@@ -604,3 +604,15 @@ Gruppe P1-3 - Bachelor Projekt
 ## 📄 Lizenz
 
 Dieses Projekt ist für Bildungszwecke erstellt.
+
+**Nutzung & Lizenzierung**
+
+Jegliche Nutzung, Weiterverwendung, Vervielfältigung oder Lizenzierung dieses Projekts – ganz oder in Teilen – bedarf der ausdrücklichen schriftlichen Genehmigung des Autors.
+
+Das gilt insbesondere für:
+- kommerzielle Nutzung
+- Weitergabe an Dritte
+- Veröffentlichung oder Einbindung in andere Projekte
+- Modifikation und Weiterentwicklung
+
+Kontakt für Anfragen: **Vaios Pechlevanidis** – pechlevanidis.vaios@gmail.com
