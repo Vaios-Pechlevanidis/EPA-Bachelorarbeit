@@ -123,12 +123,14 @@ export default function Welcome() {
         // Validate file types
         const validTypes = [
             'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/csv',
+            'application/csv',
         ]
-        
+
         for (const file of selectedFiles) {
-            if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-                setError("Bitte wählen Sie nur Excel-Dateien (.xlsx oder .xls)")
+            if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
+                setError("Bitte wählen Sie nur Excel- oder CSV-Dateien (.xlsx, .xls oder .csv)")
                 return
             }
         }
@@ -165,12 +167,14 @@ export default function Welcome() {
             
             const validTypes = [
                 'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'text/csv',
+                'application/csv',
             ]
-            
+
             for (const file of droppedFiles) {
-                if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-                    setError("Bitte wählen Sie nur Excel-Dateien (.xlsx oder .xls)")
+                if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
+                    setError("Bitte wählen Sie nur Excel- oder CSV-Dateien (.xlsx, .xls oder .csv)")
                     return
                 }
             }
@@ -635,7 +639,7 @@ export default function Welcome() {
                                         <input
                                             type="file"
                                             id={`file-upload-${index}`}
-                                            accept=".xlsx,.xls"
+                                            accept=".xlsx,.xls,.csv"
                                             multiple
                                             onChange={(e) => handleFileChange(index, e)}
                                             className="hidden"
@@ -649,12 +653,12 @@ export default function Welcome() {
                                             </div>
                                             <div>
                                                 <p className="text-base font-semibold text-white mb-1">
-                                                    {company.files.length > 0 
-                                                        ? `${company.files.length} Datei(en) ausgewählt` 
-                                                        : "Excel-Dateien auswählen"}
+                                                    {company.files.length > 0
+                                                        ? `${company.files.length} Datei(en) ausgewählt`
+                                                        : "Excel- oder CSV-Dateien auswählen"}
                                                 </p>
                                                 <p className="text-sm text-slate-300 font-medium">
-                                                    Genau 2 Dateien erforderlich (.xlsx oder .xls)
+                                                    Genau 2 Dateien erforderlich (.xlsx, .xls oder .csv)
                                                 </p>
                                                 <p className="text-xs text-slate-400 mt-1">
                                                     Oder per Drag & Drop hier ablegen

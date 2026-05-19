@@ -7,13 +7,20 @@ import { API_URL } from "@/config"
 const VALID_TYPES = [
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+  "application/csv",
 ]
 const MAX_FILES = 2
 const PREVIEW_ROWS = 10
 
 /* ---- helpers ---- */
-function isValidExcel(file) {
-  return VALID_TYPES.includes(file.type) || file.name.endsWith(".xlsx") || file.name.endsWith(".xls")
+function isValidFile(file) {
+  return (
+    VALID_TYPES.includes(file.type) ||
+    file.name.endsWith(".xlsx") ||
+    file.name.endsWith(".xls") ||
+    file.name.endsWith(".csv")
+  )
 }
 
 function formatBytes(bytes) {
@@ -163,10 +170,10 @@ export default function ImportModal({ open, onOpenChange, companyId, companyName
   /* ---- file handling ---- */
   function addFiles(incoming) {
     setValidationError("")
-    const valid = incoming.filter(isValidExcel)
-    const invalid = incoming.filter((f) => !isValidExcel(f))
+    const valid = incoming.filter(isValidFile)
+    const invalid = incoming.filter((f) => !isValidFile(f))
     if (invalid.length) {
-      setValidationError("Nur Excel-Dateien (.xlsx oder .xls) sind erlaubt.")
+      setValidationError("Nur Excel- oder CSV-Dateien (.xlsx, .xls oder .csv) sind erlaubt.")
       return
     }
     const combined = [...files, ...valid]
@@ -393,11 +400,11 @@ export default function ImportModal({ open, onOpenChange, companyId, companyName
           <p className="text-[13px] font-medium text-slate-700">
             Dateien hier ablegen oder <span className="text-indigo-600">auswählen</span>
           </p>
-          <p className="text-[11px] text-slate-400">.xlsx / .xls · max. {MAX_FILES} Dateien</p>
+          <p className="text-[11px] text-slate-400">.xlsx / .xls / .csv · max. {MAX_FILES} Dateien</p>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx,.xls"
+            accept=".xlsx,.xls,.csv"
             multiple
             className="hidden"
             onChange={handleFileInput}
