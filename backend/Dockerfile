@@ -13,11 +13,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Python Dependencies zuerst (Docker Cache nutzen)
-COPY requirements.txt pyproject.toml* ./
+COPY pyproject.toml ./
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir fastapi uvicorn python-dotenv python-multipart \
     gensim pandas openpyxl supabase statsmodels \
-    transformers sentencepiece -r requirements.txt
+    transformers sentencepiece
 
 # App kopieren
 COPY . .
