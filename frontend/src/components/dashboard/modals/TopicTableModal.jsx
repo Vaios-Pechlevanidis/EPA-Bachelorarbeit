@@ -40,7 +40,7 @@ const riskBadge = (statistical_meta) => {
   if (!statistical_meta) return null
   const { risk_level } = statistical_meta
   switch (risk_level) {
-    case "limited":     return { cls: "bg-rose-600 text-white border-rose-700 shadow-sm",     text: "BEGRENZT", bold: true }
+    case "limited":     return { cls: "bg-rose-50 text-rose-600 border-rose-200",              text: "Begrenzt" }
     case "constrained": return { cls: "bg-amber-50 text-amber-700 border-amber-200",          text: "Eingeschränkt" }
     case "acceptable":  return { cls: "bg-blue-50 text-blue-700 border-blue-200",             text: "Akzeptabel" }
     case "solid":       return { cls: "bg-emerald-50 text-emerald-700 border-emerald-200",    text: "Solide" }
@@ -303,14 +303,14 @@ export default function TopicTableModal({
                         {isRisky && (
                           <span
                             aria-hidden="true"
-                            className="absolute left-0 top-0 bottom-0 w-[4px] bg-rose-500"
+                            className="absolute left-0 top-0 bottom-0 w-[4px] bg-rose-300"
                           />
                         )}
                         <div className="flex items-center gap-2">
                           {isRisky && (
                             <span
                               title="Begrenzte Datenbasis (< 30 Reviews) — Ergebnisse mit Vorsicht interpretieren"
-                              className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex-none ring-1 ring-rose-300"
+                              className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-50 text-rose-400 flex-none ring-1 ring-rose-200"
                             >
                               <AlertTriangle className="h-3 w-3" />
                             </span>
@@ -319,7 +319,7 @@ export default function TopicTableModal({
                             {topic.topic}
                           </span>
                           {isRisky && topic.statistical_meta?.review_count != null && (
-                            <span className="text-[10px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-300 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-rose-400 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
                               n={topic.statistical_meta.review_count}
                             </span>
                           )}
