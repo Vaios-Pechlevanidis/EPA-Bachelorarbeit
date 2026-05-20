@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 import Welcome from "./pages/Welcome"
 import Dashboard from "./pages/Dashboard"
 import ComparePage from "./pages/Compare"
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       
       </Routes>
+      <SpeedInsights />
     </Router>
   )
 }
