@@ -1381,3 +1381,408 @@ export const exportKPIsAsPDF = async (kpiData) => {
     doc.save(fileName);
     console.log(`✅ PDF gespeichert: ${fileName}`);
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPARE PDF EXPORT — private helpers
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Draw a chart image scaled to fill available width, returns new y. */
+const _cmpAddChart = (doc, imgResult, yPos, maxAvailableHeight = null) => {
+    if (!imgResult?.dataUrl) return yPos;
+    const availW = PAGE.cw;
+    const availH = maxAvailableHeight || (PAGE.h - PAGE.my - 10 - yPos);
+    const aspect = imgResult.w / imgResult.h;
+    let imgW = availW;
+    let imgH = imgW / aspect;
+    if (imgH > availH) { imgH = availH; imgW = imgH * aspect; }
+    const xPos = PAGE.mx + (availW - imgW) / 2;
+    doc.addImage(imgResult.dataUrl, 'PNG', xPos, yPos, imgW, imgH);
+    return yPos + imgH + 4;
+};
+
+/** Draw a bold section title + optional subtitle + rule, returns new y. */
+const _cmpAddTitle = (doc, title, yPos, subtitle = null) => {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.s900);
+    doc.text(title, PAGE.mx, yPos);
+    let y = yPos + 7;
+    if (subtitle) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...C.s500);
+        doc.text(subtitle, PAGE.mx, y);
+        y += 5;
+    }
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.3);
+    doc.line(PAGE.mx, y, PAGE.cr, y);
+    return y + 6;
+};
+
+/** Draw page footer with label + page number. */
+const _cmpAddFooter = (doc, pageNum, totalPages, label) => {
+    const y = PAGE.h - PAGE.my + 6;
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.3);
+    doc.line(PAGE.mx, y - 4, PAGE.cr, y - 4);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C.s400);
+    doc.text(label, PAGE.mx, y);
+    doc.text(`Seite ${pageNum} / ${totalPages}`, PAGE.cr, y, { align: 'right' });
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPARE PDF EXPORT — main
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const exportCompareAsPDF = async (compareData) => {
+    const {
+        companies = [],         // [{ name, id, score, trend, mostCritical, negativeTopic, categoryRatings }]
+        radarChartElement = null,
+        barChartElement = null,
+        timelineChartElement = null,
+        categoryData = [],      // [{ category, ...companyValues }]
+        companyColors = null,   // optional hex strings per company
+        summaryData = null,     // unused – reserved for future use
+        categoryChartView = 'radar',
+    } = compareData;
+
+    // Convert hex colour strings supplied by Compare.jsx to RGB triples
+    const hexToRgb = (hex) => [
+        parseInt(hex.slice(1, 3), 16),
+        parseInt(hex.slice(3, 5), 16),
+        parseInt(hex.slice(5, 7), 16),
+    ];
+    const CMP_COLORS_DEFAULT = [C.blue500, C.emerald500, C.orange500, C.rose500, [139, 92, 246]];
+    const CMP_COLORS = companyColors
+        ? companyColors.map(hexToRgb)
+        : CMP_COLORS_DEFAULT;
+
+    const companyNames = companies.map(c => c.name || 'Unbekannt');
+    const titleLabel = companyNames.join(' vs. ');
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    let currentPage = 1;
+
+    // ── chart images ──────────────────────────────────────────────────────
+    let radarImg = null, barImg = null, timelineImg = null;
+    try { radarImg    = await extractChart(radarChartElement); }    catch (e) { console.warn('Radar-Chart Extraktion fehlgeschlagen:', e); }
+    try { barImg      = await extractChart(barChartElement); }      catch (e) { console.warn('Bar-Chart Extraktion fehlgeschlagen:', e); }
+    try { timelineImg = await extractChart(timelineChartElement); } catch (e) { console.warn('Timeline-Chart Extraktion fehlgeschlagen:', e); }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PAGE 1 — cover
+    // ═════════════════════════════════════════════════════════════════════
+    const headerH = 125;
+    doc.setFillColor(...C.navy);
+    doc.rect(0, 0, PAGE.w, headerH, 'F');
+    doc.setFillColor(...C.s800);
+    doc.rect(0, headerH - 25, PAGE.w, 25, 'F');
+
+    // accent strip
+    doc.setFillColor(...C.blue600);
+    doc.rect(0, 0, PAGE.w, 2.5, 'F');
+
+    // bar-chart icon
+    const logoX = PAGE.w / 2;
+    const logoY = 38;
+    [[logoX - 16, 18], [logoX - 8, 14], [logoX, 10], [logoX + 8, 16]].forEach(([x, h], i) => {
+        doc.setFillColor(...(i % 2 === 0 ? C.blue600 : C.blue200));
+        doc.roundedRect(x, logoY + (18 - h), 5, h, 1, 1, 'F');
+    });
+
+    // title
+    doc.setFontSize(26);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.s0);
+    doc.text('Firmenvergleich', PAGE.w / 2, 78, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C.blue200);
+    const coverSubtitle = companyNames.length <= 3
+        ? companyNames.join('  ·  ')
+        : companyNames.slice(0, 3).join('  ·  ');
+    doc.text(coverSubtitle, PAGE.w / 2, 90, { align: 'center' });
+
+    doc.setDrawColor(...C.s300);
+    doc.setLineWidth(0.3);
+    doc.line(PAGE.w / 2 - 40, 96, PAGE.w / 2 + 40, 96);
+
+    doc.setFontSize(10);
+    doc.setTextColor(...C.s400);
+    doc.text(
+        new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }),
+        PAGE.w / 2, 103, { align: 'center' }
+    );
+
+    // summary box
+    const execY = headerH + 15;
+    doc.setFillColor(...C.s0);
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(PAGE.mx, execY, PAGE.cw, 40 + companies.length * 8, 3, 3, 'FD');
+    doc.setFillColor(...C.blue600);
+    doc.roundedRect(PAGE.mx, execY, PAGE.cw, 3, 3, 3, 'F');
+    doc.setFillColor(...C.s0);
+    doc.rect(PAGE.mx, execY + 2, PAGE.cw, 2, 'F');
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.s800);
+    doc.text('Zusammenfassung', PAGE.mx + 8, execY + 12);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C.s500);
+    doc.text(`Vergleich von ${companies.length} Unternehmen anhand von Bewertungen,`, PAGE.mx + 8, execY + 20);
+    doc.text('Kategorien, Trends und Themenbereichen.', PAGE.mx + 8, execY + 26);
+
+    let summaryY = execY + 34;
+    companies.forEach((comp, i) => {
+        const col = CMP_COLORS[i] || C.s400;
+        doc.setFillColor(...col);
+        doc.circle(PAGE.mx + 12, summaryY + 3, 2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.s800);
+        doc.text(comp.name || 'Unbekannt', PAGE.mx + 18, summaryY + 4);
+        summaryY += 8;
+    });
+
+    // table of contents
+    let tocY = summaryY + 14;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.s800);
+    doc.text('Inhalt', PAGE.mx, tocY);
+    tocY += 8;
+
+    const tocItems = [];
+    let pgCounter = 1;
+    pgCounter++; tocItems.push(['KPI-Vergleich', pgCounter]);
+    if (radarImg || barImg) { pgCounter++; tocItems.push(['Kategorievergleich', pgCounter]); }
+    if (timelineImg)        { pgCounter++; tocItems.push(['Bewertungsverlauf', pgCounter]); }
+    if (categoryData.length > 0) { pgCounter++; tocItems.push(['Detailvergleich', pgCounter]); }
+
+    tocItems.forEach(([label, pg]) => {
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...C.s800);
+        doc.text(label, PAGE.mx + 4, tocY);
+        const dotX = PAGE.mx + 4 + doc.getTextWidth(label) + 2;
+        const pageX = PAGE.cr - 4;
+        doc.setTextColor(...C.s300);
+        doc.text('.'.repeat(Math.max(1, Math.floor((pageX - dotX - 10) / 1.5))), dotX, tocY);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.blue600);
+        doc.text(String(pg), pageX, tocY, { align: 'right' });
+        tocY += 6;
+    });
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PAGE 2 — KPI comparison
+    // ═════════════════════════════════════════════════════════════════════
+    doc.addPage(); currentPage++;
+    doc.setFillColor(...C.s100);
+    doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
+
+    let y = _cmpAddTitle(doc, 'KPI-Vergleich', PAGE.my + 5, 'Gegenüberstellung der wichtigsten Kennzahlen');
+
+    // legend
+    companies.forEach((comp, i) => {
+        const col = CMP_COLORS[i] || C.s400;
+        doc.setFillColor(...col);
+        doc.circle(PAGE.mx + 4 + i * 60, y, 2, 'F');
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...col);
+        doc.text(comp.name.length > 18 ? comp.name.substring(0, 18) + '…' : comp.name, PAGE.mx + 9 + i * 60, y + 0.5);
+    });
+    y += 10;
+
+    const drawKPIBlock = (title, yPos, getValue) => {
+        const rowH = 8;
+        const boxH = 10 + companies.length * rowH + 4;
+        doc.setFillColor(...C.s0);
+        doc.setDrawColor(...C.s200);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(PAGE.mx, yPos, PAGE.cw, boxH, 2, 2, 'FD');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.s800);
+        doc.text(title, PAGE.mx + 6, yPos + 7);
+        let rowY = yPos + 14;
+        companies.forEach((comp, i) => {
+            const col = CMP_COLORS[i] || C.s400;
+            const { value, valueColor } = getValue(comp);
+            doc.setFillColor(...col);
+            doc.circle(PAGE.mx + 10, rowY - 1, 1.5, 'F');
+            doc.setFontSize(8.5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...C.s800);
+            doc.text(comp.name.length > 30 ? comp.name.substring(0, 30) + '…' : comp.name, PAGE.mx + 15, rowY);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...(valueColor || C.s800));
+            doc.text(String(value), PAGE.cr - 6, rowY, { align: 'right' });
+            rowY += rowH;
+        });
+        return yPos + boxH + 6;
+    };
+
+    y = drawKPIBlock('Ø Score', y, (comp) => {
+        const s = comp.score;
+        return {
+            value: s != null ? String(s) : '–',
+            valueColor: s > 3 ? C.emerald500 : s >= 2 ? C.s800 : s != null ? C.rose500 : C.s300,
+        };
+    });
+
+    y = drawKPIBlock('Trend', y, (comp) => {
+        if (!comp.trend) return { value: '–', valueColor: C.s300 };
+        const tv = parseFloat(comp.trend.avgDelta);
+        return {
+            value: `${tv > 0 ? '+' : ''}${comp.trend.avgDelta}`,
+            valueColor: tv > 0.05 ? C.emerald500 : tv < -0.05 ? C.rose500 : C.s500,
+        };
+    });
+
+    y = drawKPIBlock('Most Critical', y, (comp) => {
+        if (!comp.mostCritical) return { value: '–', valueColor: C.s300 };
+        return { value: `${comp.mostCritical.topicName} (${comp.mostCritical.score})`, valueColor: C.rose500 };
+    });
+
+    drawKPIBlock('Negative Topic', y, (comp) => {
+        const nt = comp.negativeTopic;
+        if (!nt) return { value: '–', valueColor: C.s300 };
+        const lbl = (nt.topic_label || nt.topic_text || nt.topic || '–');
+        return { value: lbl.length > 30 ? lbl.substring(0, 30) + '…' : lbl, valueColor: C.orange500 };
+    });
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PAGE 3 — category comparison (radar + bar)
+    // ═════════════════════════════════════════════════════════════════════
+    if (radarImg || barImg) {
+        doc.addPage(); currentPage++;
+        doc.setFillColor(...C.s100);
+        doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
+        let y3 = _cmpAddTitle(doc, 'Kategorievergleich', PAGE.my + 5, 'Bewertung der Firmen in den einzelnen Kategorien');
+
+        if (radarImg) {
+            doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.s800);
+            doc.text('Radar-Ansicht', PAGE.mx + 8, y3);
+            y3 += 4;
+            y3 = _cmpAddChart(doc, radarImg, y3, barImg ? 110 : PAGE.h - PAGE.my - 10 - y3);
+            y3 += 4;
+        }
+        if (barImg) {
+            doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.s800);
+            doc.text('Balken-Ansicht', PAGE.mx + 8, y3);
+            y3 += 4;
+            _cmpAddChart(doc, barImg, y3, PAGE.h - PAGE.my - 10 - y3);
+        }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PAGE 4 — timeline
+    // ═════════════════════════════════════════════════════════════════════
+    if (timelineImg) {
+        doc.addPage(); currentPage++;
+        doc.setFillColor(...C.s100);
+        doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
+        const y4 = _cmpAddTitle(doc, 'Bewertungsverlauf', PAGE.my + 5, 'Historische Entwicklung der Bewertungen im Vergleich');
+        _cmpAddChart(doc, timelineImg, y4, PAGE.h - PAGE.my - 10 - y4);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PAGE 5+ — detail table
+    // ═════════════════════════════════════════════════════════════════════
+    if (categoryData.length > 0) {
+        doc.addPage(); currentPage++;
+        doc.setFillColor(...C.s100);
+        doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
+        let yT = _cmpAddTitle(doc, 'Detailvergleich', PAGE.my + 5, 'Bewertungen nach Kategorien mit Differenzanalyse');
+
+        const catColW = 55;
+        const compColW = companies.length >= 3 ? 30 : 38;
+        const rowH = 7;
+
+        const drawTableHeader = (atY) => {
+            doc.setFillColor(...C.s800);
+            doc.roundedRect(PAGE.mx, atY - 5, PAGE.cw, rowH + 3, 1, 1, 'F');
+            doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.s0);
+            doc.text('Kategorie', PAGE.mx + 4, atY);
+            companies.forEach((comp, i) => {
+                doc.text(
+                    comp.name.length > 12 ? comp.name.substring(0, 12) + '…' : comp.name,
+                    PAGE.mx + catColW + i * compColW, atY
+                );
+            });
+            doc.text('Diff.', PAGE.cr - 4, atY, { align: 'right' });
+            return atY + rowH + 2;
+        };
+
+        yT = drawTableHeader(yT);
+
+        categoryData.forEach((row, idx) => {
+            if (yT > PAGE.h - PAGE.my - 10) {
+                doc.addPage(); currentPage++;
+                doc.setFillColor(...C.s100);
+                doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
+                yT = PAGE.my;
+                yT = drawTableHeader(yT);
+            }
+            doc.setFillColor(...(idx % 2 === 0 ? C.s0 : C.s50));
+            doc.rect(PAGE.mx, yT - 4.5, PAGE.cw, rowH, 'F');
+
+            doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.s800);
+            doc.text(row.category.length > 28 ? row.category.substring(0, 28) + '…' : row.category, PAGE.mx + 4, yT);
+
+            const values = companies.map(comp => {
+                const v = row[comp.name];
+                return v != null ? Number(v) : null;
+            });
+            const valid = values.filter(v => v != null);
+            const maxVal = valid.length ? Math.max(...valid) : null;
+            const minVal = valid.length ? Math.min(...valid) : null;
+
+            companies.forEach((comp, i) => {
+                const x = PAGE.mx + catColW + i * compColW;
+                const val = values[i];
+                if (val == null) {
+                    doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.s300);
+                    doc.text('–', x, yT);
+                } else {
+                    const isBest  = valid.length >= 2 && val === maxVal;
+                    const isWorst = valid.length >= 2 && val === minVal && maxVal !== minVal;
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(...(isBest ? C.emerald500 : isWorst ? C.rose500 : C.s800));
+                    doc.text(val.toFixed(2), x, yT);
+                }
+            });
+
+            if (valid.length >= 2) {
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.s500);
+                doc.text(`±${(maxVal - minVal).toFixed(2)}`, PAGE.cr - 4, yT, { align: 'right' });
+            }
+            yT += rowH;
+        });
+
+        doc.setDrawColor(...C.s200); doc.setLineWidth(0.3);
+        doc.line(PAGE.mx, yT - 3, PAGE.cr, yT - 3);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // Footers on every page except cover
+    // ═════════════════════════════════════════════════════════════════════
+    const totalPages = doc.internal.pages.length - 1;
+    for (let i = 2; i <= totalPages; i++) {
+        doc.setPage(i);
+        _cmpAddFooter(doc, i, totalPages, titleLabel);
+    }
+
+    const fileName = `Firmenvergleich_${companyNames.map(n => n.replace(/\s+/g, '_')).join('_vs_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    console.log(`✅ Firmenvergleich PDF gespeichert: ${fileName} (${totalPages} Seiten)`);
+};

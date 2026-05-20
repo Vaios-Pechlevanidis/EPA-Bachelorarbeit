@@ -483,37 +483,41 @@ async def get_negative_topics(company_id: int):
 @router.get("/company/{company_id}/topic-overview")
 async def get_topic_overview(
     company_id: int,
-    source: Optional[str] = Query(default=None, description="Filter by source: 'candidates' or 'employee'")
+    source: Optional[str] = Query(default=None, description="Filter by source: 'candidates' or 'employee'"),
+    start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)")
 ):
     """
     Get topic overview data formatted for the frontend TopicOverviewCard.
-    
+
     This endpoint analyzes reviews and extracts topics with their frequency,
     average rating, sentiment, and timeline data - matching the format of
     the dummy data in TopicOverviewCard.jsx.
-    
+
     Args:
         company_id: Company ID to analyze
         source: Optional filter - 'candidates' for Bewerber or 'employee' for Mitarbeiter
+        start_date: Optional date string (YYYY-MM-DD) to filter reviews from that date onward
     """
     try:
         # Get reviews based on source filter
         candidates_data = []
         employee_data = []
-        
+
         if source is None or source == "candidates":
-            candidates_response = supabase.table("candidates")\
+            candidates_query = supabase.table("candidates")\
                 .select("*")\
-                .eq("company_id", company_id)\
-                .execute()
-            candidates_data = candidates_response.data or []
-        
+                .eq("company_id", company_id)
+            if start_date:
+                candidates_query = candidates_query.gte("datum", start_date)
+            candidates_data = candidates_query.execute().data or []
+
         if source is None or source == "employee":
-            employee_response = supabase.table("employee")\
+            employee_query = supabase.table("employee")\
                 .select("*")\
-                .eq("company_id", company_id)\
-                .execute()
-            employee_data = employee_response.data or []
+                .eq("company_id", company_id)
+            if start_date:
+                employee_query = employee_query.gte("datum", start_date)
+            employee_data = employee_query.execute().data or []
         
         all_reviews = candidates_data + employee_data
         
