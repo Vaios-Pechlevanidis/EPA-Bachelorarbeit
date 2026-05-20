@@ -136,7 +136,7 @@ export default function Dashboard() {
         if (!Number.isFinite(delta)) continue
         const rounded = Math.round(delta * 10) / 10
         const sign = rounded > 0.05 ? "up" : rounded < -0.05 ? "down" : "flat"
-        setTrendData({ avgDelta: rounded.toFixed(1), sign })
+        setTrendData({ avgDelta: rounded.toFixed(1), sign, windowMonths: json.months ?? null })
         return
       } catch {}
     }
@@ -591,22 +591,14 @@ export default function Dashboard() {
       <SorceModal
         open={open}
         onOpenChange={setOpen}
-        title="Ø Score"
-        description="Average company score"
         companyId={selectedCompany}
-      >
-        <div className="text-3xl font-bold">3.1</div>
-      </SorceModal>
+      />
 
       <TrendModal
         open={openTrend}
         onOpenChange={setOpenTrend}
-        title="Trend"
-        description="Company trend"
         companyId={effectiveCompanyId}
-      >
-        <div className="text-3xl font-bold">-0.3</div>
-      </TrendModal>
+      />
 
       <MostCriticalModal
         open={openMostCritical}

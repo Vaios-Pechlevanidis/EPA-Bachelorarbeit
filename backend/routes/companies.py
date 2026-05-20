@@ -99,7 +99,7 @@ def get_company_category_counts(company_id: int):
 
 
 @router.get("/companies/{company_id}/ratings")
-def get_company_ratings_avg(company_id: int):
+def get_company_ratings_overall(company_id: int):
     res = supabase.rpc("get_employee_ratings_avg", {"p_company_id": company_id}).execute()
 
     if res.data is None:
