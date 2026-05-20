@@ -82,7 +82,7 @@ function prettifyTopicKey(key) {
 }
 
 // Memoized TopicRatingCard für bessere Performance
-export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFiltersChange, onLoadingChange }) {
+export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFiltersChange, onLoadingChange, globalTimeRange = "all" }) {
   // Defaults
   const [source, setSource] = useState("employee")
   const [granularity, setGranularity] = useState("overall")
@@ -201,6 +201,12 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
             setRefreshing(false)
             return
           }
+        } else if (globalTimeRange !== "all") {
+          // Globaler Zeitfilter im "overall"-Modus
+          const now = new Date()
+          const years = globalTimeRange === "1y" ? 1 : 3
+          const startDate = new Date(now.getFullYear() - years, now.getMonth(), now.getDate())
+          url += `&start=${encodeURIComponent(startDate.toISOString().slice(0, 10))}`
         }
 
 
@@ -237,7 +243,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
 
     fetchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, source, granularity, selectedYear])
+  }, [companyId, source, granularity, selectedYear, globalTimeRange])
 
   // Top-5 Topics nach Häufigkeit (wie oft Werte vorhanden)
   const topicCounts = useMemo(() => {
@@ -394,11 +400,13 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
   // Export Filter-State nach außen (für PDF Export)
   useEffect(() => {
     if (onFiltersChange && !loading) {
-      // Berechne Statistiken basierend auf visibleTopics
       const stats = {
         dataPoints: chartData.length,
         topicsCount: visibleTopics.length,
-        topTopics: visibleTopics.slice(0, 3).map(t => prettifyTopicKey(t))
+        topTopics: visibleTopics.slice(0, 3).map(t => prettifyTopicKey(t)),
+        avgScore: topicStats?.avgOverall ? topicStats.avgOverall.toFixed(2) : null,
+        bestTopic: topicStats?.bestTopic ? { name: topicStats.bestTopic.name, score: topicStats.bestTopic.score.toFixed(2) } : null,
+        worstTopic: topicStats?.worstTopic ? { name: topicStats.worstTopic.name, score: topicStats.worstTopic.score.toFixed(2) } : null,
       };
 
       onFiltersChange({
@@ -411,7 +419,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, granularity, selectedYear, visibleTopics, chartData, loading]);
+  }, [source, granularity, selectedYear, visibleTopics, chartData, loading, topicStats]);
 
   // Tooltip
   // Tooltip — slate-900 dark style mit Mono-Zahlen
@@ -682,8 +690,8 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
         />
 
         <div className="px-4 pt-4 pb-4 flex flex-col flex-1 min-h-0">
-          <div id="topic-rating-chart-export" className="w-full border-0 outline-none flex-shrink-0">
-            <div className="relative h-[220px] w-full">
+          <div className="w-full border-0 outline-none flex-shrink-0">
+            <div id="topic-rating-chart-export" className="relative h-[220px] w-full">
               {emptyMessage && !showOverlay ? (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-[13px] text-slate-500">{emptyMessage}</p>
@@ -702,7 +710,6 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
               )}
             </div>
 
-            {/* Legende innerhalb des Export-Containers für PDF-Erfassung */}
             {visibleTopics.length > 0 && !emptyMessage && (
               <div className="mt-4 flex items-center justify-center gap-x-4 gap-y-1 flex-wrap text-[11px]">
                 {visibleTopics.slice(0, 6).map((topic) => {

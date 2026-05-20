@@ -498,6 +498,32 @@ a:hover { color: var(--color-primary-hover); }
   flex-shrink: 0;
 }
 
+/* ---- Global time filter (segmented control in topbar) ---- */
+.ds-time-filter {
+  display: inline-flex;
+  background: var(--slate-50);
+  border: var(--hair);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 1px;
+}
+.ds-time-btn {
+  font: 500 11px/1 var(--font-sans);
+  height: 22px;
+  padding: 0 10px;
+  border-radius: calc(var(--radius-md) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.ds-time-btn:hover { background: var(--slate-100); color: var(--color-fg); }
+.ds-time-btn.active { background: var(--slate-0); color: var(--color-fg); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.dark .ds-time-filter { background: var(--slate-800); }
+.dark .ds-time-btn.active { background: var(--slate-700); color: #e2e8f0; }
+
 /* ---- Buttons ---- */
 .ds-btn {
   font: 500 12px/1 var(--font-sans);

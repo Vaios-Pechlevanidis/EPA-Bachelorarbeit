@@ -35,7 +35,7 @@ const scoreBoxClass = (s) =>
                               : "bg-rose-50 border-rose-200"
 
 export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
-  { companyId = 1, onDataChange, onLoadingChange },
+  { companyId = 1, onDataChange, onLoadingChange, globalTimeRange = "all" },
   ref
 ) {
   const [topicsData,       setTopicsData]       = useState([])
@@ -63,7 +63,16 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
       try {
         setError(null)
         let url = `${API_URL}/analytics/company/${companyId}/topic-overview`
-        if (sourceFilter && sourceFilter !== "all") url += `?source=${sourceFilter}`
+        const params = new URLSearchParams()
+        if (sourceFilter && sourceFilter !== "all") params.set("source", sourceFilter)
+        if (globalTimeRange !== "all") {
+          const now = new Date()
+          const years = globalTimeRange === "1y" ? 1 : 3
+          const startDate = new Date(now.getFullYear() - years, now.getMonth(), now.getDate())
+          params.set("start_date", startDate.toISOString().slice(0, 10))
+        }
+        const qs = params.toString()
+        if (qs) url += `?${qs}`
         const res = await fetch(url)
         if (!res.ok) throw new Error(`API Error: ${res.status}`)
         const data = await res.json()
@@ -79,7 +88,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
     }
 
     fetchTopics()
-  }, [companyId, sourceFilter])
+  }, [companyId, sourceFilter, globalTimeRange])
 
   // Stats
   const stats = useMemo(() => {
