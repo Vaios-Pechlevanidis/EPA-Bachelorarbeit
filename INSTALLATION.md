@@ -27,6 +27,7 @@ Diese Anleitung beschreibt Schritt für Schritt, wie du das Projekt lokal einric
 
 ## Inhaltsverzeichnis
 
+0. [Von 0 auf 100 — Schnellstart](#0-von-0-auf-100--schnellstart)
 1. [Voraussetzungen](#1-voraussetzungen)
 2. [Repository klonen](#2-repository-klonen)
 3. [Backend einrichten](#3-backend-einrichten)
@@ -36,6 +37,101 @@ Diese Anleitung beschreibt Schritt für Schritt, wie du das Projekt lokal einric
 7. [Installation verifizieren](#7-installation-verifizieren)
 8. [LDA-Modelle trainieren & verwalten](#8-lda-modelle-trainieren--verwalten)
 9. [Häufige Probleme & Lösungen](#9-häufige-probleme--lösungen)
+
+---
+
+## 0. Von 0 auf 100 — Schnellstart
+
+Alle Befehle der Reihe nach ausführen. Am Ende läuft das Projekt vollständig lokal.
+
+> **Voraussetzung:** Git und Node.js (20+) müssen bereits installiert sein.
+> Python wird über `uv` verwaltet, muss also **nicht** separat installiert werden.
+
+### Schritt 1 — uv installieren
+
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.zshrc   # oder ~/.bashrc
+
+# Windows (PowerShell)
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### Schritt 2 — Repository klonen
+
+```bash
+git clone https://github.com/IIS-Bachelorprojekt/gruppe-P1-3.git gruppe-P1-3
+cd gruppe-P1-3
+```
+
+### Schritt 3 — Backend-Dependencies installieren
+
+```bash
+cd backend
+uv sync
+cd ..
+```
+
+### Schritt 4 — Umgebungsvariablen setzen
+
+```bash
+# macOS / Linux
+touch backend/.env
+echo "SUPABASE_URL=https://dein-projekt.supabase.co" >> backend/.env
+echo "SUPABASE_KEY=dein-supabase-anon-key" >> backend/.env
+
+# Windows (PowerShell)
+New-Item backend/.env
+Add-Content backend/.env "SUPABASE_URL=https://dein-projekt.supabase.co"
+Add-Content backend/.env "SUPABASE_KEY=dein-supabase-anon-key"
+```
+
+> Ersetze die Platzhalter durch die echten Supabase-Zugangsdaten deines Teams (siehe [Schritt 5](#5-umgebungsvariablen-konfigurieren)).
+
+### Schritt 5 — Frontend-Dependencies installieren
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+### Schritt 6 — Backend starten (Terminal 1 offen lassen)
+
+```bash
+cd backend
+uv run uvicorn main:app --reload
+```
+
+Backend läuft unter: **<http://localhost:8000>**
+
+### Schritt 7 — Frontend starten (neues Terminal)
+
+```bash
+cd frontend
+npm run dev
+```
+
+Frontend läuft unter: **<http://localhost:5173>**
+
+### Schritt 8 — Erstes LDA-Modell trainieren (neues Terminal)
+
+```bash
+curl -X POST http://localhost:8000/api/topics/train \
+  -H "Content-Type: application/json" \
+  -d '{"source": "both", "num_topics": 5}'
+```
+
+> Ohne trainiertes Modell sind Topic-Analysen nicht verfügbar. Dieser Schritt dauert je nach Datenmenge 30–120 Sekunden.
+
+### Fertig
+
+| Dienst   | URL                          |
+| -------- | ---------------------------- |
+| Frontend | <http://localhost:5173>      |
+| Backend  | <http://localhost:8000>      |
+| Swagger  | <http://localhost:8000/docs> |
 
 ---
 

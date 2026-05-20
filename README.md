@@ -1,25 +1,8 @@
-# Gruppe P1-3 — Projekt
+# EPA Analytics
 
-Hinweis zur KI-Unterstützung
+> Employer Review Analytics Platform — NLP-gestützte Analyse von Arbeitgeber-Bewertungen mit LDA Topic Modeling und Sentiment-Analyse.
 
-Teile dieser Datei wurden mit Hilfe von KI-gestützten Entwicklungswerkzeugen erstellt:
-- GitHub Copilot
-- Claude Sonnet 4.6
-
-Die generierten Inhalte wurden anschließend vom Autor geprüft,
-überarbeitet und in das Projekt integriert.
-
-Quelle der KI-Ausgabe:
-Anthropic (2026)
-
-Autor: Vaios Pechlevanidis
-Datum: 01.03.2026
-
-Anthropic (2026): Claude Sonnet 4.6 – Large Language Model.
-https://www.anthropic.com. Abgerufen am 01.03.2026.
-
-GitHub (2026): GitHub Copilot – AI Pair Programmer.
-https://github.com/features/copilot. Abgerufen am 01.03.2026.
+Teile dieses Projekts wurden mit Unterstützung von KI-Werkzeugen entwickelt (GitHub Copilot, Claude Sonnet 4.6). Die generierten Inhalte wurden vom Autor geprüft und integriert.
 
 
 ## 📋 Inhaltsverzeichnis
@@ -39,7 +22,6 @@ Hier findest du alle zentralen Ressourcen und Werkzeuge des Projekts:
 
 | Ressource | Beschreibung | Link |
 |-----------|-------------|------|
-| **Taiga** | Projektmanagement, User Stories, Sprints & Aufgabenverwaltung | [tree.taiga.io → Bachelorprojekt IIS](https://tree.taiga.io/project/spvapech-bachelorprojekt-iis) |
 | **Figma** | UI/UX Prototyp & Design-Dokumentation | [Figma → Prototype](https://www.figma.com/design/J6DpLLKbuyFah1hdt6lgm3/Prototype?node-id=0-1&t=AheLdS2Z58LItjWB-0) |
 
 ---
@@ -206,7 +188,7 @@ API_PORT=8000
 ## 📁 Projektstruktur
 
 ```
-gruppe-P1-3/
+epa-analytics/
 ├── backend/                      # FastAPI Backend
 │   ├── main.py                  # Haupteinstiegspunkt
 │   ├── config.py                # Konfiguration
@@ -599,11 +581,11 @@ pytest backend/tests/statistical/        # Nur Statistical
 
 ## 👥 Team
 
-Gruppe P1-3 - Bachelor Projekt
+Vaios Pechlevanidis
 
 ## 📄 Lizenz
 
-Dieses Projekt ist für Bildungszwecke erstellt.
+Dieses Projekt ist **nicht Open Source**.
 
 **Nutzung & Lizenzierung**
 
