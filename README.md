@@ -1,40 +1,40 @@
 # EPA Analytics
 
-> Employer Review Analytics Platform — NLP-gestützte Analyse von Arbeitgeber-Bewertungen mit LDA Topic Modeling und Sentiment-Analyse.
+> Employer Review Analytics Platform — NLP-powered analysis of employer reviews using LDA Topic Modeling and Sentiment Analysis.
 
-Teile dieses Projekts wurden mit Unterstützung von KI-Werkzeugen entwickelt (GitHub Copilot, Claude Sonnet 4.6). Die generierten Inhalte wurden vom Autor geprüft und integriert.
+Parts of this project were developed with the assistance of AI tools (GitHub Copilot, Claude Sonnet 4.6). The generated content was reviewed and integrated by the author.
 
 
-## 📋 Inhaltsverzeichnis
+## 📋 Table of Contents
 
-- [Wissensrepository](#-wissensrepository)
+- [Knowledge Repository](#-knowledge-repository)
 - [Requirements / Dependencies](#-requirements--dependencies)
-- [Schnellstart](#-schnellstart)
-- [Installationsanleitung](#-installationsanleitung)
-- [Einrichtung](#-einrichtung)
-- [Projektstruktur](#-projektstruktur)
+- [Quick Start](#-quick-start)
+- [Installation Guide](#-installation-guide)
+- [Setup](#-setup)
+- [Project Structure](#-project-structure)
 - [LDA Topic Modeling](#-lda-topic-modeling)
-- [Technologie-Stack](#️-technologie-stack)
+- [Technology Stack](#️-technology-stack)
 
-## 📚 Wissensrepository
+## 📚 Knowledge Repository
 
-Hier findest du alle zentralen Ressourcen und Werkzeuge des Projekts:
+Here you can find all central resources and tools of the project:
 
-| Ressource | Beschreibung | Link |
-|-----------|-------------|------|
-| **Figma** | UI/UX Prototyp & Design-Dokumentation | [Figma → Prototype](https://www.figma.com/design/J6DpLLKbuyFah1hdt6lgm3/Prototype?node-id=0-1&t=AheLdS2Z58LItjWB-0) |
+| Resource | Description | Link |
+|----------|-------------|------|
+| **Figma** | UI/UX Prototype & Design Documentation | [Figma → Prototype](https://www.figma.com/design/J6DpLLKbuyFah1hdt6lgm3/Prototype?node-id=0-1&t=AheLdS2Z58LItjWB-0) |
 
 ---
 
-## ⚡ Schnellstart
+## ⚡ Quick Start
 
 ```bash
-# Backend starten
+# Start backend
 cd backend
 uv sync
 uv run uvicorn main:app --reload
 
-# Frontend starten (neues Terminal)
+# Start frontend (new terminal)
 cd frontend
 npm install
 npm run dev
@@ -45,177 +45,177 @@ npm run dev
 
 ## 📋 Requirements / Dependencies
 
-Um das Projekt lokal laufen zu lassen, benötigst du:
+To run the project locally, you need:
 
 * **Python** >= 3.13
 * **Node.js** v20+
-* **npm** (kommt mit Node.js)
-* **uv** → https://docs.astral.sh/uv/ (empfohlen für Python)
-* **Supabase Account** (für Datenbank)
-* IDE deiner Wahl, bevorzugt **VSCode**
+* **npm** (comes with Node.js)
+* **uv** → https://docs.astral.sh/uv/ (recommended for Python)
+* **Supabase Account** (for database)
+* IDE of your choice, preferably **VSCode**
 
-### Python-Pakete (Backend):
+### Python Packages (Backend):
 * `fastapi` - Web Framework
 * `gensim` - Topic Modeling (LDA)
-* `transformers` >= 5.1 - ML-basierte Sentiment-Analyse (German BERT)
-* `torch` >= 2.10 - PyTorch Backend für Transformers
-* `pandas` - Datenverarbeitung
-* `supabase` - Datenbank-Client
-* `statsmodels` - Statistische Auswertung
+* `transformers` >= 5.1 - ML-based Sentiment Analysis (German BERT)
+* `torch` >= 2.10 - PyTorch Backend for Transformers
+* `pandas` - Data Processing
+* `supabase` - Database Client
+* `statsmodels` - Statistical Analysis
 
-### npm-Pakete (Frontend):
-* `@radix-ui/react-checkbox` - Checkbox-Komponente
-* `@radix-ui/react-label` - Label-Komponente
-* `@radix-ui/react-dialog` - Dialog/Modal-Komponente
-* `@radix-ui/react-select` - Select/Dropdown-Komponente
-* `@radix-ui/react-dropdown-menu` - Dropdown-Menü-Komponente
-* `@radix-ui/react-popover` - Popover-Komponente
-* `@radix-ui/react-separator` - Separator-Komponente
-* `cmdk` - Command-Menü-Komponente
-* `recharts` - Chart-Bibliothek
-* `lucide-react` - Icon-Bibliothek
-* `tailwindcss` - CSS-Framework
-* `html2canvas` + `jspdf` - PDF-Export
+### npm Packages (Frontend):
+* `@radix-ui/react-checkbox` - Checkbox Component
+* `@radix-ui/react-label` - Label Component
+* `@radix-ui/react-dialog` - Dialog/Modal Component
+* `@radix-ui/react-select` - Select/Dropdown Component
+* `@radix-ui/react-dropdown-menu` - Dropdown Menu Component
+* `@radix-ui/react-popover` - Popover Component
+* `@radix-ui/react-separator` - Separator Component
+* `cmdk` - Command Menu Component
+* `recharts` - Chart Library
+* `lucide-react` - Icon Library
+* `tailwindcss` - CSS Framework
+* `html2canvas` + `jspdf` - PDF Export
 
-## � Installationsanleitung
+## 📦 Installation Guide
 
-Eine ausführliche Schritt-für-Schritt-Anleitung zur Einrichtung des Projekts findest du in der **[INSTALLATION.md](./INSTALLATION.md)**.
+A detailed step-by-step guide for setting up the project can be found in **[INSTALLATION.md](./INSTALLATION.md)**.
 
-Sie enthält:
-- Voraussetzungen & Software-Installation
-- Backend- & Frontend-Setup (mit `uv` und `pip`)
-- Umgebungsvariablen konfigurieren
-- Installation verifizieren
-- Häufige Probleme & Lösungen
+It covers:
+- Prerequisites & Software Installation
+- Backend & Frontend Setup (with `uv` and `pip`)
+- Configuring Environment Variables
+- Verifying the Installation
+- Common Problems & Solutions
 
-## �🚀 Einrichtung
+## 🚀 Setup
 
 ### Backend (FastAPI)
 
-Wenn `uv` installiert ist, öffne das Terminal und führe folgendes aus:
+If `uv` is installed, open the terminal and run:
 
 ```bash
 cd backend
 uv sync
 ```
 
-Anschließend wählst du den `.venv`-Ordner als Python Interpreter für das Projekt aus.
+Then select the `.venv` folder as the Python Interpreter for the project.
 
-**Alternative ohne uv:** Falls du klassisches `pip` verwenden möchtest:
+**Alternative without uv:** If you prefer classic `pip`:
 
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate  # Auf macOS/Linux
-# .venv\Scripts\activate  # Auf Windows
+source .venv/bin/activate  # On macOS/Linux
+# .venv\Scripts\activate  # On Windows
 pip install -r requirements.txt
 ```
 
-Der Backend-Server kann wie folgt gestartet werden:
+The backend server can be started as follows:
 
 ```bash
 uv run uvicorn main:app --reload
 ```
 
-oder mit klassischem Python:
+or with classic Python:
 
 ```bash
 python -m uvicorn main:app --reload
 ```
 
-**Backend läuft unter:** `http://localhost:8000`  
-**API-Dokumentation:** `http://localhost:8000/docs` (Swagger UI)
+**Backend runs at:** `http://localhost:8000`  
+**API Documentation:** `http://localhost:8000/docs` (Swagger UI)
 
 ### Frontend (React + Vite)
 
-Wenn `node` installiert ist, öffne das Terminal und führe folgendes aus:
+If `node` is installed, open the terminal and run:
 
 ```bash
 cd frontend
 npm install
 ```
 
-Anschließend kannst du den Frontend-Dev-Server wie folgt starten:
+Then start the frontend dev server:
 
 ```bash
 npm run dev
 ```
 
-**Frontend läuft unter:** `http://localhost:5173`
+**Frontend runs at:** `http://localhost:5173`
 
-## � Umgebungsvariablen
+## 🔧 Environment Variables
 
-Erstelle eine `.env`-Datei im `backend/` Ordner:
+Create a `.env` file in the `backend/` folder:
 
 ```env
 # Supabase Configuration
-SUPABASE_URL=deine-supabase-url
-SUPABASE_KEY=dein-supabase-key
+SUPABASE_URL=your-supabase-url
+SUPABASE_KEY=your-supabase-key
 
 # Optional: API Configuration
 API_HOST=0.0.0.0
 API_PORT=8000
 ```
 
-**Wichtig:** Die `.env`-Datei ist in `.gitignore` und wird nicht ins Repository committed!
+**Important:** The `.env` file is listed in `.gitignore` and will not be committed to the repository!
 
-## 💡 Tipps
+## 💡 Tips
 
-* Am besten hast du **2 Terminal-Sessions** offen, um Backend und Frontend gleichzeitig zu nutzen!
-* Stelle sicher, dass die `.env`-Datei im Backend-Ordner korrekt konfiguriert ist
-* Für Production-Build des Frontends: `npm run build`
-* Cache löschen: `find . -type d -name "__pycache__" -exec rm -rf {} +`
-* Alte Modelle löschen: `cd backend/models && rm -f lda_model_*.* 2>/dev/null`
+* It's best to have **2 terminal sessions** open to run backend and frontend simultaneously!
+* Make sure the `.env` file in the backend folder is correctly configured
+* For a production build of the frontend: `npm run build`
+* Clear cache: `find . -type d -name "__pycache__" -exec rm -rf {} +`
+* Delete old models: `cd backend/models && rm -f lda_model_*.* 2>/dev/null`
 
-### Performance-Tipps (Version 2.1):
-* **Dashboard lädt langsam?** → Hard-Reload (Cmd+Shift+R / Ctrl+Shift+F5)
-* **API-Calls prüfen**: Browser DevTools → Network Tab → Filter "Fetch/XHR"
-* **Re-Renders analysieren**: React DevTools → Profiler Tab
-* **Caching aktiviert**: CompanySearchSelect cached automatisch nach erstem Load
+### Performance Tips (Version 2.1):
+* **Dashboard loading slowly?** → Hard-Reload (Cmd+Shift+R / Ctrl+Shift+F5)
+* **Check API calls**: Browser DevTools → Network Tab → Filter "Fetch/XHR"
+* **Analyze re-renders**: React DevTools → Profiler Tab
+* **Caching enabled**: CompanySearchSelect automatically caches after first load
 
 ### Topic Detail Modal Features:
-* **Einklappbare Ansicht-Steuerung:** Klicke auf "Ansicht anpassen", um Elemente ein-/auszublenden
-* **Intelligentes Layout:** Charts werden automatisch größer, wenn andere ausgeblendet werden
-* **5 anpassbare Bereiche:**
-  - ✅ Statistiken (Frequency, Rating, Sentiment)
-  - ✅ Zeitverlauf-Chart (Rating über Zeit)
-  - ✅ Sentiment-Chart (Gauge mit Prozentanzeige)
-  - ✅ Typische Aussagen (Top 3 Statements)
-  - ✅ Beispiel-Review (mit Navigation)
-* **Zeit-Filter:** Wähle zwischen Gesamt, 1 Jahr, 6 Monate, 3 Monate oder 1 Monat
-* **Review-Navigation:** Klicke auf Aussagen, um die vollständige Review zu sehen
+* **Collapsible view controls:** Click "Customize View" to show/hide elements
+* **Smart layout:** Charts automatically expand when others are hidden
+* **5 customizable sections:**
+  - ✅ Statistics (Frequency, Rating, Sentiment)
+  - ✅ Timeline Chart (Rating over time)
+  - ✅ Sentiment Chart (Gauge with percentage display)
+  - ✅ Typical Statements (Top 3 Statements)
+  - ✅ Sample Review (with navigation)
+* **Time Filter:** Choose between All Time, 1 Year, 6 Months, 3 Months, or 1 Month
+* **Review Navigation:** Click on statements to see the full review
 
-## 📁 Projektstruktur
+## 📁 Project Structure
 
 ```
 epa-analytics/
 ├── backend/                      # FastAPI Backend
-│   ├── main.py                  # Haupteinstiegspunkt
-│   ├── config.py                # Konfiguration
+│   ├── main.py                  # Main entry point
+│   ├── config.py                # Configuration
 │   ├── pyproject.toml           # Python Dependencies (uv)
-│   ├── examples_statistical_usage.py # Statistik-Beispiele
+│   ├── examples_statistical_usage.py # Statistics examples
 │   │
-│   ├── database/                # Datenbankverbindungen (Supabase)
+│   ├── database/                # Database connections (Supabase)
 │   │   └── supabase_client.py
 │   │
-│   ├── migrations/              # SQL-Migrationen
+│   ├── migrations/              # SQL migrations
 │   │   ├── 001_create_candidates_table.sql
 │   │   ├── 002_create_employee_table.sql
 │   │   ├── 003_create_companies_table.sql
 │   │   └── 004_add_company_references.sql
 │   │
-│   ├── models/                  # Machine Learning Modelle
+│   ├── models/                  # Machine Learning Models
 │   │   ├── lda_topic_model.py  # LDA Topic Modeling
-│   │   ├── sentiment_analyzer.py # Sentiment-Analyse
-│   │   └── saved_models/       # Trainierte Modelle
+│   │   ├── sentiment_analyzer.py # Sentiment Analysis
+│   │   └── saved_models/       # Trained models
 │   │
 │   ├── services/                # Business Logic Services
 │   │   ├── excel_service.py               # Excel Import/Export
 │   │   ├── topic_model_service.py         # Topic Modeling DB Service
-│   │   ├── topic_rating_service.py        # Topic-Rating-Analyse
-│   │   ├── topic_average_rating_service.py # Topic-Durchschnittsbewertungen
-│   │   ├── statistical_enrichment.py      # Statistische Anreicherung
-│   │   └── statistical_validator.py       # Statistische Validierung
+│   │   ├── topic_rating_service.py        # Topic-Rating Analysis
+│   │   ├── topic_average_rating_service.py # Topic Average Ratings
+│   │   ├── statistical_enrichment.py      # Statistical Enrichment
+│   │   └── statistical_validator.py       # Statistical Validation
 │   │
 │   ├── routes/                  # API Endpoints
 │   │   ├── analytics.py        # Analytics API (12 Endpoints)
@@ -226,36 +226,36 @@ epa-analytics/
 │   ├── scripts/                 # Utility Scripts
 │   │   ├── train_models.py     # Model Training
 │   │   ├── fix_html_entities.py # Text Cleanup
-│   │   ├── sweep_num_topics_db.py    # Topic-Anzahl Optimierung
-│   │   └── test_num_topics_compare.py # Topic-Vergleichstests
+│   │   ├── sweep_num_topics_db.py    # Topic Count Optimization
+│   │   └── test_num_topics_compare.py # Topic Comparison Tests
 │   │
-│   ├── tests/                   # Organisierte Tests
+│   ├── tests/                   # Organized Tests
 │   │   ├── topic_modeling/     # Topic Modeling Tests
 │   │   ├── sentiment_analysis/ # Sentiment Tests
 │   │   └── statistical/        # Statistical Tests
 │   │
-│   └── examples/                # Beispiele & Demos
+│   └── examples/                # Examples & Demos
 │       ├── topic_modeling_examples.py
 │       └── topic_rating_examples.py
 │
 ├── frontend/                    # React/Vite Frontend
-│   ├── src/                    # Quellcode
-│   │   ├── components/         # React Komponenten
-│   │   │   ├── CompanySearchSelect.jsx  # Optimiert mit Caching
+│   ├── src/                    # Source Code
+│   │   ├── components/         # React Components
+│   │   │   ├── CompanySearchSelect.jsx  # Optimized with caching
 │   │   │   ├── dashboard/     # Dashboard Components
-│   │   │   │   ├── DominantTopicsCard.jsx   # Dominante Topics
-│   │   │   │   ├── IndividualReviewsCard.jsx # Einzelne Reviews
-│   │   │   │   ├── TimelineCard.jsx         # React.memo optimiert
-│   │   │   │   ├── TopicRatingCard.jsx      # React.memo optimiert
-│   │   │   │   ├── TopicOverviewCard.jsx    # React.memo optimiert
+│   │   │   │   ├── DominantTopicsCard.jsx   # Dominant Topics
+│   │   │   │   ├── IndividualReviewsCard.jsx # Individual Reviews
+│   │   │   │   ├── TimelineCard.jsx         # React.memo optimized
+│   │   │   │   ├── TopicRatingCard.jsx      # React.memo optimized
+│   │   │   │   ├── TopicOverviewCard.jsx    # React.memo optimized
 │   │   │   │   └── modals/
 │   │   │   │       ├── MostCriticalModal.jsx
 │   │   │   │       ├── NegativTopicModal.jsx
 │   │   │   │       ├── SorceModal.jsx
 │   │   │   │       ├── TrendModal.jsx
-│   │   │   │       ├── TopicTableModal.jsx    # Topic Tabelle
-│   │   │   │       ├── TopicDetailModal.jsx   # Topic Details mit Ansicht-Anpassen
-│   │   │   │       └── ReviewDetailModal.jsx  # Vollständige Review-Ansicht
+│   │   │   │       ├── TopicTableModal.jsx    # Topic Table
+│   │   │   │       ├── TopicDetailModal.jsx   # Topic Details with Customize View
+│   │   │   │       └── ReviewDetailModal.jsx  # Full Review View
 │   │   │   └── ui/            # UI Components (shadcn)
 │   │   │       ├── badge.tsx
 │   │   │       ├── button.tsx
@@ -270,35 +270,35 @@ epa-analytics/
 │   │   │       ├── select.tsx
 │   │   │       ├── separator.tsx
 │   │   │       └── table.tsx
-│   │   ├── pages/             # Seiten
+│   │   ├── pages/             # Pages
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── Compare.jsx
 │   │   │   └── Welcome.jsx
-│   │   ├── utils/             # Hilfsfunktionen
+│   │   ├── utils/             # Utility Functions
 │   │   │   ├── pdfExport.js   # PDF Export
-│   │   │   ├── chartValidator.js # Chart Validierung
+│   │   │   ├── chartValidator.js # Chart Validation
 │   │   │   └── pdf/           # PDF Utilities
 │   │   └── lib/               # Utilities
 │   │       └── utils.ts
-│   ├── public/                # Statische Assets
+│   ├── public/                # Static Assets
 │   └── package.json           # Node.js Dependencies
-├── requirements.txt            # Python Dependencies (Projekt-Root)
-└── INSTALLATION.md             # Ausführliche Installationsanleitung
+├── requirements.txt            # Python Dependencies (Project Root)
+└── INSTALLATION.md             # Detailed Installation Guide
 ```
 
-## 🛠️ Technologie-Stack
+## 🛠️ Technology Stack
 
 ### Backend
-* **Framework:** FastAPI (moderne Python Web API)
+* **Framework:** FastAPI (modern Python Web API)
 * **Server:** Uvicorn (ASGI Server)
-* **Datenbank:** Supabase (PostgreSQL)
+* **Database:** Supabase (PostgreSQL)
 * **ML/AI:** 
   - Gensim 4.3+ (LDA Topic Modeling)
-  - Transformers 5.1+ (ML-basierte Sentiment-Analyse mit German BERT)
-  - PyTorch 2.10+ (Backend für Transformer-Modelle)
-  - Lexikon-basierte Sentiment-Analyse (regelbasiert, schnell)
-* **Statistik:** Statsmodels 0.14+
-* **Datenverarbeitung:** Pandas, OpenPyXL
+  - Transformers 5.1+ (ML-based Sentiment Analysis with German BERT)
+  - PyTorch 2.10+ (Backend for Transformer models)
+  - Lexicon-based Sentiment Analysis (rule-based, fast)
+* **Statistics:** Statsmodels 0.14+
+* **Data Processing:** Pandas, OpenPyXL
 * **Tools:** Python-dotenv, Python-multipart
 
 ### Frontend
@@ -307,100 +307,100 @@ epa-analytics/
 * **Routing:** React Router DOM 7
 * **UI Library:** shadcn/ui (Radix UI + Tailwind CSS)
   - Dialog, Select, Dropdown Menu, Popover, Separator
-  - Checkbox, Label (für Ansicht-Anpassung)
+  - Checkbox, Label (for view customization)
   - Badge, Button, Card, Input, Command, Table
 * **Charts:** Recharts (Line Charts, Gauge Charts)
 * **Icons:** Lucide React (Eye, ChevronDown, ChevronUp, Calendar, etc.)
 * **PDF Export:** html2canvas + jsPDF
-* **Styling:** Tailwind CSS v4 mit Custom Animations
+* **Styling:** Tailwind CSS v4 with Custom Animations
 * **Linting:** ESLint
 
 ### Dashboard Features
-* **Performance-Optimierungen (Version 2.1):**
-  - ⚡ **Paralleles Laden**: Alle KPI-Daten laden gleichzeitig (~50% schneller)
-  - 💾 **Caching**: Firmenliste wird gecacht (~80% schneller ab 2. Öffnung)
-  - ⏱️ **Debouncing**: Intelligente Suche mit 300ms Verzögerung
-  - 🎯 **React.memo**: Optimierte Re-Renders für große Komponenten
-  - 🔄 **Bessere Error Handling**: Explizites Logging für einfacheres Debugging
+* **Performance Optimizations (Version 2.1):**
+  - ⚡ **Parallel Loading**: All KPI data loads simultaneously (~50% faster)
+  - 💾 **Caching**: Company list is cached (~80% faster from 2nd load onward)
+  - ⏱️ **Debouncing**: Smart search with 300ms delay
+  - 🎯 **React.memo**: Optimized re-renders for large components
+  - 🔄 **Better Error Handling**: Explicit logging for easier debugging
 
-* **Topic Übersicht:**
-  - Interaktive Topic-Tabelle mit Suchfunktion
-  - Detailansicht mit Line Chart (Rating über Zeit)
-  - Gauge Chart für Sentiment-Visualisierung
-  - Typische Aussagen und Beispiel-Reviews
-  - Zweistufige Modal-Interaktion (Tabelle → Details)
-  - **Ansicht anpassen:** Ein-/ausblendbare Elemente mit intelligenter Layout-Anpassung
-  - **Responsive Charts:** Charts passen sich automatisch an und werden größer, wenn andere ausgeblendet werden
+* **Topic Overview:**
+  - Interactive topic table with search functionality
+  - Detail view with line chart (rating over time)
+  - Gauge chart for sentiment visualization
+  - Typical statements and sample reviews
+  - Two-level modal interaction (Table → Details)
+  - **Customize View:** Toggleable elements with intelligent layout adjustment
+  - **Responsive Charts:** Charts automatically expand when others are hidden
 
-### Datenbank Schema
+### Database Schema
 * **Tables:** `candidates`, `employee`, `companies`
 * **Features:** Star ratings, text feedback, relational data
 
 ## 🤖 LDA Topic Modeling
 
-Dieses Projekt enthält eine vollständige **LDA Topic Modeling**-Integration mit **Gensim** zur automatischen Themenextraktion aus Kandidaten- und Mitarbeiter-Feedback.
+This project includes a complete **LDA Topic Modeling** integration with **Gensim** for automatic topic extraction from candidate and employee feedback.
 
 ### Features
 
-✅ **Automatische Topic-Erkennung** in Textdaten  
-✅ **Sentiment-Analyse** - Dual-Mode (Lexicon + ML-Transformer)
-  - **Lexicon-Mode:** Schnell, regelbasiert, keine Dependencies
-  - **Transformer-Mode:** ML-basiert mit German BERT, 100% Genauigkeit
-✅ **Sterne-Bewertungen** - Kombiniert Text-Topics mit Rating-Daten  
-✅ **Datenbankintegration** - Direkter Zugriff auf Kandidaten- und Mitarbeiter-Daten  
-✅ **RESTful API** - 13 Endpunkte für Training, Analyse und Vorhersage  
-✅ **Modellpersistenz** - Speichern und Laden trainierter Modelle  
-✅ **Deutsche Textverarbeitung** - Optimierte Stopword-Liste  
-✅ **Flexible Analyse** - Einzelne Texte oder ganze Datensätze  
-✅ **Topic-Rating-Korrelation** - Verstehe welche Themen wie bewertet werden  
+✅ **Automatic Topic Detection** in text data  
+✅ **Sentiment Analysis** - Dual-Mode (Lexicon + ML-Transformer)
+  - **Lexicon Mode:** Fast, rule-based, no dependencies
+  - **Transformer Mode:** ML-based with German BERT, 100% accuracy
+✅ **Star Ratings** - Combines text topics with rating data  
+✅ **Database Integration** - Direct access to candidate and employee data  
+✅ **RESTful API** - 13 endpoints for training, analysis, and prediction  
+✅ **Model Persistence** - Save and load trained models  
+✅ **German Text Processing** - Optimized stopword list  
+✅ **Flexible Analysis** - Individual texts or entire datasets  
+✅ **Topic-Rating Correlation** - Understand how different topics are rated  
 
-### Schnellstart
+### Quick Start
 
-1. **Backend starten:**
+1. **Start Backend:**
    ```bash
    cd backend
    uv run uvicorn main:app --reload
    ```
 
-2. **API-Dokumentation öffnen:**
+2. **Open API Documentation:**
    ```
    http://localhost:8000/docs
    ```
 
-3. **Erstes Modell trainieren:**
+3. **Train first model:**
    ```bash
    curl -X POST http://localhost:8000/api/topics/train \
      -H "Content-Type: application/json" \
      -d '{"source": "both", "num_topics": 5}'
    ```
 
-### API-Endpunkte
+### API Endpoints
 
-| Endpoint | Methode | Beschreibung |
-|----------|---------|--------------|
-| `/api/topics/status` | GET | Model-Status abrufen |
-| `/api/topics/database/stats` | GET | Datenbank-Statistiken |
-| `/api/topics/train` | POST | Neues Modell trainieren |
-| `/api/topics/topics` | GET | Entdeckte Topics anzeigen |
-| `/api/topics/predict` | POST | Topics für Text vorhersagen |
-| `/api/topics/analyze-record` | POST | Spezifischen Datensatz analysieren |
-| `/api/topics/analyze/employee-reviews-with-ratings` | GET | Employee Reviews mit Topics, Sentiment & Ratings |
-| `/api/topics/analyze/candidate-reviews-with-ratings` | GET | Candidate Reviews mit Topics, Sentiment & Ratings |
-| `/api/topics/analyze/topic-rating-correlation` | GET | Korrelation zwischen Topics und Bewertungen |
-| `/api/topics/models/list` | GET | Gespeicherte Modelle auflisten |
-| `/api/topics/models/load` | POST | Gespeichertes Modell laden |
-| `/api/topics/company/{company_id}/negative-topics` | GET | Negative Topics einer Firma |
-| `/api/topics/company/{company_id}/most-critical` | GET | Kritischste Topics einer Firma |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/topics/status` | GET | Get model status |
+| `/api/topics/database/stats` | GET | Database statistics |
+| `/api/topics/train` | POST | Train a new model |
+| `/api/topics/topics` | GET | Show discovered topics |
+| `/api/topics/predict` | POST | Predict topics for text |
+| `/api/topics/analyze-record` | POST | Analyze a specific record |
+| `/api/topics/analyze/employee-reviews-with-ratings` | GET | Employee reviews with topics, sentiment & ratings |
+| `/api/topics/analyze/candidate-reviews-with-ratings` | GET | Candidate reviews with topics, sentiment & ratings |
+| `/api/topics/analyze/topic-rating-correlation` | GET | Correlation between topics and ratings |
+| `/api/topics/models/list` | GET | List saved models |
+| `/api/topics/models/load` | POST | Load a saved model |
+| `/api/topics/company/{company_id}/negative-topics` | GET | Negative topics for a company |
+| `/api/topics/company/{company_id}/most-critical` | GET | Most critical topics for a company |
 
-### Installation testen
+### Test Installation
 
 ```bash
-# Tests ausführen
+# Run tests
 cd backend
 pytest tests/
 ```
 
-### Beispiele ausführen
+### Run Examples
 
 **Basic Topic Modeling:**
 ```bash
@@ -408,15 +408,15 @@ cd backend
 uv run python examples/topic_modeling_examples.py
 ```
 
-**Topic-Rating-Analyse (NEU):**
+**Topic-Rating Analysis (NEW):**
 ```bash
 cd backend
 uv run python examples/topic_rating_examples.py
 ```
 
-### Beispiele
+### Examples
 
-- 💡 [`backend/examples/`](backend/examples/) - Beispiele & Demos
+- 💡 [`backend/examples/`](backend/examples/) - Examples & Demos
   - `topic_modeling_examples.py` - Basic LDA
   - `topic_rating_examples.py` - Topics + Sentiment + Ratings
 
@@ -424,47 +424,47 @@ uv run python examples/topic_rating_examples.py
 
 ```mermaid
 graph LR
-    A[Datenbank] --> B[Text extrahieren]
+    A[Database] --> B[Extract Text]
     B --> C[Preprocessing]
     C --> D[LDA Training]
-    D --> E[Topics entdeckt]
-    E --> F[Modell speichern]
-    F --> G[Vorhersagen machen]
+    D --> E[Topics Discovered]
+    E --> F[Save Model]
+    F --> G[Make Predictions]
 ```
 
-### Datenquellen
+### Data Sources
 
-**Candidates-Tabelle:**
+**Candidates Table:**
 - `stellenbeschreibung`
 - `verbesserungsvorschlaege`
 
-**Employee-Tabelle:**
+**Employee Table:**
 - `jobbeschreibung`
 - `gut_am_arbeitgeber_finde_ich`
 - `schlecht_am_arbeitgeber_finde_ich`
 - `verbesserungsvorschlaege`
 
-### Beispiel-Verwendung
+### Example Usage
 
-#### Python (Topic-Rating-Analyse):
+#### Python (Topic-Rating Analysis):
 ```python
 import requests
 
-# Modell trainieren
+# Train model
 response = requests.post(
     "http://localhost:8000/api/topics/train",
     json={"source": "employee", "num_topics": 5}
 )
 print(response.json())
 
-# Employee Reviews mit Sentiment & Ratings analysieren
+# Analyze employee reviews with sentiment & ratings
 response = requests.get(
     "http://localhost:8000/api/topics/analyze/employee-reviews-with-ratings",
     params={"limit": 50}
 )
 analysis = response.json()['analysis']
 
-# Topic-Rating-Korrelation abrufen
+# Get topic-rating correlation
 response = requests.get(
     "http://localhost:8000/api/topics/analyze/topic-rating-correlation"
 )
@@ -473,106 +473,106 @@ correlation = response.json()['correlation']
 for topic in correlation['topics']:
     print(f"Topic {topic['topic_id']}: "
           f"{topic['avg_rating']:.1f}⭐ "
-          f"({topic['mention_count']} Erwähnungen)")
+          f"({topic['mention_count']} mentions)")
 ```
 
 #### cURL:
 ```bash
-# Topics mit Ratings analysieren
+# Analyze topics with ratings
 curl "http://localhost:8000/api/topics/analyze/topic-rating-correlation"
 
-# Text analysieren
+# Analyze text
 curl -X POST http://localhost:8000/api/topics/predict \
   -H "Content-Type: application/json" \
-  -d '{"text": "Die Work-Life-Balance ist ausgezeichnet!", "threshold": 0.1}'
+  -d '{"text": "The work-life balance is excellent!", "threshold": 0.1}'
 ```
 
-### Technische Details
+### Technical Details
 
-- **LDA-Algorithmus**: Latent Dirichlet Allocation mit Gensim
-- **Sentiment-Analyse**: Lexikon-basiert mit 100+ deutschen Sentiment-Wörtern
-  - Erkennt Intensifizierer (sehr, extrem, total)
-  - Berücksichtigt Negationen (nicht, kein, nie)
-  - Berechnet Polarity (-1 bis +1) und Subjectivity (0 bis 1)
-- **Preprocessing**: Lowercase, Stopword-Entfernung, Token-Filterung
-- **Sprache**: Optimiert für deutsche Texte
-- **Parameter**: Konfigurierbare Topics (2-20), Passes, Iterations
-- **Speicherung**: Automatisches Speichern trainierter Modelle
-- **Integration**: Kombiniert Topics, Sentiment und Sterne-Bewertungen
+- **LDA Algorithm**: Latent Dirichlet Allocation with Gensim
+- **Sentiment Analysis**: Lexicon-based with 100+ German sentiment words
+  - Recognizes intensifiers (sehr, extrem, total)
+  - Considers negations (nicht, kein, nie)
+  - Calculates polarity (-1 to +1) and subjectivity (0 to 1)
+- **Preprocessing**: Lowercase, stopword removal, token filtering
+- **Language**: Optimized for German texts
+- **Parameters**: Configurable topics (2–20), passes, iterations
+- **Storage**: Automatic saving of trained models
+- **Integration**: Combines topics, sentiment, and star ratings
 
-## 🚨 Häufige Probleme & Lösungen
+## 🚨 Common Problems & Solutions
 
-### Backend startet nicht
+### Backend won't start
 ```bash
-# Port 8000 ist belegt
+# Port 8000 is in use
 lsof -ti:8000 | xargs kill -9
 uv run uvicorn main:app --reload
 ```
 
-### Frontend startet nicht
+### Frontend won't start
 ```bash
-# Dependencies fehlen
+# Missing dependencies
 cd frontend
 npm install
 npm run dev
 
-# Spezifische Pakete nachinstallieren (falls notwendig)
+# Reinstall specific packages (if necessary)
 npm install @radix-ui/react-checkbox @radix-ui/react-label
 ```
 
-### Dashboard lädt langsam (Version 2.1 sollte das beheben!)
+### Dashboard loading slowly (Version 2.1 should fix this!)
 ```bash
-# 1. Hard-Reload im Browser
-# Chrome/Edge: Cmd+Shift+R (Mac) oder Ctrl+Shift+F5 (Windows)
-# Firefox: Cmd+Shift+R (Mac) oder Ctrl+F5 (Windows)
+# 1. Hard-Reload in browser
+# Chrome/Edge: Cmd+Shift+R (Mac) or Ctrl+Shift+F5 (Windows)
+# Firefox: Cmd+Shift+R (Mac) or Ctrl+F5 (Windows)
 
-# 2. Browser Cache löschen
+# 2. Clear browser cache
 # DevTools → Application → Clear Storage
 
-# 3. Prüfe Network Tab
-# DevTools → Network → Prüfe ob KPI-Calls parallel laufen
-# Sollten jetzt ~50% schneller sein!
+# 3. Check Network Tab
+# DevTools → Network → Check if KPI calls run in parallel
+# Should now be ~50% faster!
 ```
 
 ### "Model not trained" Error
 ```bash
-# Trainiere zuerst ein Modell
+# Train a model first
 curl -X POST http://localhost:8000/api/topics/train \
   -H "Content-Type: application/json" \
   -d '{"source": "employee", "num_topics": 5}'
 ```
 
-### Python Cache Probleme
+### Python Cache Issues
 ```bash
-# Lösche alle __pycache__ Verzeichnisse
+# Delete all __pycache__ directories
 find . -type d -name "__pycache__" -exec rm -rf {} +
 ```
 
-### Alte Modelle löschen
+### Delete old models
 ```bash
-# Speicherplatz freigeben
+# Free up disk space
 cd backend/models
 rm -f lda_model_*.* 2>/dev/null
 ```
 
-### Tests finden nach Reorganisation
+### Finding tests after reorganization
 ```bash
-# Tests sind jetzt organisiert in backend/tests/
-pytest backend/tests/                    # Alle Tests
-pytest backend/tests/topic_modeling/     # Nur Topic Modeling
-pytest backend/tests/sentiment_analysis/ # Nur Sentiment
-pytest backend/tests/statistical/        # Nur Statistical
+# Tests are now organized in backend/tests/
+pytest backend/tests/                    # All tests
+pytest backend/tests/topic_modeling/     # Topic modeling only
+pytest backend/tests/sentiment_analysis/ # Sentiment only
+pytest backend/tests/statistical/        # Statistical only
 ```
 
-## 📚 Weitere Ressourcen
+## 📚 Further Resources
 
-### Projekt-Dokumentation
-- **Installationsanleitung**: [INSTALLATION.md](./INSTALLATION.md)
-- **Test-Dokumentation**: [backend/tests/](./backend/tests/)
-- **Beispiele**: [backend/examples/](./backend/examples/)
+### Project Documentation
+- **Installation Guide**: [INSTALLATION.md](./INSTALLATION.md)
+- **Test Documentation**: [backend/tests/](./backend/tests/)
+- **Examples**: [backend/examples/](./backend/examples/)
 
 ### API & Tools
-- **API Dokumentation**: http://localhost:8000/docs (Swagger UI)
+- **API Documentation**: http://localhost:8000/docs (Swagger UI)
 - **Supabase**: https://supabase.com/docs
 - **FastAPI**: https://fastapi.tiangolo.com
 - **React**: https://react.dev
@@ -583,18 +583,18 @@ pytest backend/tests/statistical/        # Nur Statistical
 
 Vaios Pechlevanidis
 
-## 📄 Lizenz
+## 📄 License
 
-Dieses Projekt ist **nicht Open Source**.
+This project is **not Open Source**.
 
-**Nutzung & Lizenzierung**
+**Usage & Licensing**
 
-Jegliche Nutzung, Weiterverwendung, Vervielfältigung oder Lizenzierung dieses Projekts – ganz oder in Teilen – bedarf der ausdrücklichen schriftlichen Genehmigung des Autors.
+Any use, reuse, reproduction, or licensing of this project — in whole or in part — requires the explicit written permission of the author.
 
-Das gilt insbesondere für:
-- kommerzielle Nutzung
-- Weitergabe an Dritte
-- Veröffentlichung oder Einbindung in andere Projekte
-- Modifikation und Weiterentwicklung
+This applies in particular to:
+- commercial use
+- distribution to third parties
+- publication or inclusion in other projects
+- modification and further development
 
-Kontakt für Anfragen: **Vaios Pechlevanidis** – pechlevanidis.vaios@gmail.com
+Contact for inquiries: **Vaios Pechlevanidis** – pechlevanidis.vaios@gmail.com

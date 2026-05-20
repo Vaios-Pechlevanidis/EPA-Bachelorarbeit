@@ -1,71 +1,71 @@
-# Installationsanleitung — Gruppe P1-3
+# Installation Guide — Group P1-3
 
-Hinweis zur KI-Unterstützung
+Note on AI Assistance
 
-Teile dieser Datei wurden mit Hilfe von KI-gestützten Entwicklungswerkzeugen erstellt:
+Parts of this file were created with the help of AI-assisted development tools:
 - GitHub Copilot
 - Claude Sonnet 4.6
 
-Die generierten Inhalte wurden anschließend vom Autor geprüft,
-überarbeitet und in das Projekt integriert.
+The generated content was subsequently reviewed,
+revised, and integrated into the project by the author.
 
-Quelle der KI-Ausgabe:
+Source of AI output:
 Anthropic (2026)
 
-Autor: Vaios Pechlevanidis
-Datum: 01.03.2026
+Author: Vaios Pechlevanidis
+Date: 01.03.2026
 
 Anthropic (2026): Claude Sonnet 4.6 – Large Language Model.
-https://www.anthropic.com. Abgerufen am 01.03.2026.
+https://www.anthropic.com. Retrieved 01.03.2026.
 
 GitHub (2026): GitHub Copilot – AI Pair Programmer.
-https://github.com/features/copilot. Abgerufen am 01.03.2026.
+https://github.com/features/copilot. Retrieved 01.03.2026.
 
-Diese Anleitung beschreibt Schritt für Schritt, wie du das Projekt lokal einrichtest und startest.
-
----
-
-## Inhaltsverzeichnis
-
-0. [Von 0 auf 100 — Schnellstart](#0-von-0-auf-100--schnellstart)
-1. [Voraussetzungen](#1-voraussetzungen)
-2. [Repository klonen](#2-repository-klonen)
-3. [Backend einrichten](#3-backend-einrichten)
-4. [Frontend einrichten](#4-frontend-einrichten)
-5. [Umgebungsvariablen konfigurieren](#5-umgebungsvariablen-konfigurieren)
-6. [Projekt starten](#6-projekt-starten)
-7. [Installation verifizieren](#7-installation-verifizieren)
-8. [LDA-Modelle trainieren & verwalten](#8-lda-modelle-trainieren--verwalten)
-9. [Häufige Probleme & Lösungen](#9-häufige-probleme--lösungen)
+This guide describes step by step how to set up and run the project locally.
 
 ---
 
-## 0. Von 0 auf 100 — Schnellstart
+## Table of Contents
 
-Alle Befehle der Reihe nach ausführen. Am Ende läuft das Projekt vollständig lokal.
+0. [Zero to Running — Quick Start](#0-zero-to-running--quick-start)
+1. [Prerequisites](#1-prerequisites)
+2. [Clone Repository](#2-clone-repository)
+3. [Set Up Backend](#3-set-up-backend)
+4. [Set Up Frontend](#4-set-up-frontend)
+5. [Configure Environment Variables](#5-configure-environment-variables)
+6. [Start the Project](#6-start-the-project)
+7. [Verify Installation](#7-verify-installation)
+8. [Train & Manage LDA Models](#8-train--manage-lda-models)
+9. [Common Problems & Solutions](#9-common-problems--solutions)
 
-> **Voraussetzung:** Git und Node.js (20+) müssen bereits installiert sein.
-> Python wird über `uv` verwaltet, muss also **nicht** separat installiert werden.
+---
 
-### Schritt 1 — uv installieren
+## 0. Zero to Running — Quick Start
+
+Run all commands in order. At the end the project will be running fully locally.
+
+> **Prerequisite:** Git and Node.js (20+) must already be installed.
+> Python is managed via `uv`, so it does **not** need to be installed separately.
+
+### Step 1 — Install uv
 
 ```bash
 # macOS / Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
-source ~/.zshrc   # oder ~/.bashrc
+source ~/.zshrc   # or ~/.bashrc
 
 # Windows (PowerShell)
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-### Schritt 2 — Repository klonen
+### Step 2 — Clone Repository
 
 ```bash
 git clone https://github.com/IIS-Bachelorprojekt/gruppe-P1-3.git gruppe-P1-3
 cd gruppe-P1-3
 ```
 
-### Schritt 3 — Backend-Dependencies installieren
+### Step 3 — Install Backend Dependencies
 
 ```bash
 cd backend
@@ -73,23 +73,23 @@ uv sync
 cd ..
 ```
 
-### Schritt 4 — Umgebungsvariablen setzen
+### Step 4 — Set Environment Variables
 
 ```bash
 # macOS / Linux
 touch backend/.env
-echo "SUPABASE_URL=https://dein-projekt.supabase.co" >> backend/.env
-echo "SUPABASE_KEY=dein-supabase-anon-key" >> backend/.env
+echo "SUPABASE_URL=https://your-project.supabase.co" >> backend/.env
+echo "SUPABASE_KEY=your-supabase-anon-key" >> backend/.env
 
 # Windows (PowerShell)
 New-Item backend/.env
-Add-Content backend/.env "SUPABASE_URL=https://dein-projekt.supabase.co"
-Add-Content backend/.env "SUPABASE_KEY=dein-supabase-anon-key"
+Add-Content backend/.env "SUPABASE_URL=https://your-project.supabase.co"
+Add-Content backend/.env "SUPABASE_KEY=your-supabase-anon-key"
 ```
 
-> Ersetze die Platzhalter durch die echten Supabase-Zugangsdaten deines Teams (siehe [Schritt 5](#5-umgebungsvariablen-konfigurieren)).
+> Replace the placeholders with the actual Supabase credentials of your team (see [Step 5](#5-configure-environment-variables)).
 
-### Schritt 5 — Frontend-Dependencies installieren
+### Step 5 — Install Frontend Dependencies
 
 ```bash
 cd frontend
@@ -97,25 +97,25 @@ npm install
 cd ..
 ```
 
-### Schritt 6 — Backend starten (Terminal 1 offen lassen)
+### Step 6 — Start Backend (keep terminal open)
 
 ```bash
 cd backend
 uv run uvicorn main:app --reload
 ```
 
-Backend läuft unter: **<http://localhost:8000>**
+Backend runs at: **<http://localhost:8000>**
 
-### Schritt 7 — Frontend starten (neues Terminal)
+### Step 7 — Start Frontend (new terminal)
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Frontend läuft unter: **<http://localhost:5173>**
+Frontend runs at: **<http://localhost:5173>**
 
-### Schritt 8 — Erstes LDA-Modell trainieren (neues Terminal)
+### Step 8 — Train First LDA Model (new terminal)
 
 ```bash
 curl -X POST http://localhost:8000/api/topics/train \
@@ -123,11 +123,11 @@ curl -X POST http://localhost:8000/api/topics/train \
   -d '{"source": "both", "num_topics": 5}'
 ```
 
-> Ohne trainiertes Modell sind Topic-Analysen nicht verfügbar. Dieser Schritt dauert je nach Datenmenge 30–120 Sekunden.
+> Without a trained model, topic analyses are not available. This step takes 30–120 seconds depending on the amount of data.
 
-### Fertig
+### Done
 
-| Dienst   | URL                          |
+| Service  | URL                          |
 | -------- | ---------------------------- |
 | Frontend | <http://localhost:5173>      |
 | Backend  | <http://localhost:8000>      |
@@ -135,21 +135,21 @@ curl -X POST http://localhost:8000/api/topics/train \
 
 ---
 
-## 1. Voraussetzungen
+## 1. Prerequisites
 
-Stelle sicher, dass folgende Software auf deinem System installiert ist:
+Make sure the following software is installed on your system:
 
-| Software   | Mindestversion | Prüfbefehl          | Download                                                  |
-| ---------- | -------------- | -------------------- | --------------------------------------------------------- |
-| **Python** | 3.13+          | `python --version`   | https://www.python.org/downloads/                         |
-| **Node.js**| 20+            | `node --version`     | https://nodejs.org/                                       |
-| **npm**    | (mit Node.js)  | `npm --version`      | (kommt mit Node.js)                                       |
-| **uv**     | (empfohlen)    | `uv --version`       | https://docs.astral.sh/uv/getting-started/installation/   |
-| **Git**    | —              | `git --version`      | https://git-scm.com/                                      |
+| Software    | Minimum Version | Check Command        | Download                                                  |
+| ----------- | --------------- | -------------------- | --------------------------------------------------------- |
+| **Python**  | 3.13+           | `python --version`   | https://www.python.org/downloads/                         |
+| **Node.js** | 20+             | `node --version`     | https://nodejs.org/                                       |
+| **npm**     | (with Node.js)  | `npm --version`      | (comes with Node.js)                                      |
+| **uv**      | (recommended)   | `uv --version`       | https://docs.astral.sh/uv/getting-started/installation/   |
+| **Git**     | —               | `git --version`      | https://git-scm.com/                                      |
 
-### uv installieren (empfohlen)
+### Install uv (recommended)
 
-`uv` ist ein schneller Python-Paketmanager und wird für das Projekt empfohlen:
+`uv` is a fast Python package manager and is recommended for this project:
 
 ```bash
 # macOS / Linux
@@ -159,11 +159,11 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-> **Hinweis:** Das Projekt funktioniert auch mit klassischem `pip`, `uv` ist aber deutlich schneller.
+> **Note:** The project also works with classic `pip`, but `uv` is significantly faster.
 
 ---
 
-## 2. Repository klonen
+## 2. Clone Repository
 
 ```bash
 git clone https://github.com/IIS-Bachelorprojekt/gruppe-P1-3.git gruppe-P1-3
@@ -172,169 +172,169 @@ cd gruppe-P1-3
 
 ---
 
-## 3. Backend einrichten
+## 3. Set Up Backend
 
-### Option A: Mit `uv` (empfohlen)
+### Option A: With `uv` (recommended)
 
 ```bash
 cd backend
 uv sync
 ```
 
-Das erstellt automatisch eine `.venv` und installiert alle Dependencies aus `pyproject.toml`.
+This automatically creates a `.venv` and installs all dependencies from `pyproject.toml`.
 
-### Option B: Mit `pip`
+### Option B: With `pip`
 
 ```bash
 cd backend
 python -m venv .venv
 
-# Virtuelle Umgebung aktivieren
+# Activate virtual environment
 source .venv/bin/activate        # macOS / Linux
 # .venv\Scripts\activate         # Windows
 
 pip install -r ../requirements.txt
 ```
 
-### Python-Interpreter in VS Code setzen
+### Set Python Interpreter in VS Code
 
-1. Öffne die Command Palette: `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Windows/Linux)
-2. Suche: **Python: Select Interpreter**
-3. Wähle den Interpreter aus `backend/.venv/bin/python`
+1. Open the Command Palette: `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Windows/Linux)
+2. Search: **Python: Select Interpreter**
+3. Select the interpreter from `backend/.venv/bin/python`
 
-### Installierte Backend-Pakete
+### Installed Backend Packages
 
-| Paket            | Zweck                                      |
-| ---------------- | ------------------------------------------ |
-| `fastapi`        | Web-Framework (REST API)                   |
-| `uvicorn`        | ASGI-Server                                |
-| `supabase`       | Datenbank-Client (PostgreSQL)              |
-| `gensim`         | LDA Topic Modeling                         |
-| `transformers`   | ML-basierte Sentiment-Analyse (German BERT)|
-| `torch`          | PyTorch Backend für Transformers           |
-| `pandas`         | Datenverarbeitung                          |
-| `openpyxl`       | Excel-Import/-Export                       |
-| `statsmodels`    | Statistische Auswertung                    |
-| `python-dotenv`  | Umgebungsvariablen aus `.env`              |
-| `python-multipart` | Datei-Upload-Support                     |
+| Package            | Purpose                                        |
+| ------------------ | ---------------------------------------------- |
+| `fastapi`          | Web Framework (REST API)                       |
+| `uvicorn`          | ASGI Server                                    |
+| `supabase`         | Database Client (PostgreSQL)                   |
+| `gensim`           | LDA Topic Modeling                             |
+| `transformers`     | ML-based Sentiment Analysis (German BERT)      |
+| `torch`            | PyTorch Backend for Transformers               |
+| `pandas`           | Data Processing                                |
+| `openpyxl`         | Excel Import/Export                            |
+| `statsmodels`      | Statistical Analysis                           |
+| `python-dotenv`    | Environment variables from `.env`              |
+| `python-multipart` | File Upload Support                            |
 
 ---
 
-## 4. Frontend einrichten
+## 4. Set Up Frontend
 
 ```bash
 cd frontend
 npm install
 ```
 
-Das installiert alle Dependencies aus `package.json`.
+This installs all dependencies from `package.json`.
 
-### Installierte Frontend-Pakete
+### Installed Frontend Packages
 
-| Paket                        | Zweck                        |
-| ---------------------------- | ---------------------------- |
-| `react` / `react-dom`       | UI-Framework                 |
-| `react-router-dom`          | Client-Side Routing          |
-| `recharts`                  | Chart-Bibliothek             |
-| `tailwindcss`               | CSS-Framework                |
-| `lucide-react`              | Icon-Bibliothek              |
-| `@radix-ui/react-*`         | UI-Komponenten (shadcn/ui)   |
-| `jspdf` / `html2canvas`     | PDF-Export                   |
-| `vite`                      | Build Tool & Dev Server      |
+| Package                  | Purpose                      |
+| ------------------------ | ---------------------------- |
+| `react` / `react-dom`   | UI Framework                 |
+| `react-router-dom`      | Client-Side Routing          |
+| `recharts`              | Chart Library                |
+| `tailwindcss`           | CSS Framework                |
+| `lucide-react`          | Icon Library                 |
+| `@radix-ui/react-*`     | UI Components (shadcn/ui)    |
+| `jspdf` / `html2canvas` | PDF Export                   |
+| `vite`                  | Build Tool & Dev Server      |
 
 ---
 
-## 5. Umgebungsvariablen konfigurieren
+## 5. Configure Environment Variables
 
-Erstelle eine `.env`-Datei im `backend/`-Ordner:
+Create a `.env` file in the `backend/` folder:
 
 ```bash
-cp backend/.env.example backend/.env   # Falls .env.example vorhanden
-# Oder manuell erstellen:
+cp backend/.env.example backend/.env   # If .env.example exists
+# Or create manually:
 touch backend/.env
 ```
 
-Füge folgende Variablen ein:
+Add the following variables:
 
 ```env
-# Supabase Configuration (PFLICHT)
-SUPABASE_URL=https://dein-projekt.supabase.co
-SUPABASE_KEY=dein-supabase-anon-key
+# Supabase Configuration (REQUIRED)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
 
 # Optional: API Configuration
 API_HOST=0.0.0.0
 API_PORT=8000
 ```
 
-> ⚠️ **Wichtig:**
-> - Die `.env`-Datei ist in `.gitignore` und wird **nicht** ins Repository committed.
-> - Frage dein Team nach den korrekten Supabase-Zugangsdaten.
-> - Ohne gültige Supabase-Credentials startet das Backend mit einer Warnung.
+> ⚠️ **Important:**
+> - The `.env` file is in `.gitignore` and will **not** be committed to the repository.
+> - Ask your team for the correct Supabase credentials.
+> - Without valid Supabase credentials, the backend starts with a warning.
 
-### Supabase-Zugangsdaten finden
+### Finding Supabase Credentials
 
-1. Gehe zu [supabase.com](https://supabase.com) und logge dich ein
-2. Wähle dein Projekt aus
-3. Gehe zu **Settings → API**
-4. Kopiere die **Project URL** → `SUPABASE_URL`
-5. Kopiere den **anon/public Key** → `SUPABASE_KEY`
+1. Go to [supabase.com](https://supabase.com) and log in
+2. Select your project
+3. Go to **Settings → API**
+4. Copy the **Project URL** → `SUPABASE_URL`
+5. Copy the **anon/public Key** → `SUPABASE_KEY`
 
 ---
 
-## 6. Projekt starten
+## 6. Start the Project
 
-Du brauchst **zwei Terminal-Fenster**, eins für das Backend und eins für das Frontend.
+You need **two terminal windows**, one for the backend and one for the frontend.
 
-### Terminal 1 — Backend starten
+### Terminal 1 — Start Backend
 
 ```bash
 cd backend
 
-# Mit uv (empfohlen)
+# With uv (recommended)
 uv run uvicorn main:app --reload
 
-# Oder mit aktivierter venv
+# Or with activated venv
 source .venv/bin/activate
 python -m uvicorn main:app --reload
 ```
 
-Das Backend läuft unter: **http://localhost:8000**
-API-Dokumentation (Swagger): **http://localhost:8000/docs**
+Backend runs at: **http://localhost:8000**  
+API Documentation (Swagger): **http://localhost:8000/docs**
 
-### Terminal 2 — Frontend starten
+### Terminal 2 — Start Frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Das Frontend läuft unter: **http://localhost:5173**
+Frontend runs at: **http://localhost:5173**
 
 ---
 
-## 7. Installation verifizieren
+## 7. Verify Installation
 
-### Backend prüfen
+### Check Backend
 
 ```bash
-# API erreichbar?
+# API reachable?
 curl http://localhost:8000/api/hello
-# Erwartete Antwort: {"message":"Hallo von FastAPI"}
+# Expected response: {"message":"Hello from FastAPI"}
 
-# Datenbankverbindung testen
+# Test database connection
 curl http://localhost:8000/api/test-connection
-# Erwartete Antwort: {"status":"success", ...}
+# Expected response: {"status":"success", ...}
 
-# Swagger UI öffnen
+# Open Swagger UI
 open http://localhost:8000/docs   # macOS
 # xdg-open http://localhost:8000/docs   # Linux
 ```
 
-### Frontend prüfen
+### Check Frontend
 
-Öffne **http://localhost:5173** im Browser. Die Welcome-Seite sollte angezeigt werden.
+Open **http://localhost:5173** in your browser. The welcome page should be displayed.
 
-### Erstes LDA-Modell trainieren
+### Train First LDA Model
 
 ```bash
 curl -X POST http://localhost:8000/api/topics/train \
@@ -342,98 +342,98 @@ curl -X POST http://localhost:8000/api/topics/train \
   -d '{"source": "both", "num_topics": 5}'
 ```
 
-### Tests ausführen
+### Run Tests
 
 ```bash
 cd backend
 
-# Alle Tests
+# All tests
 uv run pytest tests/
 
-# Nur Topic Modeling Tests
+# Topic Modeling tests only
 uv run pytest tests/topic_modeling/
 
-# Nur Sentiment-Analyse Tests
+# Sentiment Analysis tests only
 uv run pytest tests/sentiment_analysis/
 
-# Nur Statistische Tests
+# Statistical tests only
 uv run pytest tests/statistical/
 ```
 
 ---
 
-## 8. LDA-Modelle trainieren & verwalten
+## 8. Train & Manage LDA Models
 
-Das Projekt nutzt **LDA (Latent Dirichlet Allocation)** zur automatischen Themenextraktion aus Feedback-Texten. Ohne ein trainiertes Modell können keine Topic-Analysen durchgeführt werden.
+The project uses **LDA (Latent Dirichlet Allocation)** for automatic topic extraction from feedback texts. Without a trained model, no topic analyses can be performed.
 
-> **Voraussetzung:** Das Backend muss laufen und die Supabase-Datenbank muss Daten enthalten.
+> **Prerequisite:** The backend must be running and the Supabase database must contain data.
 
-### 8.1 Modell über die API trainieren (empfohlen)
+### 8.1 Train Model via API (recommended)
 
-Das Backend muss gestartet sein (`http://localhost:8000`).
+The backend must be started (`http://localhost:8000`).
 
-#### Erstes Modell trainieren
+#### Train first model
 
 ```bash
-# Kombiniertes Modell (Bewerber + Mitarbeiter), 5 Topics
+# Combined model (candidates + employees), 5 topics
 curl -X POST http://localhost:8000/api/topics/train \
   -H "Content-Type: application/json" \
   -d '{"source": "both", "num_topics": 5}'
 ```
 
-#### Trainings-Parameter
+#### Training Parameters
 
-| Parameter              | Werte                                   | Standard | Beschreibung                                   |
-| ---------------------- | --------------------------------------- | -------- | ---------------------------------------------- |
-| `source`               | `"candidates"`, `"employee"`, `"both"`  | `"both"` | Datenquelle für das Training                   |
-| `num_topics`           | 2–20                                    | `5`      | Anzahl der zu extrahierenden Topics            |
-| `limit`                | Zahl oder `null`                        | `null`   | Max. Anzahl Datensätze pro Quelle              |
-| `use_employee_weighting` | `true` / `false`                      | `true`   | Gewichtung nach Mitarbeitertyp anwenden        |
+| Parameter               | Values                                  | Default  | Description                                    |
+| ----------------------- | --------------------------------------- | -------- | ---------------------------------------------- |
+| `source`                | `"candidates"`, `"employee"`, `"both"` | `"both"` | Data source for training                       |
+| `num_topics`            | 2–20                                    | `5`      | Number of topics to extract                    |
+| `limit`                 | number or `null`                        | `null`   | Max. number of records per source              |
+| `use_employee_weighting`| `true` / `false`                        | `true`   | Apply employee type weighting                  |
 
-#### Beispiele
+#### Examples
 
 ```bash
-# Nur Mitarbeiter-Feedback, 10 Topics
+# Employee feedback only, 10 topics
 curl -X POST http://localhost:8000/api/topics/train \
   -H "Content-Type: application/json" \
   -d '{"source": "employee", "num_topics": 10}'
 
-# Nur Bewerber-Feedback, 8 Topics, max. 100 Datensätze
+# Candidate feedback only, 8 topics, max. 100 records
 curl -X POST http://localhost:8000/api/topics/train \
   -H "Content-Type: application/json" \
   -d '{"source": "candidates", "num_topics": 8, "limit": 100}'
 
-# 15 Topics ohne Mitarbeiter-Gewichtung
+# 15 topics without employee weighting
 curl -X POST http://localhost:8000/api/topics/train \
   -H "Content-Type: application/json" \
   -d '{"source": "both", "num_topics": 15, "use_employee_weighting": false}'
 ```
 
-Nach dem Training wird das Modell automatisch unter `backend/models/saved_models/` gespeichert.
+After training, the model is automatically saved under `backend/models/saved_models/`.
 
-### 8.2 Modell über das Trainings-Skript trainieren
+### 8.2 Train Model via Training Script
 
-Alternativ kann das Trainings-Skript direkt ausgeführt werden (trainiert ein kombiniertes Modell mit 15 Topics):
+Alternatively, the training script can be run directly (trains a combined model with 15 topics):
 
 ```bash
 cd backend
 
-# Mit uv
+# With uv
 uv run python scripts/train_models.py
 
-# Mit aktivierter venv
+# With activated venv
 python scripts/train_models.py
 ```
 
-Das Skript gibt Informationen über die geladenen Daten, Perplexity und Coherence Score aus.
+The script outputs information about loaded data, perplexity, and coherence score.
 
-### 8.3 Gespeicherte Modelle auflisten
+### 8.3 List Saved Models
 
 ```bash
 curl http://localhost:8000/api/topics/models/list
 ```
 
-Antwort:
+Response:
 ```json
 {
   "status": "success",
@@ -446,105 +446,105 @@ Antwort:
 }
 ```
 
-### 8.4 Gespeichertes Modell laden
+### 8.4 Load a Saved Model
 
-Beim Neustart des Backends muss ein zuvor trainiertes Modell geladen werden:
+When restarting the backend, a previously trained model must be loaded:
 
 ```bash
 curl -X POST "http://localhost:8000/api/topics/models/load?model_name=lda_model_20260214_233448"
 ```
 
-### 8.5 Modell-Status prüfen
+### 8.5 Check Model Status
 
 ```bash
 curl http://localhost:8000/api/topics/status
 ```
 
-Zeigt an, ob ein Modell geladen ist und wie viele Topics es enthält.
+Shows whether a model is loaded and how many topics it contains.
 
-### 8.6 Modell testen
+### 8.6 Test the Model
 
-Nach dem Training kannst du das Modell direkt testen:
+After training you can test the model directly:
 
 ```bash
-# Text analysieren (Topics + Sentiment)
+# Analyze text (topics + sentiment)
 curl -X POST http://localhost:8000/api/topics/predict-with-sentiment \
   -H "Content-Type: application/json" \
-  -d '{"text": "Die Work-Life-Balance ist ausgezeichnet und das Gehalt fair!", "threshold": 0.1}'
+  -d '{"text": "The work-life balance is excellent and the salary fair!", "threshold": 0.1}'
 
-# Topic-Rating-Korrelation abrufen
+# Get topic-rating correlation
 curl http://localhost:8000/api/topics/analyze/topic-rating-correlation
 
-# Alle entdeckten Topics anzeigen
+# Show all discovered topics
 curl http://localhost:8000/api/topics/topics
 ```
 
-### 8.7 Alte Modelle aufräumen
+### 8.7 Clean Up Old Models
 
-Jedes Training erzeugt mehrere Dateien (~6 Dateien pro Modell). Um Speicherplatz freizugeben:
+Each training run generates several files (~6 files per model). To free up disk space:
 
 ```bash
 cd backend/models/saved_models
 
-# Alle Modelle auflisten
+# List all models
 ls -la *.model
 
-# ALLE alten Modelle löschen (Vorsicht!)
+# Delete ALL old models (caution!)
 rm -f lda_model_*.*
 
-# Nur ein bestimmtes Modell löschen
+# Delete a specific model only
 rm -f lda_model_20260201_143902.*
 ```
 
-### 8.8 Swagger UI verwenden
+### 8.8 Use Swagger UI
 
-Alle oben genannten API-Calls können auch bequem über die **Swagger UI** ausgeführt werden:
+All API calls above can also be conveniently executed via the **Swagger UI**:
 
-1. Öffne **http://localhost:8000/docs** im Browser
-2. Navigiere zum Abschnitt **topics**
-3. Klicke auf den gewünschten Endpunkt (z.B. `/api/topics/train`)
-4. Klicke **Try it out**, passe die Parameter an und klicke **Execute**
+1. Open **http://localhost:8000/docs** in your browser
+2. Navigate to the **topics** section
+3. Click on the desired endpoint (e.g. `/api/topics/train`)
+4. Click **Try it out**, adjust the parameters, and click **Execute**
 
 ---
 
-## 9. Häufige Probleme & Lösungen
+## 9. Common Problems & Solutions
 
 ### ❌ `uv: command not found`
 
 ```bash
-# uv installieren
+# Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# Danach Terminal neu starten oder:
-source ~/.bashrc   # oder ~/.zshrc
+# Then restart terminal or:
+source ~/.bashrc   # or ~/.zshrc
 ```
 
-### ❌ Port 8000 ist belegt
+### ❌ Port 8000 is in use
 
 ```bash
-# Prozess auf Port 8000 beenden
+# Kill process on port 8000
 lsof -ti:8000 | xargs kill -9
-# Backend neu starten
+# Restart backend
 uv run uvicorn main:app --reload
 ```
 
 ### ❌ `SUPABASE_URL environment variable is required`
 
-Die `.env`-Datei fehlt oder ist nicht korrekt konfiguriert. Siehe [Schritt 5](#5-umgebungsvariablen-konfigurieren).
+The `.env` file is missing or not correctly configured. See [Step 5](#5-configure-environment-variables).
 
 ### ❌ `ModuleNotFoundError: No module named '...'`
 
 ```bash
 cd backend
 
-# Mit uv
+# With uv
 uv sync
 
-# Mit pip
+# With pip
 source .venv/bin/activate
 pip install -r ../requirements.txt
 ```
 
-### ❌ Frontend: `Module not found` oder fehlende Pakete
+### ❌ Frontend: `Module not found` or missing packages
 
 ```bash
 cd frontend
@@ -552,9 +552,9 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
-### ❌ `Model not trained` Fehler
+### ❌ `Model not trained` Error
 
-Trainiere zuerst ein LDA-Modell:
+Train an LDA model first:
 
 ```bash
 curl -X POST http://localhost:8000/api/topics/train \
@@ -562,44 +562,44 @@ curl -X POST http://localhost:8000/api/topics/train \
   -d '{"source": "employee", "num_topics": 5}'
 ```
 
-### ❌ Python Cache Probleme
+### ❌ Python Cache Issues
 
 ```bash
-# Alle __pycache__ Verzeichnisse löschen
+# Delete all __pycache__ directories
 find . -type d -name "__pycache__" -exec rm -rf {} +
 ```
 
-### ❌ Alte/korrupte Modelle
+### ❌ Old/corrupted models
 
 ```bash
 cd backend/models/saved_models
 rm -f lda_model_*.* 2>/dev/null
 ```
 
-### ❌ Dashboard lädt langsam
+### ❌ Dashboard loading slowly
 
 1. **Hard-Reload:** `Cmd+Shift+R` (Mac) / `Ctrl+Shift+F5` (Windows)
-2. **Browser Cache löschen:** DevTools → Application → Clear Storage
-3. **Network Tab prüfen:** API-Calls sollten parallel laufen
+2. **Clear browser cache:** DevTools → Application → Clear Storage
+3. **Check Network Tab:** API calls should run in parallel
 
 ---
 
-## Kurzreferenz
+## Quick Reference
 
 ```bash
 # === Backend ===
 cd backend
-uv sync                              # Dependencies installieren
-uv run uvicorn main:app --reload     # Server starten
-uv run pytest tests/                 # Tests ausführen
+uv sync                              # Install dependencies
+uv run uvicorn main:app --reload     # Start server
+uv run pytest tests/                 # Run tests
 
 # === Frontend ===
 cd frontend
-npm install                          # Dependencies installieren
-npm run dev                          # Dev Server starten
-npm run build                        # Production Build
+npm install                          # Install dependencies
+npm run dev                          # Start dev server
+npm run build                        # Production build
 
-# === Aufräumen ===
-find . -type d -name "__pycache__" -exec rm -rf {} +   # Python Cache
-cd backend/models/saved_models && rm -f lda_model_*.*   # Alte Modelle
+# === Cleanup ===
+find . -type d -name "__pycache__" -exec rm -rf {} +   # Python cache
+cd backend/models/saved_models && rm -f lda_model_*.*   # Old models
 ```
