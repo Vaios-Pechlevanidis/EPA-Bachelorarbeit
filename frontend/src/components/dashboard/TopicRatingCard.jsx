@@ -418,8 +418,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
         stats
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, granularity, selectedYear, visibleTopics, chartData, loading, topicStats]);
+  }, [source, granularity, selectedYear, visibleTopics, chartData, loading, topicStats, onFiltersChange, topics]);
 
   // Tooltip
   // Tooltip — slate-900 dark style mit Mono-Zahlen

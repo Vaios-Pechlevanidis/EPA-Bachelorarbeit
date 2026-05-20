@@ -495,7 +495,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 hasInterpolation: processedHistorical.length > 0 && processedHistorical.some(d => d._isMissing),
             });
         }
-    }, [metric, source, granularity, selectedYear, timelineData, forecastData, trendData]); // onFiltersChange NICHT in Dependencies!
+    }, [metric, source, granularity, selectedYear, timelineData, forecastData, trendData, onFiltersChange]);
 
     // Custom tooltip — slate-900 dark style mit Mono-Zahlen
     const CustomTooltip = ({ active, payload, label }) => {
@@ -1031,13 +1031,13 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                         <div className="text-center p-2 bg-green-50 rounded-lg">
                                             <p className="text-xs text-slate-500 mb-0.5">Max Trend</p>
                                             <p className="text-lg font-bold text-green-600">
-                                                {Math.max(...trendData.map(d => d.trend)).toFixed(2)}
+                                                {trendData.length > 0 ? Math.max(...trendData.map(d => d.trend)).toFixed(2) : "0.00"}
                                             </p>
                                         </div>
                                         <div className="text-center p-2 bg-red-50 rounded-lg">
                                             <p className="text-xs text-slate-500 mb-0.5">Min Trend</p>
                                             <p className="text-lg font-bold text-red-600">
-                                                {Math.min(...trendData.map(d => d.trend)).toFixed(2)}
+                                                {trendData.length > 0 ? Math.min(...trendData.map(d => d.trend)).toFixed(2) : "0.00"}
                                             </p>
                                         </div>
                                     </>

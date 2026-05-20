@@ -309,7 +309,7 @@ const ComparePage = () => {
                     fetch(`${API_URL}/companies/${companyId}/ratings`),
                     fetch(`${API_URL}/companies/${companyId}/ratings/avg`),
                     fetch(
-                        `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_months&months=12`
+                        `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_all&months=12`
                     ),
                     fetch(
                         `${API_URL}/analytics/company/${companyId}/timeline?days=1825&forecast_months=0&source=employee`
@@ -368,7 +368,7 @@ const ComparePage = () => {
                     let sign = "flat"
                     if (rounded > 0.05) sign = "up"
                     else if (rounded < -0.05) sign = "down"
-                    trend = { avgDelta: rounded.toFixed(1), sign }
+                    trend = { avgDelta: rounded.toFixed(1), sign, windowMonths: trendJson.months ?? null }
                 }
             }
 
@@ -894,9 +894,9 @@ const ComparePage = () => {
                                                 </div>
                                                 <span
                                                     className={`text-xl font-extrabold ${
-                                                        score > 3
+                                                        score >= 3.5
                                                             ? "text-green-600"
-                                                            : score >= 2
+                                                            : score >= 2.5
                                                             ? "text-slate-800"
                                                             : score != null
                                                             ? "text-red-500"
@@ -1156,7 +1156,7 @@ const ComparePage = () => {
                                                                     {trend.sign === "down" && <TrendingDown className="h-3.5 w-3.5 text-red-600 inline" />}
                                                                     {trend.sign === "flat" && <Minus className="h-3.5 w-3.5 text-slate-400 inline" />}
                                                                     <span className={trend.sign === "up" ? "text-green-600" : trend.sign === "down" ? "text-red-600" : "text-slate-500"}>
-                                                                        {parseFloat(trend.avgDelta) > 0 ? "+" : ""}{trend.avgDelta} (12 Mon.)
+                                                                        {parseFloat(trend.avgDelta) > 0 ? "+" : ""}{trend.avgDelta}{trend.windowMonths ? ` (${trend.windowMonths} Mon.)` : ""}
                                                                     </span>
                                                                 </>
                                                             ) : (

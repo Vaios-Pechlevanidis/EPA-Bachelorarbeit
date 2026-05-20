@@ -2,7 +2,7 @@ import * as React from "react"
 import { useState, useMemo } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react"
+import { Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, X } from "lucide-react"
 import { SourceToggle } from "../ChartHeader"
 import { Tag } from "../../../icons"
 
@@ -40,7 +40,7 @@ const riskBadge = (statistical_meta) => {
   if (!statistical_meta) return null
   const { risk_level } = statistical_meta
   switch (risk_level) {
-    case "limited":     return { cls: "bg-rose-600 text-white border-rose-700 shadow-sm",     text: "BEGRENZT", bold: true }
+    case "limited":     return { cls: "bg-rose-50 text-rose-600 border-rose-200",              text: "Begrenzt" }
     case "constrained": return { cls: "bg-amber-50 text-amber-700 border-amber-200",          text: "Eingeschränkt" }
     case "acceptable":  return { cls: "bg-blue-50 text-blue-700 border-blue-200",             text: "Akzeptabel" }
     case "solid":       return { cls: "bg-emerald-50 text-emerald-700 border-emerald-200",    text: "Solide" }
@@ -57,6 +57,7 @@ export default function TopicTableModal({
   const [sortKey, setSortKey] = useState("frequency") // topic | frequency | rating
   const [sortDir, setSortDir] = useState("desc")
   const [sentimentFilter, setSentimentFilter] = useState("all") // all | positive | negative | neutral
+  const [bannerDismissed, setBannerDismissed] = useState(false)
 
   const sourceValue = sourceFilter || "all"
 
@@ -241,7 +242,7 @@ export default function TopicTableModal({
           </div>
 
           {/* Warning Banner für begrenzte Datenbasis */}
-          {stats?.limited > 0 && (
+          {stats?.limited > 0 && !bannerDismissed && (
             <div className="rounded-md bg-rose-50 border-2 border-rose-300 overflow-hidden">
               {/* Akzentbalken oben */}
               <div className="h-[3px] bg-rose-500" />
@@ -260,6 +261,13 @@ export default function TopicTableModal({
                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-rose-600 text-white text-[11px] font-bold tnum flex-none">
                   {stats.limited}
                 </span>
+                <button
+                  onClick={() => setBannerDismissed(true)}
+                  className="text-rose-400 hover:text-rose-600 flex-none transition-colors"
+                  aria-label="Hinweis schließen"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
           )}
@@ -303,14 +311,14 @@ export default function TopicTableModal({
                         {isRisky && (
                           <span
                             aria-hidden="true"
-                            className="absolute left-0 top-0 bottom-0 w-[4px] bg-rose-500"
+                            className="absolute left-0 top-0 bottom-0 w-[4px] bg-rose-300"
                           />
                         )}
                         <div className="flex items-center gap-2">
                           {isRisky && (
                             <span
                               title="Begrenzte Datenbasis (< 30 Reviews) — Ergebnisse mit Vorsicht interpretieren"
-                              className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex-none ring-1 ring-rose-300"
+                              className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-50 text-rose-400 flex-none ring-1 ring-rose-200"
                             >
                               <AlertTriangle className="h-3 w-3" />
                             </span>
@@ -319,7 +327,7 @@ export default function TopicTableModal({
                             {topic.topic}
                           </span>
                           {isRisky && topic.statistical_meta?.review_count != null && (
-                            <span className="text-[10px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-300 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-rose-400 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
                               n={topic.statistical_meta.review_count}
                             </span>
                           )}

@@ -309,7 +309,18 @@ class SentimentAnalyzer:
                 polarity = 0.0
                 confidence = max(confidence * 0.7, 0.5)
                 logger.debug(f"Negated-negative override: '{text[:40]}...'")
-            
+
+            # Case F: Transformer says positive, lexicon says negative.
+            # The transformer can be fooled by semantically positive words that appear
+            # in a clearly negative context (e.g. "kein Respekt" — "Respekt" has a
+            # positive embedding even when negated).  This fires BEFORE the confidence
+            # hard cap so the lexicon can still correct obvious model errors.
+            elif sentiment == 'positive' and lexicon_sentiment == 'negative' and lexicon_result['confidence'] > 0.3:
+                sentiment = 'negative'
+                polarity = lexicon_polarity * 0.6
+                confidence = confidence * 0.6   # reduces but stays above 0.55 for typical scores
+                logger.debug(f"Case F reversal (positive→negative): '{text[:40]}...'")
+
             # Hard cap: wenn der Transformer sehr sicher ist (>= 0.75),
             # vertrauen wir ihm komplett — kein Lexikon-Override mehr.
             elif confidence >= 0.75:

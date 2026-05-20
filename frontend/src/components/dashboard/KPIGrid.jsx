@@ -179,9 +179,9 @@ export default function KPIGrid({
         onClick={onOpenScore}
       />
 
-      {/* Trend 12M */}
+      {/* Trend */}
       <KPITile
-        label="Trend 12M"
+        label={trendData?.windowMonths ? `Trend ${trendData.windowMonths}M` : "Trend"}
         icon={trendData?.sign === "down" ? <TrendDown /> : <TrendUp />}
         tone={trendT}
         value={
@@ -199,7 +199,7 @@ export default function KPIGrid({
             </Delta>
           ) : null
         }
-        footer="vs. Vorjahr"
+        footer={trendData?.windowMonths ? `vs. Vorperiode (${trendData.windowMonths} Mon.)` : "vs. Vorperiode"}
         disabled={!companyId}
         onClick={onOpenTrend}
       />
