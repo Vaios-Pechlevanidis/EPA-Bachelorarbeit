@@ -53,6 +53,9 @@ export default function Dashboard() {
   const [mostCriticalData, setMostCriticalData] = useState(null)
   const [negativeTopicItem, setNegativeTopicItem] = useState(null)
 
+  /* ---- Global time range filter ---- */
+  const [globalTimeRange, setGlobalTimeRange] = useState("all")
+
   /* ---- Timeline / TopicRating filter state ---- */
   const [timelineFilters, setTimelineFilters] = useState({
     metric: "Ø Score", source: "employee", granularity: "overall", selectedYear: null,
@@ -454,46 +457,28 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Topbar actions */}
+            {/* Global time range filter */}
             <div className="ds-topbar-actions">
               {error && (
                 <span style={{ fontSize: 12, color: "var(--rose-700)", maxWidth: 240 }} className="truncate">
                   {error}
                 </span>
               )}
-              <button
-                className="ds-btn ds-btn-secondary"
-                onClick={handleExportPDF}
-                disabled={exportingPDF || !effectiveCompanyId}
-              >
-                {exportingPDF ? (
-                  <Loader2 style={{ width: 12, height: 12 }} className="animate-spin" />
-                ) : (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                )}
-                Export
-              </button>
-              <button
-                className="ds-btn ds-btn-secondary"
-                onClick={() => setOpenImport(true)}
-                disabled={!effectiveCompanyId}
-                title="Excel-Daten für diese Firma importieren"
-              >
-                <Upload style={{ width: 12, height: 12 }} />
-                Daten importieren
-              </button>
-              <button
-                className="ds-btn ds-btn-primary"
-                onClick={() => navigate("/compare", {
-                  state: { companies: selectedCompanyId && selectedCompanyName ? [{ id: selectedCompanyId, name: selectedCompanyName }] : [] }
-                })}
-              >
-                Firma vergleichen
-              </button>
+              <div className="ds-time-filter">
+                {[
+                  { value: "all", label: "Standard" },
+                  { value: "1y",  label: "1 Jahr" },
+                  { value: "3y",  label: "3 Jahre" },
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    className={`ds-time-btn${globalTimeRange === value ? " active" : ""}`}
+                    onClick={() => setGlobalTimeRange(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -567,11 +552,13 @@ export default function Dashboard() {
                 companyId={selectedCompany || selectedCompanyId}
                 onFiltersChange={handleTimelineFiltersChange}
                 onLoadingChange={handleTimelineLoadingChange}
+                globalTimeRange={globalTimeRange}
               />
               <TopicRatingCard
                 companyId={selectedCompany || selectedCompanyId}
                 onFiltersChange={handleTopicRatingFiltersChange}
                 onLoadingChange={handleTopicRatingLoadingChange}
+                globalTimeRange={globalTimeRange}
               />
             </div>
 
@@ -581,6 +568,7 @@ export default function Dashboard() {
               companyId={selectedCompany || selectedCompanyId}
               onDataChange={handleTopicOverviewDataChange}
               onLoadingChange={handleTopicOverviewLoadingChange}
+              globalTimeRange={globalTimeRange}
             />
 
           </div>

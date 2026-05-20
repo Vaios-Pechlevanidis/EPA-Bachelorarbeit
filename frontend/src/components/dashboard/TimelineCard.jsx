@@ -151,7 +151,7 @@ function processTimelineDataWithGaps(timelineData, valueKey) {
 }
 
 // Memoized TimelineCard für bessere Performance
-export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersChange, onLoadingChange }) {
+export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersChange, onLoadingChange, globalTimeRange = "all" }) {
     const [timelineData, setTimelineData] = useState([])
     const [forecastData, setForecastData] = useState([])
     const [loading, setLoading] = useState(true)
@@ -218,8 +218,8 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
             try {
                 setError(null)
 
-                // Calculate days based on granularity
-                let days = 3650 // Default: 10 years for "overall"
+                // Calculate days based on granularity and global time range
+                let days = globalTimeRange === "1y" ? 365 : globalTimeRange === "3y" ? 1095 : 3650
 
                 if (granularity === "year") {
                     if (selectedYear) {
@@ -266,7 +266,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
         }
 
         fetchTimelineData()
-    }, [companyId, granularity, selectedYear, source])
+    }, [companyId, granularity, selectedYear, source, globalTimeRange])
 
     // Calculate trend (delta) for each month compared to previous month
     const trendData = useMemo(() => {
@@ -458,13 +458,20 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
             
             if (timelineData.length > 0) {
                 stats.dataPoints = timelineData.length;
-                
+
+                const fmt = (d) => { const dt = new Date(d.date || d.period); return dt.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' }); };
+                stats.dateRange = `${fmt(timelineData[0])} – ${fmt(timelineData[timelineData.length - 1])}`;
+                if (forecastData.length > 0) {
+                    stats.dateRangeSub = `${fmt(timelineData[0])} – ${fmt(forecastData[forecastData.length - 1])}`;
+                    stats.forecastRange = `${fmt(forecastData[0])} – ${fmt(forecastData[forecastData.length - 1])}`;
+                }
+
                 if (metric === "Anzahl") {
                     const totalCount = timelineData.reduce((sum, d) => sum + (d.count || 0), 0);
                     stats.avgCount = (totalCount / timelineData.length).toFixed(1);
                     stats.maxCount = Math.max(...timelineData.map(d => d.count || 0));
                 } else if (metric === "Trend" && trendData.length > 0) {
-                    const avgTrend = trendData.length > 1 
+                    const avgTrend = trendData.length > 1
                         ? (trendData.slice(1).reduce((sum, d) => sum + d.trend, 0) / (trendData.length - 1)).toFixed(2)
                         : "0.00";
                     stats.avgTrend = avgTrend;
@@ -874,8 +881,8 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
 
                 {/* Content nimmt restliche Card-Höhe ein, Stats werden via flex-1 Spacer an Boden gedrückt */}
                 <div className="px-4 pt-4 pb-4 flex flex-col flex-1 min-h-0">
-                    <div id="timeline-chart-export" className="w-full flex-shrink-0">
-                        <div className="relative h-[220px] w-full">
+                    <div className="w-full flex-shrink-0">
+                        <div id="timeline-chart-export" className="relative h-[220px] w-full">
                             {emptyMessage && !showOverlay ? (
                                 <div className="h-full flex items-center justify-center">
                                     <p className="text-[13px] text-slate-500">{emptyMessage}</p>

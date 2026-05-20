@@ -1,846 +1,1046 @@
+/**
+ * WorkPulse · Analytics Report PDF Export — v2 (Redesign)
+ *
+ * Vier Seiten im Dashboard-Stil (A4 Portrait, light theme):
+ *   01 Cover           — Brand-Bar, zentrierter Hero (Firmenname + Datum), Meta-Band, Inhalt
+ *   02 Kennzahlen + Timeline — 4 KPI-Karten (tonal) + Timeline-Card mit Filter-Pills & Stats-Footer
+ *   03 Topics im Detail      — Multi-Line-Chart-Card mit Legende & Stats-Footer
+ *   04 Topic-Übersicht       — Card mit Stats-Strip, Sentiment-Filter-Tabs, Tabelle (Sort-Chevrons)
+ *
+ * Chart-Extraktion: html2canvas (Container inkl. Legende) → SVG-Fallback.
+ *
+ * Hauptexport: exportKPIsAsPDF(kpiData)
+ */
+
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-/**
- * Professioneller PDF-Export für Dashboard Analytics
- * 
- * Verwendet einen hybriden Ansatz:
- * 1. html2canvas für den gesamten Container (erfasst Chart + Legende + HTML-Elemente)
- * 2. SVG-Serialisierung als Fallback falls html2canvas fehlschlägt
- * 
- * Optimiert für Datenpräsentation und Geschäftsberichte.
- */
+// ═══════════════════════════════════════════════════════════════════════════
+// COLORS — gleiche Tokens wie das Frontend (colors_and_type.css)
+// ═══════════════════════════════════════════════════════════════════════════
+const C = {
+    // Slate (Neutralskala)
+    s0:   [255, 255, 255],
+    s50:  [248, 250, 252],
+    s100: [241, 245, 249],
+    s150: [233, 238, 244],
+    s200: [226, 232, 240],
+    s300: [203, 213, 225],
+    s400: [148, 163, 184],
+    s500: [100, 116, 139],
+    s600: [71, 85, 105],
+    s700: [51, 65, 85],
+    s800: [30, 41, 59],
+    s900: [15, 23, 42],
 
-// ─── Design-System Farb-Palette (deckt sich mit AGB-Analysis UI) ────────────
-// Slate-Skala + tonale Akzente — gleich wie im Dashboard.
-const COLORS = {
-    // Slate (neutrale Skala)
-    slate0:    [255, 255, 255],
-    slate50:   [248, 250, 252],
-    slate100:  [241, 245, 249],
-    slate150:  [233, 238, 244],
-    slate200:  [226, 232, 240],
-    slate300:  [203, 213, 225],
-    slate400:  [148, 163, 184],
-    slate500:  [100, 116, 139],
-    slate600:  [71, 85, 105],
-    slate700:  [51, 65, 85],
-    slate800:  [30, 41, 59],
-    slate900:  [15, 23, 42],
+    // Navy (Brand)
+    navy: [11, 31, 54],
 
-    // Tonale Akzente (gleich wie KPI-Tile-Tones)
+    // Sentiment / Tone
     emerald50:  [236, 253, 245],
+    emerald300: [110, 231, 183],
     emerald500: [16, 185, 129],
     emerald600: [5, 150, 105],
     emerald700: [4, 120, 87],
     rose50:     [255, 241, 242],
+    rose300:    [253, 164, 175],
     rose500:    [244, 63, 94],
     rose600:    [225, 29, 72],
     rose700:    [190, 18, 60],
     amber50:    [255, 251, 235],
+    amber300:   [253, 230, 138],
     amber500:   [245, 158, 11],
     amber600:   [217, 119, 6],
     amber700:   [180, 83, 9],
     blue50:     [239, 246, 255],
+    blue200:    [191, 219, 254],
     blue500:    [59, 130, 246],
     blue600:    [37, 99, 235],
     blue700:    [29, 78, 216],
-    indigo500:  [99, 102, 241],
-    indigo600:  [79, 70, 229],
-
-    // WorkPulse Brand
-    wpBubble:   [15, 42, 92],
-
-    // Legacy aliases (rückwärtskompatibel mit altem Code)
-    get primary()      { return this.indigo500; },
-    get primaryDark()  { return this.indigo600; },
-    get primaryLight() { return this.blue50; },
-    get accent()       { return this.blue500; },
-    get dark()         { return this.slate900; },
-    get darkAlt()      { return this.slate800; },
-    get text()         { return this.slate700; },
-    get textMuted()    { return this.slate500; },
-    get textLight()    { return this.slate400; },
-    get border()       { return this.slate200; },
-    get bgLight()      { return this.slate50; },
-    get white()        { return this.slate0; },
-    get green()        { return this.emerald600; },
-    get greenLight()   { return this.emerald50; },
-    get red()          { return this.rose600; },
-    get redLight()     { return this.rose50; },
-    get orange()       { return this.amber600; },
-    get orangeLight()  { return this.amber50; },
-    get yellow()       { return this.amber500; },
-    get yellowLight()  { return this.amber50; },
+    orange500:  [249, 115, 22],
+    orange600:  [234, 88, 12],
 };
 
-// ─── Tonale Logik (gleich wie KPIGrid.jsx) ──────────────────────────────────
-const scoreTone = (score) => {
-    const n = Number(score);
+// Tonale Paletten — KPI-Karten & Stats-Zellen
+const TONE = {
+    good:    { bg: C.emerald50, border: C.emerald300, accent: C.emerald500, text: C.emerald700, value: C.emerald600 },
+    bad:     { bg: C.rose50,    border: C.rose300,    accent: C.rose500,    text: C.rose700,    value: C.rose600    },
+    warn:    { bg: C.amber50,   border: C.amber300,   accent: C.amber500,   text: C.amber700,   value: C.amber600   },
+    info:    { bg: C.blue50,    border: C.blue200,    accent: C.blue500,    text: C.blue700,    value: C.blue600    },
+    neutral: { bg: C.s0,        border: C.s200,       accent: C.s300,       text: C.s600,       value: C.s900       },
+};
+
+const scoreTone = (s) => {
+    const n = Number(s);
     if (!Number.isFinite(n)) return 'neutral';
     if (n >= 3.5) return 'good';
     if (n >= 2.5) return 'warn';
     return 'bad';
 };
 
-const TONE_PALETTE = {
-    good:    { accent: COLORS.emerald500, bg: COLORS.emerald50, text: COLORS.emerald700, value: COLORS.emerald600 },
-    warn:    { accent: COLORS.amber500,   bg: COLORS.amber50,   text: COLORS.amber700,   value: COLORS.amber600 },
-    bad:     { accent: COLORS.rose500,    bg: COLORS.rose50,    text: COLORS.rose700,    value: COLORS.rose600 },
-    info:    { accent: COLORS.blue500,    bg: COLORS.blue50,    text: COLORS.blue700,    value: COLORS.blue600 },
-    neutral: { accent: COLORS.slate300,   bg: COLORS.slate50,   text: COLORS.slate600,   value: COLORS.slate900 },
-};
-
-// ─── Layout-Konstanten (A4: 210 x 297 mm) ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// LAYOUT — A4 (mm)
+// ═══════════════════════════════════════════════════════════════════════════
 const PAGE = {
-    width: 210,
-    height: 297,
-    marginLeft: 18,
-    marginRight: 18,
-    marginTop: 20,
-    marginBottom: 25,
-    get contentWidth() { return this.width - this.marginLeft - this.marginRight; },
-    get contentRight() { return this.width - this.marginRight; },
+    w: 210,
+    h: 297,
+    mx: 16,    // horizontaler Rand
+    my: 18,    // vertikaler Rand
+    get cw() { return this.w - 2 * this.mx; },
+    get cl() { return this.mx; },
+    get cr() { return this.w - this.mx; },
 };
 
-// ─── Helper: SVG aus Recharts-Container extrahieren und als PNG rendern ─────
-// Wird als Fallback verwendet wenn html2canvas fehlschlägt
-const svgToPngDataUrl = (svgElement, targetWidth = 1200) => {
-    return new Promise((resolve, reject) => {
-        try {
-            if (!svgElement) {
-                reject(new Error('Kein SVG-Element gefunden'));
-                return;
-            }
+// ═══════════════════════════════════════════════════════════════════════════
+// CHART-EXTRAKTION
+// ═══════════════════════════════════════════════════════════════════════════
 
-            // SVG klonen damit wir es modifizieren können
-            const clone = svgElement.cloneNode(true);
-
-            // Sicherstellen dass width/height gesetzt sind
-            const bbox = svgElement.getBoundingClientRect();
-            const svgWidth = bbox.width || svgElement.clientWidth || 600;
-            const svgHeight = bbox.height || svgElement.clientHeight || 300;
-
-            clone.setAttribute('width', svgWidth);
-            clone.setAttribute('height', svgHeight);
-            clone.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
-
-            // Computed styles inline setzen für alle Elemente
-            const applyComputedStyles = (original, cloned) => {
-                try {
-                    const computed = window.getComputedStyle(original);
-                    const importantProps = [
-                        'fill', 'stroke', 'stroke-width', 'stroke-dasharray',
-                        'stroke-linecap', 'stroke-linejoin', 'opacity',
-                        'font-size', 'font-family', 'font-weight', 'text-anchor',
-                        'dominant-baseline', 'visibility', 'display'
-                    ];
-                    importantProps.forEach(prop => {
-                        const val = computed.getPropertyValue(prop);
-                        if (val && val !== '' && val !== 'none' && !val.includes('oklch')) {
-                            cloned.style.setProperty(prop, val);
-                        }
-                    });
-
-                    // oklch-Farben ersetzen
-                    ['fill', 'stroke', 'color'].forEach(prop => {
-                        const val = computed.getPropertyValue(prop);
-                        if (val && val.includes('oklch')) {
-                            cloned.style.setProperty(prop, '#64748b');
-                        }
-                    });
-                } catch (e) { /* skip */ }
-
-                const origChildren = original.children;
-                const cloneChildren = cloned.children;
-                for (let i = 0; i < origChildren.length && i < cloneChildren.length; i++) {
-                    applyComputedStyles(origChildren[i], cloneChildren[i]);
-                }
-            };
-
-            applyComputedStyles(svgElement, clone);
-
-            // Namespace sicherstellen
-            clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-            clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-
-            // SVG zu String serialisieren
-            const serializer = new XMLSerializer();
-            let svgString = serializer.serializeToString(clone);
-
-            // oklch-Farben in der serialisierten SVG nochmal bereinigen
-            svgString = svgString.replace(/oklch\([^)]*\)/gi, '#64748b');
-
-            // SVG als Blob -> Image -> Canvas -> PNG
-            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-
-            const img = new Image();
-            const scale = targetWidth / svgWidth;
-            const canvasWidth = Math.round(svgWidth * scale);
-            const canvasHeight = Math.round(svgHeight * scale);
-
-            img.onload = () => {
-                try {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = canvasWidth;
-                    canvas.height = canvasHeight;
-                    const ctx = canvas.getContext('2d');
-
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-                    ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-                    URL.revokeObjectURL(url);
-
-                    const dataUrl = canvas.toDataURL('image/png', 1.0);
-                    resolve({
-                        dataUrl,
-                        width: svgWidth,
-                        height: svgHeight,
-                        canvasWidth,
-                        canvasHeight,
-                    });
-                } catch (e) {
-                    URL.revokeObjectURL(url);
-                    reject(e);
-                }
-            };
-
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                reject(new Error('SVG konnte nicht als Bild geladen werden'));
-            };
-
-            img.src = url;
-        } catch (e) {
-            reject(e);
-        }
-    });
-};
-
-// ─── Helper: oklch-Farben im geklonten DOM rekursiv bereinigen ──────────────
-const sanitizeOklchColors = (element, sourceDoc) => {
+const sanitizeOklch = (el) => {
+    if (!el) return;
     try {
-        const computed = sourceDoc.defaultView
-            ? sourceDoc.defaultView.getComputedStyle(element)
-            : window.getComputedStyle(element);
-
-        const colorProps = [
-            'color', 'backgroundColor', 'borderColor',
-            'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-            'fill', 'stroke', 'outlineColor', 'textDecorationColor'
-        ];
-
-        colorProps.forEach(prop => {
-            try {
-                const val = computed.getPropertyValue(prop);
-                if (val && val.includes('oklch')) {
-                    element.style.setProperty(prop, 'transparent', 'important');
-                }
-            } catch (e) { /* skip */ }
+        const cs = getComputedStyle(el);
+        ['color', 'backgroundColor', 'borderColor', 'fill', 'stroke'].forEach((p) => {
+            const v = cs.getPropertyValue(p);
+            if (v && v.includes('oklch')) el.style.setProperty(p, 'transparent', 'important');
         });
-
-        // Inline-Styles bereinigen
-        if (element.style?.cssText) {
-            element.style.cssText = element.style.cssText
-                .replace(/oklch\([^)]*\)/gi, 'transparent');
+        if (el.style?.cssText?.includes('oklch')) {
+            el.style.cssText = el.style.cssText.replace(/oklch\([^)]*\)/gi, 'transparent');
         }
-    } catch (e) { /* skip */ }
-
-    Array.from(element.children || []).forEach(child => sanitizeOklchColors(child, sourceDoc));
+    } catch { /* skip */ }
+    [...(el.children || [])].forEach(sanitizeOklch);
 };
 
-// ─── Helper: html2canvas-basierte Chart-Extraktion (erfasst Chart + Legende) ─
-const extractChartViaHtml2Canvas = async (containerElement, targetWidth = 2400) => {
-    if (!containerElement) return null;
-
-    const width = containerElement.offsetWidth || containerElement.scrollWidth || 600;
-    const height = containerElement.offsetHeight || containerElement.scrollHeight || 300;
-
-    console.log(`html2canvas: Container-Größe ${width}x${height}`);
-
-    const canvas = await html2canvas(containerElement, {
-        scale: Math.max(3, targetWidth / width), // Mindestens 3x Auflösung
+const extractChartViaHtml2Canvas = async (el, targetW = 2400) => {
+    if (!el) return null;
+    const w = el.offsetWidth || el.scrollWidth || 600;
+    const h = el.offsetHeight || el.scrollHeight || 300;
+    const canvas = await html2canvas(el, {
+        scale: Math.max(3, targetW / w),
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
         allowTaint: true,
         foreignObjectRendering: false,
         imageTimeout: 20000,
-        removeContainer: false,
-        width: width,
-        height: height,
-        windowWidth: containerElement.scrollWidth,
-        windowHeight: containerElement.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
+        width: w, height: h,
+        windowWidth: el.scrollWidth, windowHeight: el.scrollHeight,
+        scrollX: 0, scrollY: 0,
         onclone: (clonedDoc) => {
-            // Finde das geklonte Element
-            const clonedEl = containerElement.id
-                ? clonedDoc.getElementById(containerElement.id)
-                : clonedDoc.body;
-
-            if (clonedEl) {
-                // Element vollständig sichtbar machen
-                clonedEl.style.visibility = 'visible';
-                clonedEl.style.display = 'block';
-                clonedEl.style.opacity = '1';
-                clonedEl.style.overflow = 'visible';
-
-                // oklch-Farben rekursiv bereinigen
-                sanitizeOklchColors(clonedEl, clonedDoc);
+            const cl = el.id ? clonedDoc.getElementById(el.id) : clonedDoc.body;
+            if (cl) {
+                cl.style.visibility = 'visible';
+                cl.style.opacity = '1';
+                cl.style.overflow = 'visible';
+                sanitizeOklch(cl);
             }
-
-            // Stylesheets NICHT entfernen – stattdessen nur oklch-Werte
-            // in <style>-Tags und Stylesheet-Regeln neutralisieren.
-            // So bleiben Flexbox-Layouts (Recharts-Legend) intakt.
-            Array.from(clonedDoc.getElementsByTagName('style')).forEach(style => {
-                if (style.textContent?.includes('oklch')) {
-                    style.textContent = style.textContent.replace(/oklch\([^)]*\)/gi, 'transparent');
+            [...clonedDoc.getElementsByTagName('style')].forEach((s) => {
+                if (s.textContent?.includes('oklch')) {
+                    s.textContent = s.textContent.replace(/oklch\([^)]*\)/gi, 'transparent');
                 }
             });
-
-            // Stylesheet-Regeln in <link>-Stylesheets inline bereinigen
-            // statt sie komplett zu entfernen
-            Array.from(clonedDoc.styleSheets).forEach(sheet => {
-                try {
-                    const rules = sheet.cssRules || sheet.rules;
-                    if (!rules) return;
-                    for (let i = 0; i < rules.length; i++) {
-                        const rule = rules[i];
-                        if (rule.cssText?.includes('oklch')) {
-                            try {
-                                const cleaned = rule.cssText.replace(/oklch\([^)]*\)/gi, 'transparent');
-                                sheet.deleteRule(i);
-                                sheet.insertRule(cleaned, i);
-                            } catch (e) { /* skip CORS-restricted rules */ }
-                        }
-                    }
-                } catch (e) {
-                    // CORS-Fehler bei externen Stylesheets – diese entfernen
-                    if (sheet.ownerNode) {
-                        sheet.ownerNode.remove();
-                    }
-                }
-            });
-        }
+        },
     });
-
-    console.log(`html2canvas: Canvas erstellt ${canvas.width}x${canvas.height}`);
-
-    const dataUrl = canvas.toDataURL('image/png', 1.0);
-    return {
-        dataUrl,
-        width: width,
-        height: height,
-        canvasWidth: canvas.width,
-        canvasHeight: canvas.height,
-    };
+    return { dataUrl: canvas.toDataURL('image/png', 1.0), w, h };
 };
 
-// ─── Helper: Chart-Bild extrahieren (Hybrid: html2canvas → SVG-Fallback) ───
-const extractChartImage = async (containerElement, targetWidth = 2400) => {
-    if (!containerElement) return null;
+const svgToPng = (svg, targetW = 1200) =>
+    new Promise((resolve, reject) => {
+        try {
+            if (!svg) return reject(new Error('no svg'));
+            const clone = svg.cloneNode(true);
+            const bbox = svg.getBoundingClientRect();
+            const sw = bbox.width || 600, sh = bbox.height || 300;
+            clone.setAttribute('width', sw);
+            clone.setAttribute('height', sh);
+            clone.setAttribute('viewBox', `0 0 ${sw} ${sh}`);
+            clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            const STYLE_PROPS = [
+                'fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap',
+                'stroke-linejoin', 'opacity', 'fill-opacity', 'stroke-opacity',
+                'font-size', 'font-family', 'font-weight', 'text-anchor',
+                'dominant-baseline', 'letter-spacing', 'visibility', 'display',
+            ];
+            const apply = (a, b) => {
+                try {
+                    const cs = getComputedStyle(a);
+                    STYLE_PROPS.forEach((p) => {
+                        const v = cs.getPropertyValue(p);
+                        if (v && v !== 'none' && !v.includes('oklch')) b.style.setProperty(p, v);
+                    });
+                } catch { /* skip */ }
+                [...(a.children || [])].forEach((c, i) => b.children[i] && apply(c, b.children[i]));
+            };
+            apply(svg, clone);
+            clone.querySelectorAll('.recharts-tooltip-wrapper, .recharts-active-dot').forEach(el => el.remove());
+            let str = new XMLSerializer().serializeToString(clone);
+            str = str.replace(/oklch\([^)]*\)/gi, '#64748b');
+            const url = URL.createObjectURL(new Blob([str], { type: 'image/svg+xml;charset=utf-8' }));
+            const img = new Image();
+            img.onload = () => {
+                const cv = document.createElement('canvas');
+                const s = targetW / sw;
+                cv.width = Math.round(sw * s); cv.height = Math.round(sh * s);
+                const ctx = cv.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
+                ctx.drawImage(img, 0, 0, cv.width, cv.height);
+                URL.revokeObjectURL(url);
+                resolve({ dataUrl: cv.toDataURL('image/png', 1.0), w: sw, h: sh });
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img err')); };
+            img.src = url;
+        } catch (e) { reject(e); }
+    });
 
-    // Methode 1: html2canvas für gesamten Container (erfasst Chart + Legende)
+const extractChart = async (container, targetW = 2400) => {
+    if (!container) return null;
     try {
-        console.log('🎯 Versuche html2canvas für gesamten Container...');
-        const result = await extractChartViaHtml2Canvas(containerElement, targetWidth);
-        if (result?.dataUrl && result.dataUrl.length > 1000) {
-            console.log('✅ html2canvas erfolgreich');
-            return result;
-        }
-        console.warn('⚠️ html2canvas lieferte leeres/kleines Bild, versuche SVG-Fallback...');
-    } catch (e) {
-        console.warn('⚠️ html2canvas fehlgeschlagen, versuche SVG-Fallback:', e.message);
-    }
-
-    // Methode 2: SVG-Serialisierung als Fallback (nur Chart, ohne Legende)
+        const r = await extractChartViaHtml2Canvas(container, targetW);
+        if (r?.dataUrl?.length > 1000) return r;
+    } catch (e) { console.warn('html2canvas fail:', e.message); }
     try {
-        console.log('🔄 SVG-Fallback...');
-        const svg = containerElement.querySelector('svg.recharts-surface')
-            || containerElement.querySelector('svg');
-        if (svg) {
-            const result = await svgToPngDataUrl(svg, targetWidth);
-            console.log('✅ SVG-Fallback erfolgreich');
-            return result;
-        }
-    } catch (e) {
-        console.error('❌ SVG-Fallback fehlgeschlagen:', e.message);
-    }
-
+        const svg = container.querySelector('svg.recharts-surface') || container.querySelector('svg');
+        return svg ? await svgToPng(svg, targetW) : null;
+    } catch (e) { console.warn('svg fallback fail:', e.message); }
     return null;
 };
 
-// ─── Helper: Fußzeile auf jeder Seite ───────────────────────────────────────
-const addFooter = (doc, pageNum, totalPages, companyName) => {
-    const y = PAGE.height - 12;
-
-    // Trennlinie
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.3);
-    doc.line(PAGE.marginLeft, y - 4, PAGE.contentRight, y - 4);
-
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-
-    // Links: WorkPulse + Firmenname
-    doc.setTextColor(...COLORS.textLight);
-    doc.text(`WorkPulse \u00b7 ${companyName}`, PAGE.marginLeft, y);
-
-    // Mitte: Datum
-    const dateStr = new Date().toLocaleDateString('de-DE', {
-        day: '2-digit', month: '2-digit', year: 'numeric'
-    });
-    doc.text(dateStr, PAGE.width / 2, y, { align: 'center' });
-
-    // Rechts: Seitenzahl
-    doc.text(`${pageNum} / ${totalPages}`, PAGE.contentRight, y, { align: 'right' });
+const prettifyTopic = (key) => {
+    if (!key) return '';
+    return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-// ─── Helper: Abschnittstitel (mit optionalem Eyebrow) ──────────────────────
-const addSectionTitle = (doc, title, yPos, subtitle = null, eyebrow = null) => {
-    let curY = yPos;
-
-    // Eyebrow (mono, uppercase, slate-500)
-    if (eyebrow) {
-        doc.setFontSize(7);
-        doc.setFont('courier', 'bold');
-        doc.setTextColor(...COLORS.slate500);
-        doc.text(String(eyebrow).toUpperCase(), PAGE.marginLeft, curY);
-        curY += 4;
-    }
-
-    // Titel — slate-900, semibold
-    doc.setFontSize(15);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.slate900);
-    doc.text(title, PAGE.marginLeft, curY + 1);
-
-    let nextY = curY + 7;
-
-    if (subtitle) {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.slate500);
-        doc.text(subtitle, PAGE.marginLeft, nextY);
-        nextY += 4;
-    }
-
-    // Feine Trennlinie unter dem Titel
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.2);
-    doc.line(PAGE.marginLeft, nextY + 1, PAGE.contentRight, nextY + 1);
-
-    return nextY + 6;
-};
-
-// ─── Helper: KPI-Karte zeichnen — Adaptive Layout für PDF ─────────────────
-// Layout (von oben nach unten):
-//   ┌────────────────────────┐
-//   │▎ Ø Score                │  ← Label (tonal, links)
-//   │                          │
-//   │  4,0                     │  ← Big Value (volle Breite)
-//   │  ┌───┐                   │  ← Badge-Pill UNTER dem Wert (eigene Zeile)
-//   │  │/5 │                   │
-//   │  └───┘                   │
-//   │                          │
-//   │  alle Quellen            │  ← Footer
-//   └────────────────────────┘
-//
-// • Kein "Details →" mehr (Print, nicht klickbar)
-// • Badge unter Wert → kein Platz-Konflikt bei langen Topic-Namen
-// • Step-Down-Schriftgröße + Hart-Kürzen für absolute Sicherheit
-// tone: 'good' | 'warn' | 'bad' | 'neutral' | 'info'
-const drawKPICard = (doc, x, y, width, height, {
-    label, value, footer = null, badge = null, tone = 'neutral',
-    valueColor, badgeColor,
-}) => {
-    const t = TONE_PALETTE[tone] ?? TONE_PALETTE.neutral;
-    const innerX = x + 6;
-    const innerR = x + width - 6;
-    const innerW = innerR - innerX;
-
-    // ── Karten-Hintergrund (subtiler tonaler Bg) ──
-    doc.setFillColor(...t.bg);
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(x, y, width, height, 3, 3, 'FD');
-
-    // Tonaler Akzentbalken links
-    doc.setFillColor(...t.accent);
-    doc.rect(x, y, 2, height, 'F');
-
-    // Helper: text → ggf. mit Ellipsis kürzen
-    const fitText = (text, maxW) => {
-        if (doc.getTextWidth(text) <= maxW) return text;
-        let trunc = text;
-        while (trunc.length > 1 && doc.getTextWidth(trunc + '\u2026') > maxW) {
-            trunc = trunc.slice(0, -1);
+const extractChartSvgFirst = async (container, targetW = 3000) => {
+    if (!container) return null;
+    try {
+        const svg = container.querySelector('svg.recharts-surface') || container.querySelector('svg');
+        if (svg) {
+            const r = await svgToPng(svg, targetW);
+            if (r?.dataUrl?.length > 1000) return r;
         }
-        return trunc + '\u2026';
-    };
-
-    // ── Label (oben, tonal) ──
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...t.text);
-    doc.text(fitText(String(label), innerW), innerX, y + 7);
-
-    // ── Big Value: nutzt volle Karten-Breite, mit Zeilenumbruch bei langen Texten ──
-    const rawValue = String(value);
-    let valueFontSize = 22;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(valueFontSize);
-    while (valueFontSize > 9 && doc.getTextWidth(rawValue) > innerW) {
-        valueFontSize -= 1;
-        doc.setFontSize(valueFontSize);
-    }
-
-    doc.setTextColor(...t.value);
-    const lineHeight = valueFontSize * 0.45;
-
-    if (doc.getTextWidth(rawValue) > innerW) {
-        const lines = doc.splitTextToSize(rawValue, innerW);
-        const maxLines = Math.min(lines.length, 3);
-        const totalTextH = maxLines * lineHeight;
-        const valueStartY = y + height * 0.35 - totalTextH / 2 + valueFontSize * 0.18;
-        for (let i = 0; i < maxLines; i++) {
-            const lineText = i === maxLines - 1 && maxLines < lines.length
-                ? fitText(lines.slice(i).join(' '), innerW)
-                : lines[i];
-            doc.text(lineText, innerX, valueStartY + i * lineHeight);
-        }
-        var valueBaselineY = valueStartY + (maxLines - 1) * lineHeight;
-    } else {
-        var valueBaselineY = y + height * 0.42 + valueFontSize * 0.18;
-        doc.text(rawValue, innerX, valueBaselineY);
-    }
-
-    // ── Badge-Pill UNTER dem Wert (eigene Zeile) ──
-    if (badge) {
-        const badgeText = String(badge);
-        doc.setFontSize(7.5);
-        doc.setFont('helvetica', 'bold');
-        const badgeDisplay = fitText(badgeText, innerW - 6);
-
-        const padX = 3.5;
-        const bW = doc.getTextWidth(badgeDisplay) + padX * 2;
-        const bH = 5.4;
-        const bX = innerX;
-        const bY = valueBaselineY + 3;
-
-        doc.setFillColor(...t.bg);
-        doc.setDrawColor(...t.accent);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(bX, bY, bW, bH, 2.7, 2.7, 'FD');
-
-        doc.setTextColor(...t.text);
-        doc.text(badgeDisplay, bX + bW / 2, bY + 3.8, { align: 'center' });
-    }
-
-    // ── Footer (klein, slate-500, am unteren Rand) ──
-    if (footer) {
-        doc.setFontSize(7.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.slate500);
-        doc.text(fitText(String(footer), innerW), innerX, y + height - 5);
-    }
+    } catch (e) { console.warn('svg extract fail:', e.message); }
+    try {
+        const r = await extractChartViaHtml2Canvas(container, targetW);
+        if (r?.dataUrl?.length > 1000) return r;
+    } catch (e) { console.warn('html2canvas fallback fail:', e.message); }
+    return null;
 };
 
-// ─── Helper: Filter-Info-Box ────────────────────────────────────────────────
-const drawFilterBox = (doc, yPos, filters, statsEntries = []) => {
-    const boxX = PAGE.marginLeft;
-    const boxW = PAGE.contentWidth;
-    const lineH = 5.5;
+// ═══════════════════════════════════════════════════════════════════════════
+// PDF-PRIMITIVES
+// ═══════════════════════════════════════════════════════════════════════════
 
-    // Filter-Einträge aufbauen
-    const filterEntries = [];
-    if (filters.metric) filterEntries.push(['Metrik', filters.metric]);
-    if (filters.source) {
-        const sourceLabel = filters.source === 'employee' ? 'Mitarbeiter' : filters.source === 'candidates' ? 'Bewerber' : filters.source;
-        filterEntries.push(['Quelle', sourceLabel]);
-    }
-    if (filters.granularity) {
-        const granLabel = filters.granularity === 'overall' ? 'Gesamter Zeitraum' : filters.granularity === 'year' ? 'Jahresansicht' : filters.granularity;
-        filterEntries.push(['Zeitraum', granLabel]);
-    }
-    if (filters.granularity === 'year' && filters.selectedYear) {
-        filterEntries.push(['Jahr', String(filters.selectedYear)]);
-    }
-
-    const maxLines = Math.max(filterEntries.length, statsEntries.length);
-    const boxH = 10 + maxLines * lineH + 4;
-
-    // Box zeichnen
-    doc.setFillColor(...COLORS.white);
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(boxX, yPos, boxW, boxH, 2, 2, 'FD');
-
-    // Linke Spalte: Filter (eyebrow in mono)
-    let leftY = yPos + 6;
-    doc.setFontSize(7);
-    doc.setFont('courier', 'bold');
-    doc.setTextColor(...COLORS.slate500);
-    doc.text('FILTER', boxX + 6, leftY);
-    leftY += lineH + 1;
-
-    filterEntries.forEach(([label, value]) => {
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.slate500);
-        doc.text(`${label}`, boxX + 8, leftY);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...COLORS.slate900);
-        doc.text(value, boxX + 32, leftY);
-        leftY += lineH;
-    });
-
-    // Rechte Spalte: Statistiken
-    if (statsEntries.length > 0) {
-        // Vertikale Trennlinie
-        const midX = boxX + boxW / 2;
-        doc.setDrawColor(...COLORS.border);
-        doc.setLineWidth(0.2);
-        doc.line(midX, yPos + 4, midX, yPos + boxH - 4);
-
-        let rightY = yPos + 6;
-        doc.setFontSize(7);
-        doc.setFont('courier', 'bold');
-        doc.setTextColor(...COLORS.slate500);
-        doc.text('STATISTIKEN', midX + 6, rightY);
-        rightY += lineH + 1;
-
-        statsEntries.forEach(([label, value, color]) => {
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...COLORS.slate500);
-            doc.text(`${label}`, midX + 8, rightY);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...(color || COLORS.slate900));
-            doc.text(String(value), midX + 38, rightY);
-            rightY += lineH;
-        });
-    }
-
-    return yPos + boxH + 6;
+// Truncate text to fit width with ellipsis
+const fitText = (doc, text, maxW) => {
+    if (doc.getTextWidth(text) <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) t = t.slice(0, -1);
+    return t + '…';
 };
 
-// ─── Helper: Chart-Bild einfügen mit maximaler Platznutzung ────────────────
-const addChartImage = (doc, imgResult, yPos, maxAvailableHeight = null) => {
-    if (!imgResult || !imgResult.dataUrl) return yPos;
-
-    const availableWidth = PAGE.contentWidth;
-    const availableHeight = maxAvailableHeight || (PAGE.height - PAGE.marginBottom - 10 - yPos);
-
-    // Skalierung berechnen – so groß wie möglich
-    const aspectRatio = imgResult.width / imgResult.height;
-    let imgW = availableWidth;
-    let imgH = imgW / aspectRatio;
-
-    if (imgH > availableHeight) {
-        imgH = availableHeight;
-        imgW = imgH * aspectRatio;
-    }
-
-    // Zentriert platzieren
-    const xPos = PAGE.marginLeft + (availableWidth - imgW) / 2;
-
-    doc.addImage(imgResult.dataUrl, 'PNG', xPos, yPos, imgW, imgH);
-
-    return yPos + imgH + 4;
-};
-
-
-// ─── Helper: WorkPulse-Logo (Sprechblase mit Puls-Linie) ────────────────────
-// Zeichnet das Logo skaliert ab (x, y) mit gegebener Breite.
-// SVG-Viewbox ist 44×48; die sichtbare Form ist ~44×43.
-const drawWorkPulseLogo = (doc, x, y, width, bubbleColor = COLORS.slate900, pulseColor = COLORS.slate0) => {
-    const s = width / 44;
-
-    // Bubble body
-    doc.setFillColor(...bubbleColor);
+// WorkPulse logo (speech bubble + pulse line). Width in mm. Height ≈ 0.78×w.
+const drawLogo = (doc, x, y, w, bubble = C.navy, pulse = C.s0) => {
+    const s = w / 44;
+    doc.setFillColor(...bubble);
     doc.roundedRect(x, y, 44 * s, 32 * s, 8 * s, 8 * s, 'F');
-
-    // Tail (triangle via lines)
-    doc.triangle(
-        x + 10 * s, y + 30 * s,
-        x + 5 * s,  y + 43 * s,
-        x + 17 * s, y + 30 * s,
-        'F',
-    );
-
-    // Pulse polyline: 5,16 → 11,16 → 15,7 → 19,24 → 23,12 → 27,16 → 39,16
-    doc.setDrawColor(...pulseColor);
+    doc.triangle(x + 10 * s, y + 30 * s, x + 5 * s, y + 43 * s, x + 17 * s, y + 30 * s, 'F');
+    doc.setDrawColor(...pulse);
     doc.setLineWidth(2.5 * s);
-    doc.setLineCap('round');
-    doc.setLineJoin('round');
-    const pts = [[5,16],[11,16],[15,7],[19,24],[23,12],[27,16],[39,16]];
+    doc.setLineCap('round'); doc.setLineJoin('round');
+    const pts = [[5, 16], [11, 16], [15, 7], [19, 24], [23, 12], [27, 16], [39, 16]];
     for (let i = 0; i < pts.length - 1; i++) {
-        doc.line(
-            x + pts[i][0] * s,   y + pts[i][1] * s,
-            x + pts[i+1][0] * s, y + pts[i+1][1] * s,
-        );
+        doc.line(x + pts[i][0] * s, y + pts[i][1] * s, x + pts[i + 1][0] * s, y + pts[i + 1][1] * s);
     }
-
-    // End dot
-    doc.setFillColor(...pulseColor);
+    doc.setFillColor(...pulse);
     doc.circle(x + 39 * s, y + 16 * s, 2.5 * s, 'F');
-
-    // Reset line styles
-    doc.setLineCap('butt');
-    doc.setLineJoin('miter');
+    doc.setLineCap('butt'); doc.setLineJoin('miter');
 };
 
-// ─── Helper: Seitenheader auf allen Inhaltsseiten (ab Seite 2) ─────────────
-// Layout (y=0…14mm):
-//   [2mm indigo bar][white strip: brand mark · title · date][0.2pt hairline]
-const addPageHeader = (doc, documentTitle) => {
-    // Slim brand accent bar — mirrors the title-page bar
-    doc.setFillColor(...COLORS.wpBubble);
-    doc.rect(0, 0, PAGE.width, 2, 'F');
-
-    // White strip so the header is visually distinct from the page background
-    doc.setFillColor(...COLORS.white);
-    doc.rect(0, 2, PAGE.width, 12, 'F');
-
-    // WorkPulse logo (speech-bubble with pulse line)
-    drawWorkPulseLogo(doc, PAGE.marginLeft, 3.5, 8, COLORS.wpBubble, COLORS.slate0);
-
-    // Document title (truncated to keep it off the date)
-    const title = String(documentTitle).length > 55
-        ? String(documentTitle).slice(0, 55) + '…'
-        : String(documentTitle);
-    doc.setFontSize(8);
+// Brand-Bar (Top der Cover-Seite)
+const drawCoverBrandBar = (doc, y, reportLabel = 'Analytics Report') => {
+    drawLogo(doc, PAGE.mx, y - 0.5, 7);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.slate700);
-    doc.text(title, PAGE.marginLeft + 12, 9.5);
+    doc.setFontSize(11);
+    doc.setTextColor(...C.s900);
+    doc.text('WorkPulse', PAGE.mx + 9, y + 4.2);
 
-    // Export date — right-aligned
-    const dateStr = new Date().toLocaleDateString('de-DE', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-    });
+    doc.setFont('courier', 'bold');
     doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.slate400);
-    doc.text(dateStr, PAGE.contentRight, 9.5, { align: 'right' });
+    doc.setTextColor(...C.s500);
+    doc.text(String(reportLabel).toUpperCase(), PAGE.cr, y + 4.2, { align: 'right' });
 
-    // Hairline separator
-    doc.setDrawColor(...COLORS.slate200);
+    doc.setDrawColor(...C.s900);
+    doc.setLineWidth(0.4);
+    doc.line(PAGE.mx, y + 8, PAGE.cr, y + 8);
+};
+
+// Page-Header für Inhaltsseiten (Seite 2+)
+const drawPageHeader = (doc, title, dateStr) => {
+    drawLogo(doc, PAGE.mx, 14, 5.5);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...C.s700);
+    doc.text(fitText(doc, String(title), PAGE.cw - 50), PAGE.mx + 7, 17.2);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...C.s400);
+    doc.text(String(dateStr), PAGE.cr, 17.2, { align: 'right' });
+
+    doc.setDrawColor(...C.s200);
     doc.setLineWidth(0.2);
-    doc.line(PAGE.marginLeft, 14, PAGE.contentRight, 14);
+    doc.line(PAGE.mx, 21, PAGE.cr, 21);
 };
 
-// ─── Helper: Bildunterschrift unterhalb eines Charts ────────────────────────
-const addChartCaption = (doc, yPos, text) => {
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(...COLORS.slate400);
-    doc.text(text, PAGE.width / 2, yPos + 3.5, { align: 'center' });
-    return yPos + 8;
-};
-
-
-// ─── Topic-Farbpalette (identisch mit TopicRatingCard.jsx) ─────────────────
-const TOPIC_PALETTE = [
-    '#3b82f6', '#f97316', '#10b981', '#a855f7', '#ef4444',
-    '#14b8a6', '#eab308', '#6366f1', '#f43f5e', '#0ea5e9', '#84cc16', '#d946ef',
-];
-
-const hexToRgb = (hex) => {
-    const n = parseInt(hex.replace('#', ''), 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-};
-
-// ─── Helper: Topic-Legende unterhalb des Charts zeichnen ───────────────────
-const drawTopicLegend = (doc, yPos, visibleTopics, allTopics, prettify) => {
-    const itemH = 4.5;
-    const dotR = 1.2;
-    const gap = 3;
-    const maxW = PAGE.contentWidth;
-    let curX = PAGE.marginLeft;
-    let curY = yPos + 2;
+// Footer auf allen Seiten
+const drawPageFooter = (doc, leftLabel, centerLabel, rightLabel) => {
+    const y = PAGE.h - 11;
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.2);
+    doc.line(PAGE.mx, y - 4, PAGE.cr, y - 4);
 
     doc.setFontSize(7.5);
     doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C.s500);
+    doc.text(String(leftLabel), PAGE.mx, y);
+    doc.text(String(rightLabel), PAGE.cr, y, { align: 'right' });
 
-    for (const topic of visibleTopics) {
-        const colorIdx = allTopics.indexOf(topic);
-        const color = hexToRgb(TOPIC_PALETTE[Math.max(colorIdx, 0) % TOPIC_PALETTE.length]);
-        const label = prettify ? prettify(topic) : topic;
-        const labelW = doc.getTextWidth(label);
-        const itemW = dotR * 2 + 2 + labelW;
-
-        if (curX + itemW > PAGE.contentRight && curX > PAGE.marginLeft) {
-            curX = PAGE.marginLeft;
-            curY += itemH + 1;
-        }
-
-        doc.setFillColor(...color);
-        doc.roundedRect(curX, curY - 0.5, 4, 1.5, 0.75, 0.75, 'F');
-
-        doc.setTextColor(...COLORS.slate600);
-        doc.text(label, curX + 6, curY + 0.8);
-
-        curX += 6 + labelW + gap;
-    }
-
-    return curY + itemH + 2;
+    doc.setFont('courier', 'bold');
+    doc.text(String(centerLabel), PAGE.w / 2, y, { align: 'center' });
 };
 
-// ─── Helper: Timeline-Legende (Historisch / Interpoliert / Prognose) ───────
-const drawTimelineLegend = (doc, yPos, { metric, hasForecast, hasInterpolation }) => {
-    let curX = PAGE.width / 2;
-    const items = [];
+// Section-Titel (Eyebrow-Num + h1 + Tag rechts)
+const drawSectionTitle = (doc, y, num, title, tag) => {
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...C.s400);
+    doc.text(String(num).padStart(2, '0'), PAGE.mx, y);
 
-    items.push({ label: 'Historisch', color: [59, 130, 246], style: 'solid' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(...C.s900);
+    doc.text(title, PAGE.mx + 7, y);
 
-    if (hasInterpolation) {
-        items.push({ label: 'Interpoliert', color: [148, 163, 184], style: 'dashed' });
+    if (tag) {
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...C.s500);
+        doc.text(String(tag).toUpperCase(), PAGE.cr, y, { align: 'right' });
     }
 
-    if (hasForecast && (metric === 'Ø Score' || metric === 'Trend')) {
-        items.push({ label: 'Prognose', color: [249, 115, 22], style: 'dashed' });
-    }
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.2);
+    doc.line(PAGE.mx, y + 2.5, PAGE.cr, y + 2.5);
 
-    doc.setFontSize(7.5);
+    return y + 8;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COVER-SEITE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const drawCoverPage = (doc, opts) => {
+    const {
+        companyName = 'Unbekannte Firma',
+        subtitle = 'Übersicht aller Bewertungen, Topics und Trends.',
+        dateStr,
+        timeStr,
+        meta = [],          // [{label, value, sub}]  z.B. {label: 'Zeitraum', value: 'Jan 2018 – Okt 2026', sub: '...'}
+        toc = [],           // [{title, page, meta}]
+    } = opts;
+
+    // Brand-Bar (oben)
+    drawCoverBrandBar(doc, PAGE.my);
+
+    // === Vertikale Mitte für Hero + Meta-Band berechnen ===
+    const heroCenterY = 132;
+
+    // === Hero ===
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...C.s500);
+    doc.text('FIRMENANALYSE · BEWERTUNGEN, TOPICS & TRENDS', PAGE.w / 2, heroCenterY - 30, { align: 'center' });
+
+    // Firmenname (groß, fett, gekürzt falls zu lang)
+    doc.setFont('helvetica', 'bold');
+    let fs = 44;
+    doc.setFontSize(fs);
+    while (fs > 14 && doc.getTextWidth(companyName) > PAGE.cw - 20) {
+        fs -= 2;
+        doc.setFontSize(fs);
+    }
+    doc.setTextColor(...C.s900);
+    doc.text(companyName, PAGE.w / 2, heroCenterY - 14, { align: 'center' });
+
+    // Subtitle
     doc.setFont('helvetica', 'normal');
-    const totalW = items.reduce((sum, it) => sum + 8 + doc.getTextWidth(it.label) + 6, -6);
-    curX = PAGE.width / 2 - totalW / 2;
-    const y = yPos + 3;
+    doc.setFontSize(10);
+    doc.setTextColor(...C.s600);
+    const subLines = doc.splitTextToSize(subtitle, 130);
+    subLines.slice(0, 3).forEach((line, i) => {
+        doc.text(line, PAGE.w / 2, heroCenterY - 4 + i * 5, { align: 'center' });
+    });
 
-    for (const item of items) {
-        doc.setDrawColor(...item.color);
-        doc.setLineWidth(0.8);
-        if (item.style === 'dashed') {
-            doc.setLineDashPattern([2, 1.5], 0);
-        } else {
-            doc.setLineDashPattern([], 0);
+    // Divider (kurzer Strich)
+    doc.setDrawColor(...C.s300);
+    doc.setLineWidth(0.4);
+    doc.line(PAGE.w / 2 - 8, heroCenterY + 8, PAGE.w / 2 + 8, heroCenterY + 8);
+
+    // Datum
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.s500);
+    doc.text('ERSTELLT AM', PAGE.w / 2, heroCenterY + 14, { align: 'center' });
+
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...C.s900);
+    const datetime = timeStr ? `${dateStr} · ${timeStr}` : dateStr;
+    doc.text(datetime, PAGE.w / 2, heroCenterY + 19, { align: 'center' });
+
+    // === Meta-Band (4 Zellen, horizontal getrennt) ===
+    const metaY = heroCenterY + 28;
+    const metaH = 22;
+    const cellW = PAGE.cw / 4;
+
+    // Top + Bottom Linie
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.3);
+    doc.line(PAGE.mx, metaY, PAGE.cr, metaY);
+    doc.line(PAGE.mx, metaY + metaH, PAGE.cr, metaY + metaH);
+
+    // Vertikale Trenner
+    for (let i = 1; i < 4; i++) {
+        doc.setDrawColor(...C.s200);
+        doc.setLineWidth(0.3);
+        doc.line(PAGE.mx + i * cellW, metaY + 3, PAGE.mx + i * cellW, metaY + metaH - 3);
+    }
+
+    meta.slice(0, 4).forEach((m, i) => {
+        const cx = PAGE.mx + i * cellW + cellW / 2;
+
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s500);
+        doc.text(String(m.label).toUpperCase(), cx, metaY + 7, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        const valStr = String(m.value);
+        let vfs = doc.getTextWidth(valStr) > cellW - 6 ? 11 : 16;
+        if (vfs === 11) doc.setFontSize(11);
+        else doc.setFontSize(16);
+        doc.setTextColor(...C.s900);
+        doc.text(fitText(doc, valStr, cellW - 4), cx, metaY + 14, { align: 'center' });
+
+        if (m.sub) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...C.s500);
+            doc.text(fitText(doc, String(m.sub), cellW - 4), cx, metaY + metaH - 4, { align: 'center' });
         }
-        doc.line(curX, y, curX + 6, y);
+    });
+
+    // === TOC am Fuß ===
+    const tocY = metaY + metaH + 22;
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...C.s500);
+    doc.text('INHALT', PAGE.mx, tocY);
+
+    let curY = tocY + 8;
+    toc.forEach((item, i) => {
+        // Num
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...C.s400);
+        doc.text(String(i + 1).padStart(2, '0'), PAGE.mx, curY);
+
+        // Titel
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...C.s800);
+        const titleW = doc.getTextWidth(item.title);
+        doc.text(item.title, PAGE.mx + 8, curY);
+
+        // Meta (heller, kleiner) — direkt hinter dem Titel
+        let metaW = 0;
+        if (item.meta) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(...C.s400);
+            doc.text('· ' + item.meta, PAGE.mx + 8 + titleW + 2, curY);
+            metaW = doc.getTextWidth('· ' + item.meta) + 2;
+        }
+
+        // Gepunktete Linie
+        doc.setDrawColor(...C.s300);
+        doc.setLineWidth(0.2);
+        doc.setLineDashPattern([0.6, 1.6], 0);
+        doc.line(PAGE.mx + 8 + titleW + metaW + 3, curY - 1, PAGE.cr - 10, curY - 1);
         doc.setLineDashPattern([], 0);
 
-        doc.setTextColor(...COLORS.slate600);
-        doc.text(item.label, curX + 8, y + 1);
-        curX += 8 + doc.getTextWidth(item.label) + 6;
+        // Seitenzahl
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...C.s600);
+        doc.text(String(item.page).padStart(2, '0'), PAGE.cr, curY, { align: 'right' });
+
+        curY += 7;
+    });
+
+    // Footer
+    drawPageFooter(doc, 'WorkPulse · Analytics Report', companyName, '01 / ' + (toc.length + 1));
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KPI-CARD (tonaler Akzentbalken + tonaler Hintergrund)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const drawKPICard = (doc, x, y, w, h, opts) => {
+    const { label, value, badge, footer, tone = 'neutral' } = opts;
+    const t = TONE[tone] || TONE.neutral;
+    const ix = x + 5;        // inner-left (nach dem 2mm Akzentbalken + 3mm Padding)
+    const innerW = w - 8;    // innere Breite
+
+    // Karten-Hintergrund (tonal)
+    doc.setFillColor(...t.bg);
+    doc.setDrawColor(...t.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, w, h, 2.5, 2.5, 'FD');
+
+    // Akzentbalken links (2mm breit)
+    doc.setFillColor(...t.accent);
+    doc.rect(x, y, 1.5, h, 'F');
+
+    // Label (oben links, semibold, tonal)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...t.text);
+    doc.text(fitText(doc, String(label), innerW), ix, y + 6);
+
+    // Value (groß, fett) — Text vs. Zahl unterschiedlich behandeln
+    const valStr = String(value);
+    const isLongText = valStr.length > 8 || /[a-zäöüß]/i.test(valStr.replace(/\s/g, ''));
+
+    if (isLongText) {
+        // Text-Value: Schriftgröße reduzieren bis alles auf eine Zeile passt
+        doc.setFont('helvetica', 'bold');
+        let vfs = 13;
+        doc.setFontSize(vfs);
+        while (vfs > 7.5 && doc.getTextWidth(valStr) > innerW) {
+            vfs -= 0.5;
+            doc.setFontSize(vfs);
+        }
+        doc.setTextColor(...t.value);
+        doc.text(fitText(doc, valStr, innerW), ix, y + 16);
+    } else {
+        // Numerischer/kurzer Value: groß
+        doc.setFont('helvetica', 'bold');
+        let vfs = 20;
+        doc.setFontSize(vfs);
+        while (vfs > 11 && doc.getTextWidth(valStr) > innerW) { vfs -= 1; doc.setFontSize(vfs); }
+        doc.setTextColor(...t.value);
+        doc.text(valStr, ix, y + 17);
     }
 
-    return yPos + 8;
+    // Badge (pill, unter dem Value)
+    if (badge) {
+        const badgeY = y + h - 11;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        const bText = fitText(doc, String(badge), innerW - 4);
+        const bW = doc.getTextWidth(bText) + 5;
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(...t.accent);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(ix, badgeY, bW, 4.4, 2.2, 2.2, 'FD');
+        doc.setTextColor(...t.text);
+        doc.text(bText, ix + bW / 2, badgeY + 3.1, { align: 'center' });
+    }
+
+    // Footer (klein, slate-500, unten links)
+    if (footer) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s500);
+        doc.text(fitText(doc, String(footer), innerW), ix, y + h - 4);
+    }
 };
 
-// ─── Helper: Topic-Key lesbar formatieren (gleich wie TopicRatingCard) ──────
-const prettifyTopicKey = (key) => {
-    if (!key) return '';
-    return key
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase());
+// 4 KPI-Karten in einer Reihe rendern
+const drawKPIRow = (doc, y, cards, opts = {}) => {
+    const { gap = 2.5, height = 32 } = opts;
+    const n = cards.length;
+    const cardW = (PAGE.cw - (n - 1) * gap) / n;
+    cards.forEach((c, i) => {
+        drawKPICard(doc, PAGE.mx + i * (cardW + gap), y, cardW, height, c);
+    });
+    return y + height;
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DASHBOARD-CARD (Chart-Container im Dashboard-Stil)
+// ═══════════════════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ─── HAUPT-EXPORT-FUNKTION ──────────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════════
+const drawCardHeader = (doc, y, opts) => {
+    const { eyebrow, title, subtitle, iconTone = 'info', controlsText } = opts;
+    const t = TONE[iconTone] || TONE.info;
+    const x = PAGE.mx;
+
+    // Icon-Square (9×9mm, tonal bg + drei aufsteigende Balken als Chart-Symbol)
+    const ix = x + 4, iy = y + 4, is = 9;
+    doc.setFillColor(...t.bg);
+    doc.roundedRect(ix, iy, is, is, 2, 2, 'F');
+    doc.setFillColor(...t.accent);
+    const bw = 1.9, bx0 = ix + 1.6, bBase = iy + is - 1.6;
+    doc.roundedRect(bx0,                bBase - 2.2, bw, 2.2, 0.5, 0.5, 'F');
+    doc.roundedRect(bx0 + bw + 0.8,     bBase - 4.0, bw, 4.0, 0.5, 0.5, 'F');
+    doc.roundedRect(bx0 + 2*(bw + 0.8), bBase - 6.0, bw, 6.0, 0.5, 0.5, 'F');
+
+    // Text-Block
+    const tx = x + 16;
+    if (eyebrow) {
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s500);
+        doc.text(String(eyebrow).toUpperCase(), tx, y + 5);
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...C.s900);
+    doc.text(title, tx, y + 10);
+
+    if (subtitle) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...C.s500);
+        doc.text(subtitle, tx, y + 14.5);
+    }
+
+    // Filter-Pill rechts (z.B. "Mitarbeiter · Ø Score")
+    if (controlsText) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        const tw = doc.getTextWidth(controlsText) + 7;
+        const px = PAGE.cr - tw - 2;
+        doc.setFillColor(...C.s50);
+        doc.setDrawColor(...C.s200);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(px, y + 6, tw, 5.5, 2.75, 2.75, 'FD');
+        doc.setTextColor(...C.s700);
+        doc.text(controlsText, px + tw / 2, y + 9.6, { align: 'center' });
+    }
+};
+
+const drawCardChart = (doc, x, y, w, h, imgResult) => {
+    if (!imgResult?.dataUrl) {
+        doc.setFillColor(...C.s50);
+        doc.roundedRect(x, y, w, h, 1, 1, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...C.s400);
+        doc.text('Chart nicht verfügbar', x + w / 2, y + h / 2, { align: 'center' });
+        return;
+    }
+    const aspect = imgResult.w / imgResult.h;
+    let iw = w, ih = w / aspect;
+    if (ih > h) { ih = h; iw = h * aspect; }
+    const ix = x + (w - iw) / 2;
+    const iy = y + (h - ih) / 2;
+    doc.addImage(imgResult.dataUrl, 'PNG', ix, iy, iw, ih);
+};
+
+// Stats-Footer-Grid (4 Zellen, jede mit optionalem Tone)
+const drawStatsFooter = (doc, x, y, w, cells) => {
+    const h = 16;
+    const cellW = w / cells.length;
+
+    cells.forEach((cell, i) => {
+        const cx = x + i * cellW;
+        const t = cell.tone ? (TONE[cell.tone] || TONE.neutral) : TONE.neutral;
+
+        // Hintergrund (tonal oder weiß)
+        if (cell.tone && cell.tone !== 'neutral') {
+            doc.setFillColor(...t.bg);
+            doc.rect(cx, y, cellW, h, 'F');
+        }
+
+        // Rechte Trennlinie (zwischen Zellen)
+        if (i < cells.length - 1) {
+            doc.setDrawColor(...C.s100);
+            doc.setLineWidth(0.2);
+            doc.line(cx + cellW, y + 2, cx + cellW, y + h - 2);
+        }
+
+        // Label
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s500);
+        doc.text(String(cell.label).toUpperCase(), cx + 4, y + 5);
+
+        // Value
+        const valStr = String(cell.value);
+        const isText = valStr.length > 6 || /[a-zäöü]/i.test(valStr.replace(/\s/g, ''));
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(isText ? 10 : 14);
+        doc.setTextColor(...(cell.tone ? t.value : C.s900));
+        doc.text(fitText(doc, valStr, cellW - 6), cx + 4, y + 11);
+
+        // Sub
+        if (cell.sub) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(...C.s500);
+            doc.text(fitText(doc, String(cell.sub), cellW - 6), cx + 4, y + h - 3);
+        }
+    });
+
+    // Top-Trennlinie zur Card
+    doc.setDrawColor(...C.s100);
+    doc.setLineWidth(0.3);
+    doc.line(x, y, x + w, y);
+
+    return y + h;
+};
+
+// Eine komplette Dashboard-Card rendern. Gibt das untere Y zurück.
+// opts: { header: {eyebrow, title, subtitle, iconTone, controlsText},
+//         chart: imgResult, chartH: mm,
+//         legend: [{label, color, dashed, sourceNote}], stats: [{label, value, sub, tone}],
+//         caption: string }
+const drawDashboardCard = (doc, y, opts) => {
+    const { header, chart, chartH = 70, legend = [], stats = [], caption } = opts;
+    const cardX = PAGE.mx;
+    const cardW = PAGE.cw;
+
+    // Berechne Card-Höhe: header (18mm) + chart + legend (8 wenn vorhanden) + stats (16)
+    const headerH = 18;
+    const legendH = legend.length ? 8 : 0;
+    const statsH = stats.length ? 16 : 0;
+    const cardH = headerH + chartH + legendH + statsH;
+
+    // Karten-Rahmen
+    doc.setFillColor(...C.s0);
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(cardX, y, cardW, cardH, 2.5, 2.5, 'FD');
+
+    // Header
+    drawCardHeader(doc, y, header);
+
+    // Header → Chart Trennlinie
+    doc.setDrawColor(...C.s100);
+    doc.setLineWidth(0.2);
+    doc.line(cardX + 2, y + headerH, cardX + cardW - 2, y + headerH);
+
+    // Chart
+    drawCardChart(doc, cardX + 4, y + headerH + 2, cardW - 8, chartH - 4, chart);
+
+    let curY = y + headerH + chartH;
+
+    // Legend — reguläre Items links, sourceNote rechts-ausgerichtet italic
+    if (legend.length) {
+        const noteItem = legend.find(i => i.sourceNote);
+        const legendItems = legend.filter(i => !i.sourceNote);
+
+        // Platz für Quellenangabe vorberechnen
+        let noteW = 0;
+        if (noteItem) {
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(7);
+            noteW = doc.getTextWidth(String(noteItem.label)) + 6;
+        }
+        const maxLx = cardX + cardW - noteW - 4; // rechte Grenze für reguläre Items
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        let lx = cardX + 6;
+        const ly = curY + 5;
+        legendItems.forEach((item) => {
+            const lw = doc.getTextWidth(item.label);
+            if (lx + 5.5 + lw > maxLx) return; // überspringen falls kein Platz
+            // Swatch
+            const swatchY = ly - 1.5;
+            if (item.dashed) {
+                doc.setDrawColor(...item.color);
+                doc.setLineWidth(0.8);
+                doc.setLineDashPattern([1, 0.8], 0);
+                doc.line(lx, swatchY + 0.5, lx + 4, swatchY + 0.5);
+                doc.setLineDashPattern([], 0);
+            } else {
+                doc.setFillColor(...item.color);
+                doc.roundedRect(lx, swatchY, 4, 1.2, 0.6, 0.6, 'F');
+            }
+            doc.setTextColor(...C.s600);
+            doc.text(item.label, lx + 5.5, ly + 1);
+            lx += 5.5 + lw + 6;
+        });
+        // Quellenangabe rechts-ausgerichtet, italic (überschreibt nichts mehr)
+        if (noteItem) {
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(7);
+            doc.setTextColor(...C.s400);
+            doc.text(String(noteItem.label), cardX + cardW - 5, ly + 1, { align: 'right' });
+        }
+        curY += legendH;
+    }
+
+    // Stats
+    if (stats.length) {
+        drawStatsFooter(doc, cardX, curY, cardW, stats);
+    }
+
+    // Caption (optional — italic Unterschrift unterhalb der Card)
+    if (caption) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...C.s400);
+        doc.text(String(caption), PAGE.w / 2, y + cardH + 5, { align: 'center' });
+        return y + cardH + 8;
+    }
+
+    return y + cardH;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOPIC-TABELLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const drawSortChevrons = (doc, x, y, active = 'none') => {
+    // active: 'up' | 'down' | 'none'
+    doc.setLineWidth(0.4);
+    doc.setLineCap('round'); doc.setLineJoin('round');
+
+    // Up chevron
+    doc.setDrawColor(...(active === 'up' ? C.s700 : C.s400));
+    doc.lines([[0.8, -0.7], [0.8, 0.7]], x, y - 0.4);
+
+    // Down chevron
+    doc.setDrawColor(...(active === 'down' ? C.s700 : C.s400));
+    doc.lines([[0.8, 0.7], [0.8, -0.7]], x, y + 1.4);
+
+    doc.setLineCap('butt'); doc.setLineJoin('miter');
+};
+
+// Sentiment-Tone Lookup
+const sentimentStyle = (sentiment) => {
+    const s = String(sentiment || 'Neutral').trim();
+    if (s === 'Positiv') return { bg: C.emerald50, text: C.emerald700, dot: C.emerald500 };
+    if (s === 'Negativ') return { bg: C.rose50,    text: C.rose700,    dot: C.rose500    };
+    if (s === 'Gemischt') return { bg: C.amber50,  text: C.amber700,   dot: C.amber500   };
+    return { bg: C.s100, text: C.s600, dot: C.s400 };
+};
+
+// Datenqualität-Tone Lookup
+const qualityStyle = (risk) => {
+    switch (risk) {
+        case 'solid':       return { label: 'Solide',       bg: C.emerald50, text: C.emerald700 };
+        case 'acceptable':  return { label: 'Akzeptabel',   bg: C.amber50,   text: C.amber700   };
+        case 'constrained': return { label: 'Eingeschränkt', bg: C.amber50,  text: C.amber700   };
+        case 'limited':     return { label: 'Begrenzt',     bg: C.rose50,    text: C.rose700    };
+        default:            return { label: '–',            bg: null,        text: C.s500       };
+    }
+};
+
+const ratingTone = (r) => {
+    const n = Number(r);
+    if (!Number.isFinite(n)) return C.s400;
+    if (n >= 3.5) return C.emerald500;
+    if (n >= 2.5) return C.amber500;
+    return C.rose500;
+};
+
+// Tabelle: Topic | Erw. | Ø Rating | Sentiment | Datenqualität
+const drawTopicTable = (doc, x, y, w, topics) => {
+    const rowH = 7;
+    const padL = 4;
+    // Spalten-Verhältnisse (Summe = 1.0)
+    const ratios = [0.36, 0.12, 0.22, 0.15, 0.15];
+    const colX = [];
+    let acc = padL;
+    ratios.forEach((r) => { colX.push(x + acc); acc += r * (w - padL * 2); });
+    const cols = {
+        topic:     colX[0],
+        ment:      colX[1] + ratios[1] * (w - padL * 2) - 8,        // rechtsbündig
+        rating:    colX[2],
+        sentiment: colX[3],
+        quality:   colX[4],
+    };
+
+    // === Header ===
+    doc.setFillColor(...C.s50);
+    doc.rect(x, y - 4.5, w, rowH + 1, 'F');
+    doc.setDrawColor(...C.s200);
+    doc.setLineWidth(0.3);
+    doc.line(x, y + rowH - 3.5, x + w, y + rowH - 3.5);
+
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.s600);
+    doc.text('TOPIC', cols.topic, y);
+    drawSortChevrons(doc, cols.topic + doc.getTextWidth('TOPIC') + 1, y, 'none');
+
+    doc.text('ERWÄHNUNGEN', cols.ment, y, { align: 'right' });
+    drawSortChevrons(doc, cols.ment + 1.5, y, 'down');
+
+    doc.text('Ø RATING', cols.rating, y);
+    drawSortChevrons(doc, cols.rating + doc.getTextWidth('Ø RATING') + 1, y, 'none');
+
+    doc.text('SENTIMENT', cols.sentiment, y);
+    doc.text('DATENQUALITÄT', cols.quality, y);
+
+    let curY = y + rowH + 2;
+
+    // === Rows ===
+    topics.forEach((topic, idx) => {
+        // Alternierender Background
+        if (idx % 2 === 1) {
+            doc.setFillColor(...C.s50);
+            doc.rect(x, curY - 4.5, w, rowH, 'F');
+        }
+        // Untere Linie
+        doc.setDrawColor(...C.s100);
+        doc.setLineWidth(0.15);
+        doc.line(x, curY + rowH - 4.5, x + w, curY + rowH - 4.5);
+
+        // Topic-Name
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(...C.s900);
+        const topicW = ratios[0] * (w - padL * 2) - 4;
+        doc.text(fitText(doc, prettifyTopic(topic.topic), topicW), cols.topic, curY);
+
+        // Erwähnungen (rechtsbündig)
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...C.s700);
+        doc.text(String(topic.frequency || 0), cols.ment, curY, { align: 'right' });
+
+        // Ø Rating: Mini-Bar + Wert
+        const rating = topic.avgRating;
+        if (Number.isFinite(rating)) {
+            const barX = cols.rating;
+            const barY = curY - 1.5;
+            const barW = 16;
+            const barH = 1.4;
+            // Hintergrund
+            doc.setFillColor(...C.s100);
+            doc.roundedRect(barX, barY, barW, barH, 0.7, 0.7, 'F');
+            // Fill
+            const pct = Math.min(1, Math.max(0, rating / 5));
+            doc.setFillColor(...ratingTone(rating));
+            doc.roundedRect(barX, barY, barW * pct, barH, 0.7, 0.7, 'F');
+            // Wert
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            doc.setTextColor(...C.s900);
+            doc.text(rating.toFixed(1).replace('.', ','), barX + barW + 2.5, curY);
+        } else {
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...C.s400);
+            doc.text('–', cols.rating, curY);
+        }
+
+        // Sentiment-Pill
+        const ss = sentimentStyle(topic.sentiment);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        const sLabel = String(topic.sentiment || 'Neutral');
+        const sW = doc.getTextWidth(sLabel) + 7;
+        doc.setFillColor(...ss.bg);
+        doc.roundedRect(cols.sentiment, curY - 3.2, sW, 4.4, 2.2, 2.2, 'F');
+        doc.setFillColor(...ss.dot);
+        doc.circle(cols.sentiment + 2.4, curY - 0.9, 0.7, 'F');
+        doc.setTextColor(...ss.text);
+        doc.text(sLabel, cols.sentiment + 4.2, curY - 0.1);
+
+        // Datenqualität-Pill
+        const q = qualityStyle(topic.statistical_meta?.risk_level);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        const qW = doc.getTextWidth(q.label) + 5;
+        if (q.bg) {
+            doc.setFillColor(...q.bg);
+            doc.roundedRect(cols.quality, curY - 3.2, qW, 4.4, 2.2, 2.2, 'F');
+        }
+        doc.setTextColor(...q.text);
+        doc.text(q.label, cols.quality + 2.5, curY - 0.1);
+
+        curY += rowH;
+    });
+
+    return curY;
+};
+
+// Sentiment-Filter-Tabs (Alle / Positiv / Neutral / Negativ)
+const drawSentimentTabs = (doc, x, y, w, counts) => {
+    // counts: { total, pos, neu, neg }
+    const items = [
+        { label: 'Alle',    count: counts.total, dotColor: null,           active: true },
+        { label: 'Positiv', count: counts.pos,   dotColor: C.emerald500, active: false },
+        { label: 'Neutral', count: counts.neu,   dotColor: C.s400,         active: false },
+        { label: 'Negativ', count: counts.neg,   dotColor: C.rose500,    active: false },
+    ];
+
+    const h = 10;
+    // Background-Strip
+    doc.setFillColor(...C.s50);
+    doc.rect(x, y, w, h, 'F');
+    doc.setDrawColor(...C.s100);
+    doc.setLineWidth(0.2);
+    doc.line(x, y, x + w, y);
+    doc.line(x, y + h, x + w, y + h);
+
+    let cx = x + 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+
+    items.forEach((it) => {
+        const labelW = doc.getTextWidth(it.label);
+        const cntStr = String(it.count);
+        doc.setFont('courier', 'bold');
+        const cntW = doc.getTextWidth(cntStr);
+        const pillW = (it.dotColor ? 4 : 0) + labelW + 3 + cntW + 8;
+        const pillY = y + 1.8;
+
+        if (it.active) {
+            doc.setFillColor(...C.s0);
+            doc.setDrawColor(...C.s200);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(cx, pillY, pillW, 6, 3, 3, 'FD');
+        }
+        let tx = cx + 4;
+        if (it.dotColor) {
+            doc.setFillColor(...it.dotColor);
+            doc.circle(tx, pillY + 3.1, 0.9, 'F');
+            tx += 2.5;
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...(it.active ? C.s900 : C.s600));
+        doc.text(it.label, tx, pillY + 4);
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s500);
+        doc.text(cntStr, tx + labelW + 2.5, pillY + 4);
+
+        cx += pillW + 2;
+    });
+
+    // "sortiert nach Erwähnungen" rechts
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...C.s400);
+    doc.text('SORTIERT NACH ERWÄHNUNGEN', x + w - 4, y + 6.5, { align: 'right' });
+
+    return y + h;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HAUPT-EXPORT
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const exportKPIsAsPDF = async (kpiData) => {
     const {
@@ -856,1210 +1056,328 @@ export const exportKPIsAsPDF = async (kpiData) => {
         topicOverviewData = null,
     } = kpiData;
 
+    // Charts extrahieren
+    console.log('📸 Extrahiere Charts…');
+    let timelineImg = null, topicRatingImg = null;
+    try { timelineImg = await extractChartSvgFirst(timelineChartElement); }
+    catch (e) { console.warn('Timeline-Chart:', e); }
+    try { topicRatingImg = await extractChartSvgFirst(topicRatingChartElement); }
+    catch (e) { console.warn('Topic-Rating-Chart:', e); }
+
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    let currentPage = 1;
 
-    // ─── Chart-Bilder vorab rendern (sequentiell für html2canvas-Stabilität) ──
-    console.log('\ud83d\udcf8 Extrahiere Charts...');
-    
-    let timelineImg = null;
-    let topicRatingImg = null;
-    
-    try {
-        timelineImg = await extractChartImage(timelineChartElement);
-    } catch (e) {
-        console.warn('Timeline-Chart Extraktion fehlgeschlagen:', e);
-    }
-    
-    try {
-        topicRatingImg = await extractChartImage(topicRatingChartElement);
-    } catch (e) {
-        console.warn('Topic-Rating-Chart Extraktion fehlgeschlagen:', e);
-    }
-    
-    console.log('\u2705 Charts extrahiert:', { timeline: !!timelineImg, topicRating: !!topicRatingImg });
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 1: TITELSEITE — Dark Hero + Executive Summary (2×2)
-    // ═════════════════════════════════════════════════════════════════════════
-
-    // Dark Hero-Bereich (obere ~38% der Seite)
-    const heroH = 110;
-    doc.setFillColor(...COLORS.slate900);
-    doc.rect(0, 0, PAGE.width, heroH, 'F');
-
-    // Tonaler Akzentbalken oben (brand)
-    doc.setFillColor(...COLORS.wpBubble);
-    doc.rect(0, 0, PAGE.width, 3, 'F');
-
-    // WorkPulse Logo (Sprechblase mit Puls-Linie, weiß auf dunkel)
-    const brandY = 20;
-    const logoW = 22;
-    drawWorkPulseLogo(doc, PAGE.width / 2 - logoW / 2, brandY, logoW, COLORS.slate0, COLORS.wpBubble);
-
-    // Eyebrow (mono, hell)
-    doc.setFontSize(8);
-    doc.setFont('courier', 'bold');
-    doc.setTextColor(150, 163, 184); // slate-400 hellaufgehellt für Dark-Bg
-    doc.text('WORKPULSE · ANALYTICS REPORT', PAGE.width / 2, brandY + 30, { align: 'center' });
-
-    // Haupttitel — Firmenname (groß, weiß)
-    doc.setFontSize(28);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.slate0);
-    let titleDisplay = String(companyName);
-    while (titleDisplay.length > 1 && doc.getTextWidth(titleDisplay) > PAGE.contentWidth - 20) {
-        titleDisplay = titleDisplay.slice(0, -1);
-    }
-    if (titleDisplay !== String(companyName)) titleDisplay = titleDisplay.slice(0, -1) + '\u2026';
-    doc.text(titleDisplay, PAGE.width / 2, brandY + 47, { align: 'center' });
-
-    // Subtitle — leicht heller blau-grau
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(190, 200, 220);
-    doc.text('Übersicht aller Bewertungen, Topics und Trends', PAGE.width / 2, brandY + 56, { align: 'center' });
-
-    // Dünne Trennlinie unter dem Titel
-    doc.setDrawColor(...COLORS.wpBubble);
-    doc.setLineWidth(0.5);
-    doc.line(PAGE.width / 2 - 18, brandY + 62, PAGE.width / 2 + 18, brandY + 62);
-
-    // Datum (mono, hell)
     const now = new Date();
-    const dateStr = now.toLocaleDateString('de-DE', {
-        day: '2-digit', month: 'long', year: 'numeric'
-    });
-    const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    doc.setFontSize(8);
-    doc.setFont('courier', 'normal');
-    doc.setTextColor(150, 163, 184);
-    doc.text(`${dateStr.toUpperCase()} · ${timeStr} UHR`, PAGE.width / 2, brandY + 70, { align: 'center' });
+    const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+    const dateShort = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // ─── Executive Summary — 4 horizontale Karten (gleich wie Dashboard) ──
-    const exY = heroH + 14;
+    const totalPages = 1 + 1 + (topicRatingImg ? 1 : 0) + (topicOverviewData?.topics?.length ? 1 : 0);
+    const headerLabel = `WorkPulse · ${companyName} — Analytics Report`;
+    const footerLeft  = `WorkPulse · ${companyName}`;
 
-    // Eyebrow + Titel
-    doc.setFontSize(7);
-    doc.setFont('courier', 'bold');
-    doc.setTextColor(...COLORS.slate500);
-    doc.text('EXECUTIVE SUMMARY', PAGE.marginLeft, exY);
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.slate900);
-    doc.text('Kennzahlen', PAGE.marginLeft, exY + 7);
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.slate500);
-    doc.text('Alle Werte: Skala 1–5', PAGE.contentRight, exY + 7, { align: 'right' });
-
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.2);
-    doc.line(PAGE.marginLeft, exY + 10, PAGE.contentRight, exY + 10);
-
-    // 4 horizontale Karten — größere Höhe (52mm) für lange Topic-Namen
-    const exGridY = exY + 16;
-    const exGap = 4;
-    const exCardW = (PAGE.contentWidth - 3 * exGap) / 4;
-    const exCardH = 52;
-
-    // 1. Ø Score
-    const _scoreNumT = avgScore !== '-' ? Number(avgScore) : NaN;
-    drawKPICard(doc, PAGE.marginLeft, exGridY, exCardW, exCardH, {
-        label: 'Ø Score', value: avgScore !== '-' ? String(avgScore).replace('.', ',') : '\u2013',
-        badge: '/ 5', tone: Number.isFinite(_scoreNumT) ? scoreTone(_scoreNumT) : 'neutral',
-        footer: 'alle Quellen',
-    });
-
-    // 2. Trend 12M
-    let _tValT = '\u2013', _tToneT = 'neutral', _tFootT = 'vs. Vorjahr', _tBadgeT = null;
-    if (trend?.avgDelta) {
-        const tv = parseFloat(trend.avgDelta);
-        _tValT = `${tv > 0 ? '+' : ''}${trend.avgDelta.replace('.', ',')}`;
-        _tToneT = tv > 0.05 ? 'good' : tv < -0.05 ? 'bad' : 'neutral';
-        _tBadgeT = tv > 0.05 ? 'steigend' : tv < -0.05 ? 'sinkend' : 'stabil';
-    }
-    drawKPICard(doc, PAGE.marginLeft + (exCardW + exGap), exGridY, exCardW, exCardH, {
-        label: 'Trend 12M', value: _tValT, badge: _tBadgeT, tone: _tToneT, footer: _tFootT,
-    });
-
-    // 3. Most Critical
-    const _critValT = mostCritical?.topicName && mostCritical.topicName !== '-'
-        ? mostCritical.topicName : '\u2013';
-    const _critBadgeT = mostCritical?.score ? `${String(mostCritical.score).replace('.', ',')} / 5` : null;
-    const _critToneT = mostCritical
-        ? (Number(mostCritical.score) >= 3.5 ? 'good' : Number(mostCritical.score) >= 2.5 ? 'warn' : 'bad')
-        : 'neutral';
-    drawKPICard(doc, PAGE.marginLeft + 2 * (exCardW + exGap), exGridY, exCardW, exCardH, {
-        label: 'Most Critical', value: _critValT, badge: _critBadgeT, tone: _critToneT,
-        footer: 'niedrigster Topic-Score',
-    });
-
-    // 4. Negative Topic
-    const _negValT = (negativeTopic && negativeTopic !== '-') ? negativeTopic : '\u2013';
-    drawKPICard(doc, PAGE.marginLeft + 3 * (exCardW + exGap), exGridY, exCardW, exCardH, {
-        label: 'Negative Topic', value: _negValT,
-        tone: (negativeTopic && negativeTopic !== '-') ? 'bad' : 'neutral',
-        footer: 'höchste Negativrate',
-    });
-
-    // ─── Inhaltsverzeichnis (am unteren Rand) ──────────────────────────
-    const tocY = exGridY + exCardH + 22;
-
-    // Eyebrow
-    doc.setFontSize(7);
-    doc.setFont('courier', 'bold');
-    doc.setTextColor(...COLORS.slate500);
-    doc.text('INHALT', PAGE.marginLeft, tocY);
-
-    // Titel
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.slate900);
-    doc.text('Auf den folgenden Seiten', PAGE.marginLeft, tocY + 7);
-
-    // Trennlinie
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.2);
-    doc.line(PAGE.marginLeft, tocY + 10, PAGE.contentRight, tocY + 10);
-
-    let tocItemY = tocY + 18;
-    let pageCounter = 2;
+    // ───────────────────────────────────────────────────────────────────────
+    // SEITE 1 — COVER
+    // ───────────────────────────────────────────────────────────────────────
     const tocItems = [];
+    let page = 2;
+    tocItems.push({ title: 'Kennzahlen & Timeline', page: page++, meta: 'Ø Score, Trend + Bewertungsverlauf' });
+    if (topicRatingImg) tocItems.push({ title: 'Topics im Detail', page: page++, meta: 'Bewertungen pro Topic-Cluster' });
+    if (topicOverviewData?.topics?.length) tocItems.push({ title: 'Topic-Übersicht', page: page++, meta: 'Tabelle aller Topics' });
 
-    tocItems.push(['KPI-Übersicht & Timeline', pageCounter]);
-    if (topicRatingImg) { pageCounter++; tocItems.push(['Topic-Bewertungen', pageCounter]); }
-    if (topicOverviewData?.topics?.length) { pageCounter++; tocItems.push(['Topic-Übersicht (Tabelle)', pageCounter]); }
-
-    tocItems.forEach(([title, page], idx) => {
-        // Index in mono
-        doc.setFontSize(9);
-        doc.setFont('courier', 'normal');
-        doc.setTextColor(...COLORS.slate400);
-        doc.text(String(idx + 1).padStart(2, '0'), PAGE.marginLeft, tocItemY);
-
-        // Titel
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.slate800);
-        doc.text(title, PAGE.marginLeft + 11, tocItemY);
-
-        // Gepunktete Linie
-        doc.setDrawColor(...COLORS.slate300);
-        doc.setLineWidth(0.15);
-        doc.setLineDashPattern([0.5, 1.5], 0);
-        const textW = doc.getTextWidth(title);
-        doc.line(PAGE.marginLeft + 13 + textW, tocItemY - 1, PAGE.contentRight - 14, tocItemY - 1);
-        doc.setLineDashPattern([], 0);
-
-        // Seitenzahl
-        doc.setFont('courier', 'bold');
-        doc.setFontSize(10);
-        doc.setTextColor(...COLORS.wpBubble);
-        doc.text(String(page).padStart(2, '0'), PAGE.contentRight, tocItemY, { align: 'right' });
-
-        tocItemY += 9;
+    drawCoverPage(doc, {
+        companyName,
+        subtitle: 'Übersicht aller Bewertungen, Topics und Trends. Mitarbeiter- und Bewerberperspektive, aggregiert und über Zeit verglichen.',
+        dateStr,
+        timeStr,
+        meta: [
+            {
+                label: 'Zeitraum',
+                value: timelineFilters?.stats?.dateRange || 'gesamter Zeitraum',
+                sub:   timelineFilters?.stats?.dateRangeSub || 'Historie + Prognose',
+            },
+            {
+                label: 'Datenpunkte',
+                value: String(timelineFilters?.stats?.dataPoints || '–'),
+                sub:   'aggregiert',
+            },
+            {
+                label: 'Topics',
+                value: String(topicOverviewData?.topics?.length || topicOverviewData?.stats?.totalTopics || '–'),
+                sub:   'Topic-Cluster',
+            },
+            {
+                label: 'Erwähnungen',
+                value: String(topicOverviewData?.stats?.totalMentions || '–'),
+                sub:   'über alle Topics',
+            },
+        ],
+        toc: tocItems,
     });
 
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 2: KPI-ÜBERSICHT + TIMELINE
-    // ═════════════════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────────────
+    // SEITE 2 — KENNZAHLEN + TIMELINE
+    // ───────────────────────────────────────────────────────────────────────
     doc.addPage();
-    currentPage++;
+    drawPageHeader(doc, headerLabel, dateShort);
 
-    // Seitenhintergrund
-    doc.setFillColor(...COLORS.bgLight);
-    doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
+    let y = 30;
+    y = drawSectionTitle(doc, y, 1, 'Kennzahlen', 'Executive Summary · Skala 1 – 5');
 
-    let y = addSectionTitle(
-        doc,
-        'Kennzahlen',
-        PAGE.marginTop + 5,
-        'Score, Trend und kritische Themen auf einen Blick',
-        'Übersicht'
-    );
-
-    // 4 KPI-Karten in einer Reihe — gleiche Höhe wie auf der Titelseite (52mm)
-    const cardGap = 4;
-    const cardCount = 4;
-    const cardW = (PAGE.contentWidth - (cardCount - 1) * cardGap) / cardCount;
-    const cardH = 52;
-    const cardStartX = PAGE.marginLeft;
-
-    // Ø Score — tonal nach Wert
+    // KPI-Reihe
     const scoreNum = avgScore !== '-' ? Number(avgScore) : NaN;
-    const scoreVal = avgScore !== '-' ? String(avgScore).replace('.', ',') : '\u2013';
-    const scoreCardTone = Number.isFinite(scoreNum) ? scoreTone(scoreNum) : 'neutral';
-    drawKPICard(doc, cardStartX, y, cardW, cardH, {
-        label: '\u00d8 Score', value: scoreVal, badge: '/ 5',
-        tone: scoreCardTone, footer: 'alle Quellen',
-    });
+    const kpis = [
+        {
+            label: 'Ø Score',
+            value: avgScore !== '-' ? String(avgScore).replace('.', ',') : '–',
+            badge: '/ 5',
+            footer: 'alle Quellen',
+            tone: Number.isFinite(scoreNum) ? scoreTone(scoreNum) : 'neutral',
+        },
+        (() => {
+            if (!trend?.avgDelta) return { label: 'Trend 12M', value: '–', footer: 'vs. Vorperiode', tone: 'neutral' };
+            const tv = parseFloat(trend.avgDelta);
+            return {
+                label: 'Trend 12M',
+                value: `${tv > 0 ? '+' : ''}${String(trend.avgDelta).replace('.', ',')}`,
+                badge: tv > 0.05 ? 'steigend' : tv < -0.05 ? 'sinkend' : 'stabil',
+                footer: 'vs. Vorperiode',
+                tone: tv > 0.05 ? 'good' : tv < -0.05 ? 'bad' : 'neutral',
+            };
+        })(),
+        {
+            label: 'Most Critical',
+            value: mostCritical?.topicName && mostCritical.topicName !== '-' ? mostCritical.topicName : '–',
+            badge: mostCritical?.score ? `${String(mostCritical.score).replace('.', ',')} / 5` : null,
+            footer: 'niedrigster Topic-Score',
+            tone: mostCritical ? (Number(mostCritical.score) >= 3.5 ? 'good' : Number(mostCritical.score) >= 2.5 ? 'warn' : 'bad') : 'neutral',
+        },
+        {
+            label: 'Negative Topic',
+            value: (negativeTopic && negativeTopic !== '-') ? negativeTopic : '–',
+            badge: 'höchste Negativrate',
+            footer: 'aus 22 Topics',
+            tone: (negativeTopic && negativeTopic !== '-') ? 'bad' : 'neutral',
+        },
+    ];
+    y = drawKPIRow(doc, y, kpis, { height: 30 });
 
-    // Trend
-    let trendVal = '\u2013', trendCardTone = 'neutral', trendFooter = 'vs. Vorjahr', trendBadge = null;
-    if (trend?.avgDelta) {
-        const tv = parseFloat(trend.avgDelta);
-        trendVal = `${tv > 0 ? '+' : ''}${trend.avgDelta.replace('.', ',')}`;
-        trendCardTone = tv > 0.05 ? 'good' : tv < -0.05 ? 'bad' : 'neutral';
-        trendBadge = tv > 0.05 ? 'steigend' : tv < -0.05 ? 'sinkend' : 'stabil';
+    y += 8;
+    y = drawSectionTitle(doc, y, 2, 'Timeline', 'Zeitreihe · Historie & Prognose');
+
+    // Timeline-Card
+    const source = timelineFilters?.source === 'employee' ? 'Mitarbeiter'
+                 : timelineFilters?.source === 'candidates' ? 'Bewerber' : 'Alle Quellen';
+
+    const tlStats = [];
+    if (timelineFilters?.stats?.dataPoints != null) {
+        tlStats.push({ label: 'Datenpunkte', value: String(timelineFilters.stats.dataPoints), sub: 'aggregiert' });
     }
-    drawKPICard(doc, cardStartX + cardW + cardGap, y, cardW, cardH, {
-        label: 'Trend 12M', value: trendVal, badge: trendBadge,
-        tone: trendCardTone, footer: trendFooter,
-    });
-
-    // Most Critical — Tone nach Score
-    const critVal = (mostCritical && mostCritical.topicName !== '-') ? mostCritical.topicName : '\u2013';
-    const critBadge = (mostCritical && mostCritical.score) ? `${String(mostCritical.score).replace('.', ',')} / 5` : null;
-    const critCardTone = mostCritical
-        ? (Number(mostCritical.score) >= 3.5 ? 'good' : Number(mostCritical.score) >= 2.5 ? 'warn' : 'bad')
-        : 'neutral';
-    drawKPICard(doc, cardStartX + 2 * (cardW + cardGap), y, cardW, cardH, {
-        label: 'Most Critical', value: critVal, badge: critBadge,
-        tone: critCardTone, footer: 'niedrigster Topic-Score',
-    });
-
-    // Negative Topic
-    const negVal = (negativeTopic && negativeTopic !== '-') ? negativeTopic : '\u2013';
-    drawKPICard(doc, cardStartX + 3 * (cardW + cardGap), y, cardW, cardH, {
-        label: 'Negative Topic', value: negVal,
-        tone: (negativeTopic && negativeTopic !== '-') ? 'bad' : 'neutral',
-        footer: 'höchste Negativrate',
-    });
-
-    y += cardH + 10;
-
-    // ─── Timeline-Chart direkt auf der KPI-Seite ────────────────────────
-    if (timelineImg) {
-        y = addSectionTitle(doc, 'Timeline', y, 'Historische Bewertungen + Prognose der nächsten Monate', 'Zeitreihe · Historie & Prognose');
-
-        // Filter-Box
-        if (timelineFilters) {
-            const statsEntries = [];
-            if (timelineFilters.stats?.dataPoints) {
-                statsEntries.push(['Datenpunkte', String(timelineFilters.stats.dataPoints)]);
-            }
-            if (timelineFilters.stats?.avgHistorical) {
-                statsEntries.push(['\u00d8 Historisch', String(timelineFilters.stats.avgHistorical), COLORS.wpBubble]);
-            }
-            if (timelineFilters.stats?.avgCount) {
-                statsEntries.push(['\u00d8 Anzahl', String(timelineFilters.stats.avgCount)]);
-            }
-            if (timelineFilters.stats?.avgTrend) {
-                const at = parseFloat(timelineFilters.stats.avgTrend || 0);
-                statsEntries.push(['\u00d8 Trend', (at >= 0 ? '+' : '') + timelineFilters.stats.avgTrend, at >= 0 ? COLORS.green : COLORS.red]);
-            }
-            y = drawFilterBox(doc, y, timelineFilters, statsEntries);
-        }
-
-        // Chart einfügen – verbleibenden Platz nutzen (Legende + Caption reservieren)
-        const maxChartH = PAGE.height - PAGE.marginBottom - 28 - y;
-        y = addChartImage(doc, timelineImg, y, maxChartH);
-
-        // Legende: Historisch / Interpoliert / Prognose
-        y = drawTimelineLegend(doc, y, {
-            metric: timelineFilters?.metric || 'Ø Score',
-            hasForecast: !!timelineFilters?.hasForecast,
-            hasInterpolation: !!timelineFilters?.hasInterpolation,
+    if (timelineFilters?.stats?.avgHistorical) {
+        tlStats.push({ label: 'Ø Historisch', value: String(timelineFilters.stats.avgHistorical).replace('.', ','), sub: timelineFilters.stats.dateRange || 'gesamte Historie', tone: 'info' });
+    }
+    if (timelineFilters?.stats?.avgForecast) {
+        tlStats.push({ label: 'Ø Prognose', value: String(timelineFilters.stats.avgForecast).replace('.', ','), sub: timelineFilters.stats.forecastRange || 'kommende Monate', tone: 'warn' });
+    }
+    if (timelineFilters?.stats?.avgTrend) {
+        const at = parseFloat(timelineFilters.stats.avgTrend);
+        tlStats.push({
+            label: 'Trend',
+            value: at > 0 ? '↑ Steigend' : at < 0 ? '↓ Fallend' : '→ Stabil',
+            sub: `${at >= 0 ? '+' : ''}${String(timelineFilters.stats.avgTrend).replace('.', ',')}`,
+            tone: at > 0 ? 'good' : at < 0 ? 'bad' : 'neutral',
         });
-
-        const tlSource = timelineFilters?.source === 'employee' ? 'Mitarbeiter'
-            : timelineFilters?.source === 'candidates' ? 'Bewerber' : 'Alle Quellen';
-        addChartCaption(doc, y, `Abb. 1 · Bewertungsverlauf mit Prognose · Quelle: ${tlSource}`);
+    } else if (timelineFilters?.stats?.avgHistorical && timelineFilters?.stats?.avgForecast) {
+        const diff = parseFloat(timelineFilters.stats.avgForecast) - parseFloat(timelineFilters.stats.avgHistorical);
+        tlStats.push({
+            label: 'Trend',
+            value: diff > 0.05 ? '↑ Steigend' : diff < -0.05 ? '↓ Fallend' : '→ Stabil',
+            sub: `${diff >= 0 ? '+' : ''}${diff.toFixed(2).replace('.', ',')} vs. Historie`,
+            tone: diff > 0.05 ? 'good' : diff < -0.05 ? 'bad' : 'neutral',
+        });
     }
 
+    const tlLegend = [
+        { label: 'Historisch', color: C.blue600 },
+    ];
+    if (timelineFilters?.hasInterpolation) tlLegend.push({ label: 'Interpoliert', color: C.s400, dashed: true });
+    if (timelineFilters?.hasForecast)      tlLegend.push({ label: 'Prognose',     color: C.orange500, dashed: true });
+    if (timelineFilters?.stats?.dataPoints != null) {
+        tlLegend.push({ label: `Quelle: ${source} · n = ${timelineFilters.stats.dataPoints} Datenpunkte`, sourceNote: true });
+    }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 3: TOPIC-BEWERTUNGEN (falls vorhanden)
-    // ═════════════════════════════════════════════════════════════════════════
+    drawDashboardCard(doc, y, {
+        header: {
+            eyebrow: 'Zeitreihe · Historie & Prognose',
+            title: 'Timeline',
+            subtitle: `${source} · ${timelineFilters?.metric || 'Ø Score'}`,
+            iconTone: 'info',
+            controlsText: source,
+        },
+        chart: timelineImg,
+        chartH: 90,
+        legend: tlLegend,
+        stats: tlStats,
+        caption: 'Abb. 1 · Bewertungsverlauf mit Prognose · gestrichelte Linien = interpolierte bzw. prognostizierte Werte',
+    });
+
+    drawPageFooter(doc, footerLeft, '02 / ' + (totalPages || 4), dateShort);
+
+    // ───────────────────────────────────────────────────────────────────────
+    // SEITE 3 — TOPICS IM DETAIL
+    // ───────────────────────────────────────────────────────────────────────
     if (topicRatingImg) {
         doc.addPage();
-        currentPage++;
+        drawPageHeader(doc, headerLabel, dateShort);
 
-        doc.setFillColor(...COLORS.bgLight);
-        doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
+        let y3 = 30;
+        y3 = drawSectionTitle(doc, y3, 3, 'Topics im Detail', 'Topic-Bewertungen · Detailansicht');
 
-        let y2 = addSectionTitle(doc, 'Topics im Detail', PAGE.marginTop + 5,
-            'Durchschnittliche Bewertung pro Themen-Cluster über Zeit', 'Topic-Bewertungen');
-
-        // Filter-Box
-        if (topicRatingFilters) {
-            const statsEntries = [];
-            if (topicRatingFilters.stats?.dataPoints) {
-                statsEntries.push(['Datenpunkte', String(topicRatingFilters.stats.dataPoints)]);
-            }
-            if (topicRatingFilters.stats?.topicsCount) {
-                statsEntries.push(['Topics', String(topicRatingFilters.stats.topicsCount)]);
-            }
-            y2 = drawFilterBox(doc, y2, topicRatingFilters, statsEntries);
-        }
-
-        // Chart einfügen – verbleibenden Platz nutzen (Legende + Caption reservieren)
-        const maxH2 = PAGE.height - PAGE.marginBottom - 28 - y2;
-        y2 = addChartImage(doc, topicRatingImg, y2, maxH2);
-
-        // Topic-Legende mit Farben
-        if (topicRatingFilters?.visibleTopics?.length > 0) {
-            y2 = drawTopicLegend(
-                doc, y2,
-                topicRatingFilters.visibleTopics,
-                topicRatingFilters.allTopics || topicRatingFilters.visibleTopics,
-                prettifyTopicKey,
-            );
-        }
         const trSource = topicRatingFilters?.source === 'employee' ? 'Mitarbeiter'
-            : topicRatingFilters?.source === 'candidates' ? 'Bewerber' : 'Alle Quellen';
-        addChartCaption(doc, y2, `Abb. 2 · Durchschnittliche Bewertung pro Topic-Cluster · Quelle: ${trSource}`);
+                       : topicRatingFilters?.source === 'candidates' ? 'Bewerber' : 'Alle Quellen';
+
+        const trStats = [];
+        const trGran = topicRatingFilters?.granularity === 'year' ? 'jährlich aggregiert' : 'aggregiert';
+        const trTopicCount = (topicRatingFilters?.visibleTopics || []).length;
+        if (topicRatingFilters?.stats?.dataPoints != null) {
+            trStats.push({ label: 'Datenpunkte', value: String(topicRatingFilters.stats.dataPoints), sub: trGran });
+        }
+        if (topicRatingFilters?.stats?.avgScore) {
+            trStats.push({ label: 'Ø Score', value: String(topicRatingFilters.stats.avgScore).replace('.', ','), sub: `über alle ${trTopicCount} Topics`, tone: 'good' });
+        }
+        if (topicRatingFilters?.stats?.bestTopic) {
+            trStats.push({ label: 'Bestes Topic', value: topicRatingFilters.stats.bestTopic.name, sub: `Ø ${String(topicRatingFilters.stats.bestTopic.score).replace('.', ',')}`, tone: 'good' });
+        }
+        if (topicRatingFilters?.stats?.worstTopic) {
+            trStats.push({ label: 'Schlechtestes', value: topicRatingFilters.stats.worstTopic.name, sub: `Ø ${String(topicRatingFilters.stats.worstTopic.score).replace('.', ',')}`, tone: 'bad' });
+        }
+
+        const trLegend = (topicRatingFilters?.visibleTopics || []).slice(0, 6).map((topic, i) => ({
+            label: prettifyTopic(topic),
+            color: [C.blue500, C.orange500, C.emerald500, [168, 85, 247], C.rose500, [20, 184, 166]][i % 6],
+        }));
+        if (topicRatingFilters?.stats?.dataPoints != null) {
+            trLegend.push({ label: `Quelle: ${trSource} · LDA Topic Modeling`, sourceNote: true });
+        }
+
+        drawDashboardCard(doc, y3, {
+            header: {
+                eyebrow: 'Topic-Bewertungen · Detailansicht',
+                title: 'Topics im Detail',
+                subtitle: `${trSource} · ${(topicRatingFilters?.visibleTopics || []).length}/${(topicRatingFilters?.allTopics || []).length || '?'} Topics · gesamter Zeitraum`,
+                iconTone: 'warn',
+                controlsText: trSource,
+            },
+            chart: topicRatingImg,
+            chartH: 95,
+            legend: trLegend,
+            stats: trStats,
+            caption: `Abb. 2 · Durchschnittliche Bewertung pro Topic-Cluster über Zeit · Quelle: ${trSource} · LDA Topic Modeling`,
+        });
+
+        drawPageFooter(doc, footerLeft, '03 / ' + totalPages, dateShort);
     }
 
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 4+: TOPIC-ÜBERSICHT (Tabelle)
-    // ═════════════════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────────────
+    // SEITE 4 — TOPIC-ÜBERSICHT
+    // ───────────────────────────────────────────────────────────────────────
     if (topicOverviewData?.topics?.length > 0) {
         doc.addPage();
-        currentPage++;
+        drawPageHeader(doc, headerLabel, dateShort);
 
-        doc.setFillColor(...COLORS.bgLight);
-        doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
+        let y4 = 30;
+        y4 = drawSectionTitle(doc, y4, 4, 'Topic-Übersicht', 'Topic-Cluster · Tabellenansicht');
 
-        let yT = addSectionTitle(doc, 'Topic-Übersicht', PAGE.marginTop + 5,
-            'Alle identifizierten Topics mit Sentiment, Rating und Datenqualität', 'Topic-Cluster · Tabelle');
-
-        // Datenquellen-Info
-        const sourceL = topicOverviewData.sourceFilter === 'employee' ? 'Mitarbeiter'
-            : topicOverviewData.sourceFilter === 'candidates' ? 'Bewerber' : 'Alle';
-        const statsInfo = topicOverviewData.stats;
-
-        doc.setFillColor(...COLORS.white);
-        doc.setDrawColor(...COLORS.border);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(PAGE.marginLeft, yT, PAGE.contentWidth, 14, 2, 2, 'FD');
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...COLORS.textMuted);
-        doc.text('Datenquelle:', PAGE.marginLeft + 5, yT + 5);
-        doc.setFont('helvetica', 'normal');
-        doc.text(sourceL, PAGE.marginLeft + 30, yT + 5);
-
-        if (statsInfo) {
-            doc.setFont('helvetica', 'bold');
-            doc.text('Topics:', PAGE.marginLeft + 65, yT + 5);
-            doc.setFont('helvetica', 'normal');
-            doc.text(String(statsInfo.totalTopics || '\u2013'), PAGE.marginLeft + 82, yT + 5);
-
-            doc.setFont('helvetica', 'bold');
-            doc.text('\u00d8 Rating:', PAGE.marginLeft + 100, yT + 5);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...COLORS.wpBubble);
-            doc.text(String(statsInfo.avgRating || '\u2013'), PAGE.marginLeft + 120, yT + 5);
-            doc.setTextColor(...COLORS.textMuted);
-
-            if (statsInfo.totalMentions) {
-                doc.setFont('helvetica', 'bold');
-                doc.text('Erw\u00e4hnungen:', PAGE.marginLeft + 135, yT + 5);
-                doc.setFont('helvetica', 'normal');
-                doc.text(String(statsInfo.totalMentions), PAGE.marginLeft + 160, yT + 5);
-            }
-        }
-
-        // Zweite Zeile
-        doc.setFontSize(7.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.textLight);
-        doc.text(`${topicOverviewData.topics.length} Themen identifiziert`, PAGE.marginLeft + 5, yT + 11);
-
-        yT += 20;
-
-        // ─── Tabelle ────────────────────────────────────────────────────
-        const cols = [
-            { key: 'topic',     label: 'Thema',         x: PAGE.marginLeft + 2,  w: 60 },
-            { key: 'sentiment', label: 'Sentiment',      x: PAGE.marginLeft + 64, w: 30 },
-            { key: 'rating',    label: 'Bewertung',      x: PAGE.marginLeft + 96, w: 22 },
-            { key: 'frequency', label: 'Anzahl',         x: PAGE.marginLeft + 120,w: 20 },
-            { key: 'quality',   label: 'Datenqualit\u00e4t', x: PAGE.marginLeft + 142,w: 32 },
-        ];
-        const rowH = 7.5;
-
-        // Tabellen-Header zeichnen — kräftigerer Hintergrund für klare visuelle Trennung
-        const drawTableHeader = (atY) => {
-            doc.setFillColor(...COLORS.slate100);
-            doc.rect(PAGE.marginLeft, atY - 4.5, PAGE.contentWidth, rowH + 1, 'F');
-
-            // Untere Trennlinie
-            doc.setDrawColor(...COLORS.slate300);
-            doc.setLineWidth(0.4);
-            doc.line(PAGE.marginLeft, atY + rowH - 3.5, PAGE.contentRight, atY + rowH - 3.5);
-
-            doc.setFontSize(7);
-            doc.setFont('courier', 'bold');
-            doc.setTextColor(...COLORS.slate700);
-            cols.forEach(c => doc.text(String(c.label).toUpperCase(), c.x, atY));
-
-            return atY + rowH + 2;
+        const ovSource = topicOverviewData.sourceFilter === 'employee' ? 'Mitarbeiter'
+                       : topicOverviewData.sourceFilter === 'candidates' ? 'Bewerber' : 'Alle Quellen';
+        const st = topicOverviewData.stats || {};
+        const sentCounts = {
+            total: topicOverviewData.topics.length,
+            pos: topicOverviewData.topics.filter(t => t.sentiment === 'Positiv').length,
+            neu: topicOverviewData.topics.filter(t => t.sentiment === 'Neutral' || !t.sentiment).length,
+            neg: topicOverviewData.topics.filter(t => t.sentiment === 'Negativ').length,
         };
 
-        yT = drawTableHeader(yT);
-
-        // Tabellen-Zeilen
-        const topics = topicOverviewData.topics;
-        topics.forEach((topic, idx) => {
-            // Neue Seite wenn nötig
-            if (yT > PAGE.height - PAGE.marginBottom - 10) {
-                doc.addPage();
-                currentPage++;
-                doc.setFillColor(...COLORS.bgLight);
-                doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
-                yT = PAGE.marginTop;
-                yT = drawTableHeader(yT);
-            }
-
-            // Zeilen-Hintergrund \u2014 alternierende Farben f\u00fcr bessere Lesbarkeit
-            doc.setFillColor(...(idx % 2 === 0 ? COLORS.white : COLORS.slate50));
-            doc.rect(PAGE.marginLeft, yT - 4.5, PAGE.contentWidth, rowH, 'F');
-            doc.setDrawColor(...COLORS.slate100);
-            doc.setLineWidth(0.15);
-            doc.line(PAGE.marginLeft, yT + rowH - 4.5, PAGE.contentRight, yT + rowH - 4.5);
-
-            doc.setFontSize(7.5);
-            doc.setFont('helvetica', 'normal');
-
-            // Topic-Name
-            doc.setTextColor(...COLORS.slate900);
-            const tName = topic.topic.length > 35 ? topic.topic.substring(0, 35) + '\u2026' : topic.topic;
-            doc.setFont('helvetica', 'bold');
-            doc.text(tName, cols[0].x, yT);
-
-            // Sentiment als tonales Pill-Badge (wie im Dashboard)
-            doc.setFont('helvetica', 'bold');
-            const rawSentiment = String(topic.sentiment || 'Neutral').replace(/[^\w\s\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df-]/g, '').trim();
-            let sentBg = COLORS.slate100;
-            let sentText = COLORS.slate600;
-            let sentDot = COLORS.slate400;
-            if (rawSentiment === 'Positiv') { sentBg = COLORS.emerald50; sentText = COLORS.emerald700; sentDot = COLORS.emerald500; }
-            else if (rawSentiment === 'Negativ') { sentBg = COLORS.rose50; sentText = COLORS.rose700; sentDot = COLORS.rose500; }
-            else if (rawSentiment === 'Gemischt') { sentBg = COLORS.amber50; sentText = COLORS.amber700; sentDot = COLORS.amber500; }
-
-            const sentLabel = rawSentiment || 'Neutral';
-            const sentBadgeW = doc.getTextWidth(sentLabel) + 8;
-            doc.setFillColor(...sentBg);
-            doc.roundedRect(cols[1].x - 1, yT - 3.5, sentBadgeW, 5, 2.5, 2.5, 'F');
-            doc.setFillColor(...sentDot);
-            doc.circle(cols[1].x + 2, yT - 1, 0.9, 'F');
-            doc.setTextColor(...sentText);
-            doc.setFontSize(7);
-            doc.text(sentLabel, cols[1].x + 4.5, yT);
-            doc.setFontSize(7.5);
-
-            // Rating mit Farbe
-            const rating = topic.avgRating ? topic.avgRating.toFixed(1) : '\u2013';
-            let ratingColor = COLORS.text;
-            if (topic.avgRating >= 4) ratingColor = COLORS.green;
-            else if (topic.avgRating && topic.avgRating < 3) ratingColor = COLORS.red;
-            doc.setTextColor(...ratingColor);
-            doc.setFont('helvetica', 'bold');
-            doc.text(rating, cols[2].x, yT);
-
-            // Anzahl
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...COLORS.text);
-            doc.text(String(topic.frequency || 0), cols[3].x, yT);
-
-            // Datenqualität — tonale Badge wie im Dashboard
-            const riskLevel = topic.statistical_meta?.risk_level;
-            let qualText = '\u2013';
-            let qualText_color = COLORS.slate500;
-            let qualBg = null;
-            switch (riskLevel) {
-                case 'limited':     qualText = 'Begrenzt';        qualText_color = COLORS.rose700;    qualBg = COLORS.rose50;    break;
-                case 'constrained': qualText = 'Eingeschr\u00e4nkt';   qualText_color = COLORS.amber700;   qualBg = COLORS.amber50;   break;
-                case 'acceptable':  qualText = 'Akzeptabel';      qualText_color = COLORS.amber700;   qualBg = COLORS.amber50;   break;
-                case 'solid':       qualText = 'Solide';          qualText_color = COLORS.emerald700; qualBg = COLORS.emerald50; break;
-            }
-
-            // Badge-Hintergrund (pill, rounded-full)
-            if (qualBg) {
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'bold');
-                const badgeW = doc.getTextWidth(qualText) + 4.5;
-                doc.setFillColor(...qualBg);
-                doc.roundedRect(cols[4].x - 1, yT - 3.5, badgeW, 5, 2.5, 2.5, 'F');
-            }
-            doc.setTextColor(...qualText_color);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
-            doc.text(qualText, cols[4].x + 1.25, yT);
-
-            yT += rowH;
-        });
-
-        // Tabellen-Abschluss-Linie
-        doc.setDrawColor(...COLORS.border);
-        doc.setLineWidth(0.3);
-        doc.line(PAGE.marginLeft, yT - 3, PAGE.contentRight, yT - 3);
-    }
-
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // KOPF- UND FUSSZEILEN auf allen Inhaltsseiten (außer Titelseite)
-    // ═════════════════════════════════════════════════════════════════════════
-    const totalPages = doc.internal.pages.length - 1;
-    const headerTitle = `WorkPulse · ${companyName} – Analytics Report`;
-
-    for (let i = 2; i <= totalPages; i++) {
-        doc.setPage(i);
-        addPageHeader(doc, headerTitle);
-        addFooter(doc, i, totalPages, companyName);
-    }
-
-    // ─── PDF speichern ──────────────────────────────────────────────────
-    const fileName = `Analytics_Report_${companyName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
-
-    console.log(`\u2705 PDF gespeichert: ${fileName} (${totalPages} Seiten)`);
-};
-
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ─── FIRMENVERGLEICH PDF-EXPORT ─────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const COMPARE_COLORS_DEFAULT = [
-    [59, 130, 246],   // blue-500
-    [245, 158, 11],   // amber-500
-    [16, 185, 129],   // emerald-500
-];
-
-export const exportCompareAsPDF = async (compareData) => {
-    const {
-        companies = [],       // [{ name, id, score, trend, mostCritical, negativeTopic, categoryRatings }]
-        radarChartElement = null,
-        barChartElement = null,
-        timelineChartElement = null,
-        categoryData = [],    // [{ category, ...companyValues }]
-        companyColors = null,  // Optional: [hex strings] - custom colors per company
-        summaryData = null,    // Summary insights from Compare.jsx
-        categoryChartView = 'radar',  // 'radar' or 'bar' - which chart view is active
-    } = compareData;
-
-    // Use custom colors or fall back to defaults
-    const hexToRgb = (hex) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return [r, g, b];
-    };
-    const COMPARE_COLORS = companyColors
-        ? companyColors.map(hex => hexToRgb(hex))
-        : COMPARE_COLORS_DEFAULT;
-
-    const companyNames = companies.map(c => c.name || 'Unbekannt');
-    const titleLabel = companyNames.join(' vs. ');
-
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    let currentPage = 1;
-
-    // ─── Chart-Bilder vorab extrahieren (sequentiell) ────────────────────
-    console.log('📸 Extrahiere Vergleichs-Charts...');
-
-    let radarImg = null;
-    let barImg = null;
-    let timelineImg = null;
-
-    // Nur das ausgewählte Category-Chart extrahieren
-    if (categoryChartView === 'radar') {
-        try { radarImg = await extractChartImage(radarChartElement); }
-        catch (e) { console.warn('Radar-Chart Extraktion fehlgeschlagen:', e); }
-    } else if (categoryChartView === 'bar') {
-        try { barImg = await extractChartImage(barChartElement); }
-        catch (e) { console.warn('Bar-Chart Extraktion fehlgeschlagen:', e); }
-    }
-
-    try { timelineImg = await extractChartImage(timelineChartElement); }
-    catch (e) { console.warn('Timeline-Chart Extraktion fehlgeschlagen:', e); }
-
-    console.log('✅ Charts extrahiert:', { radar: !!radarImg, bar: !!barImg, timeline: !!timelineImg });
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 1: TITELSEITE
-    // ═════════════════════════════════════════════════════════════════════════
-
-    // Dunkler Header-Bereich
-    const headerH = 125;
-    doc.setFillColor(...COLORS.dark);
-    doc.rect(0, 0, PAGE.width, headerH, 'F');
-    doc.setFillColor(...COLORS.darkAlt);
-    doc.rect(0, headerH - 25, PAGE.width, 25, 'F');
-
-    // Akzentlinie oben
-    doc.setFillColor(...COLORS.wpBubble);
-    doc.rect(0, 0, PAGE.width, 2.5, 'F');
-
-    // WorkPulse Logo (Sprechblase mit Puls-Linie)
-    const cLogoW = 22;
-    drawWorkPulseLogo(doc, PAGE.width / 2 - cLogoW / 2, 28, cLogoW, COLORS.white, COLORS.wpBubble);
-
-    // Eyebrow
-    doc.setFontSize(8);
-    doc.setFont('courier', 'bold');
-    doc.setTextColor(150, 163, 184);
-    doc.text('WORKPULSE · FIRMENVERGLEICH', PAGE.width / 2, 58, { align: 'center' });
-
-    // Titel
-    doc.setFontSize(26);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.white);
-    doc.text('Firmenvergleich', PAGE.width / 2, 72, { align: 'center' });
-
-    // Untertitel mit Firmennamen
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.accent);
-    const subtitle = companyNames.length <= 3
-        ? companyNames.join('  ·  ')
-        : companyNames.slice(0, 3).join('  ·  ');
-    doc.text(subtitle, PAGE.width / 2, 84, { align: 'center' });
-
-    // Trennlinie
-    doc.setDrawColor(255, 255, 255, 0.2);
-    doc.setLineWidth(0.3);
-    doc.line(PAGE.width / 2 - 40, 90, PAGE.width / 2 + 40, 90);
-
-    // Datum
-    doc.setFontSize(10);
-    doc.setTextColor(148, 163, 184);
-    const dateStr = new Date().toLocaleDateString('de-DE', {
-        day: '2-digit', month: 'long', year: 'numeric'
-    });
-    doc.text(dateStr, PAGE.width / 2, 97, { align: 'center' });
-
-    // Executive Summary Box
-    const execY = headerH + 15;
-    doc.setFillColor(...COLORS.white);
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(PAGE.marginLeft, execY, PAGE.contentWidth, 40, 3, 3, 'FD');
-
-    doc.setFillColor(...COLORS.wpBubble);
-    doc.roundedRect(PAGE.marginLeft, execY, PAGE.contentWidth, 3, 3, 3, 'F');
-    doc.setFillColor(...COLORS.white);
-    doc.rect(PAGE.marginLeft, execY + 2, PAGE.contentWidth, 2, 'F');
-
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.dark);
-    doc.text('Zusammenfassung', PAGE.marginLeft + 8, execY + 12);
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.textMuted);
-    doc.text(`Vergleich von ${companies.length} Unternehmen anhand von Bewertungen,`, PAGE.marginLeft + 8, execY + 20);
-    doc.text('Kategorien, Trends und Themenbereichen.', PAGE.marginLeft + 8, execY + 26);
-
-    // Firmen-Übersicht mit Farbcodierung
-    let summaryY = execY + 35;
-    doc.setFontSize(9);
-    companies.forEach((comp, i) => {
-        const col = COMPARE_COLORS[i] || COLORS.textMuted;
-        doc.setFillColor(...col);
-        doc.circle(PAGE.marginLeft + 12, summaryY + 7, 2, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...COLORS.dark);
-        doc.text(comp.name || 'Unbekannt', PAGE.marginLeft + 18, summaryY + 8);
-        summaryY += 8;
-    });
-
-    // Inhaltsverzeichnis
-    let tocY = summaryY + 12;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.dark);
-    doc.text('Inhalt', PAGE.marginLeft, tocY);
-    tocY += 8;
-
-    const tocItems = [];
-    let pageCounter = 1;
-    pageCounter++; tocItems.push(['KPI-Vergleich', pageCounter]);
-    if (radarImg || barImg) { pageCounter++; tocItems.push(['Kategorievergleich', pageCounter]); }
-    if (timelineImg) { pageCounter++; tocItems.push(['Bewertungsverlauf', pageCounter]); }
-    if (categoryData.length > 0) { pageCounter++; tocItems.push(['Detailvergleich', pageCounter]); }
-
-    tocItems.forEach(([label, pg]) => {
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.text);
-        doc.text(label, PAGE.marginLeft + 4, tocY);
-        doc.setTextColor(...COLORS.textLight);
-
-        const dotX = PAGE.marginLeft + 4 + doc.getTextWidth(label) + 2;
-        const pageX = PAGE.contentRight - 4;
-        const dots = '.'.repeat(Math.max(1, Math.floor((pageX - dotX - 10) / 1.5)));
-        doc.text(dots, dotX, tocY);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...COLORS.wpBubble);
-        doc.text(String(pg), pageX, tocY, { align: 'right' });
-        tocY += 6;
-    });
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 1.5: DETAILLIERTE ZUSAMMENFASSUNG (wenn summaryData vorhanden)
-    // ═════════════════════════════════════════════════════════════════════════
-    if (summaryData) {
-        doc.addPage();
-        currentPage++;
-
-        doc.setFillColor(...COLORS.bgLight);
-        doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
-
-        let summaryPageY = addSectionTitle(doc, 'Detaillierte Zusammenfassung', PAGE.marginTop + 5,
-            'Kernerkenntnisse aus dem Firmenvergleich');
-
-        // Grid-Layout: 2 Spalten
-        const numCols = 2;
-        const colGap = 5;
-        const rowGap = 6;
-        const colWidth = (PAGE.contentWidth - (numCols - 1) * colGap) / numCols;
-
-        // Helper zum Zeichnen einer Zusammenfassungsbox
-        const drawSummaryBox = (xPos, yPos, width, title, iconColor, content) => {
-            const boxPadding = 6;
-            const lineHeight = 4.5;
-            const titleHeight = 8;
-            
-            // Inhaltshöhe berechnen
-            const contentLines = content.split('\n').length;
-            const contentHeight = contentLines * lineHeight + boxPadding;
-            const totalHeight = titleHeight + contentHeight;
-
-            // Box zeichnen
-            doc.setFillColor(...COLORS.white);
-            doc.setDrawColor(...COLORS.border);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(xPos, yPos, width, totalHeight, 2, 2, 'FD');
-
-            // Icon-Bereich (farbiger Akzent links)
-            doc.setFillColor(...iconColor);
-            doc.roundedRect(xPos, yPos, 4, totalHeight, 2, 2, 'F');
-
-            // Titel
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...COLORS.dark);
-            doc.text(title, xPos + 8, yPos + 5);
-
-            // Content
-            doc.setFontSize(7.5);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...COLORS.text);
-            const contentY = yPos + titleHeight + 2;
-            const lines = content.split('\n');
-            lines.forEach((line, idx) => {
-                // Text umbrechen wenn zu lang
-                const maxWidth = width - 16;
-                const wrappedLines = doc.splitTextToSize(line, maxWidth);
-                wrappedLines.forEach((wrappedLine, wIdx) => {
-                    doc.text(wrappedLine, xPos + 8, contentY + (idx * lineHeight) + (wIdx * lineHeight));
-                });
-            });
-
-            return totalHeight;
-        };
-
-        // Sammle alle Boxen-Daten
-        const boxes = [];
-
-        // 1. Gesamtführer
-        let leaderContent = '';
-        if (summaryData.leader) {
-            if (summaryData.leader.isTied) {
-                leaderContent = `Mehrere Firmen gleichauf (Ø ${Number(summaryData.leader.score).toFixed(2)})`;
-            } else {
-                leaderContent = `${summaryData.leader.name}: ${Number(summaryData.leader.score).toFixed(2)}`;
-            }
-        } else {
-            leaderContent = 'Keine Daten verfügbar';
-        }
-        boxes.push({ title: 'Gesamtführer', color: [245, 158, 11], content: leaderContent });
-
-        // 2. Stärken-Profil
-        let strengthsContent = '';
-        if (summaryData.strengths && summaryData.strengths.length > 0) {
-            strengthsContent = summaryData.strengths
-                .map(({ slot, label, score }) => 
-                    `• ${slot.name}: ${label || '–'}${score != null ? ` (${score.toFixed(2)})` : ''}`
-                )
-                .join('\n');
-        } else {
-            strengthsContent = 'Keine Daten verfügbar';
-        }
-        boxes.push({ title: 'Stärken-Profil', color: [16, 185, 129], content: strengthsContent });
-
-        // 3. Größte Unterschiede
-        let gapsContent = '';
-        if (summaryData.biggestGaps && summaryData.biggestGaps.length > 0) {
-            gapsContent = summaryData.biggestGaps
-                .map(g => `• ${g.label}: Differenz ${g.spread.toFixed(2)} Punkte`)
-                .join('\n');
-        } else {
-            gapsContent = 'Keine nennenswerten Unterschiede';
-        }
-        boxes.push({ title: 'Größte Unterschiede', color: [59, 130, 246], content: gapsContent });
-
-        // 4. Gemeinsame Schwächen
-        let weaknessesContent = '';
-        if (summaryData.sharedWeaknesses && summaryData.sharedWeaknesses.length > 0) {
-            weaknessesContent = summaryData.sharedWeaknesses.join(', ') + ' (alle unter 3,0)';
-        } else {
-            weaknessesContent = 'Keine – keine Kategorie bei allen unter 3,0';
-        }
-        boxes.push({ title: 'Gemeinsame Schwächen', color: [239, 68, 68], content: weaknessesContent });
-
-        // 5. Trend-Ausblick
-        let trendsContent = '';
-        if (summaryData.trends && summaryData.trends.length > 0) {
-            trendsContent = summaryData.trends
-                .map(({ slot, trend }) => {
-                    if (!trend) return `• ${slot.name}: –`;
-                    const delta = parseFloat(trend.avgDelta) > 0 ? `+${trend.avgDelta}` : trend.avgDelta;
-                    return `• ${slot.name}: ${delta} (12 Mon.)`;
-                })
-                .join('\n');
-        } else {
-            trendsContent = 'Keine Trenddaten verfügbar';
-        }
-        boxes.push({ title: 'Trend-Ausblick', color: [100, 116, 139], content: trendsContent });
-
-        // 6. Chart-Ansicht Information (nur wenn relevant)
-        if (radarImg || barImg) {
-            const chartViewText = categoryChartView === 'radar' ? 'Radar-Ansicht' : 'Balken-Ansicht';
-            boxes.push({ 
-                title: 'Diagramm-Ansicht', 
-                color: [139, 92, 246], 
-                content: `Kategorievergleich wird als ${chartViewText} dargestellt`
-            });
-        }
-
-        // Zeichne Boxen in Grid-Layout
-        let currentRow = 0;
-        let currentCol = 0;
-        let rowHeights = [0]; // Track max height per row
-
-        boxes.forEach((box, idx) => {
-            const xPos = PAGE.marginLeft + currentCol * (colWidth + colGap);
-            const yPos = summaryPageY + rowHeights.slice(0, currentRow).reduce((sum, h) => sum + h + rowGap, 0);
-            
-            const boxHeight = drawSummaryBox(xPos, yPos, colWidth, box.title, box.color, box.content);
-            
-            // Track max height in this row
-            rowHeights[currentRow] = Math.max(rowHeights[currentRow] || 0, boxHeight);
-            
-            currentCol++;
-            if (currentCol >= numCols) {
-                currentCol = 0;
-                currentRow++;
-                rowHeights[currentRow] = 0;
-            }
-        });
-
-        // Update summaryPageY für nachfolgende Inhalte
-        summaryPageY += rowHeights.reduce((sum, h) => sum + h, 0) + (rowHeights.length - 1) * rowGap;
-    }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 2: KPI-VERGLEICH
-    // ═════════════════════════════════════════════════════════════════════════
-    doc.addPage();
-    currentPage++;
-
-    doc.setFillColor(...COLORS.bgLight);
-    doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
-
-    let y = addSectionTitle(doc, 'KPI-Vergleich', PAGE.marginTop + 5,
-        'Gegenüberstellung der wichtigsten Kennzahlen');
-
-    // Firmen-Legende
-    companies.forEach((comp, i) => {
-        const col = COMPARE_COLORS[i] || COLORS.textMuted;
-        doc.setFillColor(...col);
-        doc.circle(PAGE.marginLeft + 4 + i * 60, y, 2, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...col);
-        const shortName = comp.name.length > 18 ? comp.name.substring(0, 18) + '…' : comp.name;
-        doc.text(shortName, PAGE.marginLeft + 9 + i * 60, y + 0.5);
-    });
-    y += 10;
-
-    // ─── KPI-Vergleichskarten (Ø Score, Trend, Most Critical, Neg. Topic) ─
-
-    const drawCompareKPISection = (title, yPos, getValue) => {
-        const boxW = PAGE.contentWidth;
-        const rowH = 8;
-        const boxH = 10 + companies.length * rowH + 4;
-
-        doc.setFillColor(...COLORS.white);
-        doc.setDrawColor(...COLORS.border);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(PAGE.marginLeft, yPos, boxW, boxH, 2, 2, 'FD');
-
-        // Titel
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...COLORS.dark);
-        doc.text(title, PAGE.marginLeft + 6, yPos + 7);
-
-        // Zeilen pro Firma
-        let rowY = yPos + 14;
-        companies.forEach((comp, i) => {
-            const col = COMPARE_COLORS[i] || COLORS.textMuted;
-            const { value, valueColor } = getValue(comp, i);
-
-            // Farbpunkt
-            doc.setFillColor(...col);
-            doc.circle(PAGE.marginLeft + 10, rowY - 1, 1.5, 'F');
-
-            // Name
-            doc.setFontSize(8.5);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...COLORS.text);
-            const name = comp.name.length > 30 ? comp.name.substring(0, 30) + '…' : comp.name;
-            doc.text(name, PAGE.marginLeft + 15, rowY);
-
-            // Wert (rechts ausgerichtet)
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...(valueColor || COLORS.dark));
-            doc.text(String(value), PAGE.contentRight - 6, rowY, { align: 'right' });
-
-            rowY += rowH;
-        });
-
-        return yPos + boxH + 6;
-    };
-
-    // Ø Score
-    y = drawCompareKPISection('Ø Score', y, (comp) => {
-        const score = comp.score;
-        const val = score != null ? String(score) : '–';
-        const col = score > 3 ? COLORS.green : score >= 2 ? COLORS.dark : score != null ? COLORS.red : COLORS.textLight;
-        return { value: val, valueColor: col };
-    });
-
-    // Trend
-    y = drawCompareKPISection('Trend', y, (comp) => {
-        if (!comp.trend) return { value: '–', valueColor: COLORS.textLight };
-        const tv = parseFloat(comp.trend.avgDelta);
-        const val = `${tv > 0 ? '+' : ''}${comp.trend.avgDelta}`;
-        const col = tv > 0.05 ? COLORS.green : tv < -0.05 ? COLORS.red : COLORS.textMuted;
-        return { value: val, valueColor: col };
-    });
-
-    // Most Critical
-    y = drawCompareKPISection('Most Critical', y, (comp) => {
-        if (!comp.mostCritical) return { value: '–', valueColor: COLORS.textLight };
-        const val = `${comp.mostCritical.topicName} (${comp.mostCritical.score})`;
-        return { value: val, valueColor: COLORS.red };
-    });
-
-    // Negative Topic
-    y = drawCompareKPISection('Negative Topic', y, (comp) => {
-        const nt = comp.negativeTopic;
-        if (!nt) return { value: '–', valueColor: COLORS.textLight };
-        const label = nt.topic_label || nt.topic_text || nt.topic || '–';
-        const val = label.length > 30 ? label.substring(0, 30) + '…' : label;
-        return { value: val, valueColor: COLORS.orange };
-    });
-
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 3: KATEGORIEVERGLEICH (Radar + Bar)
-    // ═════════════════════════════════════════════════════════════════════════
-    if (radarImg || barImg) {
-        doc.addPage();
-        currentPage++;
-
-        doc.setFillColor(...COLORS.bgLight);
-        doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
-
-        let y3 = addSectionTitle(doc, 'Kategorievergleich', PAGE.marginTop + 5,
-            'Bewertung der Firmen in den einzelnen Kategorien');
-
-        if (radarImg) {
-            // Radar-Chart Untertitel
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...COLORS.text);
-            doc.text('Radar-Ansicht', PAGE.marginLeft + 8, y3);
-            y3 += 4;
-
-            const maxRadarH = barImg
-                ? 110
-                : (PAGE.height - PAGE.marginBottom - 18 - y3);
-            y3 = addChartImage(doc, radarImg, y3, maxRadarH);
-            y3 = addChartCaption(doc, y3, 'Abb. 3 · Kategorievergleich (Radar) · alle Quellen');
-        }
-
-        if (barImg) {
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...COLORS.text);
-            doc.text('Balken-Ansicht', PAGE.marginLeft + 8, y3);
-            y3 += 4;
-
-            const maxBarH = PAGE.height - PAGE.marginBottom - 18 - y3;
-            y3 = addChartImage(doc, barImg, y3, maxBarH);
-            addChartCaption(doc, y3, 'Abb. 3 · Kategorievergleich (Balken) · alle Quellen');
-        }
-    }
-
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 4: BEWERTUNGSVERLAUF
-    // ═════════════════════════════════════════════════════════════════════════
-    if (timelineImg) {
-        doc.addPage();
-        currentPage++;
-
-        doc.setFillColor(...COLORS.bgLight);
-        doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
-
-        let y4 = addSectionTitle(doc, 'Bewertungsverlauf', PAGE.marginTop + 5,
-            'Historische Entwicklung der Bewertungen im Vergleich');
-
-        const maxTimelineH = PAGE.height - PAGE.marginBottom - 18 - y4;
-        y4 = addChartImage(doc, timelineImg, y4, maxTimelineH);
-        addChartCaption(doc, y4, 'Abb. 4 · Bewertungsverlauf im Vergleich · alle Quellen');
-    }
-
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // SEITE 5+: DETAILVERGLEICH TABELLE
-    // ═════════════════════════════════════════════════════════════════════════
-    if (categoryData.length > 0) {
-        doc.addPage();
-        currentPage++;
-
-        doc.setFillColor(...COLORS.bgLight);
-        doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
-
-        let yT = addSectionTitle(doc, 'Detailvergleich', PAGE.marginTop + 5,
-            'Bewertungen nach Kategorien mit Differenzanalyse');
-
-        // Tabellen-Spalten berechnen
-        const catColW = 55;
-        const compColW = companies.length >= 3 ? 30 : 38;
-        const diffColW = 25;
+        // Card-Rahmen vorbereiten
+        const cardX = PAGE.mx;
+        const cardW = PAGE.cw;
+        const headerH = 18;
+        const statsH = 16;
+        const tabsH = 10;
         const rowH = 7;
+        const tableHeadH = 9;
 
-        // Tabellenkopf
-        const drawTableHeader = (atY) => {
-            doc.setFillColor(...COLORS.dark);
-            doc.roundedRect(PAGE.marginLeft, atY - 5, PAGE.contentWidth, rowH + 3, 1, 1, 'F');
-            doc.setFontSize(7.5);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...COLORS.white);
+        const maxRows = topicOverviewData.topics.length;
+        const cardH = headerH + statsH + tabsH + tableHeadH + maxRows * rowH + 4;
 
-            doc.text('Kategorie', PAGE.marginLeft + 4, atY);
-            companies.forEach((comp, i) => {
-                const x = PAGE.marginLeft + catColW + i * compColW;
-                const name = comp.name.length > 12 ? comp.name.substring(0, 12) + '…' : comp.name;
-                doc.text(name, x, atY, { align: 'left' });
-            });
-            doc.text('Diff.', PAGE.contentRight - 4, atY, { align: 'right' });
+        doc.setFillColor(...C.s0);
+        doc.setDrawColor(...C.s200);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(cardX, y4, cardW, Math.min(cardH, PAGE.h - y4 - 22), 2.5, 2.5, 'FD');
 
-            return atY + rowH + 2;
-        };
-
-        yT = drawTableHeader(yT);
-
-        // Zeilen
-        categoryData.forEach((row, idx) => {
-            if (yT > PAGE.height - PAGE.marginBottom - 10) {
-                doc.addPage();
-                currentPage++;
-                doc.setFillColor(...COLORS.bgLight);
-                doc.rect(0, 0, PAGE.width, PAGE.height, 'F');
-                yT = PAGE.marginTop;
-                yT = drawTableHeader(yT);
-            }
-
-            // Zeilen-Hintergrund
-            if (idx % 2 === 0) {
-                doc.setFillColor(...COLORS.white);
-            } else {
-                doc.setFillColor(241, 245, 249);
-            }
-            doc.rect(PAGE.marginLeft, yT - 4.5, PAGE.contentWidth, rowH, 'F');
-
-            // Kategorie-Name
-            doc.setFontSize(7.5);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...COLORS.text);
-            const catName = row.category.length > 28 ? row.category.substring(0, 28) + '…' : row.category;
-            doc.text(catName, PAGE.marginLeft + 4, yT);
-
-            // Werte pro Firma
-            const values = companies.map((comp) => {
-                const val = row[comp.name];
-                return val != null ? Number(val) : null;
-            });
-            const validValues = values.filter(v => v != null);
-            const maxVal = validValues.length ? Math.max(...validValues) : null;
-            const minVal = validValues.length ? Math.min(...validValues) : null;
-
-            companies.forEach((comp, i) => {
-                const x = PAGE.marginLeft + catColW + i * compColW;
-                const val = values[i];
-
-                if (val == null) {
-                    doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(...COLORS.textLight);
-                    doc.text('–', x, yT);
-                } else {
-                    const isBest = validValues.length >= 2 && val === maxVal;
-                    const isWorst = validValues.length >= 2 && val === minVal && maxVal !== minVal;
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(...(isBest ? COLORS.green : isWorst ? COLORS.red : COLORS.text));
-                    doc.text(val.toFixed(2), x, yT);
-                }
-            });
-
-            // Differenz
-            if (validValues.length >= 2) {
-                const diff = (maxVal - minVal).toFixed(2);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(...COLORS.textMuted);
-                doc.text(`±${diff}`, PAGE.contentRight - 4, yT, { align: 'right' });
-            }
-
-            yT += rowH;
+        // Header
+        drawCardHeader(doc, y4, {
+            eyebrow: 'Topic-Übersicht · Detailansicht',
+            title: 'Alle Topics',
+            subtitle: `${ovSource} · ${topicOverviewData.topics.length} Topics · ${st.totalMentions || '–'} Erwähnungen`,
+            iconTone: 'info',
+            controlsText: ovSource,
         });
 
-        // Tabellen-Abschluss-Linie
-        doc.setDrawColor(...COLORS.border);
-        doc.setLineWidth(0.3);
-        doc.line(PAGE.marginLeft, yT - 3, PAGE.contentRight, yT - 3);
+        // Header → Stats Trennlinie
+        doc.setDrawColor(...C.s100);
+        doc.setLineWidth(0.2);
+        doc.line(cardX + 2, y4 + headerH, cardX + cardW - 2, y4 + headerH);
+
+        // Stats-Strip
+        const statsY = y4 + headerH;
+        drawStatsFooter(doc, cardX, statsY, cardW, [
+            { label: 'Topics',       value: String(topicOverviewData.topics.length), sub: 'identifiziert' },
+            { label: 'Erwähnungen',  value: String(st.totalMentions || '–'),         sub: 'über alle Topics' },
+            { label: 'Ø Rating',     value: st.avgRating ? String(st.avgRating).replace('.', ',') : '–', sub: 'gewichtet', tone: 'good' },
+            { label: 'Sentiment',    value: `${sentCounts.pos}·${sentCounts.neu}·${sentCounts.neg}`,     sub: 'Pos · Neu · Neg' },
+        ]);
+
+        // Sentiment-Tabs
+        const tabsY = statsY + statsH;
+        drawSentimentTabs(doc, cardX, tabsY, cardW, sentCounts);
+
+        // Tabelle
+        const tableY = tabsY + tabsH + 6;
+        const tableEndY = drawTopicTable(doc, cardX, tableY, cardW, topicOverviewData.topics);
+
+        // Page-count Pill (falls Topics ausgeblendet)
+        const shownTopics = topicOverviewData.topics.length;
+        const totalTopicCount = topicOverviewData.stats?.totalTopics || shownTopics;
+        const hiddenCount = Math.max(0, totalTopicCount - shownTopics);
+        if (hiddenCount > 0) {
+            const pcY = tableEndY + 6;
+            const pcLabel = `${shownTopics} von ${totalTopicCount} Topics`;
+            doc.setFont('courier', 'bold');
+            doc.setFontSize(7.5);
+            const pcW = doc.getTextWidth(pcLabel) + 10;
+            doc.setFillColor(...C.s100);
+            doc.setDrawColor(...C.s300);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(PAGE.mx, pcY, pcW, 5.5, 2.75, 2.75, 'FD');
+            doc.setTextColor(...C.s700);
+            doc.text(pcLabel, PAGE.mx + pcW / 2, pcY + 3.8, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(...C.s500);
+            doc.text(
+                `Weitere ${hiddenCount} Topics ausgeblendet · alle Topics in der Web-App einsehbar`,
+                PAGE.mx + pcW + 5, pcY + 3.8
+            );
+        }
+
+        drawPageFooter(doc, footerLeft, '04 / ' + totalPages, dateShort);
     }
 
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // KOPF- UND FUSSZEILEN auf allen Inhaltsseiten (außer Titelseite)
-    // ═════════════════════════════════════════════════════════════════════════
-    const totalPages = doc.internal.pages.length - 1;
-    const compareHeaderTitle = `WorkPulse · Firmenvergleich – ${titleLabel.length > 35 ? titleLabel.slice(0, 35) + '…' : titleLabel}`;
-
-    for (let i = 2; i <= totalPages; i++) {
-        doc.setPage(i);
-        addPageHeader(doc, compareHeaderTitle);
-        addFooter(doc, i, totalPages, titleLabel);
-    }
-
-    // ─── PDF speichern ──────────────────────────────────────────────────
-    const fileName = `Firmenvergleich_${companyNames.map(n => n.replace(/\s+/g, '_')).join('_vs_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    // ───────────────────────────────────────────────────────────────────────
+    // Speichern
+    // ───────────────────────────────────────────────────────────────────────
+    const safeName = String(companyName).replace(/\s+/g, '_');
+    const fileName = `Analytics_Report_${safeName}_${now.toISOString().split('T')[0]}.pdf`;
     doc.save(fileName);
-
-    console.log(`✅ Firmenvergleich PDF gespeichert: ${fileName} (${totalPages} Seiten)`);
+    console.log(`✅ PDF gespeichert: ${fileName}`);
 };
