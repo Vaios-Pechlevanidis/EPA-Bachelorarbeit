@@ -112,21 +112,36 @@ export default function Dashboard() {
   }
 
   /* ---- KPI fetching ---- */
-  async function getAvg() {
+  function getStartDate(timeRange) {
+    if (timeRange === "1y") {
+      const d = new Date(); d.setFullYear(d.getFullYear() - 1); return d.toISOString().slice(0, 10)
+    }
+    if (timeRange === "3y") {
+      const d = new Date(); d.setFullYear(d.getFullYear() - 3); return d.toISOString().slice(0, 10)
+    }
+    return null
+  }
+
+  async function getAvg(timeRange = globalTimeRange) {
     const companyId = effectiveCompanyId
     if (!companyId) { setData(null); return }
     try {
-      const res = await fetch(`${API_URL}/companies/${companyId}/ratings`)
+      const startDate = getStartDate(timeRange)
+      const url = startDate
+        ? `${API_URL}/companies/${companyId}/ratings?start_date=${startDate}`
+        : `${API_URL}/companies/${companyId}/ratings`
+      const res = await fetch(url)
       if (!res.ok) throw new Error()
       setData(await res.json())
     } catch { setData(null) }
   }
 
-  async function getTrend() {
+  async function getTrend(timeRange = globalTimeRange) {
     const companyId = effectiveCompanyId
     if (!companyId) { setTrendData(null); return }
+    const months = timeRange === "3y" ? 36 : 12
     const urls = [
-      `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_all&months=12`,
+      `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_all&months=${months}`,
       `${API_URL}/companies/${companyId}/ratings/trend?mode=rate&days=30`,
     ]
     for (const url of urls) {
@@ -146,11 +161,15 @@ export default function Dashboard() {
     setTrendData(null)
   }
 
-  async function getMostCritical() {
+  async function getMostCritical(timeRange = globalTimeRange) {
     const companyId = effectiveCompanyId
     if (!companyId) { setMostCriticalData(null); return }
     try {
-      const res = await fetch(`${API_URL}/companies/${companyId}/ratings/avg`)
+      const startDate = getStartDate(timeRange)
+      const url = startDate
+        ? `${API_URL}/companies/${companyId}/ratings/avg?start_date=${startDate}`
+        : `${API_URL}/companies/${companyId}/ratings/avg`
+      const res = await fetch(url)
       if (!res.ok) throw new Error()
       const json = await res.json()
       const labelMap = {
@@ -177,55 +196,26 @@ export default function Dashboard() {
     } catch { setMostCriticalData(null) }
   }
 
-  async function getNegativeTopic() {
+  async function getNegativeTopic(timeRange = globalTimeRange) {
     const companyId = effectiveCompanyId
     if (!companyId) { setNegativeTopicItem(null); return }
-    try {
-      const res = await fetch(`${API_URL}/topics/company/${companyId}/negative-topics`)
-      if (res.ok) {
-        const json = await res.json()
-        const list = json?.negative_topics || []
-        if (Array.isArray(list) && list.length) {
-          const mentionsOf = (t) => { const n = Number(t?.mention_count); return Number.isFinite(n) ? n : 0 }
-          const ratingOf   = (t) => { const r = Number(t?.avg_rating);    return Number.isFinite(r) ? r : NaN }
-          const impactOf   = (t) => { const n = Math.max(0, mentionsOf(t)); const r = ratingOf(t); return Number.isFinite(r) ? n * Math.max(0, 5 - r) : 0 }
-          const chosen = list.reduce((best, cur) => {
-            const bi = impactOf(best), ci = impactOf(cur)
-            if (ci > bi) return cur; if (ci < bi) return best
-            const br = ratingOf(best), cr = ratingOf(cur)
-            if (Number.isFinite(br) && Number.isFinite(cr)) { if (cr < br) return cur; if (cr > br) return best }
-            return mentionsOf(cur) > mentionsOf(best) ? cur : best
-          }, list[0])
-          setNegativeTopicItem({
-            ...chosen,
-            title: "Negative Topic",
-            topic_label: chosen?.topic_label || chosen?.topic || chosen?.topic_text,
-            categories: Array.isArray(chosen?.categories) ? chosen.categories : (chosen?.topic_label ? [chosen.topic_label] : []),
-          })
-          return
-        }
-      }
+    const startDate = getStartDate(timeRange)
 
-      const fallbackRes = await fetch(`${API_URL}/analytics/company/${companyId}/topic-overview`)
-      if (!fallbackRes.ok) { setNegativeTopicItem(null); return }
-      const fallbackJson = await fallbackRes.json()
-      const topics = Array.isArray(fallbackJson?.topics) ? fallbackJson.topics : []
-      if (!topics.length) { setNegativeTopicItem(null); return }
+    const normSent  = (s) => String(s || "").toLowerCase()
+    const isNeg = (t) => normSent(t?.sentiment).includes("neg")
+    const isNeu = (t) => normSent(t?.sentiment).includes("neu")
+    const isPos = (t) => normSent(t?.sentiment).includes("pos")
+    const hasNone = (t) => !normSent(t?.sentiment)
+    const ratingOf = (t) => { const r = Number(t?.avgRating); return Number.isFinite(r) ? r : NaN }
+    const freqOf   = (t) => { const f = Number(t?.frequency); return Number.isFinite(f) ? f : 0 }
+    const impactOf = (t) => { const f = Math.max(0, freqOf(t)); const r = ratingOf(t); return Number.isFinite(r) ? f * Math.max(0, 5 - r) : 0 }
 
-      const normSent  = (s) => String(s || "").toLowerCase()
-      const isNeg = (t) => normSent(t?.sentiment).includes("neg")
-      const isNeu = (t) => normSent(t?.sentiment).includes("neu")
-      const isPos = (t) => normSent(t?.sentiment).includes("pos")
-      const hasNone = (t) => !normSent(t?.sentiment)
-      const ratingOf = (t) => { const r = Number(t?.avgRating); return Number.isFinite(r) ? r : NaN }
-      const freqOf   = (t) => { const f = Number(t?.frequency); return Number.isFinite(f) ? f : 0 }
-
+    const pickFromTopics = (topics) => {
+      if (!topics.length) return null
       const neg = topics.filter(isNeg), neu = topics.filter(isNeu), none = topics.filter(hasNone)
       const pool = neg.length ? neg : (neu.length ? neu : (none.length ? none : topics.filter((t) => !isPos(t))))
       const rPool = pool.filter((t) => Number.isFinite(ratingOf(t)))
       const base = rPool.length ? rPool : pool
-
-      const impactOf = (t) => { const f = Math.max(0, freqOf(t)); const r = ratingOf(t); return Number.isFinite(r) ? f * Math.max(0, 5 - r) : 0 }
       const chosen = base.reduce((best, cur) => {
         const bi = impactOf(best), ci = impactOf(cur)
         if (ci > bi) return cur; if (ci < bi) return best
@@ -233,8 +223,46 @@ export default function Dashboard() {
         if (Number.isFinite(br) && Number.isFinite(cr)) { if (cr < br) return cur; if (cr > br) return best }
         return freqOf(cur) > freqOf(best) ? cur : best
       }, base[0])
+      return { ...chosen, title: "Negative Topic", topic_label: chosen?.topic, categories: chosen?.topic ? [chosen.topic] : chosen?.categories }
+    }
 
-      setNegativeTopicItem({ ...chosen, title: "Negative Topic", topic_label: chosen?.topic, categories: chosen?.topic ? [chosen.topic] : chosen?.categories })
+    try {
+      // ML-based endpoint has no date filter — only use it for "all"
+      if (!startDate) {
+        const res = await fetch(`${API_URL}/topics/company/${companyId}/negative-topics`)
+        if (res.ok) {
+          const json = await res.json()
+          const list = json?.negative_topics || []
+          if (Array.isArray(list) && list.length) {
+            const mentionsOf = (t) => { const n = Number(t?.mention_count); return Number.isFinite(n) ? n : 0 }
+            const rOf        = (t) => { const r = Number(t?.avg_rating);    return Number.isFinite(r) ? r : NaN }
+            const iOf        = (t) => { const n = Math.max(0, mentionsOf(t)); const r = rOf(t); return Number.isFinite(r) ? n * Math.max(0, 5 - r) : 0 }
+            const chosen = list.reduce((best, cur) => {
+              const bi = iOf(best), ci = iOf(cur)
+              if (ci > bi) return cur; if (ci < bi) return best
+              const br = rOf(best), cr = rOf(cur)
+              if (Number.isFinite(br) && Number.isFinite(cr)) { if (cr < br) return cur; if (cr > br) return best }
+              return mentionsOf(cur) > mentionsOf(best) ? cur : best
+            }, list[0])
+            setNegativeTopicItem({
+              ...chosen,
+              title: "Negative Topic",
+              topic_label: chosen?.topic_label || chosen?.topic || chosen?.topic_text,
+              categories: Array.isArray(chosen?.categories) ? chosen.categories : (chosen?.topic_label ? [chosen.topic_label] : []),
+            })
+            return
+          }
+        }
+      }
+
+      const fallbackUrl = startDate
+        ? `${API_URL}/analytics/company/${companyId}/topic-overview?start_date=${startDate}`
+        : `${API_URL}/analytics/company/${companyId}/topic-overview`
+      const fallbackRes = await fetch(fallbackUrl)
+      if (!fallbackRes.ok) { setNegativeTopicItem(null); return }
+      const fallbackJson = await fallbackRes.json()
+      const topics = Array.isArray(fallbackJson?.topics) ? fallbackJson.topics : []
+      setNegativeTopicItem(pickFromTopics(topics))
     } catch { setNegativeTopicItem(null) }
   }
 
@@ -322,9 +350,9 @@ export default function Dashboard() {
     }
     setDashboardLoadingStates((p) => ({ ...p, kpiCards: true }))
     setImportHistory(getImportHistory(effectiveCompanyId))
-    Promise.allSettled([getAvg(), getTrend(), getMostCritical(), getNegativeTopic()])
+    Promise.allSettled([getAvg(globalTimeRange), getTrend(globalTimeRange), getMostCritical(globalTimeRange), getNegativeTopic(globalTimeRange)])
       .then(() => setDashboardLoadingStates((p) => ({ ...p, kpiCards: false })))
-  }, [effectiveCompanyId])
+  }, [effectiveCompanyId, globalTimeRange])
 
   const handleImportSuccess = useCallback(() => {
     setImportHistory(getImportHistory(effectiveCompanyId))

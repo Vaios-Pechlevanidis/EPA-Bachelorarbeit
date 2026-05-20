@@ -428,10 +428,15 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
         return [...historical, ...forecast]
     }, [timelineData, forecastData, metric, trendData, forecastTrendData, processedHistorical])
 
-    // Find the last historical date for reference line
-    const lastHistoricalDate = timelineData.length > 0 
-        ? (timelineData[timelineData.length - 1].date_display || timelineData[timelineData.length - 1].date)
-        : null
+    // Find the last historical date for reference line — derived from chartData so the
+    // format always matches the XAxis dataKey (processTimelineDataWithGaps converts dates
+    // from "2024-01" to "Jan 2024", so we cannot use timelineData directly here).
+    const lastHistoricalDate = useMemo(() => {
+        for (let i = chartData.length - 1; i >= 0; i--) {
+            if (chartData[i].historical !== null) return chartData[i].date
+        }
+        return null
+    }, [chartData])
 
     // Calculate Y-axis domain based on metric
     const yAxisDomain = useMemo(() => {

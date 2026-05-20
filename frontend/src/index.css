@@ -521,8 +521,10 @@ a:hover { color: var(--color-primary-hover); }
 }
 .ds-time-btn:hover { background: var(--slate-100); color: var(--color-fg); }
 .ds-time-btn.active { background: var(--slate-0); color: var(--color-fg); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-.dark .ds-time-filter { background: var(--slate-800); }
-.dark .ds-time-btn.active { background: var(--slate-700); color: #e2e8f0; }
+.dark .ds-time-filter { background: var(--slate-100); border-color: var(--color-border-strong); }
+.dark .ds-time-btn { color: var(--color-fg-muted); }
+.dark .ds-time-btn:hover { background: var(--slate-200); color: var(--color-fg); }
+.dark .ds-time-btn.active { background: var(--slate-200); color: var(--color-fg); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
 
 /* ---- Buttons ---- */
 .ds-btn {

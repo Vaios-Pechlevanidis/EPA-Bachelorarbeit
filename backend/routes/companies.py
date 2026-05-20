@@ -49,13 +49,23 @@ def get_companies():
 
 
 @router.get("/companies/{company_id}/ratings/avg")
-def get_company_ratings_avg(company_id: int):
-    res = supabase.rpc("get_employee_ratings_avg", {"p_company_id": company_id}).execute()
+def get_company_ratings_avg(
+    company_id: int,
+    start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
+):
+    if start_date:
+        columns = list(CATEGORY_COLUMN_MAP.values())
+        q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id).gte("datum", start_date)
+        rows = q.execute().data or []
+        result = {}
+        for avg_key, col in CATEGORY_COLUMN_MAP.items():
+            vals = [float(r[col]) for r in rows if r.get(col) is not None]
+            result[avg_key] = round(sum(vals) / len(vals), 4) if vals else None
+        return result
 
+    res = supabase.rpc("get_employee_ratings_avg", {"p_company_id": company_id}).execute()
     if res.data is None:
         raise HTTPException(status_code=500, detail="No data returned from RPC")
-
-    # res.data ist meistens: [ { ... } ]
     return res.data[0] if len(res.data) > 0 else {}
 
 
@@ -98,34 +108,50 @@ def get_company_category_counts(company_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/companies/{company_id}/ratings")
-def get_company_ratings_overall(company_id: int):
-    res = supabase.rpc("get_employee_ratings_avg", {"p_company_id": company_id}).execute()
+def _compute_avg_overall(company_id: int, start_date: Optional[str] = None) -> Optional[float]:
+    """Query employee table directly and compute avg_overall, optionally filtered by start_date."""
+    columns = list(CATEGORY_COLUMN_MAP.values())
+    q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id)
+    if start_date:
+        q = q.gte("datum", start_date)
+    rows = q.execute().data or []
+    totals: dict[str, list[float]] = {col: [] for col in columns}
+    for row in rows:
+        for col in columns:
+            v = row.get(col)
+            if v is None:
+                continue
+            try:
+                totals[col].append(float(v))
+            except (TypeError, ValueError):
+                pass
+    cat_avgs = [sum(vals) / len(vals) for vals in totals.values() if vals]
+    return round(sum(cat_avgs) / len(cat_avgs), 2) if cat_avgs else None
 
+
+@router.get("/companies/{company_id}/ratings")
+def get_company_ratings_overall(
+    company_id: int,
+    start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
+):
+    if start_date:
+        avg_overall = _compute_avg_overall(company_id, start_date)
+        return {"avg_overall": avg_overall}
+
+    res = supabase.rpc("get_employee_ratings_avg", {"p_company_id": company_id}).execute()
     if res.data is None:
         raise HTTPException(status_code=500, detail="No data returned from RPC")
-
     row = res.data[0] if len(res.data) > 0 else {}
-
-    # Durchschnitt der Durchschnitte berechnen (nur numerische Werte)
     values = []
     for v in row.values():
         if v is None:
             continue
-        # Supabase kann float, int, Decimal oder sogar string liefern -> sauber konvertieren
         try:
             values.append(float(v))
         except (TypeError, ValueError):
             continue
-
     avg_overall = round(sum(values) / len(values), 2) if values else None
-
-    # Du gibst jetzt Kategorien + Gesamt-Ø zurück
-    return {
-        
-        "avg_overall": avg_overall,
-        
-    }
+    return {"avg_overall": avg_overall}
     
 @router.get("/companies/{company_id}/ratings/trend")
 def get_company_ratings_trend(

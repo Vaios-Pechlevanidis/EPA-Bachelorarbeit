@@ -26,8 +26,9 @@ const RANGE_TO_STABLE_MONTHS = { "1Y": 12, "3Y": 36 };
 const RANGE_TO_DAYS_FALLBACK = { "All": 730 };
 
 const fmtDelta = (d, sign) => {
-  if (sign === "new") return "neu";
-  if (d === null || !Number.isFinite(d)) return "0,0";
+  if (sign === "new")    return "neu";
+  if (sign === "nodata") return "k.A.";
+  if (d === null || !Number.isFinite(d)) return "k.A.";
   const v = Math.round(d * 10) / 10;
   const a = Math.abs(v).toFixed(1).replace(".", ",");
   if (sign === "up")   return `+${a}`;
@@ -36,9 +37,10 @@ const fmtDelta = (d, sign) => {
 };
 
 const signTone = (sign) => {
-  if (sign === "up")   return { text: "text-emerald-700", bg: "bg-emerald-50", icon: TrendingUp };
-  if (sign === "down") return { text: "text-rose-700",    bg: "bg-rose-50",    icon: TrendingDown };
-  if (sign === "new")  return { text: "text-blue-700",    bg: "bg-blue-50",    icon: Minus };
+  if (sign === "up")     return { text: "text-emerald-700", bg: "bg-emerald-50", icon: TrendingUp };
+  if (sign === "down")   return { text: "text-rose-700",    bg: "bg-rose-50",    icon: TrendingDown };
+  if (sign === "new")    return { text: "text-blue-700",    bg: "bg-blue-50",    icon: Minus };
+  if (sign === "nodata") return { text: "text-slate-400",   bg: "bg-slate-50",   icon: Minus };
   return { text: "text-slate-600", bg: "bg-slate-100", icon: Minus };
 };
 
@@ -81,12 +83,12 @@ export default function TrendModal({ open, onOpenChange, companyId }) {
     if (!data) return [];
     const metrics = data.metrics ?? data;
     return Object.entries(metrics)
-      .map(([key, obj]) => ({
-        key,
-        title: LABELS[key] ?? key,
-        delta: obj?.delta == null ? null : Number(obj.delta),
-        sign:  obj?.sign ?? "flat",
-      }))
+      .map(([key, obj]) => {
+        const delta = obj?.delta == null ? null : Number(obj.delta);
+        // delta===null means no data in current window — don't show as flat 0,0
+        const sign = delta === null && obj?.sign !== "new" ? "nodata" : (obj?.sign ?? "flat");
+        return { key, title: LABELS[key] ?? key, delta, sign };
+      })
       .filter((x) => Boolean(x.title));
   }, [data]);
 
