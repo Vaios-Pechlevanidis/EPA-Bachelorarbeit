@@ -965,16 +965,28 @@ def analyze_topic(
                         }
                     })
             
-            # Collect ratings
-            avg_rating = review.get("durchschnittsbewertung")
-            if avg_rating:
-                ratings.append(float(avg_rating))
-            
-            # Collect specific rating fields
+            # Collect ratings — topic-specific fields take priority.
+            # Using both durchschnittsbewertung AND the specific field would
+            # double-count and bias the topic average toward the overall mean.
+            topic_specific = []
             for field in rating_fields:
                 field_rating = review.get(field)
-                if field_rating:
-                    ratings.append(float(field_rating))
+                if field_rating is not None:
+                    try:
+                        topic_specific.append(float(field_rating))
+                    except (TypeError, ValueError):
+                        pass
+
+            if topic_specific:
+                ratings.extend(topic_specific)
+            else:
+                # No topic-specific rating available — use overall avg as fallback
+                avg_rating_val = review.get("durchschnittsbewertung")
+                if avg_rating_val is not None:
+                    try:
+                        ratings.append(float(avg_rating_val))
+                    except (TypeError, ValueError):
+                        pass
             
             # Group by month for timeline
             date_str = review.get("datum")
