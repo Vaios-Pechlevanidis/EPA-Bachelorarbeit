@@ -49,7 +49,7 @@ services:
     environment:
       SUPABASE_URL: http://supabase-gateway
       # Anon-JWT signiert mit dem JWT_SECRET oben (gültig bis 2121)
-      SUPABASE_KEY: 
+      SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYxMzUzMTk4NSwiZXhwIjo0NzY5MjA1OTg1fQ.pbhLUdXC6QkeCbtQ3zLd-kaX9yp2dAXDFmsuhHYKbaQ
     depends_on:
       - supabase-gateway
     restart: unless-stopped
