@@ -1,0 +1,70 @@
+services:
+
+  # ── Datenbank ────────────────────────────────────────────────────────────────
+  supabase-db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - supabase-db-data:/var/lib/postgresql/data
+      - ./supabase/init:/docker-entrypoint-initdb.d:ro
+
+  # ── PostgREST (REST-API über PostgreSQL) ────────────────────────────────────
+  supabase-rest:
+    image: postgrest/postgrest:v12.2.0
+    restart: unless-stopped
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgresql://authenticator:postgres@supabase-db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+
+  # ── Gateway (leitet /rest/v1/ an PostgREST weiter) ──────────────────────────
+  supabase-gateway:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - supabase-rest
+    volumes:
+      - ./supabase/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+
+  # ── Backend ──────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:7860"
+    environment:
+      SUPABASE_URL: http://supabase-gateway
+      # Anon-JWT signiert mit dem JWT_SECRET oben (gültig bis 2121)
+      SUPABASE_KEY: 
+    depends_on:
+      - supabase-gateway
+    restart: unless-stopped
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  supabase-db-data:
