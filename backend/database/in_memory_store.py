@@ -401,12 +401,40 @@ def _make_candidate(company_id: int, period: str, cid: int, offsets: dict = None
     return row
 
 
-_D2_EMP_RANGES = {"early": (4.0, 4.8), "mid": (3.3, 4.2), "late": (2.5, 3.5)}
+_D2_EMP_RANGES  = {"early": (4.0, 4.8), "mid": (3.3, 4.2), "late": (2.5, 3.5)}
 _D2_CAND_RANGES = {"early": (3.8, 4.6), "mid": (3.1, 4.0), "late": (2.4, 3.3)}
+
+# Demo 3: V-Form — Einbruch 2023 (Restrukturierung), danach Erholung
+# Stark in: Gleichberechtigung, Umwelt, Arbeitsbedingungen
+# Schwach während Krise: Kommunikation, Vorgesetztenverhalten, Atmosphäre
+_CAT_OFFSETS_D3 = {
+    "arbeitsatmosphaere": -0.1, "image": +0.1, "work_life_balance": 0.0,
+    "karriere_weiterbildung": +0.1, "gehalt_sozialleistungen": 0.0,
+    "kollegenzusammenhalt": +0.2, "umwelt_sozialbewusstsein": +0.3,
+    "vorgesetztenverhalten": -0.2, "kommunikation": -0.3,
+    "interessante_aufgaben": +0.2, "umgang_mit_aelteren_kollegen": +0.1,
+    "arbeitsbedingungen": +0.2, "gleichberechtigung": +0.3,
+}
+
+_CAND_OFFSETS_D3 = {
+    "erklaerung_der_weiteren_schritte": -0.1, "zufriedenstellende_reaktion": 0.0,
+    "vollstaendigkeit_der_infos": -0.1, "zufriedenstellende_antworten": +0.1,
+    "angenehme_atmosphaere": +0.2, "professionalitaet_des_gespraechs": +0.1,
+    "wertschaetzende_behandlung": +0.2, "erwartbarkeit_des_prozesses": -0.2,
+    "zeitgerechte_zu_oder_absage": -0.1, "schnelle_antwort": 0.0,
+}
+
+# V-Form: früh gut → Krise mitte → Erholung spät
+_D3_EMP_RANGES  = {"early": (3.8, 4.4), "mid": (2.3, 3.1), "late": (3.5, 4.3)}
+_D3_CAND_RANGES = {"early": (3.6, 4.2), "mid": (2.2, 3.0), "late": (3.4, 4.1)}
 
 
 def _generate_data():
-    companies = [{"id": 1, "name": "Demo 1"}, {"id": 2, "name": "Demo 2"}]
+    companies = [
+        {"id": 1, "name": "Demo 1"},
+        {"id": 2, "name": "Demo 2"},
+        {"id": 3, "name": "Demo 3"},
+    ]
     employees = []
     candidates = []
 
@@ -417,10 +445,16 @@ def _generate_data():
             employees.append(_make_employee(1, period, eid, _CAT_OFFSETS_D1))
             eid += 1
 
-    # Demo 2: sinkender Trend (andere Basis-Ranges + andere Offsets)
+    # Demo 2: sinkender Trend
     for period, count in [("early", 45), ("mid", 55), ("late", 50)]:
         for _ in range(count):
             employees.append(_make_employee(2, period, eid, _CAT_OFFSETS_D2, _D2_EMP_RANGES))
+            eid += 1
+
+    # Demo 3: V-Form (Krise 2023, Erholung 2024+)
+    for period, count in [("early", 40), ("mid", 60), ("late", 50)]:
+        for _ in range(count):
+            employees.append(_make_employee(3, period, eid, _CAT_OFFSETS_D3, _D3_EMP_RANGES))
             eid += 1
 
     # Demo 1 candidates
@@ -434,6 +468,12 @@ def _generate_data():
     for period, count in [("early", 22), ("mid", 28), ("late", 25)]:
         for _ in range(count):
             candidates.append(_make_candidate(2, period, cid, _CAND_OFFSETS_D2, _D2_CAND_RANGES))
+            cid += 1
+
+    # Demo 3 candidates
+    for period, count in [("early", 18), ("mid", 30), ("late", 22)]:
+        for _ in range(count):
+            candidates.append(_make_candidate(3, period, cid, _CAND_OFFSETS_D3, _D3_CAND_RANGES))
             cid += 1
 
     return companies, employees, candidates
