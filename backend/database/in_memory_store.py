@@ -287,7 +287,8 @@ _CANDIDATE_CATS = [
     "zeitgerechte_zu_oder_absage", "schnelle_antwort",
 ]
 
-_CAT_OFFSETS = {
+# Demo 1: steigender Trend, stark in Atmosphäre & Zusammenhalt
+_CAT_OFFSETS_D1 = {
     "arbeitsatmosphaere": +0.3, "image": 0.0, "work_life_balance": -0.2,
     "karriere_weiterbildung": -0.1, "gehalt_sozialleistungen": -0.3,
     "kollegenzusammenhalt": +0.4, "umwelt_sozialbewusstsein": +0.1,
@@ -296,7 +297,20 @@ _CAT_OFFSETS = {
     "arbeitsbedingungen": 0.0, "gleichberechtigung": +0.2,
 }
 
-_CAND_OFFSETS = {
+# Demo 2: sinkender Trend, stark in Work-Life-Balance & Arbeitsbedingungen,
+#          schwach in Kommunikation, Karriere & Führung
+_CAT_OFFSETS_D2 = {
+    "arbeitsatmosphaere": -0.1, "image": +0.2, "work_life_balance": +0.4,
+    "karriere_weiterbildung": -0.5, "gehalt_sozialleistungen": -0.4,
+    "kollegenzusammenhalt": +0.1, "umwelt_sozialbewusstsein": +0.3,
+    "vorgesetztenverhalten": -0.3, "kommunikation": -0.5,
+    "interessante_aufgaben": -0.1, "umgang_mit_aelteren_kollegen": +0.2,
+    "arbeitsbedingungen": +0.3, "gleichberechtigung": +0.1,
+}
+
+_CAT_OFFSETS = _CAT_OFFSETS_D1  # kept for backwards compat
+
+_CAND_OFFSETS_D1 = {
     "erklaerung_der_weiteren_schritte": 0.0, "zufriedenstellende_reaktion": +0.1,
     "vollstaendigkeit_der_infos": -0.1, "zufriedenstellende_antworten": 0.0,
     "angenehme_atmosphaere": +0.3, "professionalitaet_des_gespraechs": +0.2,
@@ -304,19 +318,34 @@ _CAND_OFFSETS = {
     "zeitgerechte_zu_oder_absage": -0.1, "schnelle_antwort": 0.0,
 }
 
+# Demo 2 Kandidaten: schwächerer Prozess, weniger Transparenz
+_CAND_OFFSETS_D2 = {
+    "erklaerung_der_weiteren_schritte": -0.3, "zufriedenstellende_reaktion": -0.2,
+    "vollstaendigkeit_der_infos": -0.3, "zufriedenstellende_antworten": -0.1,
+    "angenehme_atmosphaere": +0.1, "professionalitaet_des_gespraechs": 0.0,
+    "wertschaetzende_behandlung": +0.1, "erwartbarkeit_des_prozesses": -0.4,
+    "zeitgerechte_zu_oder_absage": -0.4, "schnelle_antwort": -0.3,
+}
 
-def _make_employee(company_id: int, period: str, eid: int) -> dict:
+_CAND_OFFSETS = _CAND_OFFSETS_D1  # kept for backwards compat
+
+
+def _make_employee(company_id: int, period: str, eid: int, offsets: dict = None, ranges: dict = None) -> dict:
+    if offsets is None:
+        offsets = _CAT_OFFSETS_D1
+    if ranges is None:
+        ranges = {"early": (2.8, 3.5), "mid": (3.2, 3.9), "late": (3.6, 4.5)}
+
+    lo, hi = ranges[period]
+    base = random.uniform(lo, hi)
     if period == "early":
-        base = random.uniform(2.8, 3.5)
         date = _date_between(_START, datetime(2022, 12, 31))
     elif period == "mid":
-        base = random.uniform(3.2, 3.9)
         date = _date_between(datetime(2023, 1, 1), datetime(2023, 12, 31))
     else:
-        base = random.uniform(3.6, 4.5)
         date = _date_between(datetime(2024, 1, 1), _END)
 
-    cats = {cat: _rand_rating(base + _CAT_OFFSETS[cat]) for cat in _EMPLOYEE_CATS}
+    cats = {cat: _rand_rating(base + offsets[cat]) for cat in _EMPLOYEE_CATS}
     avg = round(sum(cats.values()) / len(cats), 2)
 
     row: dict = {
@@ -338,18 +367,22 @@ def _make_employee(company_id: int, period: str, eid: int) -> dict:
     return row
 
 
-def _make_candidate(company_id: int, period: str, cid: int) -> dict:
+def _make_candidate(company_id: int, period: str, cid: int, offsets: dict = None, ranges: dict = None) -> dict:
+    if offsets is None:
+        offsets = _CAND_OFFSETS_D1
+    if ranges is None:
+        ranges = {"early": (2.9, 3.6), "mid": (3.3, 4.0), "late": (3.7, 4.6)}
+
+    lo, hi = ranges[period]
+    base = random.uniform(lo, hi)
     if period == "early":
-        base = random.uniform(2.9, 3.6)
         date = _date_between(_START, datetime(2022, 12, 31))
     elif period == "mid":
-        base = random.uniform(3.3, 4.0)
         date = _date_between(datetime(2023, 1, 1), datetime(2023, 12, 31))
     else:
-        base = random.uniform(3.7, 4.6)
         date = _date_between(datetime(2024, 1, 1), _END)
 
-    cats = {cat: _rand_rating(base + _CAND_OFFSETS[cat]) for cat in _CANDIDATE_CATS}
+    cats = {cat: _rand_rating(base + offsets[cat]) for cat in _CANDIDATE_CATS}
     avg = round(sum(cats.values()) / len(cats), 2)
 
     row: dict = {
@@ -368,20 +401,41 @@ def _make_candidate(company_id: int, period: str, cid: int) -> dict:
     return row
 
 
+_D2_EMP_RANGES = {"early": (4.0, 4.8), "mid": (3.3, 4.2), "late": (2.5, 3.5)}
+_D2_CAND_RANGES = {"early": (3.8, 4.6), "mid": (3.1, 4.0), "late": (2.4, 3.3)}
+
+
 def _generate_data():
-    companies = [{"id": 1, "name": "Demo 1"}]
+    companies = [{"id": 1, "name": "Demo 1"}, {"id": 2, "name": "Demo 2"}]
     employees = []
     candidates = []
+
+    # Demo 1: steigender Trend
     eid = 1
     for period, count in [("early", 40), ("mid", 50), ("late", 60)]:
         for _ in range(count):
-            employees.append(_make_employee(1, period, eid))
+            employees.append(_make_employee(1, period, eid, _CAT_OFFSETS_D1))
             eid += 1
+
+    # Demo 2: sinkender Trend (andere Basis-Ranges + andere Offsets)
+    for period, count in [("early", 45), ("mid", 55), ("late", 50)]:
+        for _ in range(count):
+            employees.append(_make_employee(2, period, eid, _CAT_OFFSETS_D2, _D2_EMP_RANGES))
+            eid += 1
+
+    # Demo 1 candidates
     cid = 1
     for period, count in [("early", 20), ("mid", 25), ("late", 30)]:
         for _ in range(count):
-            candidates.append(_make_candidate(1, period, cid))
+            candidates.append(_make_candidate(1, period, cid, _CAND_OFFSETS_D1))
             cid += 1
+
+    # Demo 2 candidates
+    for period, count in [("early", 22), ("mid", 28), ("late", 25)]:
+        for _ in range(count):
+            candidates.append(_make_candidate(2, period, cid, _CAND_OFFSETS_D2, _D2_CAND_RANGES))
+            cid += 1
+
     return companies, employees, candidates
 
 
