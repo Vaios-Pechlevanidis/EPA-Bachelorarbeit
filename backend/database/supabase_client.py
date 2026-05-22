@@ -1,31 +1,19 @@
-from supabase import create_client, Client
-from config import get_settings
+import os
+from dotenv import load_dotenv
 
-# Global Supabase client instance
-_supabase_client: Client | None = None
+load_dotenv()
 
+_url = os.getenv("SUPABASE_URL", "")
+_key = os.getenv("SUPABASE_KEY", "")
 
-def get_supabase_client() -> Client:
-    """
-    Get or create the Supabase client instance (singleton pattern).
-    
-    Returns:
-        Client: Initialized Supabase client
-        
-    Raises:
-        ValueError: If Supabase configuration is invalid
-    """
-    global _supabase_client
-    
-    if _supabase_client is None:
-        settings = get_settings()
-        try:
-            _supabase_client = create_client(
-                settings.supabase_url,
-                settings.supabase_key
-            )
-        except Exception as e:
-            raise ValueError(f"Failed to initialize Supabase client: {str(e)}")
-    
-    return _supabase_client
+if _url and _key:
+    from supabase import create_client, Client as _Client
+    _client = create_client(_url, _key)
 
+    def get_supabase_client() -> _Client:
+        return _client
+else:
+    from database.in_memory_store import get_in_memory_client
+
+    def get_supabase_client():
+        return get_in_memory_client()

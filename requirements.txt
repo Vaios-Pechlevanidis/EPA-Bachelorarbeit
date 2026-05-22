@@ -9,11 +9,10 @@
 fastapi>=0.124.0
 uvicorn>=0.38.0
 
-# Datenbank
+# Datenbank (lokal mit .env, auf Vercel/HuggingFace deaktiviert)
 supabase>=2.0.0
-
-# Konfiguration
 python-dotenv>=1.0.0
+
 
 # Topic Modeling
 gensim>=4.3.0

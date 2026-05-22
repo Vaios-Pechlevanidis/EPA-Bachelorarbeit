@@ -25,7 +25,7 @@ from __future__ import annotations
 from fastapi import UploadFile
 import pandas as pd
 from typing import Dict, Any, List, Optional
-from database.supabase_client import get_supabase_client
+from database.supabase_client import get_supabase_client  # no-op in demo mode
 from services.csv_service import read_csv_to_dataframe
 import io
 import re

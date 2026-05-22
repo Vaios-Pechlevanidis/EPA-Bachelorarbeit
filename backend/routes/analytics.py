@@ -90,19 +90,23 @@ async def get_company_overview(company_id: int):
         now = datetime.now()
         thirty_days_ago = now - timedelta(days=30)
         sixty_days_ago = now - timedelta(days=60)
-        
+
+        def _parse_datum(d: str) -> datetime:
+            dt = datetime.fromisoformat(d.replace("Z", "+00:00"))
+            return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
         recent_ratings = [
-            float(r["durchschnittsbewertung"]) 
-            for r in candidates_data + employee_data 
-            if r.get("durchschnittsbewertung") and r.get("datum") 
-            and datetime.fromisoformat(r["datum"].replace("Z", "+00:00")) >= thirty_days_ago
-        ]
-        
-        previous_ratings = [
-            float(r["durchschnittsbewertung"]) 
-            for r in candidates_data + employee_data 
+            float(r["durchschnittsbewertung"])
+            for r in candidates_data + employee_data
             if r.get("durchschnittsbewertung") and r.get("datum")
-            and sixty_days_ago <= datetime.fromisoformat(r["datum"].replace("Z", "+00:00")) < thirty_days_ago
+            and _parse_datum(r["datum"]) >= thirty_days_ago
+        ]
+
+        previous_ratings = [
+            float(r["durchschnittsbewertung"])
+            for r in candidates_data + employee_data
+            if r.get("durchschnittsbewertung") and r.get("datum")
+            and sixty_days_ago <= _parse_datum(r["datum"]) < thirty_days_ago
         ]
         
         recent_avg = sum(recent_ratings) / len(recent_ratings) if recent_ratings else 0

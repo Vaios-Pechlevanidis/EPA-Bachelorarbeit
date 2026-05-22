@@ -223,8 +223,14 @@ def get_company_ratings_trend(
                 }
 
             try:
-                first_dt = datetime.fromisoformat(str(bounds.data[0]["datum"]).replace("Z", "+00:00"))
-                last_dt  = datetime.fromisoformat(str(bounds.data[-1]["datum"]).replace("Z", "+00:00"))
+                def _to_utc(s: str) -> datetime:
+                    dt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+                    if dt.tzinfo is None:
+                        from datetime import timezone as _tz
+                        dt = dt.replace(tzinfo=_tz.utc)
+                    return dt
+                first_dt = _to_utc(bounds.data[0]["datum"])
+                last_dt  = _to_utc(bounds.data[-1]["datum"])
             except Exception:
                 return {
                     "mode": mode,
