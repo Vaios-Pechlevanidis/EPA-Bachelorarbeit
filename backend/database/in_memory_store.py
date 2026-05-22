@@ -329,6 +329,24 @@ _CAND_OFFSETS_D2 = {
 
 _CAND_OFFSETS = _CAND_OFFSETS_D1  # kept for backwards compat
 
+# Bulk balanced: alle Kategorien leicht positiv, gut bis akzeptabel
+_BALANCED_OFFSETS = {
+    "arbeitsatmosphaere": +0.1, "image": +0.1, "work_life_balance": +0.1,
+    "karriere_weiterbildung": 0.0, "gehalt_sozialleistungen": 0.0,
+    "kollegenzusammenhalt": +0.1, "umwelt_sozialbewusstsein": +0.1,
+    "vorgesetztenverhalten": 0.0, "kommunikation": 0.0,
+    "interessante_aufgaben": +0.1, "umgang_mit_aelteren_kollegen": 0.0,
+    "arbeitsbedingungen": +0.1, "gleichberechtigung": +0.1,
+}
+
+_BALANCED_CAND_OFFSETS = {
+    "erklaerung_der_weiteren_schritte": +0.1, "zufriedenstellende_reaktion": +0.1,
+    "vollstaendigkeit_der_infos": 0.0, "zufriedenstellende_antworten": +0.1,
+    "angenehme_atmosphaere": +0.2, "professionalitaet_des_gespraechs": +0.1,
+    "wertschaetzende_behandlung": +0.1, "erwartbarkeit_des_prozesses": 0.0,
+    "zeitgerechte_zu_oder_absage": 0.0, "schnelle_antwort": +0.1,
+}
+
 
 def _make_employee(company_id: int, period: str, eid: int, offsets: dict = None, ranges: dict = None) -> dict:
     if offsets is None:
@@ -474,6 +492,49 @@ def _generate_data():
     for period, count in [("early", 18), ("mid", 30), ("late", 22)]:
         for _ in range(count):
             candidates.append(_make_candidate(3, period, cid, _CAND_OFFSETS_D3, _D3_CAND_RANGES))
+            cid += 1
+
+    # ── Bulk balanced reviews (500 Mitarbeiter + 150 Bewerber pro Firma) ────
+    for company_id in [1, 2, 3]:
+        for _ in range(500):
+            base = random.uniform(3.2, 4.5)
+            cats = {cat: _rand_rating(base + _BALANCED_OFFSETS[cat]) for cat in _EMPLOYEE_CATS}
+            avg = round(sum(cats.values()) / len(cats), 2)
+            row: dict = {
+                "id": eid, "company_id": company_id,
+                "titel": random.choice(_JOB_TITLES),
+                "status": random.choice(_STATUS_EMPLOYEE),
+                "datum": _date_between(_START, _END),
+                "durchschnittsbewertung": avg,
+                "gerundete_durchschnittsbewertung": round(round(avg * 2) / 2, 1),
+                "jobbeschreibung": random.choice(_JOB_TITLES) + " in der Produktentwicklung.",
+                "gut_am_arbeitgeber_finde_ich": random.choice(_GUT_POOL),
+                "schlecht_am_arbeitgeber_finde_ich": random.choice(_SCHLECHT_POOL),
+                "verbesserungsvorschlaege": random.choice(_VERBESSERUNG_POOL),
+            }
+            for cat in _EMPLOYEE_CATS:
+                row[f"sternebewertung_{cat}"] = cats[cat]
+                row[cat] = random.choice(_TOPIC_TEXTS[cat])
+            employees.append(row)
+            eid += 1
+
+        for _ in range(150):
+            base = random.uniform(3.3, 4.5)
+            cats = {cat: _rand_rating(base + _BALANCED_CAND_OFFSETS[cat]) for cat in _CANDIDATE_CATS}
+            avg = round(sum(cats.values()) / len(cats), 2)
+            row = {
+                "id": cid, "company_id": company_id,
+                "titel": random.choice(_CANDIDATE_TITEL_POOL),
+                "status": random.choice(_STATUS_CANDIDATE),
+                "datum": _date_between(_START, _END),
+                "durchschnittsbewertung": avg,
+                "gerundete_durchschnittsbewertung": round(round(avg * 2) / 2, 1),
+                "stellenbeschreibung": random.choice(_STELLENBESCHREIBUNG_POOL),
+                "verbesserungsvorschlaege": random.choice(_CANDIDATE_VERBESSERUNG_POOL),
+            }
+            for cat in _CANDIDATE_CATS:
+                row[f"sternebewertung_{cat}"] = cats[cat]
+            candidates.append(row)
             cid += 1
 
     return companies, employees, candidates
