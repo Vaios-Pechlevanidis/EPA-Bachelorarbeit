@@ -1,3 +1,12 @@
+---
+title: EPA Bachelorprojekt
+emoji: 📊
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # EPA Analytics
 
 > Employer Review Analytics Platform — NLP-powered analysis of employer reviews using LDA Topic Modeling and Sentiment Analysis.
