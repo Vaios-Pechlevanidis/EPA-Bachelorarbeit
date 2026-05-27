@@ -34,7 +34,6 @@ def search_companies(q: str = Query(..., min_length=1)):
     return res.data or []
 @router.get("/companies")
 def get_companies():
-    # Alle Firmen aus DB abrufen
     res = (
         supabase.table("companies")
         .select("id,name")
@@ -42,9 +41,20 @@ def get_companies():
         .execute()
     )
     data = res.data or []
+
     for row in data:
         if "id" in row and row["id"] is not None:
-            row["id"] = str(row["id"])
+            cid = row["id"]
+            emp_count = (
+                supabase.table("employee").select("id", count="exact")
+                .eq("company_id", cid).limit(1).execute().count or 0
+            )
+            cand_count = (
+                supabase.table("candidates").select("id", count="exact")
+                .eq("company_id", cid).limit(1).execute().count or 0
+            )
+            row["review_count"] = emp_count + cand_count
+            row["id"] = str(cid)
     return data
 
 

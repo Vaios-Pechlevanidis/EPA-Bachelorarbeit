@@ -204,7 +204,17 @@ export function CompanySearchSelect({
                                             "mr-2 h-4 w-4",
                                             isDark ? "text-slate-500" : "text-slate-400"
                                         )} />
-                                        {company.name}
+                                        <span style={{ flex: 1 }}>{company.name}</span>
+                                        {company.review_count != null && (
+                                            <span style={{
+                                                marginLeft: 8,
+                                                fontSize: 11,
+                                                color: isDark ? "var(--slate-400)" : "var(--slate-500)",
+                                                whiteSpace: "nowrap",
+                                            }}>
+                                                {company.review_count} Bew.
+                                            </span>
+                                        )}
                                     </CommandItem>
                                 ))}
                             </CommandGroup>

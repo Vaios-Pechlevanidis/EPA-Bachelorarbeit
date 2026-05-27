@@ -39,6 +39,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
   ref
 ) {
   const [topicsData,       setTopicsData]       = useState([])
+  const [totalReviews,     setTotalReviews]     = useState(null)
   const [loading,          setLoading]          = useState(true)
   const [refreshing,       setRefreshing]       = useState(false)
   const [error,            setError]            = useState(null)
@@ -77,6 +78,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
         if (!res.ok) throw new Error(`API Error: ${res.status}`)
         const data = await res.json()
         setTopicsData(data.topics || [])
+        setTotalReviews(data.total_reviews ?? null)
       } catch (err) {
         console.error("Error fetching topics:", err)
         setError(err.message)
@@ -228,6 +230,11 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
                     <p className={`text-[20px] font-semibold tnum ${scoreColorClass(stats.avg)}`}>
                       {fmt(stats.avg, 2)}
                     </p>
+                    {totalReviews != null && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {Number(totalReviews).toLocaleString("de-DE")} Bew.
+                      </p>
+                    )}
                   </div>
                   <div className="text-center px-3 py-2.5 bg-slate-50 rounded-md border border-slate-200">
                     <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1">Erwähnungen</p>

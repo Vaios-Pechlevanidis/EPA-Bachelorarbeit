@@ -32,7 +32,7 @@ def date_between(start: datetime, end: datetime) -> str:
 
 
 START = datetime(2022, 1, 1)
-END   = datetime(2025, 4, 30)
+END   = datetime(2026, 5, 15)
 
 # ── Text pools ────────────────────────────────────────────────────────────────
 
@@ -265,8 +265,8 @@ STATUS_EMPLOYEE = ["Angestellt", "Ex-Angestellt", "Angestellt", "Ex-Angestellt",
 STATUS_CANDIDATE = ["Bewerber", "Bewerber", "Bewerber"]
 
 # Demo 2: sinkender Trend – frühe Werte hoch, späte niedrig
-EMP_RANGES  = {"early": (4.0, 4.8), "mid": (3.3, 4.2), "late": (2.5, 3.5)}
-CAND_RANGES = {"early": (3.8, 4.6), "mid": (3.1, 4.0), "late": (2.4, 3.3)}
+EMP_RANGES  = {"early": (4.0, 4.8), "mid": (3.3, 4.2), "late": (2.5, 3.5), "recent": (1.8, 2.8)}
+CAND_RANGES = {"early": (3.8, 4.6), "mid": (3.1, 4.0), "late": (2.4, 3.3), "recent": (1.7, 2.7)}
 
 CAT_OFFSETS = {
     "arbeitsatmosphaere": -0.1, "image": +0.2, "work_life_balance": +0.4,
@@ -310,8 +310,10 @@ def make_employee(company_id: int, period: str) -> dict:
         date = date_between(START, datetime(2022, 12, 31))
     elif period == "mid":
         date = date_between(datetime(2023, 1, 1), datetime(2023, 12, 31))
-    else:
-        date = date_between(datetime(2024, 1, 1), END)
+    elif period == "late":
+        date = date_between(datetime(2024, 1, 1), datetime(2024, 12, 31))
+    else:  # recent
+        date = date_between(datetime(2025, 1, 1), END)
 
     cats = {cat: rand_rating(base + CAT_OFFSETS[cat]) for cat in EMPLOYEE_CATS}
     avg = round(sum(cats.values()) / len(cats), 2)
@@ -343,8 +345,10 @@ def make_candidate(company_id: int, period: str) -> dict:
         date = date_between(START, datetime(2022, 12, 31))
     elif period == "mid":
         date = date_between(datetime(2023, 1, 1), datetime(2023, 12, 31))
-    else:
-        date = date_between(datetime(2024, 1, 1), END)
+    elif period == "late":
+        date = date_between(datetime(2024, 1, 1), datetime(2024, 12, 31))
+    else:  # recent
+        date = date_between(datetime(2025, 1, 1), END)
 
     cats = {cat: rand_rating(base + CAND_OFFSETS[cat]) for cat in CANDIDATE_CATS}
     avg = round(sum(cats.values()) / len(cats), 2)
@@ -376,9 +380,14 @@ def main():
         company_id = res.data[0]["id"]
         print(f"  Created company with id={company_id}")
 
+    print("Deleting existing reviews ...")
+    supabase.table("employee").delete().eq("company_id", company_id).execute()
+    supabase.table("candidates").delete().eq("company_id", company_id).execute()
+
+    # Build employee records: 134 per year × 4 years = 536 total
     employees = []
-    for period, count in [("early", 45), ("mid", 55), ("late", 50)]:
-        for _ in range(count):
+    for period in ("early", "mid", "late", "recent"):
+        for _ in range(134):
             employees.append(make_employee(company_id, period))
 
     print(f"Inserting {len(employees)} employee reviews ...")
@@ -387,9 +396,10 @@ def main():
         supabase.table("employee").insert(employees[i:i+batch]).execute()
         print(f"  Inserted employees {i+1}–{min(i+batch, len(employees))}")
 
+    # Build candidate records: 66 per year × 4 years = 264 total
     candidates = []
-    for period, count in [("early", 22), ("mid", 28), ("late", 25)]:
-        for _ in range(count):
+    for period in ("early", "mid", "late", "recent"):
+        for _ in range(66):
             candidates.append(make_candidate(company_id, period))
 
     print(f"Inserting {len(candidates)} candidate reviews ...")

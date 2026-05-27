@@ -516,9 +516,20 @@ export default function Dashboard() {
             {/* Page heading */}
             {selectedCompanyName && (
               <div style={{ marginBottom: 24 }}>
-                <h1 style={{ margin: 0, font: "600 24px/30px var(--font-sans)", letterSpacing: "-0.015em", color: "var(--color-fg)" }}>
-                  {selectedCompanyName}
-                </h1>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                  <h1 style={{ margin: 0, font: "600 24px/30px var(--font-sans)", letterSpacing: "-0.015em", color: "var(--color-fg)" }}>
+                    {selectedCompanyName}
+                  </h1>
+                  {(() => {
+                    const cid = effectiveCompanyId
+                    const co = companies.find(c => String(c.id) === String(cid))
+                    return co?.review_count != null ? (
+                      <span style={{ font: "400 13px/1 var(--font-sans)", color: "var(--color-fg-muted)" }}>
+                        {co.review_count} Bewertungen
+                      </span>
+                    ) : null
+                  })()}
+                </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 4, flexWrap: "wrap" }}>
                   <p style={{ margin: 0, font: "400 13px/1.5 var(--font-sans)", color: "var(--color-fg-muted)" }}>
                     Übersicht aller Bewertungen, Topics und Trends.
@@ -561,7 +572,7 @@ export default function Dashboard() {
               <KPIGrid
                 companyId={effectiveCompanyId}
                 avgScore={data?.avg_overall}
-                avgCount={data?.count}
+                avgCount={null}
                 trendData={trendData}
                 mostCriticalData={mostCriticalData}
                 negativeTopicItem={negativeTopicItem}

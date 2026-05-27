@@ -28,7 +28,7 @@ def date_between(start: datetime, end: datetime) -> str:
 
 START = datetime(2022, 1, 1)
 MID   = datetime(2023, 6, 1)
-END   = datetime(2025, 4, 30)
+END   = datetime(2026, 5, 15)
 
 # ── Employee text pools ───────────────────────────────────────────────────────
 
@@ -286,9 +286,12 @@ def make_employee(company_id: int, period: str) -> dict:
     elif period == "mid":
         base = random.uniform(3.2, 3.9)
         date = date_between(datetime(2023, 1, 1), datetime(2023, 12, 31))
-    else:
+    elif period == "late":
         base = random.uniform(3.6, 4.5)
-        date = date_between(datetime(2024, 1, 1), END)
+        date = date_between(datetime(2024, 1, 1), datetime(2024, 12, 31))
+    else:  # recent
+        base = random.uniform(4.0, 4.8)
+        date = date_between(datetime(2025, 1, 1), END)
 
     cats = {
         "arbeitsatmosphaere":         rand_rating(base + 0.3),
@@ -334,9 +337,12 @@ def make_candidate(company_id: int, period: str) -> dict:
     elif period == "mid":
         base = random.uniform(3.3, 4.0)
         date = date_between(datetime(2023, 1, 1), datetime(2023, 12, 31))
-    else:
+    elif period == "late":
         base = random.uniform(3.7, 4.6)
-        date = date_between(datetime(2024, 1, 1), END)
+        date = date_between(datetime(2024, 1, 1), datetime(2024, 12, 31))
+    else:  # recent
+        base = random.uniform(4.1, 4.9)
+        date = date_between(datetime(2025, 1, 1), END)
 
     cats_candidate = {
         "erklaerung_der_weiteren_schritte":  rand_rating(base),
@@ -382,14 +388,15 @@ def main():
         company_id = res.data[0]["id"]
         print(f"  Created company with id={company_id}")
 
-    # Build employee records: 40 early + 50 mid + 60 late = 150 total
+    print("Deleting existing reviews ...")
+    supabase.table("employee").delete().eq("company_id", company_id).execute()
+    supabase.table("candidates").delete().eq("company_id", company_id).execute()
+
+    # Build employee records: 134 per year × 4 years = 536 total
     employees = []
-    for _ in range(40):
-        employees.append(make_employee(company_id, "early"))
-    for _ in range(50):
-        employees.append(make_employee(company_id, "mid"))
-    for _ in range(60):
-        employees.append(make_employee(company_id, "late"))
+    for period in ("early", "mid", "late", "recent"):
+        for _ in range(134):
+            employees.append(make_employee(company_id, period))
 
     print(f"Inserting {len(employees)} employee reviews ...")
     batch = 50
@@ -397,14 +404,11 @@ def main():
         supabase.table("employee").insert(employees[i:i+batch]).execute()
         print(f"  Inserted employees {i+1}–{min(i+batch, len(employees))}")
 
-    # Build candidate records: 20 early + 25 mid + 30 late = 75 total
+    # Build candidate records: 66 per year × 4 years = 264 total
     candidates = []
-    for _ in range(20):
-        candidates.append(make_candidate(company_id, "early"))
-    for _ in range(25):
-        candidates.append(make_candidate(company_id, "mid"))
-    for _ in range(30):
-        candidates.append(make_candidate(company_id, "late"))
+    for period in ("early", "mid", "late", "recent"):
+        for _ in range(66):
+            candidates.append(make_candidate(company_id, period))
 
     print(f"Inserting {len(candidates)} candidate reviews ...")
     for i in range(0, len(candidates), batch):
