@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _url = os.getenv("SUPABASE_URL", "")
-_key = os.getenv("SUPABASE_KEY", "")
+# Use service_role key for server-side operations (bypasses RLS for writes).
+# Falls back to anon key for local dev without a service role key.
+_key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY", "")
 
 if _url and _key:
     from supabase import create_client, Client as _Client
