@@ -130,7 +130,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
     }
   }), [topicsData])
 
-  const handleCardClick = () => setTableModalOpen(true)
+  const handleCardClick = () => { if (!tableModalOpen && !detailModalOpen) setTableModalOpen(true) }
   const handleTopicSelect = (topic) => {
     setSelectedTopic(topic)
     setTableModalOpen(false)
