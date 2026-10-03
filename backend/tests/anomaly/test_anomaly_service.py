@@ -78,9 +78,10 @@ class TestDemoCompanies:
             assert a["n_reviews_before"] + a["n_reviews_after"] == a["n_reviews"]
 
     def test_series_covers_all_months(self, in_memory_db):
-        """Test: Reihe enthält alle Monate mit period, mean, count, evaluated."""
+        """Test: Reihe enthält alle Monate mit period, mean, count, n_values, evaluated."""
         series = svc.company_anomalies(DEMO_3, "employee")["series"]
-        assert set(series[0]) == {"period", "mean", "count", "evaluated"}
+        assert set(series[0]) == {"period", "mean", "count", "n_values", "evaluated"}
+        assert all(m["evaluated"] == (m["n_values"] >= 5) for m in series)
         assert [m["period"] for m in series] == rs.month_range(series[0]["period"], series[-1]["period"])
 
 

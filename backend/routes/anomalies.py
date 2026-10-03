@@ -31,7 +31,8 @@ def get_company_anomalies(
 
         {
           "company_id": 18, "source": "employee", "dimension": "durchschnittsbewertung",
-          "series": [{"period": "2022-01", "mean": 4.235, "count": 13, "evaluated": true}, ...],
+          "series": [{"period": "2022-01", "mean": 4.235, "count": 13, "n_values": 13,
+                      "evaluated": true}, ...],   # evaluated: n_values >= min_reviews_per_month
           "anomalies": [{"id", "company_id", "source", "dimension", "date", "direction",
                          "delta", "before_mean", "after_mean", "n_reviews_before",
                          "n_reviews_after", "n_reviews", "severity", "method", "params"}, ...],

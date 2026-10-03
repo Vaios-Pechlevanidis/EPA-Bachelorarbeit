@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { Activity, ArrowLeft, Building2, ListOrdered } from "lucide-react"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, DimensionPicker } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, DimensionPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { DEFAULT_TIME_RANGE, fmtPeriod, inWindow, isTimeRangeKey, timeWindow } from "@/lib/anomalySeries"
 import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useTheme } from "@/hooks/useTheme"
@@ -13,24 +14,26 @@ import { API_URL } from "../config"
    Geöffnet per Klick auf die AnomalyCard im Dashboard, analog zum Vergleich.
    Die Firma steht in der URL (?company=ID), damit Neuladen und Teilen
    funktionieren; der Name kommt aus dem Navigationszustand oder /companies.
-   Die Dimension steht ebenfalls in der URL (?dimension=key).
+   Dimension und Zeitraum stehen ebenfalls in der URL (?dimension=key&range=1y).
+   Der Zeitraum wählt nur den Ausschnitt; erkannt wird auf der ganzen Reihe.
    ============================================================================ */
 
 // Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
 const SOURCE = "employee"
 
-function Section({ icon, eyebrow, title, subtitle, children }) {
+function Section({ icon, eyebrow, title, subtitle, actions, children }) {
     return (
         <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
             <div className="px-4 pt-3 pb-3 border-b border-slate-200 flex items-start gap-2.5">
                 <span className="w-7 h-7 rounded-md grid place-items-center flex-none bg-slate-100 text-slate-600 mt-0.5 [&_svg]:w-[14px] [&_svg]:h-[14px]">
                     {icon}
                 </span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                     <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">{eyebrow}</p>
                     <h2 className="m-0 text-[14px] leading-5 font-semibold tracking-tight text-slate-900">{title}</h2>
                     {subtitle && <p className="m-0 mt-0.5 text-[11px] text-slate-500 leading-4">{subtitle}</p>}
                 </div>
+                {actions && <div className="flex-none flex items-center gap-2">{actions}</div>}
             </div>
             <div className="px-4 py-4">{children}</div>
         </section>
@@ -51,6 +54,8 @@ export default function AnomaliesPage() {
     const companyName = companyId ? names[companyId] ?? "" : ""
     const dimensionParam = searchParams.get("dimension")
     const dimension = EMPLOYEE_DIMENSIONS.some((d) => d.key === dimensionParam) ? dimensionParam : OVERALL_DIMENSION.key
+    const rangeParam = searchParams.get("range")
+    const rangeKey = isTimeRangeKey(rangeParam) ? rangeParam : DEFAULT_TIME_RANGE
 
     // Suchparameter ändern, ohne die übrigen (Firma, Dimension) zu verlieren.
     const updateParams = (patch) => {
@@ -88,6 +93,18 @@ export default function AnomaliesPage() {
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
     const eligibility = data?.eligibility
     const count = anomalies.length
+    // Sichtbares Fenster relativ zum letzten Monat der Reihe (null = ganze Reihe).
+    const range = useMemo(() => timeWindow(data?.series ?? [], rangeKey), [data, rangeKey])
+    const visibleAnomalies = useMemo(() => anomalies.filter((a) => inWindow(a.date, range)), [anomalies, range])
+    const hiddenCount = count - visibleAnomalies.length
+    const countText = `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
+    const chartSubtitle = eligibility && !eligibility.eligible
+        ? "Mitarbeiter · keine automatische Erkennung"
+        : range
+            ? `Mitarbeiter · ${fmtPeriod(range.from)} – ${fmtPeriod(range.to)} · ${count
+                ? `${visibleAnomalies.length} von ${count} ${count === 1 ? "auffälligen Veränderung" : "auffälligen Veränderungen"} im Zeitraum`
+                : "keine auffälligen Veränderungen"}`
+            : `Mitarbeiter · ${countText}`
 
     // Zurück mit der gewählten Firma, damit das Dashboard sie wieder anzeigt.
     const backToDashboard = () =>
@@ -156,18 +173,42 @@ export default function AnomaliesPage() {
                             icon={<Activity />}
                             eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
                             title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
-                            subtitle={`Mitarbeiter · ${eligibility && !eligibility.eligible ? "keine automatische Erkennung" : `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`}`}
+                            subtitle={chartSubtitle}
+                            actions={
+                                <TimeRangeFilter
+                                    value={rangeKey}
+                                    onChange={(key) => updateParams({ range: key === DEFAULT_TIME_RANGE ? null : key })}
+                                />
+                            }
                         >
-                            <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={380} />
+                            <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={380} range={range} />
                         </Section>
 
                         <Section
                             icon={<ListOrdered />}
                             eyebrow="LISTE"
                             title="Auffällige Veränderungen"
-                            subtitle="Abfälle zuerst, innerhalb nach Größe der Veränderung"
+                            subtitle={range
+                                ? `Im gewählten Zeitraum (${fmtPeriod(range.from)} – ${fmtPeriod(range.to)}); Abfälle zuerst, innerhalb nach Größe`
+                                : "Abfälle zuerst, innerhalb nach Größe der Veränderung"}
                         >
-                            {!loading && !error && <AnomalyList anomalies={anomalies} eligibility={eligibility} />}
+                            {!loading && !error && <AnomalyList
+                                    anomalies={visibleAnomalies}
+                                    eligibility={eligibility}
+                                    emptyText={range ? "Im gewählten Zeitraum keine auffälligen Veränderungen." : undefined}
+                                />}
+                            {!loading && !error && range && hiddenCount > 0 && (
+                                <p className="m-0 mt-2 text-[11px] text-slate-500">
+                                    {hiddenCount}{visibleAnomalies.length ? " weitere" : ""} {hiddenCount === 1 ? "auffällige Veränderung liegt" : "auffällige Veränderungen liegen"} außerhalb des gewählten Zeitraums.{" "}
+                                    <button
+                                        type="button"
+                                        className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                        onClick={() => updateParams({ range: null })}
+                                    >
+                                        Gesamten Zeitraum zeigen
+                                    </button>
+                                </p>
+                            )}
                         </Section>
                     </>
                 )}

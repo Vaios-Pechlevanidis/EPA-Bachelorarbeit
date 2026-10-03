@@ -14,6 +14,7 @@ import { Activity, ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucid
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { ChartCardHeader, DropdownPicker } from "./ChartHeader"
 import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
+import { INTERP_KEYS, TIME_RANGES, fmtPeriod, inWindow, interpolateGaps } from "@/lib/anomalySeries"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -40,11 +41,6 @@ const fmt = (v, digits = 2) =>
 
 const fmtDelta = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(v))
 
-function fmtPeriod(period) {
-    const [y, m] = period.split("-").map(Number)
-    return new Date(y, m - 1, 1).toLocaleDateString("de-DE", { month: "short", year: "numeric" })
-}
-
 function AnomalyTooltip({ active, payload, anomaliesByPeriod }) {
     if (!active || !payload?.length) return null
     const point = payload[0].payload
@@ -58,12 +54,21 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod }) {
                     <span className="font-semibold tnum text-white">{fmt(point.mean)}</span>
                 </p>
             ) : (
-                <p className="text-slate-400 italic m-0">nicht bewertet (unter {point.minReviews} Bewertungen)</p>
+                <p className="text-slate-400 italic m-0">
+                    nicht bewertet (unter {point.minReviews} Bewertungen mit Wert)
+                    {point.interpolated && <><br />Linie interpoliert, nur Darstellung</>}
+                </p>
             )}
             <p className="flex items-center justify-between gap-3">
                 <span className="text-slate-400">Bewertungen</span>
                 <span className="tnum text-slate-300">{point.count}</span>
             </p>
+            {point.n_values != null && point.n_values !== point.count && (
+                <p className="flex items-center justify-between gap-3">
+                    <span className="text-slate-400">davon mit Wert</span>
+                    <span className="tnum text-slate-300">{point.n_values}</span>
+                </p>
+            )}
             {anomaly && (
                 <div className="mt-1.5 pt-1.5 border-t border-slate-700">
                     <p className="mb-1 inline-flex items-center gap-1.5" style={{ color: DIRECTION[anomaly.direction].color }}>
@@ -105,10 +110,10 @@ export function IneligibleNotice({ eligibility }) {
     )
 }
 
-export function AnomalyList({ anomalies, eligibility }) {
+export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffälligen Veränderungen erkannt." }) {
     if (eligibility && !eligibility.eligible) return <IneligibleNotice eligibility={eligibility} />
     if (!anomalies.length) {
-        return <p className="text-[12px] text-slate-500 m-0">Keine auffälligen Veränderungen erkannt.</p>
+        return <p className="text-[12px] text-slate-500 m-0">{emptyText}</p>
     }
     return (
         <ul className="m-0 p-0 list-none">
@@ -143,32 +148,53 @@ function isolatedDot(chartData) {
     return IsolatedDot
 }
 
-/* Diagramm mit Lade-, Fehler- und Leerzustand; Höhe frei wählbar (Karte 220, Seite größer). */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) {
-    const anomaliesByPeriod = useMemo(
-        () => Object.fromEntries(anomalies.map((a) => [a.date, a])),
-        [anomalies],
-    )
+/* Diagramm mit Lade-, Fehler- und Leerzustand; Höhe frei wählbar (Karte 220, Seite größer).
+   Bewertete Monate bilden die durchgezogene Linie. Nicht bewertete Monate
+   zwischen zwei bewerteten werden gestrichelt und linear überbrückt (nur
+   Darstellung, siehe lib/anomalySeries.js). "range" ({from, to} oder null)
+   wählt einen Ausschnitt; Interpolation und Erkennung beruhen trotzdem auf
+   der ganzen Reihe, damit Linien am Fensterrand richtig weiterlaufen. */
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
-    // Achse nur aus bewerteten Monaten; dünne Monate würden sie verzerren.
-    const yDomain = useMemo(() => {
-        const vals = series.filter((m) => m.evaluated && m.mean != null).map((m) => m.mean)
-        if (!vals.length) return [1, 5]
-        return [Math.max(1, Math.floor((Math.min(...vals) - 0.2) * 2) / 2), Math.min(5, Math.ceil((Math.max(...vals) + 0.2) * 2) / 2)]
-    }, [series])
-    // Alle Kalendermonate der Reihe: bewertete tragen "value" (Linie), nicht
-    // bewertete unterbrechen die Linie und erhalten eine Markierung an der Grundlinie.
-    const chartData = useMemo(
-        () => series.map((m) => ({
+    const fullData = useMemo(() => {
+        const interp = interpolateGaps(series)
+        return series.map((m, i) => ({
             ...m,
+            ...interp[i],
             minReviews,
             value: m.evaluated ? m.mean : null,
-            gap: m.evaluated ? null : yDomain[0],
-        })),
-        [series, minReviews, yDomain],
+        }))
+    }, [series, minReviews])
+    const chartData = useMemo(
+        () => (range ? fullData.filter((m) => inWindow(m.period, range)) : fullData),
+        [fullData, range],
     )
-    const hasGaps = chartData.some((m) => !m.evaluated)
+    const visibleAnomalies = useMemo(
+        () => anomalies.filter((a) => inWindow(a.date, range)),
+        [anomalies, range],
+    )
+    const anomaliesByPeriod = useMemo(
+        () => Object.fromEntries(visibleAnomalies.map((a) => [a.date, a])),
+        [visibleAnomalies],
+    )
+    // Achse aus den sichtbaren Werten (bewertet und interpoliert); dünne
+    // Monatsmittel gehen nicht ein, weil sie die Achse verzerren würden.
+    const yDomain = useMemo(() => {
+        const vals = chartData.flatMap((m) => [m.value, ...INTERP_KEYS.map((k) => m[k])]).filter((v) => v != null)
+        if (!vals.length) return [1, 5]
+        return [Math.max(1, Math.floor((Math.min(...vals) - 0.2) * 2) / 2), Math.min(5, Math.ceil((Math.max(...vals) + 0.2) * 2) / 2)]
+    }, [chartData])
+    // Achsenstriche auf dem 0,5er-Raster der Domain, bei schmalem Ausschnitt 0,25;
+    // sonst setzt Recharts Viertelwerte, die toFixed(1) falsch beschriften würde.
+    const yTicks = useMemo(() => {
+        const step = yDomain[1] - yDomain[0] <= 1 ? 0.25 : 0.5
+        const ticks = []
+        for (let v = yDomain[0]; v <= yDomain[1] + 1e-9; v += step) ticks.push(+v.toFixed(2))
+        return ticks
+    }, [yDomain])
+    const hasInterpolation = chartData.some((m) => m.interpolated)
+    const hasVisibleValues = chartData.some((m) => m.value != null)
 
     return (
         <div className="w-full">
@@ -197,16 +223,33 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) 
                         />
                         <YAxis
                             domain={yDomain}
+                            ticks={yTicks}
                             tick={{ fontSize: 10, fill: "var(--color-axis)" }}
                             tickLine={false}
                             axisLine={false}
-                            width={32}
-                            tickFormatter={(v) => v.toFixed(1)}
+                            width={34}
+                            tickFormatter={(v) => (Number.isInteger(v * 2) ? v.toFixed(1) : v.toFixed(2))}
                         />
                         <Tooltip
                             content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} />}
                             cursor={{ stroke: "var(--color-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
+                            filterNull={false}
                         />
+                        {INTERP_KEYS.map((key) => (
+                            <Line
+                                key={key}
+                                type="linear"
+                                dataKey={key}
+                                stroke="var(--color-fg-subtle)"
+                                strokeWidth={1.25}
+                                strokeDasharray="4 4"
+                                dot={false}
+                                activeDot={false}
+                                connectNulls={false}
+                                legendType="none"
+                                isAnimationActive={false}
+                            />
+                        ))}
                         <Line
                             type="monotone"
                             dataKey="value"
@@ -217,15 +260,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) 
                             connectNulls={false}
                             isAnimationActive={false}
                         />
-                        <Line
-                            dataKey="gap"
-                            stroke="none"
-                            dot={{ r: 2, fill: "none", stroke: "var(--color-fg-subtle)", strokeWidth: 1 }}
-                            activeDot={false}
-                            legendType="none"
-                            isAnimationActive={false}
-                        />
-                        {anomalies.map((a) => {
+                        {visibleAnomalies.map((a) => {
                             const point = chartData.find((m) => m.period === a.date)
                             if (!point) return null
                             return (
@@ -244,6 +279,13 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) 
                     </LineChart>
                 </ResponsiveContainer>
             )}
+            {!error && !loading && series.length > 0 && !hasVisibleValues && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <p className="text-[13px] text-slate-500 bg-white/70 px-2 rounded">
+                        {range ? "Im gewählten Zeitraum gibt es" : "Die Reihe hat"} keinen Monat mit mindestens {minReviews} Bewertungen.
+                    </p>
+                </div>
+            )}
             {loading && (
                 <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-md pointer-events-none">
                     <div className="flex items-center gap-2">
@@ -255,15 +297,35 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) 
         </div>
         {!error && minReviews != null && (
             <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                {hasGaps && (
-                    <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full border border-slate-400" />
-                        nicht bewertet
+                {hasInterpolation && (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-4 h-0 border-t border-dashed border-slate-400" />
+                        interpoliert (Monat mit weniger als {minReviews} Bewertungen mit Wert, nicht in der Erkennung)
                     </span>
                 )}
-                <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen</span>
+                <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen mit Wert</span>
             </p>
         )}
+        </div>
+    )
+}
+
+/* Zeitfilter (Segmentschalter im Stil des Dashboard-Filters). Bezugspunkt ist
+   der letzte Monat der Reihe; der Filter wählt nur den Ausschnitt. */
+export function TimeRangeFilter({ value, onChange }) {
+    return (
+        <div className="ds-time-filter" role="group" aria-label="Zeitraum">
+            {TIME_RANGES.map(({ key, label }) => (
+                <button
+                    key={key}
+                    type="button"
+                    aria-pressed={value === key}
+                    className={`ds-time-btn${value === key ? " active" : ""}`}
+                    onClick={() => onChange(key)}
+                >
+                    {label}
+                </button>
+            ))}
         </div>
     )
 }

@@ -166,7 +166,10 @@ def company_anomalies(
         "source": source,
         "dimension": dimension,
         "series": [
-            {"period": m["period"], "mean": m["mean"], "count": m["count"], "evaluated": m["evaluated"]}
+            {
+                "period": m["period"], "mean": m["mean"], "count": m["count"],
+                "n_values": m["n_values"], "evaluated": m["evaluated"],
+            }
             for m in series
         ],
         "anomalies": anomalies,
