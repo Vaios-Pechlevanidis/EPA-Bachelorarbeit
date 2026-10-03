@@ -61,16 +61,6 @@ export function StepGlyph({ direction, severity = "high", color, size = 12 }) {
     )
 }
 
-/* Punkt-Symbol für die Legende der Karte (gefüllt = deutlich, hohl = mäßig). */
-function DotGlyph({ direction, hollow = false, color }) {
-    const c = color ?? DIRECTION[direction].color
-    return (
-        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" className="flex-none">
-            <circle cx="5" cy="5" r="3.5" fill={hollow ? "none" : c} stroke={c} strokeWidth="1.5" />
-        </svg>
-    )
-}
-
 /* Markierung im Diagramm: Stufe am markierten Monat von Ø davor (links) zu
    Ø danach (rechts). Höhe = Ausmaß im Maßstab der Y-Achse, Form = Richtung,
    Strichstärke = Schweregrad. Der Monatswert selbst bleibt auf der Linie. */
@@ -231,9 +221,11 @@ function isolatedDot(chartData, opacity = 1) {
    oder null) wählt einen Ausschnitt; Interpolation und Erkennung beruhen
    trotzdem auf der ganzen Reihe, damit Linien am Fensterrand richtig
    weiterlaufen. */
-/* compact (Dashboard-Karte): Die Niveaulinie ist die Hauptlinie, die Monatswerte
-   laufen blass im Hintergrund, Veränderungen sind Punkte auf dem neuen Niveau statt
-   Stufen, die Legende ist eine kurze Zeile ohne Erklärtexte.
+/* compact (Dashboard-Karte): Darstellung wie in der ersten Version der Karte –
+   kräftige Monatslinie, je Veränderung ein dezenter Ring auf dem Monatswert des
+   markierten Monats, unter dem Diagramm nur Interpolation und Datenbasis.
+   Stufen, Niveaulinie, ausführliche Legende und ausgeblendete Ränder stehen auf
+   der Detailseite.
    Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
 export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false }) {
     const minReviews = data?.params?.min_reviews_per_month
@@ -290,9 +282,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
     const hasVisibleValues = chartData.some((m) => m.value != null)
     const hasLevels = chartData.some((m) => m.level != null)
     const stepHalfWidth = compact ? 4 : height >= 300 ? 6 : 5
-    const style = compact
-        ? { valueOpacity: 0.35, valueWidth: 1, interpOpacity: 0.45, levelColor: "var(--color-fg-muted)", levelWidth: 1.5, levelOpacity: 1 }
-        : { valueOpacity: 1, valueWidth: 1.5, interpOpacity: 1, levelColor: "var(--color-fg-subtle)", levelWidth: 1, levelOpacity: 0.8 }
+    const style = { valueOpacity: 1, valueWidth: 1.5, interpOpacity: 1, levelColor: "var(--color-fg-subtle)", levelWidth: 1, levelOpacity: 0.8 }
 
     return (
         <div className="w-full">
@@ -375,14 +365,14 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             isAnimationActive={false}
                         />
                         {visibleAnomalies.map((a) => (compact ? (
-                            // Karte: Punkt am markierten Monat auf dem neuen Niveau, also am
-                            // Sprung der Niveaulinie; gefüllt = deutlich, hohl = mäßig.
+                            // Karte: Ring auf dem Monatswert des markierten Monats (erste Version).
                             <ReferenceDot
                                 key={a.id}
                                 x={a.date}
-                                y={a.after_mean}
-                                r={4}
-                                fill={a.severity === "high" ? DIRECTION[a.direction].color : "var(--color-bg-card)"}
+                                y={a.month_mean}
+                                r={a.severity === "high" ? 5 : 4}
+                                fill={DIRECTION[a.direction].color}
+                                fillOpacity={0.35}
                                 stroke={DIRECTION[a.direction].color}
                                 strokeWidth={1.5}
                                 ifOverflow="visible"
@@ -414,34 +404,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             )}
         </div>
-        {!error && minReviews != null && compact && (
-            <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block w-4 h-0 border-t border-blue-500 opacity-50" />
-                    Monatsmittel (ab {minReviews} Bewertungen)
-                </span>
-                {hasInterpolation && (
-                    <span className="inline-flex items-center gap-1.5">
-                        <span className="inline-block w-4 h-0 border-t border-dashed border-slate-400" />
-                        interpoliert
-                    </span>
-                )}
-                {hasLevels && (
-                    <span className="inline-flex items-center gap-1.5">
-                        <span className="inline-block w-4 h-0 border-t-[1.5px] border-slate-500" />
-                        Niveau
-                    </span>
-                )}
-                {visibleAnomalies.length > 0 && (
-                    <>
-                        <span className="inline-flex items-center gap-1"><DotGlyph direction="fall" /> Abfall</span>
-                        <span className="inline-flex items-center gap-1"><DotGlyph direction="rise" /> Anstieg</span>
-                        <span className="inline-flex items-center gap-1"><DotGlyph direction="fall" hollow color="var(--color-fg-muted)" /> hohl = mäßig</span>
-                    </>
-                )}
-            </p>
-        )}
-        {!error && minReviews != null && !compact && (
+        {!error && minReviews != null && (
             <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 {hasInterpolation && (
                     <span className="inline-flex items-center gap-1.5">
@@ -543,7 +506,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 actions={<DimensionPicker value={dimension} onChange={setDimension} compact />}
             />
             <div className="px-4 pt-4 pb-4">
-                <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} showLevels compact />
+                <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />
 
                 {/* Die Liste der Veränderungen steht nur auf der Detailseite; die Karte
                     zeigt Verlauf und Zähler und erklärt nur, wenn nichts erkannt werden kann. */}
