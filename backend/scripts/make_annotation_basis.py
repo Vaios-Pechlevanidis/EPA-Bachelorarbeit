@@ -52,13 +52,13 @@ import os
 import re
 import sys
 import unicodedata
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BACKEND_DIR)
 
 from database.supabase_client import get_supabase_client  # noqa: E402
+from services.rating_series_service import OVERALL_DIMENSION, build_monthly_series  # noqa: E402
 from services.topic_average_rating_service import (  # noqa: E402
     CANDIDATES_TOPIC_COLUMNS,
     EMPLOYEE_TOPIC_COLUMNS,
@@ -99,66 +99,23 @@ def slugify(name: str) -> str:
     return s or "unbenannt"
 
 
-# ── Monats-Helfer ────────────────────────────────────────────────────────────
-
-def month_key(datum_raw: Any) -> Optional[str]:
-    if not datum_raw:
-        return None
-    try:
-        dt = datetime.fromisoformat(str(datum_raw).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return f"{dt.year:04d}-{dt.month:02d}"
-
-
-def month_range(first: str, last: str) -> List[str]:
-    y, m = (int(x) for x in first.split("-"))
-    ly, lm = (int(x) for x in last.split("-"))
-    out: List[str] = []
-    while (y, m) <= (ly, lm):
-        out.append(f"{y:04d}-{m:02d}")
-        m += 1
-        if m == 13:
-            y, m = y + 1, 1
-    return out
-
-
 # ── Serienbildung ────────────────────────────────────────────────────────────
 
 def build_series(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Monatsserie (alle Kalendermonate im Zeitraum) aus Rohzeilen mit datum und
-    durchschnittsbewertung. Reine Funktion, ohne DB-Zugriff."""
-    sums: Dict[str, float] = {}
-    n_vals: Dict[str, int] = {}
-    counts: Dict[str, int] = {}
-    for r in rows:
-        mk = month_key(r.get("datum"))
-        if mk is None:
-            continue
-        counts[mk] = counts.get(mk, 0) + 1
-        val = r.get("durchschnittsbewertung")
-        if val is None:
-            continue
-        try:
-            v = float(val)
-        except (TypeError, ValueError):
-            continue
-        sums[mk] = sums.get(mk, 0.0) + v
-        n_vals[mk] = n_vals.get(mk, 0) + 1
-
-    if not counts:
-        return []
-
+    durchschnittsbewertung. Mittel und Anzahl kommen aus
+    services/rating_series_service.build_monthly_series, also aus derselben
+    Reihenbildung, die die Anomalieerkennung verwendet (E3). Ergänzt wird nur die
+    Differenz zum letzten Monat mit Wert. Reine Funktion, ohne DB-Zugriff."""
     series: List[Dict[str, Any]] = []
     prev_mean: Optional[float] = None
-    for period in month_range(min(counts), max(counts)):
-        count = counts.get(period, 0)
-        mean = round(sums[period] / n_vals[period], 3) if n_vals.get(period) else None
+    for month in build_monthly_series(rows, OVERALL_DIMENSION):
+        mean = month["mean"]
         delta = round(mean - prev_mean, 3) if (mean is not None and prev_mean is not None) else None
         series.append({
-            "period": period,
+            "period": month["period"],
             "mean_durchschnittsbewertung": mean,
-            "count": count,
+            "count": month["count"],
             "delta_vs_previous": delta,
         })
         if mean is not None:

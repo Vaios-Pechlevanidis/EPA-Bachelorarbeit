@@ -1,6 +1,6 @@
 # Datenbasis: Dichte der Kununu-Bewertungen je Unternehmen
 
-Stand: 2026-10-02T22:55:32+02:00 (automatisch erzeugt durch `backend/scripts/report_data_density.py`, Quelle: gehostete Supabase-Datenbank, Tabellen `employee` und `candidates`). Diese Datei nicht von Hand bearbeiten; die Rohwerte liegen in `backend/data/data_density.json`.
+Stand: 2026-10-03T14:22:03+02:00 (automatisch erzeugt durch `backend/scripts/report_data_density.py`, Quelle: gehostete Supabase-Datenbank, Tabellen `employee` und `candidates`). Diese Datei nicht von Hand bearbeiten; die Rohwerte liegen in `backend/data/data_density.json`.
 
 ## Methode
 
@@ -31,7 +31,7 @@ Stand: 2026-10-02T22:55:32+02:00 (automatisch erzeugt durch `backend/scripts/rep
 | 16 | Universität zu Köln | 181 | 0 | 2008-06 – 2026-03 | 214 | 0 | 0,0 | 125 | 207 | 7 | 100,0 % | 92,3 % – 100,0 % |
 | 19 | SAP SE | 496 | 0 | 2020-07 – 2026-06 | 72 | 0 | 0,0 | 37 | 46 | 26 | 100,0 % | 92,9 % – 99,8 % |
 | 20 | NTT DATA SE | 430 | 0 | 2015-07 – 2026-07 | 133 | 0 | 3,0 | 17 | 93 | 40 | 100,0 % | 89,3 % – 99,8 % |
-| 21 | 1 und 1 | 1291 | 0 | 2007-06 – 2025-07 | 218 | 0 | 4,0 | 23 | 111 | 107 | 100,0 % | 91,3 % – 97,2 % |
+| 21 | 1&1 AG | 1291 | 0 | 2007-06 – 2025-07 | 218 | 0 | 4,0 | 23 | 111 | 107 | 100,0 % | 91,3 % – 97,2 % |
 | 22 | Aixtron | 109 | 0 | 2011-02 – 2025-07 | 174 | 0 | 0,0 | 111 | 171 | 3 | 100,0 % | 95,4 % – 100,0 % |
 | 23 | Atoss | 171 | 0 | 2008-10 – 2025-03 | 198 | 0 | 0,0 | 102 | 194 | 4 | 100,0 % | 86,0 % – 95,9 % |
 | 24 | Bechtle | 2369 | 0 | 2007-12 – 2025-07 | 212 | 0 | 9,0 | 23 | 73 | 139 | 100,0 % | 90,5 % – 96,8 % |
@@ -62,7 +62,7 @@ Stand: 2026-10-02T22:55:32+02:00 (automatisch erzeugt durch `backend/scripts/rep
 | 16 | Universität zu Köln | 20 | 0 | 2012-05 – 2026-01 | 165 | 0 | 0,0 | 146 | 165 | 0 | 100,0 % | 40,0 % – 95,0 % |
 | 19 | SAP SE | 259 | 0 | 2011-08 – 2026-05 | 178 | 0 | 1,0 | 49 | 172 | 6 | 100,0 % | 83,8 % – 97,3 % |
 | 20 | NTT DATA SE | 0 | 0 | – | 0 | – | – | 0 | 0 | 0 | – | – |
-| 21 | 1 und 1 | 195 | 0 | 2008-10 – 2025-06 | 201 | 0 | 1,0 | 87 | 201 | 0 | 100,0 % | 87,7 % – 99,0 % |
+| 21 | 1&1 AG | 195 | 0 | 2008-10 – 2025-06 | 201 | 0 | 1,0 | 87 | 201 | 0 | 100,0 % | 87,7 % – 99,0 % |
 | 22 | Aixtron | 116 | 0 | 2018-09 – 2025-07 | 83 | 0 | 0,0 | 54 | 71 | 12 | 100,0 % | 6,0 % – 99,1 % |
 | 23 | Atoss | 192 | 0 | 2012-08 – 2025-06 | 155 | 0 | 1,0 | 59 | 151 | 4 | 100,0 % | 89,1 % – 99,5 % |
 | 24 | Bechtle | 295 | 0 | 2011-10 – 2025-07 | 166 | 0 | 1,0 | 43 | 157 | 9 | 100,0 % | 82,0 % – 98,6 % |
@@ -78,7 +78,7 @@ Stand: 2026-10-02T22:55:32+02:00 (automatisch erzeugt durch `backend/scripts/rep
 
 ## Konsequenzen
 
-**Mitarbeitende (`employee`):** 15 von 26 Unternehmen haben mindestens 12 Monate mit ≥ 5 Bewertungen: Thyssenkrupp (32), Open Grid Europe (22), E.ON (38), RWE (34), Karlsruher Institut für Technologie (27), Technische Universität München (13), SAP SE (26), NTT DATA SE (40), 1 und 1 (107), Bechtle (139), Cancom (115), Carl Zeiss (99), Compugroup Medical Deutschland (76), Telekom (165), Freenet (86).
+**Mitarbeitende (`employee`):** 15 von 26 Unternehmen haben mindestens 12 Monate mit ≥ 5 Bewertungen: Thyssenkrupp (32), Open Grid Europe (22), E.ON (38), RWE (34), Karlsruher Institut für Technologie (27), Technische Universität München (13), SAP SE (26), NTT DATA SE (40), 1&1 AG (107), Bechtle (139), Cancom (115), Carl Zeiss (99), Compugroup Medical Deutschland (76), Telekom (165), Freenet (86).
 
 Weniger als 12 Monate mit ≥ 5 Bewertungen (11 Unternehmen):
 
@@ -108,7 +108,7 @@ Weniger als 12 Monate mit ≥ 5 Bewertungen (21 Unternehmen):
 - Universität zu Köln (id 16): Monate ≥ 5: 0; 20 Zeilen über 165 Kalendermonate; Median 0,0 Bewertungen/Monat
 - SAP SE (id 19): Monate ≥ 5: 6; 259 Zeilen über 178 Kalendermonate; Median 1,0 Bewertungen/Monat
 - NTT DATA SE (id 20): keine Bewertungen in dieser Quelle
-- 1 und 1 (id 21): Monate ≥ 5: 0; 195 Zeilen über 201 Kalendermonate; Median 1,0 Bewertungen/Monat
+- 1&1 AG (id 21): Monate ≥ 5: 0; 195 Zeilen über 201 Kalendermonate; Median 1,0 Bewertungen/Monat
 - Atoss (id 23): Monate ≥ 5: 4; 192 Zeilen über 155 Kalendermonate; Median 1,0 Bewertungen/Monat
 - Bechtle (id 24): Monate ≥ 5: 9; 295 Zeilen über 166 Kalendermonate; Median 1,0 Bewertungen/Monat
 - Cancom (id 25): Monate ≥ 5: 5; 139 Zeilen über 172 Kalendermonate; Median 0,0 Bewertungen/Monat
@@ -144,7 +144,7 @@ Für sehr dünn belegte Unternehmen ist eine Monatsauflösung nicht tragfähig; 
 | 16 | Universität zu Köln | 100,0 % | 100,0 % | 96,7 % | 100,0 % | 98,3 % | 99,5 % | 100,0 % | 95,6 % | 100,0 % | 100,0 % | 100,0 % | 92,3 % | 100,0 % | 98,3 % |
 | 19 | SAP SE | 100,0 % | 99,8 % | 97,8 % | 98,8 % | 98,4 % | 99,2 % | 99,0 % | 96,6 % | 98,6 % | 98,6 % | 98,0 % | 92,9 % | 98,0 % | 95,6 % |
 | 20 | NTT DATA SE | 100,0 % | 99,5 % | 96,7 % | 98,4 % | 98,4 % | 99,1 % | 99,3 % | 89,3 % | 99,1 % | 99,8 % | 99,3 % | 93,7 % | 98,8 % | 96,7 % |
-| 21 | 1 und 1 | 100,0 % | 97,2 % | 95,3 % | 96,5 % | 95,2 % | 96,4 % | 97,1 % | 91,9 % | 96,9 % | 96,8 % | 96,4 % | 91,3 % | 96,4 % | 94,7 % |
+| 21 | 1&1 AG | 100,0 % | 97,2 % | 95,3 % | 96,5 % | 95,2 % | 96,4 % | 97,1 % | 91,9 % | 96,9 % | 96,8 % | 96,4 % | 91,3 % | 96,4 % | 94,7 % |
 | 22 | Aixtron | 100,0 % | 100,0 % | 96,3 % | 100,0 % | 96,3 % | 100,0 % | 100,0 % | 98,2 % | 99,1 % | 100,0 % | 100,0 % | 96,3 % | 100,0 % | 95,4 % |
 | 23 | Atoss | 100,0 % | 95,9 % | 90,1 % | 95,3 % | 93,6 % | 94,7 % | 95,3 % | 86,0 % | 95,9 % | 95,3 % | 94,7 % | 89,5 % | 95,3 % | 93,0 % |
 | 24 | Bechtle | 100,0 % | 96,8 % | 94,7 % | 96,0 % | 94,6 % | 96,0 % | 96,5 % | 91,6 % | 96,4 % | 96,3 % | 96,1 % | 90,5 % | 95,7 % | 92,7 % |
@@ -178,7 +178,7 @@ Für sehr dünn belegte Unternehmen ist eine Monatsauflösung nicht tragfähig; 
 | 16 | Universität zu Köln | 100,0 % | 40,0 % | 95,0 % | 45,0 % | 40,0 % | 40,0 % | 40,0 % | 45,0 % | 95,0 % | 55,0 % | 95,0 % |
 | 19 | SAP SE | 100,0 % | 85,3 % | 96,5 % | 84,6 % | 83,8 % | 83,8 % | 84,6 % | 85,3 % | 96,9 % | 86,1 % | 97,3 % |
 | 20 | NTT DATA SE | – | – | – | – | – | – | – | – | – | – | – |
-| 21 | 1 und 1 | 100,0 % | 88,2 % | 91,3 % | 98,0 % | 91,8 % | 91,3 % | 96,4 % | 90,8 % | 87,7 % | 91,3 % | 99,0 % |
+| 21 | 1&1 AG | 100,0 % | 88,2 % | 91,3 % | 98,0 % | 91,8 % | 91,3 % | 96,4 % | 90,8 % | 87,7 % | 91,3 % | 99,0 % |
 | 22 | Aixtron | 100,0 % | 99,1 % | 99,1 % | 97,4 % | 99,1 % | 98,3 % | 98,3 % | 94,8 % | 6,0 % | 99,1 % | 99,1 % |
 | 23 | Atoss | 100,0 % | 91,1 % | 89,6 % | 99,5 % | 91,1 % | 89,6 % | 97,4 % | 90,6 % | 89,1 % | 89,1 % | 99,0 % |
 | 24 | Bechtle | 100,0 % | 82,7 % | 82,4 % | 98,3 % | 82,4 % | 82,0 % | 95,9 % | 82,0 % | 83,4 % | 82,0 % | 98,6 % |

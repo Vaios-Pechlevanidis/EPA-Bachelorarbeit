@@ -1,33 +1,30 @@
 """
-Validator für die manuellen Referenzannotationen (Prüfpunkt 5 des
-Fundament-Checks, Inkrement 0).
+Validator für die manuellen Referenzannotationen in ``backend/data/annotations.json``
+(Prüfpunkt 5 des Fundaments, Protokoll in ``docs/referenzzeitraeume-literatur.md``,
+Abschnitt 3). Die Referenzzeiträume dienen der Evaluation der Anomalieerkennung
+(DZ1) und sind nicht Teil des Dashboards.
 
-Zweck
------
-Prüft ``backend/data/annotations.json`` auf
+Geprüft werden
 
-- gültiges JSON und die Grundstruktur {"version": 1, "hinweise": {...}, "annotations": [...]}
+- gültige Grundstruktur {"version": 1, "hinweise": {...}, "annotations": [...]}
 - Pflichtfelder je Eintrag: company, source, dimension, period_from, period_to, direction, note
 - company: auflösbar über den bereinigten Namen (strip, Whitespace-Kollaps,
-  casefold) gegen die Unternehmen der Datenbank (Standard) bzw. gegen die
-  Unternehmensliste in ``backend/data/data_density.json`` (``--offline``);
-  Demo-Unternehmen sind nicht zulässig
+  casefold) gegen die Unternehmen der Datenbank bzw. gegen die Unternehmensliste
+  in ``data_density.json``; Demo-Unternehmen sind nicht zulässig
 - source in {employee, candidates}; dimension = "durchschnittsbewertung" oder
   ein Themen-Schlüssel der jeweiligen Quelle
 - period_from / period_to im Format YYYY-MM, period_from <= period_to, beide
-  innerhalb des Datenzeitraums des Unternehmens für diese Quelle (aus
-  ``data_density.json``, daher wird diese Datei immer benötigt)
+  innerhalb des Datenzeitraums des Unternehmens für diese Quelle
 - direction in {rise, fall}; note nicht leer
 - keine Duplikate (gleiche company/source/dimension/period_from/period_to);
   Überschneidungen derselben Dimension werden als Warnung gemeldet
+- Protokollregeln 2 (Länge, Warnung), 3 (Mindestfallzahl an den Rändern:
+  Fehler; dünne Monate innerhalb: Warnung) und 5 (Mindestabstand: Warnung),
+  sofern Monatszählungen aus ``data/series/`` vorliegen
 
-Gibt einen deutschen Bericht aus und beendet sich mit Exit-Code 1 bei
-Fehlern. Mit ``--require-all-companies`` gilt zusätzlich als Fehler, wenn ein
-Nicht-Demo-Unternehmen keinen Eintrag hat.
-
-Die Prüf-Logik ist als reine Funktion ``validate()`` ohne Datenbank- oder
-Dateizugriff implementiert, damit sie in Tests mit In-Memory-Fixtures
-verwendet werden kann (siehe ``tests/test_annotations_validator.py``).
+Mit ``--require-all-companies`` gilt zusätzlich als Fehler, wenn ein
+Nicht-Demo-Unternehmen keinen Eintrag hat. ``validate()`` ist eine reine
+Funktion ohne Datei-, DB- oder Netzwerkzugriff; Exit-Code 1 bei Fehlern.
 
 Verwendung
 ----------
@@ -41,6 +38,8 @@ Verwendung
 from __future__ import annotations
 
 import argparse
+import csv
+import glob
 import json
 import os
 import re
@@ -51,25 +50,43 @@ from typing import Any, Dict, List, Optional, Tuple
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BACKEND_DIR)
 
-from services.topic_average_rating_service import (  # noqa: E402
-    CANDIDATES_TOPIC_COLUMNS,
-    EMPLOYEE_TOPIC_COLUMNS,
+# Quellen, Dimensionen und die Schwelle für bewertete Monate (E4) kommen aus
+# demselben Dienst, der die Reihe für die Anomalieerkennung bildet.
+from services.rating_series_service import (  # noqa: E402
+    DIMENSIONS_BY_SOURCE,
+    MIN_REVIEWS_PER_MONTH,
+    VALID_SOURCES,
 )
 
 DEFAULT_FILE = os.path.join(BACKEND_DIR, "data", "annotations.json")
 DEFAULT_DENSITY = os.path.join(BACKEND_DIR, "data", "data_density.json")
+DEFAULT_SERIES_DIR = os.path.join(BACKEND_DIR, "data", "series")
 
-VALID_SOURCES: Tuple[str, ...] = ("employee", "candidates")
 VALID_DIRECTIONS: Tuple[str, ...] = ("rise", "fall")
 REQUIRED_KEYS: Tuple[str, ...] = (
     "company", "source", "dimension", "period_from", "period_to", "direction", "note",
 )
-DIMENSIONS_BY_SOURCE: Dict[str, List[str]] = {
-    "employee": ["durchschnittsbewertung"] + list(EMPLOYEE_TOPIC_COLUMNS.keys()),
-    "candidates": ["durchschnittsbewertung"] + list(CANDIDATES_TOPIC_COLUMNS.keys()),
-}
 PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 _DEMO_RE = re.compile(r"^demo\s*\d+$")
+
+# Protokollregeln aus docs/referenzzeitraeume-literatur.md, Abschnitt 3
+# (Regel 3 nutzt MIN_REVIEWS_PER_MONTH aus dem Reihendienst)
+MAX_PERIOD_MONTHS = 6          # Regel 2: Obergrenze eines Referenzzeitraums in Kalendermonaten
+MAX_THIN_MONTHS_INSIDE = 1     # Regel 3: höchstens ein nicht bewerteter Monat innerhalb des Zeitraums
+MIN_GAP_MONTHS = 3             # Regel 5: Mindestabstand zweier Zeiträume derselben Reihe (Kalendermonate)
+
+
+def _month_index(period: str) -> int:
+    return int(period[:4]) * 12 + int(period[5:7]) - 1
+
+
+def _month_range(p_from: str, p_to: str) -> List[str]:
+    out: List[str] = []
+    i = _month_index(p_from)
+    while i <= _month_index(p_to):
+        out.append(f"{i // 12:04d}-{i % 12 + 1:02d}")
+        i += 1
+    return out
 
 
 # ── Datenstrukturen ──────────────────────────────────────────────────────────
@@ -85,6 +102,9 @@ class CompanyInfo:
     name: str
     name_normalized: str
     ranges: Dict[str, Optional[Tuple[str, str]]] = field(default_factory=dict)
+    # counts[source][period] = Anzahl Bewertungen im Monat (aus data/series/*.csv);
+    # fehlt der Schlüssel, werden die Regeln 3 und 5 nicht geprüft.
+    counts: Dict[str, Dict[str, int]] = field(default_factory=dict)
 
 
 @dataclass
@@ -167,6 +187,36 @@ def companies_from_db(density: Dict[str, Any], warnings: Optional[List[str]] = N
             )
         out[norm] = info
     return out
+
+
+def attach_series_counts(companies: Dict[str, CompanyInfo], series_dir: str,
+                         warnings: Optional[List[str]] = None) -> int:
+    """Liest die Monatszählungen aus data/series/<id>_<slug>_<source>.csv in CompanyInfo.counts.
+    Liefert die Zahl der gelesenen Dateien; fehlende Dateien werden als Warnung gemeldet."""
+    loaded = 0
+    for info in companies.values():
+        if info.id is None:
+            continue
+        for source in VALID_SOURCES:
+            matches = glob.glob(os.path.join(series_dir, f"{info.id}_*_{source}.csv"))
+            if not matches:
+                if warnings is not None:
+                    warnings.append(
+                        f"Keine Serien-CSV für '{info.name}'/{source} in {series_dir}; "
+                        "Protokoll-Regeln 3 und 5 werden für diese Reihe nicht geprüft "
+                        "(make_annotation_basis.py ausführen)."
+                    )
+                continue
+            counts: Dict[str, int] = {}
+            with open(matches[0], "r", encoding="utf-8") as fh:
+                for row in csv.DictReader(fh, delimiter=";"):
+                    try:
+                        counts[row["period"]] = int(row.get("count") or 0)
+                    except (TypeError, ValueError):
+                        continue
+            info.counts[source] = counts
+            loaded += 1
+    return loaded
 
 
 # ── Prüfung ──────────────────────────────────────────────────────────────────
@@ -256,6 +306,30 @@ def _check_entry(
                     f"{lab}: Zeitraum {p_from}..{p_to} liegt außerhalb des Datenzeitraums "
                     f"{first}..{last} von '{info.name}'/{source}."
                 )
+        # Regel 2: Obergrenze der Länge
+        length = _month_index(p_to) - _month_index(p_from) + 1
+        if length > MAX_PERIOD_MONTHS:
+            warnings.append(
+                f"{lab}: Zeitraum {p_from}..{p_to} umfasst {length} Kalendermonate, Protokoll-Regel 2 "
+                f"erlaubt höchstens {MAX_PERIOD_MONTHS}; längere monotone Verläufe sind Trends."
+            )
+        # Regel 3: Randmonate bewertet, höchstens ein dünner Monat innerhalb
+        counts = info.counts.get(source) if info is not None else None
+        if counts is not None:
+            for key, val in (("period_from", p_from), ("period_to", p_to)):
+                n = counts.get(val, 0)
+                if n < MIN_REVIEWS_PER_MONTH:
+                    errors.append(
+                        f"{lab}: {key} {val} hat nur {n} Bewertungen; Protokoll-Regel 3 verlangt "
+                        f"mindestens {MIN_REVIEWS_PER_MONTH} an beiden Rändern."
+                    )
+            inside = _month_range(p_from, p_to)[1:-1]
+            thin = [m for m in inside if counts.get(m, 0) < MIN_REVIEWS_PER_MONTH]
+            if len(thin) > MAX_THIN_MONTHS_INSIDE:
+                warnings.append(
+                    f"{lab}: {len(thin)} Monate innerhalb des Zeitraums haben weniger als "
+                    f"{MIN_REVIEWS_PER_MONTH} Bewertungen ({', '.join(thin)}); Protokoll-Regel 3 erlaubt einen."
+                )
 
     # direction
     direction = entry["direction"]
@@ -321,6 +395,14 @@ def validate(
                     f"{_label(i, entry)}: Zeitraum {p_from}..{p_to} überschneidet sich mit Eintrag #{o_i} "
                     f"({o_from}..{o_to}) derselben Dimension."
                 )
+            else:
+                gap = (_month_index(p_from) - _month_index(o_to) - 1 if p_from > o_to
+                       else _month_index(o_from) - _month_index(p_to) - 1)
+                if gap < MIN_GAP_MONTHS:
+                    result.warnings.append(
+                        f"{_label(i, entry)}: nur {gap} Monat(e) Abstand zu Eintrag #{o_i} ({o_from}..{o_to}); "
+                        f"Protokoll-Regel 5 verlangt mindestens {MIN_GAP_MONTHS} bewertete Monate."
+                    )
         spans.setdefault((norm, source, dimension), []).append((p_from, p_to, i))
 
     result.companies_annotated = sorted(annotated.values(), key=str.casefold)
@@ -374,6 +456,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--offline", action="store_true", help="Unternehmensliste aus data_density.json statt aus der DB")
     parser.add_argument("--require-all-companies", action="store_true",
                         help="Fehler, wenn ein Nicht-Demo-Unternehmen keinen Eintrag hat")
+    parser.add_argument("--series-dir", default=DEFAULT_SERIES_DIR,
+                        help=f"Serien-CSVs für die Protokollregeln 3 und 5 (Default: {DEFAULT_SERIES_DIR})")
+    parser.add_argument("--no-series", action="store_true",
+                        help="Serien-CSVs nicht laden (Regeln 3 und 5 werden dann nicht geprüft)")
     args = parser.parse_args(argv)
 
     density, err = _load_json(args.density, "data_density.json")
@@ -399,6 +485,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             "Hinweis: data_density.json prüfen bzw. 'uv run python scripts/report_data_density.py' ausführen."
         )
         return 1
+    if not args.no_series and os.path.isdir(args.series_dir):
+        attach_series_counts(companies, args.series_dir, load_warnings)
+    elif not args.no_series:
+        load_warnings.append(
+            f"Serien-Verzeichnis {args.series_dir} fehlt; Protokoll-Regeln 3 und 5 werden nicht geprüft."
+        )
     result = validate(doc, companies, require_all_companies=args.require_all_companies)
     result.warnings = load_warnings + result.warnings
     print(f"Modus: {mode}")

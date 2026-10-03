@@ -222,8 +222,8 @@
   },
   {
     "company_id": 21,
-    "name": "1 und 1",
-    "name_normalized": "1 und 1",
+    "name": "1&1 AG",
+    "name_normalized": "1&1 AG",
     "ticker": "1U1.DE",
     "isin": null,
     "sector": "Telekommunikation",
@@ -235,7 +235,7 @@
       "isin_source": "unverified",
       "checked_at": "2026-10-02"
     },
-    "note": "1&1 AG (TecDAX). Das Kununu-Profil könnte auch weitere Marken des 1&1-/United-Internet-Konzerns umfassen."
+    "note": "1&1 AG (TecDAX). Das Kununu-Profil könnte auch weitere Marken des 1&1-/United-Internet-Konzerns umfassen. Name in der DB am 2026-10-03 vom Autor auf \"1&1 AG\" geändert (vorher \"1 und 1\")."
   },
   {
     "company_id": 22,

@@ -42,8 +42,11 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   was die Nutzer sehen; das Kategorienmittel weicht davon ab, weil Bewertungen mit
   unvollständigen Kategorien anders gewichtet werden, und ist für Kandidaten nicht
   definiert.
-- **Status:** endgültig für Inkrement 1; die Serien-CSVs unter `backend/data/series/`
-  verwenden genau diese Definition.
+- **Umsetzung:** `backend/services/rating_series_service.py` ist die einzige Implementierung
+  dieser Reihe (`monthly_series`, `build_monthly_series`, Eignung nach E4 über `is_eligible`).
+  Die Anomalieerkennung in Inkrement 1 nutzt diesen Dienst; die Serien-CSVs unter
+  `backend/data/series/` werden über denselben Dienst erzeugt.
+- **Status:** endgültig für Inkrement 1.
 
 ## E4 – Mindestdichte je Monat
 
@@ -69,9 +72,23 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   vom Autor anhand der Serien-CSVs unter `backend/data/series/` eingetragen, bevor
   Erkennungscode entsteht, und mit `backend/scripts/validate_annotations.py` geprüft. Die
   Datei wird in einem eigenen Commit vor dem ersten Erkennungscode versioniert.
+- **Annotationsprotokoll (2026-10-03):** Die Regeln für Auswahl, Länge und Abgleich der
+  Referenzzeiträume stehen in `docs/referenzzeitraeume-literatur.md`, Abschnitt 3, und sind in
+  `backend/data/annotations.json` unter `hinweise.protokoll` wiederholt. Kurzfassung: Einheit
+  Kalendermonat; Zeitraum 1–3, höchstens 6 Monate; Randmonate mit ≥ 5 Bewertungen; Richtwert
+  ≥ 0,5 Sterne Niveauunterschied gegenüber den bis zu sechs Vormonaten; 0–3 Zeiträume je Reihe;
+  Toleranz beim Abgleich ±1 Monat mit Eins-zu-eins-Zuordnung und F1 als Hauptmaß; Ereignisanker
+  erst nach der Beurteilung aus der Reihe; Unternehmen unter der Mindestdichte aus E4 ohne
+  Einträge. Literaturgrundlage: Green et al. (2019) für Quartalsreaktion und Mindestfallzahl
+  (15 je Quartal, SD der Quartalsänderung 0,45), van den Burg & Williams (2020), Truong et al.
+  (2020), Lavin & Ahmad (2015) und Tatbul et al. (2018) für Toleranzmarge, Eins-zu-eins-Zuordnung
+  und Regionslabels, Restart Career & kununu (2024) für die Größenordnung realer Einbrüche.
+  Kein Paper untersucht „optimale Referenzzeiträume“ für Arbeitgeberbewertungen direkt; die
+  Zahlenwerte sind Setzungen des Autors innerhalb literaturgezogener Spannen und so gekennzeichnet.
 - **Begründung:** Eine aus der Erkennung abgeleitete oder nachträglich erzeugte Referenz
   wäre zirkulär und würde den F1-Wert entwerten; die Git-Historie belegt die Reihenfolge.
-- **Status:** Vorlage und Validierung vorhanden; Einträge offen (Handarbeit des Autors).
+- **Status:** Vorlage, Protokoll und Validierung vorhanden; Einträge offen (Handarbeit des Autors).
+  Die Referenzzeiträume sind kein Teil des Dashboards; sie dienen nur der Evaluation (DZ1).
 
 ## E6 – Unternehmens-Metadaten
 

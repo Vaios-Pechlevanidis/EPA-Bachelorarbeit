@@ -330,3 +330,91 @@ def test_format_report_lists_errors_and_result(companies):
     assert "note ist leer" in report
     assert report.strip().endswith("FEHLER (1).")
     assert "OK, keine Fehler." in va.format_report(va.validate(make_doc(), companies))
+
+
+# ---------------------------------------------------------------------------
+# Protokollregeln (docs/referenzzeitraeume-literatur.md, Abschnitt 3)
+# ---------------------------------------------------------------------------
+
+def warnings_containing(result, *fragments):
+    return [w for w in result.warnings if all(f in w for f in fragments)]
+
+
+def companies_with_counts():
+    comps = va.companies_from_density(DENSITY)
+    # E.ON/employee: 2020-01..2020-12 mit 8 Bewertungen, außer 2020-04 (3) und 2020-06 (2)
+    counts = {f"2020-{m:02d}": 8 for m in range(1, 13)}
+    counts["2020-04"] = 3
+    counts["2020-06"] = 2
+    comps["e.on"].counts["employee"] = counts
+    return comps
+
+
+def test_rule2_period_longer_than_six_months_warns(companies):
+    result = va.validate(make_doc(valid_entry(period_from="2020-01", period_to="2020-08")), companies)
+    assert result.ok
+    assert warnings_containing(result, "8 Kalendermonate", "Regel 2")
+
+
+def test_rule2_six_months_is_allowed(companies):
+    result = va.validate(make_doc(valid_entry(period_from="2020-01", period_to="2020-06")), companies)
+    assert not warnings_containing(result, "Regel 2")
+
+
+def test_rule3_thin_boundary_month_fails():
+    comps = companies_with_counts()
+    result = va.validate(make_doc(valid_entry(period_from="2020-04", period_to="2020-05")), comps)
+    assert errors_containing(result, "period_from 2020-04", "3 Bewertungen", "Regel 3")
+    assert not errors_containing(result, "period_to")
+
+
+def test_rule3_two_thin_months_inside_warn():
+    comps = companies_with_counts()
+    result = va.validate(make_doc(valid_entry(period_from="2020-03", period_to="2020-07")), comps)
+    assert result.ok
+    assert warnings_containing(result, "2 Monate innerhalb", "2020-04, 2020-06")
+
+
+def test_rule3_one_thin_month_inside_is_fine():
+    comps = companies_with_counts()
+    result = va.validate(make_doc(valid_entry(period_from="2020-03", period_to="2020-05")), comps)
+    assert result.ok and not result.warnings
+
+
+def test_rule3_not_checked_without_counts(companies):
+    result = va.validate(make_doc(valid_entry(period_from="2020-04", period_to="2020-05")), companies)
+    assert result.ok and not result.warnings
+
+
+def test_rule5_gap_below_three_months_warns(companies):
+    result = va.validate(
+        make_doc(valid_entry(period_from="2020-01", period_to="2020-02"),
+                 valid_entry(period_from="2020-04", period_to="2020-05", direction="rise")),
+        companies,
+    )
+    assert result.ok
+    assert warnings_containing(result, "nur 1 Monat(e) Abstand", "Regel 5")
+
+
+def test_rule5_gap_of_three_months_is_fine(companies):
+    result = va.validate(
+        make_doc(valid_entry(period_from="2020-01", period_to="2020-02"),
+                 valid_entry(period_from="2020-06", period_to="2020-07", direction="rise")),
+        companies,
+    )
+    assert result.ok and not warnings_containing(result, "Regel 5")
+
+
+def test_attach_series_counts_reads_csv(tmp_path):
+    comps = va.companies_from_density(DENSITY)
+    csv_path = tmp_path / "7_e_on_employee.csv"
+    csv_path.write_text(
+        "period;mean_durchschnittsbewertung;count;delta_vs_previous\n2020-01;3.5;6;\n2020-02;;0;\n2020-03;3.9;11;0.4\n",
+        encoding="utf-8",
+    )
+    warns = []
+    loaded = va.attach_series_counts(comps, str(tmp_path), warns)
+    assert loaded == 1
+    assert comps["e.on"].counts["employee"] == {"2020-01": 6, "2020-02": 0, "2020-03": 11}
+    assert "candidates" not in comps["e.on"].counts
+    assert any("E.ON" in w and "candidates" in w for w in warns)

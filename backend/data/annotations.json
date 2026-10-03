@@ -7,6 +7,8 @@
       "1. Je Unternehmen und Quelle die CSV backend/data/series/<id>_<slug>_<source>.csv öffnen (Trennzeichen ';', Dezimalpunkt '.').",
       "2. Spalten: period (Kalendermonat), mean_durchschnittsbewertung (Monatsmittel), count (Anzahl Bewertungen), delta_vs_previous (Differenz zum letzten vorhergehenden Monat mit Wert, nicht zwingend der direkte Vormonat).",
       "3. Zeiträume markieren, in denen die Bewertung nach eigener fachlicher Einschätzung extrem steigt (rise) oder fällt (fall). Monate mit sehr kleinem count sind mit Vorsicht zu beurteilen; die Dichte je Unternehmen steht in docs/datenbasis.md.",
+      "3a. Jeden Kandidaten gegen das Protokoll (hinweise.protokoll, Regeln 2-5) prüfen: Länge max. 6 Monate, Randmonate mit >= 5 Bewertungen, Niveauunterschied als Richtwert >= 0,5 Sterne, höchstens ein Zeitraum je 12 bewertete Monate.",
+      "3b. Erst nach der Beurteilung aus der Reihe nach einem Ereignis suchen (Regel 7) und es mit Datum, Quelle, URL in der note festhalten; Beurteilung 'Reihe allein' oder 'Reihe + Ereignis' anhängen.",
       "4. Für Themen-Dimensionen (z. B. 'kommunikation') gibt es keine eigene CSV; sie werden nur annotiert, wenn eine Begründung unabhängig von Erkennungscode möglich ist.",
       "5. Jeden Eintrag mit einer kurzen deutschen Begründung versehen (Feld 'note').",
       "6. Danach prüfen: cd backend && uv run python scripts/validate_annotations.py [--offline] [--require-all-companies]."
@@ -65,6 +67,23 @@
       "period_to": "YYYY-MM",
       "direction": "rise|fall",
       "note": "<deutsche Begründung>"
+    },
+    "protokoll": {
+      "quelle": "docs/referenzzeitraeume-literatur.md, Abschnitt 3 (Annotationsprotokoll, abgeleitet aus Ereignisstudien zu Arbeitgeberbewertungen und Konventionen der Changepoint-Evaluation; Setzungen des Autors sind dort gekennzeichnet).",
+      "regeln": [
+        "1 Einheit: Kalendermonat; ein Referenzzeitraum ist ein zusammenhängender Bereich period_from..period_to.",
+        "2 Länge: vom ersten abweichenden bewerteten Monat bis zum ersten Monat auf dem neuen Niveau; Regelfall 1-3 Monate, Obergrenze 6 Kalendermonate. Längere monotone Verläufe sind Trends, keine Referenzzeiträume.",
+        "3 Mindestfallzahl: period_from und period_to müssen Monate mit >= 5 Bewertungen sein; innerhalb des Zeitraums höchstens ein Monat mit < 5 Bewertungen. Monate mit 5-9 Bewertungen in der note mit Anzahl nennen.",
+        "4 Größenordnung (Richtwert): Mittel der Monatsmittel im Zeitraum weicht vom Mittel der bis zu sechs vorangehenden bewerteten Monate um >= 0,5 Sterne ab; ein einzelner Monatssprung reicht nicht.",
+        "5 Seltenheit: 0-3 Zeiträume je Reihe; zwei Zeiträume derselben Reihe liegen mindestens drei bewertete Monate auseinander.",
+        "6 Toleranz beim späteren Abgleich (fixiert, nicht nachträglich ändern): Treffer, wenn period_from-1 <= Erkennungsmonat <= period_to+1; jede Annotation zählt höchstens einmal; Hauptmaß F1.",
+        "7 Ereignisanker zweistufig: (A) zuerst allein aus der Serien-CSV beurteilen und notieren; (B) erst danach nach einem unabhängigen Ereignis suchen (Google-News-RSS, EQS; nicht notierte Unternehmen per Namenssuche), frühestens 3 Monate vor period_from und spätestens in period_to, mit Datum, Quelle und URL. Ereignis ohne sichtbare Veränderung erzeugt keine Annotation; Veränderung ohne Ereignis wird nicht gelöscht.",
+        "8 Unabhängigkeit: Datei vollständig erstellen, validieren und in einem eigenen Commit versionieren, bevor Erkennungscode entsteht; spätere Änderungen erhöhen version und werden begründet.",
+        "9 Dünn belegte Unternehmen/Quellen (< 12 Monate mit >= 5 Bewertungen, Liste in docs/datenbasis.md) erhalten keine Einträge.",
+        "10 Dimensionen: primär durchschnittsbewertung; Themen-Dimensionen nur mit unabhängiger Begründung.",
+        "11 Inhalt der note (deutsch, in dieser Reihenfolge): Vorniveau (Mittel, Monate, n je Monat) - Niveau im Zeitraum (Mittel, n je Monat) - Differenz in Sternen - Richtung - ggf. Streuungshinweis - Ereignisanker: Datum, Quelle, URL oder 'keiner' - Beurteilung: 'Reihe allein' oder 'Reihe + Ereignis'."
+      ],
+      "note_beispiel": "Vorniveau 3,9 (2022-10 bis 2023-02, n=7-12); Zeitraum 3,1 (n=9, 11); Δ -0,8; fall; Anker: Vorstandswechsel 2023-04 (EQS, URL); Reihe + Ereignis."
     }
   },
   "annotations": []
