@@ -36,9 +36,13 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
   und ist auch ohne Farbe lesbar; zusätzlich rot bzw. grün. Ein **kräftiger** Strich heißt
   „deutlich“ (ab 0,5 Sternen), ein dünner „mäßig“. Eine Legende unter dem Diagramm erklärt
   die Zeichen,
-- auf der Detailseite zusätzlich eine dünne graue **Niveaulinie**: das Mittel jedes
-  Abschnitts zwischen zwei erkannten Wechseln, also genau die Werte, die die Erkennung
-  verglichen hat. Auf der Karte entfällt sie, damit die Karte ruhig bleibt,
+- eine graue **Niveaulinie**: das Mittel jedes Abschnitts zwischen zwei erkannten
+  Wechseln, also genau die Werte, die die Erkennung verglichen hat. Auf der
+  **Dashboard-Karte** ist sie die Hauptlinie (kompakte Darstellung seit 2026-10-03): Die
+  Niveautreppe mit farbigen Sprüngen trägt das Bild, die Monatswerte laufen blass im
+  Hintergrund, und die Legende ist eine kurze Zeile („Monatsmittel (ab 5 Bewertungen) ·
+  interpoliert · Niveau · Abfall · Anstieg“). Ausführliche Legende und ausgeblendete Ränder
+  stehen nur auf der Detailseite. Dort ist die Niveaulinie dünn, die Monatslinie kräftig,
 - einen **Tooltip** je Monat mit dem Monatsmittel und der Zahl der Bewertungen (bei
   Einzeldimensionen zusätzlich „davon mit Wert“, wenn nicht jede Bewertung diese Kategorie
   bewertet hat), bei nicht
@@ -235,7 +239,7 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 | Teil | Datei | Aufgabe |
 |---|---|---|
 | Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
-| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), optionaler Niveaulinie (`showLevels`, Detailseite), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis (Liste nur auf der Detailseite), Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
+| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), Niveaulinie (`showLevels`), kompakter Kartenvariante (`compact`: Niveau als Hauptlinie, Monatswerte blass, einzeilige Legende), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis (Liste nur auf der Detailseite), Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
 | Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Anzeigebereich vom ersten bis zum letzten bewerteten Monat (`trimToEvaluated`), Zeitfenster relativ zum letzten angezeigten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
@@ -282,6 +286,13 @@ ihnen abhängt (Abschnitt 5). Gegen Referenzzeiträume (DZ1) sind sie noch nicht
 **Warum dezente Markierungen und das Wort „auffällig“?** Die Arbeit liefert eine
 Plausibilisierung, keine Kausalaussage. Eine auffällige Markierung soll zum Nachsehen
 einladen, nicht als Alarm oder als Ursache gelesen werden.
+
+**Warum auf der Karte das Niveau im Vordergrund?** Auf 220 px Höhe und mit über 200
+Monaten wirkte die verrauschte Monatslinie zusammen mit den farbigen Stufen und drei
+Legendenzeilen unübersichtlich (Rückmeldung des Autors am Telekom-Beispiel). Auf dem
+Dashboard zählt der Überblick: wann sich das Niveau verschoben hat und wie stark. Die
+Monatswerte bleiben sichtbar, aber zurückgenommen; die Einzelheiten stehen auf der
+Detailseite.
 
 **Warum eine Stufe statt eines Punkts?** Bis 2026-10-03 markierte ein Ring das
 Monatsmittel des markierten Monats. Eine Prüfung mit drei Prüfern, drei unabhängigen

@@ -200,13 +200,13 @@ export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffäl
 
 /* Punkt nur für bewertete Monate ohne bewerteten Nachbarn; sonst wären sie
    zwischen zwei Lücken unsichtbar, weil eine Linie zwei Punkte braucht. */
-function isolatedDot(chartData) {
+function isolatedDot(chartData, opacity = 1) {
     function IsolatedDot({ cx, cy, index }) {
         const isolated = chartData[index]?.value != null
             && chartData[index - 1]?.value == null
             && chartData[index + 1]?.value == null
         if (!isolated || cx == null || cy == null) return <g key={`iso-${index}`} />
-        return <circle key={`iso-${index}`} cx={cx} cy={cy} r={2} fill="#3b82f6" />
+        return <circle key={`iso-${index}`} cx={cx} cy={cy} r={2} fill="#3b82f6" fillOpacity={opacity} />
     }
     return IsolatedDot
 }
@@ -220,7 +220,10 @@ function isolatedDot(chartData) {
    oder null) wählt einen Ausschnitt; Interpolation und Erkennung beruhen
    trotzdem auf der ganzen Reihe, damit Linien am Fensterrand richtig
    weiterlaufen. */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false }) {
+/* compact (Dashboard-Karte): Die Niveaulinie ist die Hauptlinie, die Monatswerte
+   laufen blass im Hintergrund, die Legende ist eine kurze Zeile ohne Erklärtexte.
+   Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
     const trimmed = useMemo(() => trimToEvaluated(series), [series])
@@ -274,7 +277,10 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
     const hasInterpolation = chartData.some((m) => m.interpolated)
     const hasVisibleValues = chartData.some((m) => m.value != null)
     const hasLevels = chartData.some((m) => m.level != null)
-    const stepHalfWidth = height >= 300 ? 6 : 5
+    const stepHalfWidth = compact ? 4 : height >= 300 ? 6 : 5
+    const style = compact
+        ? { valueOpacity: 0.35, valueWidth: 1, interpOpacity: 0.45, levelColor: "var(--color-fg-muted)", levelWidth: 1.5, levelOpacity: 1 }
+        : { valueOpacity: 1, valueWidth: 1.5, interpOpacity: 1, levelColor: "var(--color-fg-subtle)", levelWidth: 1, levelOpacity: 0.8 }
 
     return (
         <div className="w-full">
@@ -322,6 +328,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                                 dataKey={key}
                                 stroke="var(--color-fg-subtle)"
                                 strokeWidth={1.25}
+                                strokeOpacity={style.interpOpacity}
                                 strokeDasharray="4 4"
                                 dot={false}
                                 activeDot={false}
@@ -334,9 +341,9 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             <Line
                                 type="stepAfter"
                                 dataKey="level"
-                                stroke="var(--color-fg-subtle)"
-                                strokeWidth={1}
-                                strokeOpacity={0.8}
+                                stroke={style.levelColor}
+                                strokeWidth={style.levelWidth}
+                                strokeOpacity={style.levelOpacity}
                                 dot={false}
                                 activeDot={false}
                                 connectNulls={false}
@@ -348,8 +355,9 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             type="monotone"
                             dataKey="value"
                             stroke="#3b82f6"
-                            strokeWidth={1.5}
-                            dot={isolatedDot(chartData)}
+                            strokeWidth={style.valueWidth}
+                            strokeOpacity={style.valueOpacity}
+                            dot={isolatedDot(chartData, style.valueOpacity)}
                             activeDot={{ r: 3, stroke: "var(--color-bg-card)", strokeWidth: 1 }}
                             connectNulls={false}
                             isAnimationActive={false}
@@ -381,7 +389,33 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             )}
         </div>
-        {!error && minReviews != null && (
+        {!error && minReviews != null && compact && (
+            <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-4 h-0 border-t border-blue-500 opacity-50" />
+                    Monatsmittel (ab {minReviews} Bewertungen)
+                </span>
+                {hasInterpolation && (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-4 h-0 border-t border-dashed border-slate-400" />
+                        interpoliert
+                    </span>
+                )}
+                {hasLevels && (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-4 h-0 border-t-[1.5px] border-slate-500" />
+                        Niveau
+                    </span>
+                )}
+                {visibleAnomalies.length > 0 && (
+                    <>
+                        <span className="inline-flex items-center gap-1"><StepGlyph direction="fall" /> Abfall</span>
+                        <span className="inline-flex items-center gap-1"><StepGlyph direction="rise" /> Anstieg</span>
+                    </>
+                )}
+            </p>
+        )}
+        {!error && minReviews != null && !compact && (
             <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 {hasInterpolation && (
                     <span className="inline-flex items-center gap-1.5">
@@ -392,7 +426,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen mit Wert</span>
             </p>
         )}
-        {!error && visibleAnomalies.length > 0 && (
+        {!error && visibleAnomalies.length > 0 && !compact && (
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span>Auffällige Veränderung des Niveaus ab dem markierten Monat, Stufe von Ø davor zu Ø danach:</span>
                 <span className="inline-flex items-center gap-1"><StepGlyph direction="fall" /> Abfall</span>
@@ -409,7 +443,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 )}
             </p>
         )}
-        {!error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && (
+        {!error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (
             <p className="m-0 mt-1 text-center text-[11px] text-slate-400">
                 Ausgeblendet (kein Monat mit mindestens {minReviews} Bewertungen mit Wert):{" "}
                 {hiddenEdges
@@ -483,7 +517,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 actions={<DimensionPicker value={dimension} onChange={setDimension} compact />}
             />
             <div className="px-4 pt-4 pb-4">
-                <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} />
+                <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} showLevels compact />
 
                 {/* Die Liste der Veränderungen steht nur auf der Detailseite; die Karte
                     zeigt Verlauf und Zähler und erklärt nur, wenn nichts erkannt werden kann. */}
