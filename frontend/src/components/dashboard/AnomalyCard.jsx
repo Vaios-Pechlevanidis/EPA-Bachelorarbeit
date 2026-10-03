@@ -20,8 +20,8 @@ import { INTERP_KEYS, TIME_RANGES, fmtPeriod, inWindow, interpolateGaps, levelsF
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
    Daten: GET /analytics/company/{id}/anomalies (live berechnet, nur lesend).
-   Die Karte öffnet per Klick die Detailseite /anomalies (onOpen); Diagramm und
-   Liste werden dort wiederverwendet.
+   Die Karte zeigt Verlauf und Zähler; die Liste der Veränderungen steht nur auf
+   der Detailseite /anomalies, die ein Klick auf die Karte öffnet (onOpen).
    Wortwahl: "auffällige Veränderung", keine Aussage über Ursachen.
    ============================================================================ */
 
@@ -485,13 +485,17 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
             <div className="px-4 pt-4 pb-4">
                 <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} />
 
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                    {!loading && !error && <AnomalyList anomalies={anomalies} eligibility={data?.eligibility} />}
-                </div>
+                {/* Die Liste der Veränderungen steht nur auf der Detailseite; die Karte
+                    zeigt Verlauf und Zähler und erklärt nur, wenn nichts erkannt werden kann. */}
+                {!loading && !error && data?.eligibility && !data.eligibility.eligible && (
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                        <IneligibleNotice eligibility={data.eligibility} />
+                    </div>
+                )}
 
                 <p className="text-[11px] text-slate-400 text-center mt-3 m-0 inline-flex w-full items-center justify-center gap-1">
                     <Maximize2 className="w-3 h-3" />
-                    Karte anklicken öffnet die Detailseite
+                    Karte anklicken öffnet die Detailseite mit der Liste
                 </p>
             </div>
         </div>

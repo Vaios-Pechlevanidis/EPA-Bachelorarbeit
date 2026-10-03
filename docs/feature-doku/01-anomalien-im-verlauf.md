@@ -49,7 +49,10 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
 - unter dem Diagramm den **Hinweis zur Datenbasis**: „Sternebewertung, Monatsmittel, Monate
   mit mindestens 5 Bewertungen mit Wert“, bei überbrückten Lücken zusätzlich die Legende
   „interpoliert (Monat mit weniger als 5 Bewertungen mit Wert, nicht in der Erkennung)“,
-- eine **Liste** der Veränderungen unter dem Diagramm, Abfälle zuerst, innerhalb nach Größe,
+- auf der Detailseite eine **Liste** der Veränderungen unter dem Diagramm, Abfälle zuerst,
+  innerhalb nach Größe. Auf der Dashboard-Karte steht keine Liste (seit 2026-10-03), damit
+  das Dashboard übersichtlich bleibt; der Zähler im Untertitel und der Hinweis „Karte
+  anklicken öffnet die Detailseite mit der Liste“ führen dorthin,
 - die **Anzahl** der auffälligen Veränderungen im Untertitel der Karte (Zähler aus FA-26),
 - bei Unternehmen mit zu wenig Daten statt einer leeren Liste den Hinweis **„Keine
   automatische Erkennung“** mit Grund, zum Beispiel „Nur 5 bewertete Monate (mindestens 12
@@ -232,7 +235,7 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 | Teil | Datei | Aufgabe |
 |---|---|---|
 | Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
-| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), optionaler Niveaulinie (`showLevels`, Detailseite), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis, Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
+| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), optionaler Niveaulinie (`showLevels`, Detailseite), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis (Liste nur auf der Detailseite), Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
 | Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Anzeigebereich vom ersten bis zum letzten bewerteten Monat (`trimToEvaluated`), Zeitfenster relativ zum letzten angezeigten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
