@@ -20,8 +20,15 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
   („nicht bewertet“) unterbrechen die
   durchgezogene Linie. Liegt eine solche Lücke zwischen zwei bewerteten Monaten, wird sie
   mit einer dünnen, grau **gestrichelten** Linie überbrückt (lineare Interpolation, nur
-  Darstellung). Lücken am Anfang oder Ende der Reihe bleiben leer. Ein bewerteter Monat
+  Darstellung). Ein bewerteter Monat
   zwischen zwei Lücken erhält einen kleinen Punkt,
+- **Anzeigebereich:** Das Diagramm beginnt beim ersten und endet beim letzten bewerteten
+  Monat. Leere Ränder davor und danach (dort gibt es keinen Monat mit genug Bewertungen und
+  nichts zu überbrücken) werden ausgeblendet und in einer Zeile unter dem Diagramm genannt,
+  z. B. bei E.ON „Jan. 2018 – Feb. 2019 (14 Monate), Apr. 2026 (1 Monat)“ und bei Open Grid
+  Europe „Feb. 2013 – Dez. 2016 (47 Monate), März 2026 (1 Monat)“. Mit Zeitfilter bleibt der
+  hintere Rand genannt, weil das Fenster am letzten bewerteten Monat endet (Universität
+  Duisburg-Essen, „12 Monate“: „Dez. 2024 – Apr. 2026 (17 Monate)“),
 - **dezente Punkte** an den Monaten, in denen sich das Bewertungsniveau auffällig
   verändert hat: rot für einen Abfall, grün für einen Anstieg, etwas größer bei
   deutlichen Veränderungen,
@@ -47,7 +54,7 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
 Firmenvergleich; die auf der Karte gewählte Dimension wird übernommen. Dort stehen ein
 größeres Diagramm und die Liste. Oben rechts lassen sich Dimension und Firma wechseln.
 Über dem Diagramm steht ein **Zeitfilter** mit „Gesamt“, „5 Jahre“, „3 Jahre“ und
-„12 Monate“. Er wählt den sichtbaren Ausschnitt, gezählt vom letzten Monat der Reihe
+„12 Monate“. Er wählt den sichtbaren Ausschnitt, gezählt vom letzten bewerteten Monat
 zurück; die Y-Achse passt sich dem Ausschnitt an. Der Untertitel nennt den Zeitraum und
 wie viele der auffälligen Veränderungen darin liegen („2 von 9 … im Zeitraum“). Die Liste
 zeigt nur die Veränderungen im Zeitraum und nennt darunter, wie viele außerhalb liegen,
@@ -210,9 +217,10 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 |---|---|---|
 | Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
 | Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`) | Verlauf mit gestrichelt überbrückten Lücken, Markierungen und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis, Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
-| Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Zeitfenster relativ zum letzten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
+| Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Anzeigebereich vom ersten bis zum letzten bewerteten Monat (`trimToEvaluated`), Zeitfenster relativ zum letzten angezeigten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
+| Icon | `Anomaly` in `frontend/src/icons.jsx` | kleines Liniendiagramm mit Niveausprung, der Ring markiert den ersten Monat auf dem neuen Niveau; im Stil der übrigen App-Icons (nur Konturen, Strichstärke 1,8), genutzt in Kartenkopf, Detailseite und Seitenleiste. Ersetzt das Lucide-Icon `Activity`, das mit fester Größe von 24 px aus dem 14-px-Feld des Kartenkopfs ragte |
 | Detailseite | `frontend/src/pages/Anomalies.jsx`, Route `/anomalies` in `frontend/src/App.jsx` | großes Diagramm, Liste, Firmenwechsel, Zurück zum Dashboard mit derselben Firma |
 | Navigation | Eintrag „Anomalien“ in der linken Leiste von `Dashboard.jsx` | zweiter Weg zur Detailseite; deaktiviert, solange keine Firma gewählt ist |
 
@@ -278,8 +286,18 @@ Carl Zeiss: mehr als 200 Monate) sind in voller Länge kaum zu lesen. Der Zeitfi
 vergrößert einen Ausschnitt. Die Erkennung läuft trotzdem immer auf der ganzen Reihe:
 Würde sie nur den Ausschnitt auswerten, hinge eine auffällige Veränderung vom gewählten
 Zoom ab, und ein 12-Monats-Fenster wäre nach E4 gar nicht geeignet. Bezugspunkt ist der
-letzte Monat der Reihe und nicht das heutige Datum, weil viele Reihen 2025 enden und ein
-Fenster ab heute leer wäre. Die Liste nennt, wie viele Veränderungen außerhalb des
+letzte bewertete Monat und nicht das heutige Datum, weil viele Reihen 2025 enden und ein
+Fenster ab heute leer wäre.
+
+**Warum leere Ränder ausblenden?** Viele Reihen beginnen mit einzelnen Bewertungen, lange
+bevor ein Monat 5 Bewertungen erreicht (Open Grid Europe: 47 Monate, E.ON: 14 Monate).
+Dort gibt es weder einen bewerteten Monat noch etwas zu überbrücken, das Diagramm zeigte
+nur leere Fläche und stauchte den eigentlichen Verlauf. Die ausgeblendeten Monate werden
+unter dem Diagramm mit Zeitraum und Anzahl genannt, damit klar bleibt, dass die Reihe
+früher beginnt. Für die Erkennung ändert sich nichts, sie nutzt ohnehin nur bewertete
+Monate. Damit ist die frühere Vorgabe „alle Monate zwischen erstem und letztem Monat der
+Reihe zeigen“ (Abschluss Schritt A) durch die Entscheidung des Autors vom 2026-10-03
+ersetzt. Die Liste nennt, wie viele Veränderungen außerhalb des
 Ausschnitts liegen, damit nichts unbemerkt ausgeblendet wird.
 
 **Warum die Dimensionsauswahl?** Eine Verschiebung der Gesamtnote sagt nicht, *in welchem
@@ -308,7 +326,7 @@ dringendere Anlass zum Handeln.
   bewertete Monate zwischen 2019-07 und 2021-04, 18 zwischen 2017-01 und 2018-08). Sie ist
   dort nur eine Verbindungslinie und kein Verlauf; über die Entwicklung in dieser Zeit sagt
   sie nichts.
-- Der Zeitfilter zählt vom letzten Monat der jeweiligen Reihe zurück. Zwei Unternehmen mit
+- Der Zeitfilter zählt vom letzten bewerteten Monat der jeweiligen Reihe zurück. Zwei Unternehmen mit
   „12 Monate“ können daher unterschiedliche Kalenderzeiträume zeigen; der Untertitel nennt
   den Zeitraum.
 
@@ -324,6 +342,7 @@ dringendere Anlass zum Handeln.
 | Service und Route | `backend/tests/anomaly/test_anomaly_service.py`, `test_anomalies_route.py` (In-Memory-Store, ohne Netzwerk): Demo 3 `fall` ±1 Monat um 2023-01 und `rise` um 2023-12, Demo 1/2 ohne Veränderung, nicht geeignete Reihen, `n_reviews`-Aufteilung, `dimension=all`, 400/422 |
 | Lücken, Eignung, Dimension | geprüft an Open Grid Europe (viele Lücken), PLEdoc (nicht geeignet), Demo 3 mit „Kommunikation“ und „Vorgesetztenverhalten“; helles und dunkles Theme |
 | Review Zeitfilter/Interpolation | Vier unabhängige Prüfer (Interpolation, Zeitfilter, Recharts, UI) und zwei Gegenprüfer, 2026-10-03. `interpolateGaps` wurde erschöpfend über alle 32 767 Muster aus bewerteten Monaten und Lücken bis Länge 14 geprüft, auch mit allen Fensterausschnitten: nie eine gestrichelte Strecke über einer durchgezogenen, Randlücken leer, kein interpolierter Wert als Datenwert. Bestätigt und behoben: Begründung im Tooltip bei Einzeldimensionen (`n_values`), Dativ im Untertitel, Leerhinweis ohne Zeitfilter, Y-Achsenbeschriftung bei Viertelstrichen. 4 Meldungen widerlegt |
+| Review Anzeigebereich/Icon | Zwei Prüfer (Logik, UI) und ein Gegenprüfer, 2026-10-03. Bestätigt und behoben: Im Zeitausschnitt fehlte der Hinweis auf ausgeblendete jüngere Monate (Universität Duisburg-Essen: 17 Monate mit 30 Bewertungen nach dem letzten bewerteten Monat). Widerlegt bzw. als Gestaltungsfrage eingestuft: Lesbarkeit des Rings im Icon bei 14 px auf 1x-Bildschirmen, Kontrast der Hinweiszeile (entspricht der Konvention der übrigen Karten), Formulierung des Hinweises (trotzdem geglättet) |
 | Interpolation und Zeitfilter | Hilfsfunktionen in `frontend/src/lib/anomalySeries.js` per Node-Prüfskript geprüft (Lücke in der Mitte, Ränder, benachbarte Lücken mit wechselnden Schlüsseln, einzelner Monat zwischen zwei Lücken, nicht bewerteter Monat mit Mittelwert, Fenster über den Jahreswechsel, Fenster größer als die Reihe). Im Browser: Open Grid Europe gesamt und 3 Jahre (Überbrückung am Fensterrand), Telekom 3 Jahre (2 von 9 im Zeitraum, Hinweis auf 7 außerhalb), Demo 3 12 Monate; helles und dunkles Theme |
 | Parameterübersicht | `backend/data/calibration/anomaly_params_employee_durchschnittsbewertung.csv`, Stand 2026-10-03, Mitarbeitende, Gesamtbewertung, 15 geeignete Unternehmen. Summe Abfälle/Anstiege bei min_delta 0,3: penalty 0,25 → 56/60, **0,5 → 31/35 (Startwert)**, 1,0 → 16/19, 2,0 → 4/5. Bei penalty 0,5 und min_delta 0,2/0,3/0,5: 31/36, 31/35, 27/28 |
 | Commits Inkrement 1 | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte), `8c3af1e` (Detailseite) |
