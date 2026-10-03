@@ -50,6 +50,7 @@ from services.rating_series_service import (
     evaluated_months,
     is_eligible,
     monthly_series,
+    monthly_series_by_dimension,
 )
 
 DEFAULT_MIN_DELTA = 0.3   # Sterne; vorläufig, siehe E9
@@ -181,7 +182,51 @@ def company_anomalies(
     }
 
 
+def company_anomalies_all(
+    company_id: int,
+    source: str = "employee",
+    penalty: float = DEFAULT_PENALTY,
+    min_delta: float = DEFAULT_MIN_DELTA,
+) -> Dict[str, Any]:
+    """Eignung und Anomalien aller Dimensionen einer Quelle (``dimension=all``).
+
+    Ohne Monatsreihen, um die Antwort klein zu halten; die Reihe einer
+    Dimension liefert ``company_anomalies``. ``anomalies`` ist die über alle
+    Dimensionen zusammengeführte und nach ``sort_anomalies`` sortierte Liste.
+    ValueError bei ungültiger Quelle.
+    """
+    series_by_dimension = monthly_series_by_dimension(company_id, source)
+    dimensions: List[Dict[str, Any]] = []
+    combined: List[Dict[str, Any]] = []
+    for dimension, series in series_by_dimension.items():
+        elig = eligibility(series)
+        found = (
+            detect_anomalies(
+                series, company_id=company_id, source=source, dimension=dimension,
+                penalty=penalty, min_delta=min_delta,
+            )
+            if elig["eligible"] else []
+        )
+        dimensions.append({"dimension": dimension, "eligibility": elig, "anomalies": found})
+        combined.extend(found)
+    return {
+        "company_id": company_id,
+        "source": source,
+        "dimension": "all",
+        "dimensions": dimensions,
+        "anomalies": sort_anomalies(combined),
+        "params": {
+            "method": "pelt",
+            "model": DEFAULT_MODEL,
+            "min_size": DEFAULT_MIN_SIZE,
+            "penalty": penalty,
+            "min_delta": min_delta,
+            "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
+        },
+    }
+
+
 __all__ = [
     "DEFAULT_MIN_DELTA", "SEVERITY_HIGH",
-    "eligibility", "sort_anomalies", "detect_anomalies", "company_anomalies",
+    "eligibility", "sort_anomalies", "detect_anomalies", "company_anomalies", "company_anomalies_all",
 ]

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useMemo, memo } from "react"
+import { useMemo, useState, memo } from "react"
 import {
     LineChart,
     Line,
@@ -10,9 +10,10 @@ import {
     ResponsiveContainer,
     ReferenceDot,
 } from "recharts"
-import { Activity, ArrowDownRight, ArrowUpRight, Maximize2 } from "lucide-react"
+import { Activity, ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucide-react"
 import { useAnomalies } from "@/hooks/useAnomalies"
-import { ChartCardHeader } from "./ChartHeader"
+import { ChartCardHeader, DropdownPicker } from "./ChartHeader"
+import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -22,8 +23,8 @@ import { ChartCardHeader } from "./ChartHeader"
    Wortwahl: "auffällige Veränderung", keine Aussage über Ursachen.
    ============================================================================ */
 
+// Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
 const SOURCE = "employee"
-const DIMENSION = "durchschnittsbewertung"
 
 const SOURCE_LABEL = { employee: "Mitarbeiter", candidates: "Bewerber" }
 
@@ -267,13 +268,29 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) 
     )
 }
 
+/* Auswahl der Dimension (Mitarbeiterquelle), Standard Gesamtbewertung. */
+export function DimensionPicker({ value, onChange, compact = false }) {
+    return (
+        <DropdownPicker
+            label="Dimension"
+            icon={<Layers />}
+            value={dimensionLabel(value)}
+            options={EMPLOYEE_DIMENSIONS.map((d) => ({ value: d.key, label: d.label }))}
+            onChange={onChange}
+            align="start"
+            compact={compact}
+        />
+    )
+}
+
 export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
-    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension: DIMENSION })
+    const [dimension, setDimension] = useState(OVERALL_DIMENSION.key)
+    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
 
     if (!companyId) return null
 
-    const subtitle = `${SOURCE_LABEL[SOURCE]} · Gesamtbewertung · ${countLabel(anomalies, data?.eligibility)}`
-    const open = () => onOpen?.()
+    const subtitle = `${SOURCE_LABEL[SOURCE]} · ${dimensionLabel(dimension)} · ${countLabel(anomalies, data?.eligibility)}`
+    const open = () => onOpen?.(dimension)
 
     return (
         <div
@@ -290,6 +307,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 title="Anomalien im Verlauf"
                 subtitle={subtitle}
                 expandable
+                actions={<DimensionPicker value={dimension} onChange={setDimension} compact />}
             />
             <div className="px-4 pt-4 pb-4">
                 <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} />

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { Activity, ArrowLeft, Building2, ListOrdered } from "lucide-react"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, DimensionPicker } from "@/components/dashboard/AnomalyCard"
+import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useTheme } from "@/hooks/useTheme"
 import { API_URL } from "../config"
@@ -12,10 +13,11 @@ import { API_URL } from "../config"
    Geöffnet per Klick auf die AnomalyCard im Dashboard, analog zum Vergleich.
    Die Firma steht in der URL (?company=ID), damit Neuladen und Teilen
    funktionieren; der Name kommt aus dem Navigationszustand oder /companies.
+   Die Dimension steht ebenfalls in der URL (?dimension=key).
    ============================================================================ */
 
+// Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
 const SOURCE = "employee"
-const DIMENSION = "durchschnittsbewertung"
 
 function Section({ icon, eyebrow, title, subtitle, children }) {
     return (
@@ -47,10 +49,23 @@ export default function AnomaliesPage() {
     )
     const [query, setQuery] = useState(location.state?.company?.name ?? "")
     const companyName = companyId ? names[companyId] ?? "" : ""
+    const dimensionParam = searchParams.get("dimension")
+    const dimension = EMPLOYEE_DIMENSIONS.some((d) => d.key === dimensionParam) ? dimensionParam : OVERALL_DIMENSION.key
+
+    // Suchparameter ändern, ohne die übrigen (Firma, Dimension) zu verlieren.
+    const updateParams = (patch) => {
+        const next = new URLSearchParams(searchParams)
+        Object.entries(patch).forEach(([k, v]) => (v == null ? next.delete(k) : next.set(k, v)))
+        setSearchParams(next)
+    }
 
     // Firma aus dem Navigationszustand in die URL übernehmen (Neuladen, Teilen).
     useEffect(() => {
-        if (companyId && !searchParams.get("company")) setSearchParams({ company: companyId }, { replace: true })
+        if (companyId && !searchParams.get("company")) {
+            const next = new URLSearchParams(searchParams)
+            next.set("company", companyId)
+            setSearchParams(next, { replace: true })
+        }
     }, [companyId, searchParams, setSearchParams])
 
     // Namen nachladen, wenn die Seite direkt über die URL geöffnet wurde.
@@ -70,7 +85,7 @@ export default function AnomaliesPage() {
         return () => controller.abort()
     }, [companyId, names])
 
-    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension: DIMENSION })
+    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
     const eligibility = data?.eligibility
     const count = anomalies.length
 
@@ -83,7 +98,7 @@ export default function AnomaliesPage() {
         const id = String(company.id)
         setNames((n) => ({ ...n, [id]: company.name }))
         setQuery(company.name)
-        setSearchParams({ company: id })
+        updateParams({ company: id })
     }
 
     return (
@@ -111,6 +126,12 @@ export default function AnomaliesPage() {
                         </p>
                     </div>
                 </div>
+                {companyId && (
+                    <DimensionPicker
+                        value={dimension}
+                        onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key })}
+                    />
+                )}
                 <div className="w-[260px] flex-none">
                     <CompanySearchSelect
                         value={query}
@@ -134,7 +155,7 @@ export default function AnomaliesPage() {
                         <Section
                             icon={<Activity />}
                             eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
-                            title="Monatsverlauf der Gesamtbewertung"
+                            title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
                             subtitle={`Mitarbeiter · ${eligibility && !eligibility.eligible ? "keine automatische Erkennung" : `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`}`}
                         >
                             <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={380} />

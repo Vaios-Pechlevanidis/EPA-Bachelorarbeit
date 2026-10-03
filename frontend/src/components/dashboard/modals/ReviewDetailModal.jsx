@@ -1,4 +1,5 @@
 import * as React from "react"
+import { RATING_CATEGORIES as ratingCategories } from "@/lib/ratingCategories"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import {
   Calendar, User, Star,
@@ -55,22 +56,6 @@ const ratingTone = (s) => {
     labelText: "text-rose-700",
   }
 }
-
-const ratingCategories = [
-  { key: "arbeitsatmosphaere",         label: "Arbeitsatmosphäre" },
-  { key: "image",                       label: "Image" },
-  { key: "work_life_balance",           label: "Work-Life Balance" },
-  { key: "karriere_weiterbildung",      label: "Karriere/Weiterbildung" },
-  { key: "gehalt_sozialleistungen",     label: "Gehalt/Sozialleistungen" },
-  { key: "kollegenzusammenhalt",        label: "Kollegenzusammenhalt" },
-  { key: "umwelt_sozialbewusstsein",    label: "Umwelt-/Sozialbewusstsein" },
-  { key: "vorgesetztenverhalten",       label: "Vorgesetztenverhalten" },
-  { key: "kommunikation",               label: "Kommunikation" },
-  { key: "interessante_aufgaben",       label: "Interessante Aufgaben" },
-  { key: "umgang_mit_aelteren_kollegen", label: "Umgang mit älteren Kollegen" },
-  { key: "arbeitsbedingungen",          label: "Arbeitsbedingungen" },
-  { key: "gleichberechtigung",          label: "Gleichberechtigung" },
-]
 
 /* ─── Star rendering ─── */
 function StarRating({ rating, size = "md" }) {

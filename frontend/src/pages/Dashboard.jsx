@@ -369,9 +369,11 @@ export default function Dashboard() {
   const handleTopicOverviewLoadingChange = useCallback((v) => setDashboardLoadingStates((p) => ({ ...p, topicOverview: v })), [])
 
   /* ---- Anomalien-Detailseite (analog zum Vergleich) ---- */
-  const openAnomalies = useCallback(() => {
+  const openAnomalies = useCallback((dimension) => {
     if (!effectiveCompanyId) return
-    navigate(`/anomalies?company=${encodeURIComponent(effectiveCompanyId)}`, {
+    const params = new URLSearchParams({ company: String(effectiveCompanyId) })
+    if (typeof dimension === "string" && dimension !== "durchschnittsbewertung") params.set("dimension", dimension)
+    navigate(`/anomalies?${params}`, {
       state: { company: { id: effectiveCompanyId, name: selectedCompanyName } },
     })
   }, [effectiveCompanyId, selectedCompanyName, navigate])
