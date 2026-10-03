@@ -9,6 +9,18 @@ const base = {
   strokeLinejoin: "round",
 };
 
+/* Anomalie im Verlauf: kleines Liniendiagramm (Achsen) mit Niveausprung; der
+   Ring markiert den ersten Monat auf dem neuen Niveau. Nur Konturen, damit es auch in der Seitenleiste
+   (fill: none) und im Kartenkopf gleich aussieht. */
+export const Anomaly = (p) => (
+  <svg {...base} {...p}>
+    <path d="M3 3v18h18" />
+    <path d="M7 8h4.2l2.6 6.4" />
+    <path d="M17.2 15.5H20" />
+    <circle cx="15.5" cy="15.5" r="1.8" />
+  </svg>
+);
+
 export const Star = (p) => (
   <svg {...base} {...p}>
     <polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2" />

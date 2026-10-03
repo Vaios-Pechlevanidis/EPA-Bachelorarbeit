@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { Activity, ArrowLeft, Building2, ListOrdered } from "lucide-react"
+import { ArrowLeft, Building2, ListOrdered } from "lucide-react"
+import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, DimensionPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
-import { DEFAULT_TIME_RANGE, fmtPeriod, inWindow, isTimeRangeKey, timeWindow } from "@/lib/anomalySeries"
+import { DEFAULT_TIME_RANGE, fmtPeriod, inWindow, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useTheme } from "@/hooks/useTheme"
@@ -93,8 +94,8 @@ export default function AnomaliesPage() {
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
     const eligibility = data?.eligibility
     const count = anomalies.length
-    // Sichtbares Fenster relativ zum letzten Monat der Reihe (null = ganze Reihe).
-    const range = useMemo(() => timeWindow(data?.series ?? [], rangeKey), [data, rangeKey])
+    // Sichtbares Fenster relativ zum letzten angezeigten (bewerteten) Monat; null = alles.
+    const range = useMemo(() => timeWindow(trimToEvaluated(data?.series).series, rangeKey), [data, rangeKey])
     const visibleAnomalies = useMemo(() => anomalies.filter((a) => inWindow(a.date, range)), [anomalies, range])
     const hiddenCount = count - visibleAnomalies.length
     const countText = `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
@@ -132,7 +133,7 @@ export default function AnomaliesPage() {
                 <div className="h-5 w-px bg-slate-200" />
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <span className="w-7 h-7 rounded-md grid place-items-center flex-none bg-slate-100 text-slate-600 [&_svg]:w-[14px] [&_svg]:h-[14px]">
-                        <Activity />
+                        <AnomalyIcon />
                     </span>
                     <div className="min-w-0">
                         <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">
@@ -170,7 +171,7 @@ export default function AnomaliesPage() {
                 ) : (
                     <>
                         <Section
-                            icon={<Activity />}
+                            icon={<AnomalyIcon />}
                             eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
                             title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
                             subtitle={chartSubtitle}

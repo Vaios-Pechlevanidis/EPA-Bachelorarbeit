@@ -10,11 +10,12 @@ import {
     ResponsiveContainer,
     ReferenceDot,
 } from "recharts"
-import { Activity, ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucide-react"
+import { Anomaly as AnomalyIcon } from "../../icons"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { ChartCardHeader, DropdownPicker } from "./ChartHeader"
 import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
-import { INTERP_KEYS, TIME_RANGES, fmtPeriod, inWindow, interpolateGaps } from "@/lib/anomalySeries"
+import { INTERP_KEYS, TIME_RANGES, fmtPeriod, inWindow, interpolateGaps, trimToEvaluated } from "@/lib/anomalySeries"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -151,12 +152,16 @@ function isolatedDot(chartData) {
 /* Diagramm mit Lade-, Fehler- und Leerzustand; Höhe frei wählbar (Karte 220, Seite größer).
    Bewertete Monate bilden die durchgezogene Linie. Nicht bewertete Monate
    zwischen zwei bewerteten werden gestrichelt und linear überbrückt (nur
-   Darstellung, siehe lib/anomalySeries.js). "range" ({from, to} oder null)
-   wählt einen Ausschnitt; Interpolation und Erkennung beruhen trotzdem auf
-   der ganzen Reihe, damit Linien am Fensterrand richtig weiterlaufen. */
+   Darstellung, siehe lib/anomalySeries.js). Angezeigt wird der Bereich vom
+   ersten bis zum letzten bewerteten Monat; leere Ränder davor und danach
+   werden ausgeblendet und unter dem Diagramm genannt. "range" ({from, to}
+   oder null) wählt einen Ausschnitt; Interpolation und Erkennung beruhen
+   trotzdem auf der ganzen Reihe, damit Linien am Fensterrand richtig
+   weiterlaufen. */
 export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
+    const trimmed = useMemo(() => trimToEvaluated(series), [series])
     const fullData = useMemo(() => {
         const interp = interpolateGaps(series)
         return series.map((m, i) => ({
@@ -166,10 +171,15 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
             value: m.evaluated ? m.mean : null,
         }))
     }, [series, minReviews])
-    const chartData = useMemo(
-        () => (range ? fullData.filter((m) => inWindow(m.period, range)) : fullData),
-        [fullData, range],
-    )
+    const chartData = useMemo(() => {
+        const shown = trimmed.series.length
+            ? fullData.filter((m) => inWindow(m.period, { from: trimmed.series[0].period, to: trimmed.series[trimmed.series.length - 1].period }))
+            : fullData
+        return range ? shown.filter((m) => inWindow(m.period, range)) : shown
+    }, [fullData, trimmed, range])
+    // Ausgeblendete Ränder nennen. Im Ausschnitt nur den hinteren: Das Fenster endet am
+    // letzten bewerteten Monat, jüngere Monate mit wenigen Bewertungen fehlen sonst unbemerkt.
+    const hiddenEdges = [range ? null : trimmed.hiddenBefore, trimmed.hiddenAfter].filter(Boolean)
     const visibleAnomalies = useMemo(
         () => anomalies.filter((a) => inWindow(a.date, range)),
         [anomalies, range],
@@ -306,12 +316,20 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen mit Wert</span>
             </p>
         )}
+        {!error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && (
+            <p className="m-0 mt-1 text-center text-[11px] text-slate-400">
+                Ausgeblendet (kein Monat mit mindestens {minReviews} Bewertungen mit Wert):{" "}
+                {hiddenEdges
+                    .map((e) => `${fmtPeriod(e.from)}${e.months > 1 ? ` – ${fmtPeriod(e.to)}` : ""} (${e.months} ${e.months === 1 ? "Monat" : "Monate"})`)
+                    .join(", ")}
+            </p>
+        )}
         </div>
     )
 }
 
 /* Zeitfilter (Segmentschalter im Stil des Dashboard-Filters). Bezugspunkt ist
-   der letzte Monat der Reihe; der Filter wählt nur den Ausschnitt. */
+   der letzte bewertete Monat; der Filter wählt nur den Ausschnitt. */
 export function TimeRangeFilter({ value, onChange }) {
     return (
         <div className="ds-time-filter" role="group" aria-label="Zeitraum">
@@ -364,7 +382,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
             className="group bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs hover:shadow-sm transition-shadow cursor-pointer flex flex-col"
         >
             <ChartCardHeader
-                icon={<Activity />}
+                icon={<AnomalyIcon />}
                 eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
                 title="Anomalien im Verlauf"
                 subtitle={subtitle}

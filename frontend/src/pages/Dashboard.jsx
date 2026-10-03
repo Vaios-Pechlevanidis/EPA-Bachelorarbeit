@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { Loader2, Upload, Clock, Activity } from "lucide-react"
+import { Loader2, Upload, Clock } from "lucide-react"
 
 import { WorkPulseLogo }     from "@/components/WorkPulseLogo"
 import { TimelineCard }      from "@/components/dashboard/TimelineCard"
@@ -17,7 +17,7 @@ import NegativTopicModal from "../components/dashboard/modals/NegativTopicModal"
 import ImportModal, { getImportHistory } from "../components/dashboard/modals/ImportModal"
 
 import {
-  Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon,
+  Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon,
 } from "../icons"
 import { useTheme } from "../hooks/useTheme"
 import { API_URL } from "../config"
@@ -417,7 +417,7 @@ export default function Dashboard() {
               disabled={!effectiveCompanyId}
               title={effectiveCompanyId ? "Anomalien im Verlauf" : "Erst eine Firma auswählen"}
             >
-              <Activity style={{ width: 16, height: 16 }} />
+              <AnomalyIcon />
               Anomalien
             </button>
           </div>

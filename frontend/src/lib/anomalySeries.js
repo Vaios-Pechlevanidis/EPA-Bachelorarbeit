@@ -3,9 +3,9 @@
  * Anzeige; die Erkennung im Backend läuft immer auf der vollständigen Reihe
  * und nur auf bewerteten Monaten (E4, E9). */
 
-/* Zeitfilter der Detailseite. Bezugspunkt ist der letzte Monat der Reihe,
- * nicht das heutige Datum: viele Reihen enden 2025, ein Fenster ab heute
- * wäre dort leer. */
+/* Zeitfilter der Detailseite. Bezugspunkt ist der letzte angezeigte Monat
+ * (letzter bewerteter Monat, siehe trimToEvaluated), nicht das heutige Datum:
+ * viele Reihen enden 2025, ein Fenster ab heute wäre dort leer. */
 export const TIME_RANGES = [
   { key: "all", label: "Gesamt", months: null },
   { key: "5y", label: "5 Jahre", months: 60 },
@@ -35,6 +35,26 @@ export function periodFromIndex(index) {
   const y = Math.floor(index / 12)
   const m = (index % 12) + 1
   return `${y}-${String(m).padStart(2, "0")}`
+}
+
+/* Anzeigebereich: vom ersten bis zum letzten bewerteten Monat. Davor und
+ * danach gibt es keinen Monat mit genug Bewertungen und nichts zu überbrücken;
+ * diese Ränder würden nur leere Fläche erzeugen. Rückgabe: {series, hiddenBefore,
+ * hiddenAfter}, die Ränder als {from, to, months} oder null. Ohne bewerteten
+ * Monat bleibt die Reihe unverändert (series ist dann die ganze Reihe). */
+export function trimToEvaluated(series) {
+  const list = series ?? []
+  const isValue = (m) => m.evaluated && m.mean != null
+  const first = list.findIndex(isValue)
+  if (first < 0) return { series: list, hiddenBefore: null, hiddenAfter: null }
+  let last = list.length - 1
+  while (!isValue(list[last])) last--
+  const edge = (a, b) => (b >= a ? { from: list[a].period, to: list[b].period, months: b - a + 1 } : null)
+  return {
+    series: list.slice(first, last + 1),
+    hiddenBefore: edge(0, first - 1),
+    hiddenAfter: edge(last + 1, list.length - 1),
+  }
 }
 
 /* Sichtbares Fenster {from, to} (inklusive) für einen Zeitfilter oder null
