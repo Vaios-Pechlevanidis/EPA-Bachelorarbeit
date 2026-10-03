@@ -5,7 +5,7 @@
 | Inkrement | 1 (Zyklus 2) |
 | Anforderungen | FA-01 bis FA-04, Zähler aus FA-26 |
 | Entscheidungen | E3 (Erkennungsreihe), E4 (Mindestdichte), E5 (Referenzzeiträume), E9 (Verfahren und Parameter, folgt) |
-| Status | Durchstich fertig (Quelle Mitarbeitende, Gesamtbewertung); Dimensionsauswahl und Hinweise folgen. Parameter **vorläufig** |
+| Status | Durchstich fertig (Quelle Mitarbeitende, Gesamtbewertung) mit Karte und Detailseite; Dimensionsauswahl und Hinweise folgen (Schritt 6). Parameter **vorläufig** |
 | Stand | 2026-10-03 |
 
 ## 1. Vorstellung
@@ -167,6 +167,22 @@ Umsetzung: `backend/services/anomaly_service.py`. Die API dazu ist
 `GET /api/analytics/company/{id}/anomalies` (`backend/routes/anomalies.py`). Sie rechnet
 bei jedem Aufruf live und legt nichts in der Datenbank ab.
 
+### 2.5 Darstellung im Frontend
+
+| Teil | Datei | Aufgabe |
+|---|---|---|
+| Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
+| Diagramm und Liste | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`) | Verlauf mit Markierungen und Tooltip, Liste der Veränderungen; von Karte und Detailseite gemeinsam genutzt |
+| Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
+| Detailseite | `frontend/src/pages/Anomalies.jsx`, Route `/anomalies` in `frontend/src/App.jsx` | großes Diagramm, Liste, Firmenwechsel, Zurück zum Dashboard mit derselben Firma |
+| Navigation | Eintrag „Anomalien“ in der linken Leiste von `Dashboard.jsx` | zweiter Weg zur Detailseite; deaktiviert, solange keine Firma gewählt ist |
+
+Die Farben kommen aus den Theme-Variablen der App (`--rose-500`, `--emerald-500`,
+`--color-grid`, `--color-axis`). Die Karte funktioniert deshalb im hellen und im dunklen Theme.
+Die Detailseite wendet das gespeicherte Theme auch an, wenn sie direkt über die URL
+geöffnet wird. Die Karte gehört nicht zum PDF-Export; der Export nutzt nur die
+Diagramm-IDs von Timeline und Topics.
+
 ## 3. Begründung
 
 **Warum Niveauwechsel statt Ausreißer?** Einzelne Monate mit 5–15 Bewertungen schwanken
@@ -199,6 +215,13 @@ Referenzzeiträume (DZ1).
 Plausibilisierung, keine Kausalaussage. Ein auffälliger Punkt soll zum Nachsehen einladen,
 nicht als Alarm oder als Ursache gelesen werden.
 
+**Warum eine eigene Detailseite?** Auf dem Dashboard teilt sich die Karte den Platz mit
+anderen Kennzahlen. Für das Lesen eines langen Verlaufs über Jahre ist ein breites
+Diagramm nötig. Die Seite folgt dem Muster des Firmenvergleichs (eigene Route, Leiste mit
+Zurück-Button), damit man die Bedienung nicht neu lernen muss. Die Firma steht in
+der Adresse, damit eine Ansicht in einem Interview (DZ3) gezielt geöffnet oder
+weitergegeben werden kann.
+
 **Warum Abfälle zuerst?** Für Personalverantwortliche sind Verschlechterungen meist der
 dringendere Anlass zum Handeln.
 
@@ -224,11 +247,12 @@ dringendere Anlass zum Handeln.
 | Gehostete Demo 3 (id 18) | `fall` 2023-01 (−1,38), `rise` 2024-01 (+1,19), `rise` 2025-01 (+0,36) |
 | Dashboard | geprüft im hellen und dunklen Theme, Tooltip und Liste, keine Konsolenfehler; PDF-Export-Pfad unverändert |
 | Detailseite | Klick auf Karte → `/anomalies?company=18`; Neuladen über die URL lädt den Firmennamen nach; gespeichertes Theme wird angewendet; „Zurück“ zeigt das Dashboard mit derselben Firma |
-| Commits | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte) |
+| Commits | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte), `8c3af1e` (Detailseite) |
 
 ## 6. Offene Punkte
 
 - Definition von `n_reviews` und `severity` bestätigen.
+- Detailseite im selben Browser-Tab (wie der Vergleich) oder in einem neuen Tab öffnen?
 - Verbreiterung (Schritt 6): Auswahl der Dimension, `dimension=all`, sichtbare Lücken,
   Hinweis zur Datenbasis, Hinweis bei nicht geeigneten Unternehmen.
 - Service- und Routentests (Schritt 7), Parameterraster (Schritt 8), Eintrag E9 (Schritt 9).
