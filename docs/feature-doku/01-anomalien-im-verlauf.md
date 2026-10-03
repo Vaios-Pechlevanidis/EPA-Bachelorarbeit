@@ -79,7 +79,73 @@ Umsetzung: `backend/models/changepoint_detector.py`. Das Modul enthält reine Fu
 Datenbankzugriff. Eine kleine Schnittstelle (`ChangePointDetector`) erlaubt es, später ein
 zweites Verfahren einzuhängen (geplant: Günnemann et al. 2014).
 
-### 2.3 Kennzahlen je Veränderung
+### 2.3 Wann wird eine Anomalie gekennzeichnet?
+
+**Was eine Anomalie hier ausmacht:** Eine Anomalie ist in diesem Dashboard eine
+**anhaltende Verschiebung des Bewertungsniveaus**. Ab einem bestimmten Monat liegen die
+Monatsmittel über mehrere Monate spürbar höher oder tiefer als in den Monaten davor. Ein
+einzelner schlechter Monat ist keine Anomalie, ebenso wenig ein kleines Auf und Ab.
+Entscheidend ist, dass das neue Niveau hält und der Unterschied groß genug ist.
+
+Ein Monat wird nur markiert, wenn **alle vier Bedingungen** erfüllt sind:
+
+| Nr. | Bedingung | Prüfwert (Start, vorläufig) | Wozu |
+|---|---|---|---|
+| 1 | Die Reihe ist **geeignet**. | mind. 12 bewertete Monate mit je mind. 5 Bewertungen (E4) | Ohne genug Monate gibt es kein verlässliches „davor“ und „danach“. |
+| 2 | **Beide Abschnitte** um den Wechsel sind lang genug. | mind. 3 bewertete Monate davor und danach (`min_size`) | Das neue Niveau muss halten; ein Ausreißermonat reicht nicht. |
+| 3 | Der Wechsel **erklärt die Reihe deutlich besser**, als er kostet. | Gewinn > Strafterm 0,5 (`penalty`), siehe unten | Zufällige Schwankungen sollen keine Wechsel erzeugen. |
+| 4 | Der Unterschied ist **groß genug**. | \|Delta\| ≥ 0,3 Sterne (`min_delta`) | Statistisch erkennbare, aber praktisch belanglose Verschiebungen fallen weg. |
+
+**Bedingung 3 in Zahlen:** Teilt man einen Abschnitt in zwei Teile mit *n₁* und *n₂*
+Monaten und den Mitteln *m₁* und *m₂*, sinkt die Summe der quadrierten Abweichungen um
+
+> Gewinn = n₁ · n₂ / (n₁ + n₂) · (m₂ − m₁)²
+
+PELT setzt den Wechsel nur, wenn dieser Gewinn den Strafterm 0,5 übersteigt. Daraus folgt
+eine einfache Faustregel: **Je kürzer die Abschnitte, desto größer muss der Sprung sein.**
+
+| Monate davor / danach | nötiger Sprung allein durch den Strafterm | wirksame Schwelle (mit `min_delta` 0,3) |
+|---|---|---|
+| 3 / 3 | 0,58 Sterne | 0,58 Sterne |
+| 3 / 12 | 0,46 Sterne | 0,46 Sterne |
+| 6 / 6 | 0,41 Sterne | 0,41 Sterne |
+| 12 / 12 | 0,29 Sterne | 0,30 Sterne |
+| 24 / 24 | 0,20 Sterne | 0,30 Sterne |
+
+Bei kurzen Abschnitten entscheidet also der Strafterm, bei langen der Mindestbetrag
+`min_delta`. Die Faustregel gilt für einen einzelnen Wechsel; bei mehreren Wechseln wägt
+PELT alle Zerlegungen gemeinsam ab.
+
+**Einordnung nach Richtung und Stärke:**
+
+- **Richtung:** Abfall (`fall`), wenn das Niveau danach niedriger ist, sonst Anstieg (`rise`).
+- **Stärke:** „deutlich“ (`high`) ab 0,5 Sternen, sonst „mäßig“ (`medium`). 0,5 Sterne ist
+  der Richtwert des Annotationsprotokolls (E5); die Grenze ist noch zu bestätigen.
+  „Deutlich“ markierte Punkte sind im Diagramm etwas größer.
+
+**Beispiel (gehostete Demo 3, synthetisch):**
+
+| Monat | davor / danach (bewertete Monate) | Delta | Gewinn | Ergebnis |
+|---|---|---|---|---|
+| 2023-01 | 12 / 12 | −1,38 | 11,3 | Abfall, deutlich |
+| 2024-01 | 12 / 11 | +1,19 | 8,1 | Anstieg, deutlich |
+| 2025-01 | 11 / 15 | +0,36 | 0,8 | Anstieg, mäßig (knapp über beiden Schwellen) |
+
+**Was nicht markiert wird:**
+
+- ein einzelner Ausreißermonat oder ein Ausreißer über zwei Monate (Bedingung 2),
+- Monate mit weniger als 5 Bewertungen; sie gehen gar nicht in die Erkennung ein (Bedingung 1),
+- Verschiebungen unter 0,3 Sternen (Bedingung 4),
+- ein Bruch in den letzten 1–2 bewerteten Monaten, weil das neue Niveau noch keine 3 Monate hat (Bedingung 2),
+- langsame, gleichmäßige Trends: Das Verfahren sucht Stufen. Ein schleichender Trend wird
+  entweder gar nicht oder als eine bzw. mehrere Stufen erkannt, sobald sich genug Abstand
+  aufgebaut hat.
+
+**Was eine Markierung nicht bedeutet:** Sie sagt, *dass* und *wann* sich das Niveau
+verschoben hat, nicht *warum*. Die Einordnung, etwa über Nachrichten aus dem Zeitraum,
+ist ein eigener, späterer Schritt und bleibt eine Plausibilisierung.
+
+### 2.4 Kennzahlen je Veränderung
 
 | Feld | Bedeutung |
 |---|---|
