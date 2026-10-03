@@ -1,6 +1,6 @@
-# Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“
+# Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“ und Inkrement 1 „Anomalien im Verlauf“
 
-Stand: 2026-10-02. Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-03 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -89,6 +89,19 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   wäre zirkulär und würde den F1-Wert entwerten; die Git-Historie belegt die Reihenfolge.
 - **Status:** Vorlage, Protokoll und Validierung vorhanden; Einträge offen (Handarbeit des Autors).
   Die Referenzzeiträume sind kein Teil des Dashboards; sie dienen nur der Evaluation (DZ1).
+- **Aktualisierung 2026-10-03 – Einträge zurückgestellt:** Der Autor hat das Eintragen der
+  Referenzzeiträume am 2026-10-03 zurückgestellt; der Erkennungscode von Inkrement 1 (E9) ist
+  seitdem entstanden. Die oben vorgesehene Reihenfolge (Annotation vor dem ersten
+  Erkennungscode, belegt durch die Git-Historie) gilt damit **nicht mehr**.
+- **Ersatzregel:** Die Annotation erfolgt **vor der Evaluation** (DZ1) anhand der Serien-CSVs
+  unter `backend/data/series/` und **ohne Einsicht in Erkennungsergebnisse** (keine Karte, keine
+  Detailseite, keine API-Antwort, keine Parameterübersicht unter `backend/data/calibration/`
+  für die zu annotierenden Reihen). Die Annotationen werden in einem eigenen Commit vor dem
+  ersten Abgleich versioniert.
+- **Einschränkung für DZ1:** Die Unabhängigkeit der Referenz lässt sich nicht mehr über die
+  Git-Historie belegen, sondern nur über die Selbstverpflichtung des Autors. Zudem kennt der
+  Autor die Ergebnisse für Demo 3 und die Größenordnung der Treffer aus der Parameterübersicht
+  (E9). Beides ist in der Evaluation als Grenze der Validität zu nennen.
 
 ## E6 – Unternehmens-Metadaten
 
@@ -139,3 +152,46 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Modelle aus. Die Abhängigkeiten `ruptures` und `yfinance` stehen in `pyproject.toml`,
   `uv.lock`, `requirements.txt` und beiden Dockerfiles.
 - **Status:** endgültig; Image nach der Änderung neu bauen.
+
+## E9 – Erkennungsverfahren und Parameter
+
+- **Kontext:** Inkrement 1 markiert im Dashboard auffällige Veränderungen im Monatsverlauf
+  (FA-01 bis FA-04, Zähler aus FA-26). Gesucht sind anhaltende Niveauwechsel, keine einzelnen
+  Ausreißermonate. Eingabe ist die Monatsreihe nach E3, nur bewertete Monate nach E4.
+- **Entscheidung:**
+  - **Verfahren:** PELT (Killick, Fearnhead & Eckley 2012) aus `ruptures` mit Kostenfunktion
+    `model="l2"` (Wechsel des Mittelwerts), `min_size=3` bewertete Monate je Abschnitt und
+    Strafterm `penalty=0.5`. Umsetzung: `backend/models/changepoint_detector.py`.
+  - **Fallback:** Für Reihen, die für PELT zu kurz sind (unter `2 × min_size` Werten),
+    Differenz der Mittel zweier angrenzender Fenster von 3 Monaten mit Schwelle 0,3 Sterne.
+    Im Dashboard greift er nicht, weil geeignete Reihen mindestens 12 Monate haben.
+  - **Mindestbetrag:** Wechsel mit `|delta| < min_delta = 0,3` Sternen werden nicht angezeigt.
+  - **Schweregrad:** `high` („deutlich“) ab 0,5 Sternen (Richtwert des Annotationsprotokolls,
+    E5), sonst `medium` („mäßig“).
+  - **Austauschbarkeit:** Das Protocol `ChangePointDetector` erlaubt ein zweites Verfahren
+    (geplant: Günnemann et al. 2014), ohne Service, API oder Frontend zu ändern.
+  - **Kennzahlen je Veränderung:** Monat (erster bewerteter Monat auf dem neuen Niveau),
+    Richtung, Delta, Mittel davor und danach, Bewertungen davor und danach
+    (`n_reviews_before`, `n_reviews_after`, Summe `n_reviews`), Verfahren und Parameter.
+    Umsetzung: `backend/services/anomaly_service.py`,
+    API `GET /api/analytics/company/{id}/anomalies` (auch `dimension=all`).
+- **Begründung:** PELT findet die beste Zerlegung exakt in linearer Zeit, ohne die Zahl der
+  Wechsel vorzugeben; `l2` passt zur Frage nach Niveauverschiebungen. `min_size=3` schließt
+  Ausreißermonate aus. Die Zahlenwerte sind Setzungen des Autors innerhalb der Größenordnungen
+  aus `docs/referenzzeitraeume-literatur.md` (u. a. SD der Quartalsänderung ≈ 0,45 Sterne bei
+  Green et al. 2019; Richtwert 0,5 Sterne im Annotationsprotokoll).
+- **Prüfung bisher:**
+  - Synthetische Demo-Reihen (`backend/tests/anomaly/`): Demo 3 liefert den erwarteten Abfall
+    um 2023-01 und Anstieg um 2023-12 (±1 Monat); Demo 1 und Demo 2 liefern in der
+    Gesamtbewertung keine Veränderung.
+  - Parameterübersicht (`backend/scripts/explore_anomaly_params.py`,
+    `backend/data/calibration/anomaly_params_employee_durchschnittsbewertung.csv`, Stand
+    2026-10-03): Mit den Startwerten 31 Abfälle und 35 Anstiege bei 15 geeigneten Unternehmen
+    (Mitarbeitende, Gesamtbewertung). Die Zahl hängt vor allem vom Strafterm ab (penalty 0,25:
+    116; 0,5: 66; 1,0: 35; 2,0: 9 bei min_delta 0,3); `min_delta` wirkt ab penalty 0,5 kaum.
+    Lange, dichte Reihen (Cancom, 1&1, Telekom) erhalten die meisten Markierungen, weil der
+    Strafterm nicht mit der Reihenlänge wächst.
+- **Status:** **vorläufig.** Die Werte sind Setzungen des Autors, geprüft an Demo 3 und an der
+  Parameterübersicht, **nicht an Referenzzeiträumen**. Die Messung gegen die Referenzzeiträume
+  für DZ1 (F1 mit ±1 Monat Toleranz, E5) steht aus; danach wird dieser Eintrag mit Beleg
+  aktualisiert.
