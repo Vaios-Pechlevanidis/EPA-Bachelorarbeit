@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 router = APIRouter(prefix="/api", tags=["Companies"])
-supabase = get_supabase_client()
 logger = logging.getLogger(__name__)
 
 # Erlaubte Werte für companies.peer_group (Vergleichsgruppe für Zyklus 2,
@@ -121,6 +120,7 @@ def _select_companies_with_fallback() -> list[dict]:
     "id,name" zurückgefallen; die Metadaten-Schlüssel werden dann mit None
     ergänzt, damit die Antwortstruktur stabil bleibt.
     """
+    supabase = get_supabase_client()
     try:
         res = (
             supabase.table("companies")
@@ -148,6 +148,7 @@ def _select_companies_with_fallback() -> list[dict]:
 @router.get("/companies/search")
 def search_companies(q: str = Query(..., min_length=1)):
     # Vorschläge aus DB, case-insensitive, enthält-suche
+    supabase = get_supabase_client()
     res = (
         supabase.table("companies")
         .select("id,name")
@@ -161,6 +162,7 @@ def search_companies(q: str = Query(..., min_length=1)):
 def get_companies():
     """Liefert alle Unternehmen mit Metadaten (ticker, isin, sector, peer_group)
     und der Gesamtzahl der Bewertungen (employee + candidates)."""
+    supabase = get_supabase_client()
     data = _select_companies_with_fallback()
 
     for row in data:
@@ -184,6 +186,7 @@ def get_company_ratings_avg(
     company_id: int,
     start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
 ):
+    supabase = get_supabase_client()
     if start_date:
         columns = list(CATEGORY_COLUMN_MAP.values())
         q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id).gte("datum", start_date)
@@ -221,6 +224,7 @@ CATEGORY_COLUMN_MAP = {
 @router.get("/companies/{company_id}/ratings/category-counts")
 def get_company_category_counts(company_id: int):
     """Return number of non-null ratings per category (employee table). Keys match avg_* used elsewhere."""
+    supabase = get_supabase_client()
     try:
         columns = list(CATEGORY_COLUMN_MAP.values())
         res = (
@@ -241,6 +245,7 @@ def get_company_category_counts(company_id: int):
 
 def _compute_avg_overall(company_id: int, start_date: Optional[str] = None) -> Optional[float]:
     """Query employee table directly and compute avg_overall, optionally filtered by start_date."""
+    supabase = get_supabase_client()
     columns = list(CATEGORY_COLUMN_MAP.values())
     q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id)
     if start_date:
@@ -265,6 +270,7 @@ def get_company_ratings_overall(
     company_id: int,
     start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
 ):
+    supabase = get_supabase_client()
     if start_date:
         avg_overall = _compute_avg_overall(company_id, start_date)
         return {"avg_overall": avg_overall}
@@ -303,6 +309,7 @@ def get_company_ratings_trend(
     
     Uses the 'datum' field (review date) not 'created_at' for time-based filtering.
     """
+    supabase = get_supabase_client()
     def to_float(x):
         try:
             return float(x) if x is not None else None
@@ -635,6 +642,7 @@ def create_company(company: CompanyCreate):
     (nicht-None) Felder gespeichert. Fehlen die Metadaten-Spalten in der DB
     (Migration 006 nicht eingespielt), wird gewarnt und nur der Name gespeichert.
     """
+    supabase = get_supabase_client()
     normalized_name = normalize_company_name(company.name)
     if not normalized_name:
         raise HTTPException(status_code=400, detail="Unternehmensname darf nicht leer sein")
@@ -693,6 +701,7 @@ def delete_company(company_id: int):
     Deletes a company from the database.
     This is used for rollback when file upload fails.
     """
+    supabase = get_supabase_client()
     try:
         # First, check if company has any data (employees or candidates)
         employees = supabase.table("employee").select("id").eq("company_id", company_id).limit(1).execute()
@@ -725,6 +734,7 @@ def delete_company_data(company_id: int):
     The company itself remains in the database.
     Used when user wants to replace existing data with new uploads.
     """
+    supabase = get_supabase_client()
     try:
         # Delete all employees for this company
         employees_result = supabase.table("employee").delete().eq("company_id", company_id).execute()

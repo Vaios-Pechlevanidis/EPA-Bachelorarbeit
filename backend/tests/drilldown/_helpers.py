@@ -2,9 +2,11 @@
 Hilfen der Drill-down-Tests (Inkrement 2): App mit dem Analytics-Router gegen
 den In-Memory-Store und Hashes der Antworten vor Inkrement 2.
 
-``routes/analytics.py`` bindet beim Import einen Modul-Client ``supabase``. Er
-wird hier auf den In-Memory-Client gesetzt, damit auch die unveränderten
-Pfade (``/reviews`` ohne neue Parameter, ``topic-overview``) ohne Netzwerk laufen.
+``routes/analytics.py`` importiert ``get_supabase_client`` beim Laden; nach dem
+Neuladen von ``database.supabase_client`` durch ``in_memory_db`` zeigt dieser Name
+noch auf die alte Funktion. Er wird hier auf den In-Memory-Client gesetzt, damit
+auch die unveränderten Pfade (``/reviews`` ohne neue Parameter,
+``topic-overview``) ohne Netzwerk laufen.
 """
 
 import hashlib
@@ -68,7 +70,7 @@ def analytics_client(monkeypatch, client):
     """TestClient mit dem Analytics-Router; Modul-Client auf ``client`` gesetzt."""
     import routes.analytics as analytics
 
-    monkeypatch.setattr(analytics, "supabase", client)
+    monkeypatch.setattr(analytics, "get_supabase_client", lambda: client)
     app = FastAPI()
     app.include_router(analytics.router)
     return TestClient(app)

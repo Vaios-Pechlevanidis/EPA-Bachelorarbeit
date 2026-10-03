@@ -29,12 +29,12 @@ import re
 import random
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
-supabase = get_supabase_client()
 
 
 @router.get("/company/{company_id}/overview")
 async def get_company_overview(company_id: int):
     """Get overall statistics for a company."""
+    supabase = get_supabase_client()
     try:
         # Get candidates data
         candidates_response = supabase.table("candidates")\
@@ -111,6 +111,7 @@ async def get_company_timeline(
     source: str = Query(default="all", description="Data source: 'employee', 'candidates', or 'all'")
 ):
     """Get timeline data for ratings over time with forecast."""
+    supabase = get_supabase_client()
     try:
         cutoff_date = datetime.now() - timedelta(days=days)
         
@@ -258,6 +259,7 @@ def calculate_forecast(historical_data: List[Dict[str, Any]], months: int) -> Li
 @router.get("/company/{company_id}/category-ratings")
 async def get_category_ratings(company_id: int):
     """Get average ratings for each category."""
+    supabase = get_supabase_client()
     try:
         # Get all rating columns for candidates
         candidates_response = supabase.table("candidates")\
@@ -438,6 +440,7 @@ async def get_company_reviews(
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching reviews: {str(e)}")
 
+    supabase = get_supabase_client()
     try:
         reviews = []
         
@@ -478,6 +481,7 @@ async def get_company_reviews(
 @router.get("/company/{company_id}/negative-topics")
 async def get_negative_topics(company_id: int):
     """Get the most mentioned negative topics."""
+    supabase = get_supabase_client()
     try:
         # Get employee negative feedback
         employee_response = supabase.table("employee")\
@@ -561,6 +565,7 @@ async def get_topic_overview(
     sortiert); bis 2026-10-04 las die Route je Quelle nur eine Abfrage und damit
     höchstens 1000 Zeilen (PostgREST-Grenze).
     """
+    supabase = get_supabase_client()
     try:
         end_day = parse_day(end_date, "end_date")
     except ValueError as e:
@@ -782,6 +787,7 @@ async def get_negative_kritikpunkte(company_id: int):
             "negative_share_percent": 70
         }
     """
+    supabase = get_supabase_client()
     try:
         # Hole Employee-Daten (haben meist mehr kritische Bewertungen)
         employee_response = supabase.table("employee")\
@@ -985,6 +991,7 @@ async def get_company_statistical_assessment(company_id: int) -> Dict[str, Any]:
     - Topic-wise sample size assessment (ANOVA context)
     - Recommendations for statistical analysis
     """
+    supabase = get_supabase_client()
     try:
         validator = StatisticalValidator()
         

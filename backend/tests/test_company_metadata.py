@@ -62,7 +62,7 @@ def entries() -> list[dict]:
 def in_memory(monkeypatch):
     """Lenkt routes.companies auf den In-Memory-Client um."""
     client = get_in_memory_client()
-    monkeypatch.setattr(companies_module, "supabase", client)
+    monkeypatch.setattr(companies_module, "get_supabase_client", lambda: client)
     monkeypatch.setattr(companies_module, "_meta_columns_warning_logged", False)
     return client
 
@@ -289,7 +289,7 @@ class _MissingColumnClient:
 
 def test_get_companies_falls_back_without_migration_and_warns_once(monkeypatch, caplog):
     fake = _MissingColumnClient(get_in_memory_client())
-    monkeypatch.setattr(companies_module, "supabase", fake)
+    monkeypatch.setattr(companies_module, "get_supabase_client", lambda: fake)
     monkeypatch.setattr(companies_module, "_meta_columns_warning_logged", False)
 
     with caplog.at_level(logging.WARNING, logger="routes.companies"):

@@ -207,6 +207,8 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
 - Zuordnung der Statuswerte (`True`/`False`, `deferred`, „Bewerber“) vom Autor zu bestätigen.
 - Der Vergleich für Einzeldimensionen nutzt dieselben Themen wie die Gesamtbewertung; ob
   je Dimension nur das zugehörige Thema gezeigt werden soll, ist offen.
-- Der Fix für den gemeinsamen Supabase-Client (`fix/supabase-client-thread-safety`) ist
-  nicht in `main`; mit mehreren gleichzeitigen Anfragen der Detailseite treten die
-  bekannten 500-Fehler ohne CORS-Kopf häufiger auf (beobachtet bei `/companies`).
+- Gemeinsamer Supabase-Client (behoben 2026-10-04): Der Fix aus
+  `fix/supabase-client-thread-safety` (ein Client je Thread) ist in diesen Branch
+  übernommen und auf `TopicModelDatabase` und `ExcelProcessor` erweitert. Vorher
+  lieferten 6 von 6 gleichzeitigen `/companies`-Anfragen 500 ohne CORS-Kopf, danach 54 von
+  54 gleichzeitigen Anfragen (Unternehmen, Anomalien, Bewertungen) 200.
