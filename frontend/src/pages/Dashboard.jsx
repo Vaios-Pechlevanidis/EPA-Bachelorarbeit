@@ -7,6 +7,7 @@ import { WorkPulseLogo }     from "@/components/WorkPulseLogo"
 import { TimelineCard }      from "@/components/dashboard/TimelineCard"
 import { TopicRatingCard }   from "@/components/dashboard/TopicRatingCard"
 import { TopicOverviewCard } from "@/components/dashboard/TopicOverviewCard"
+import { AnomalyCard }       from "@/components/dashboard/AnomalyCard"
 import KPIGrid               from "@/components/dashboard/KPIGrid"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import SorceModal        from "../components/dashboard/modals/SorceModal"
@@ -599,6 +600,11 @@ export default function Dashboard() {
                 onLoadingChange={handleTopicRatingLoadingChange}
                 globalTimeRange={globalTimeRange}
               />
+            </div>
+
+            {/* Anomalies (Inkrement 1) */}
+            <div style={{ marginBottom: 16 }}>
+              <AnomalyCard companyId={selectedCompany || selectedCompanyId} />
             </div>
 
             {/* Topic overview */}
