@@ -4,6 +4,7 @@ from routes.topics import router as topics_router
 from routes.upload import router as upload_router
 from routes.companies import router as companies_router
 from routes.analytics import router as analytics_router
+from routes.anomalies import router as anomalies_router
 
 app = FastAPI()
 
@@ -23,6 +24,7 @@ app.include_router(topics_router)
 app.include_router(upload_router)
 app.include_router(companies_router)
 app.include_router(analytics_router)
+app.include_router(anomalies_router)
 
 
 @app.get("/api/hello")
