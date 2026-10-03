@@ -53,22 +53,23 @@ Groundwork for anomaly detection and explanation (Design Science Research, cycle
 | Annotation check | `backend/scripts/validate_annotations.py` | `cd backend && uv run python scripts/validate_annotations.py` |
 | News-source spike | `backend/scripts/spike_news_sources.py` → `docs/quellen-spike.md` | `cd backend && uv run python scripts/spike_news_sources.py --company "Thyssenkrupp" --month 2023-04 --ticker TKA.DE` |
 
-Reference periods in `backend/data/annotations.json` are entered manually by the author from the series CSVs (see `docs/entscheidungen.md`, E5). Status 2026-10-03: the annotations are deferred, and the detection code of increment 1 now exists. The reference periods must therefore be made without looking at the detection results; this deviation from the order planned in E5 is still to be recorded in the decisions (E9).
+Reference periods in `backend/data/annotations.json` are entered manually by the author from the series CSVs (see `docs/entscheidungen.md`, E5). Status 2026-10-03: the entries were deferred and the detection code of increment 1 now exists, so the order originally planned in E5 no longer applies. Replacement rule (E5): annotate before the evaluation, from the series CSVs and without looking at any detection results; this is recorded as a limitation for DZ1.
 
 ---
 
-## 🔎 Cycle 2 – Increment 1 "Anomalien im Verlauf" (in progress)
+## 🔎 Cycle 2 – Increment 1 "Anomalien im Verlauf"
 
-Detects lasting level shifts in the monthly rating series and shows them in the dashboard. The feature is presented, explained and justified in [docs/feature-doku/01-anomalien-im-verlauf.md](docs/feature-doku/01-anomalien-im-verlauf.md); all parameters are preliminary.
+Detects lasting level shifts in the monthly rating series and shows them in the dashboard. The feature is presented, explained and justified in [docs/feature-doku/01-anomalien-im-verlauf.md](docs/feature-doku/01-anomalien-im-verlauf.md); method and parameters are recorded as preliminary in `docs/entscheidungen.md`, E9.
 
 | Part | Where | Notes |
 |---|---|---|
 | Change point detector | `backend/models/changepoint_detector.py` | PELT from `ruptures` (`model="l2"`, `min_size=3`, `penalty=0.5`), moving-mean fallback for short series, `ChangePointDetector` protocol for further methods |
-| Anomaly service | `backend/services/anomaly_service.py` | Uses `monthly_series` and `is_eligible` (E3/E4), detects on evaluated months only, filters `min_delta` (0.3 stars), sorts falls before rises |
-| API | `backend/routes/anomalies.py` | `GET /api/analytics/company/{company_id}/anomalies?source=employee&dimension=durchschnittsbewertung&penalty=&min_delta=` — returns series, anomalies, parameters, eligibility; computed live, read-only, no migration |
-| Dashboard card | `frontend/src/components/dashboard/AnomalyCard.jsx` | Below the chart row; click opens the detail page |
-| Detail page | `frontend/src/pages/Anomalies.jsx`, route `/anomalies?company=ID` | Larger chart and list, company switcher, also reachable via "Anomalien" in the sidebar |
-| Tests | `backend/tests/anomaly/` | `cd backend && uv run python -m pytest tests/anomaly tests/forecast tests/test_rating_series_service.py -q` |
+| Anomaly service | `backend/services/anomaly_service.py` | Uses `monthly_series` and `is_eligible` (E3/E4), detects on evaluated months only, filters `min_delta` (0.3 stars), sorts falls before rises; reviews before/after per change |
+| API | `backend/routes/anomalies.py` | `GET /api/analytics/company/{company_id}/anomalies?source=employee&dimension=durchschnittsbewertung&penalty=&min_delta=` — returns series (period, mean, count, n_values, evaluated), anomalies (incl. segment bounds, gap before the marked month), parameters, eligibility; `dimension=all` returns eligibility and anomalies per dimension plus one combined list. Computed live, read-only, no migration |
+| Dashboard card | `frontend/src/components/dashboard/AnomalyCard.jsx` | Below the chart row; chart as in the first version (monthly line, rings on the marked months), dashed interpolation over gaps, dimension picker, counter, eligibility notice; click opens the detail page, which shows the list, step markers (mean before → mean after), level line and full legend |
+| Detail page | `frontend/src/pages/Anomalies.jsx`, route `/anomalies?company=ID&dimension=KEY&range=5y\|3y\|1y` | Larger chart and list, dimension and company switcher, chart range from the first to the last evaluated month (hidden empty edges are named below the chart), time filter (view window counted back from the last evaluated month; detection always uses the full series), also reachable via "Anomalien" in the sidebar |
+| Parameter overview | `backend/scripts/explore_anomaly_params.py` → `backend/data/calibration/` | `cd backend && uv run python scripts/explore_anomaly_params.py` (read-only; evidence for checkpoint 1, not a calibration against reference periods) |
+| Tests | `backend/tests/anomaly/` (detector, service, route; in-memory store, no network) | `cd backend && uv run python -m pytest tests/anomaly tests/forecast tests/test_rating_series_service.py -q` |
 
 ---
 
@@ -274,6 +275,7 @@ epa-analytics/
 │   │   └── upload.py           # File Upload
 │   │
 │   ├── scripts/                 # Utility Scripts
+│   │   ├── explore_anomaly_params.py # Anomaly parameter overview (read-only)
 │   │   ├── train_models.py     # Model Training
 │   │   ├── fix_html_entities.py # Text Cleanup
 │   │   ├── sweep_num_topics_db.py    # Topic Count Optimization
@@ -335,6 +337,8 @@ epa-analytics/
 │   │   │   ├── chartValidator.js # Chart Validation
 │   │   │   └── pdf/           # PDF Utilities
 │   │   └── lib/               # Utilities
+│   │       ├── anomalySeries.js # Time window and display-only interpolation for anomaly charts
+│   │       ├── ratingCategories.js # Rating dimensions: key → label
 │   │       └── utils.ts
 │   ├── public/                # Static Assets
 │   └── package.json           # Node.js Dependencies

@@ -28,7 +28,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useState, useEffect, useMemo, useCallback, memo } from "react"
+import { useState, useEffect, useMemo, memo } from "react"
 import { API_URL } from "@/config"
 import { ChartCardHeader, SourceToggle, DropdownPicker } from "./ChartHeader"
 import { TrendUp as TrendUpIcon } from "../../icons"
@@ -159,9 +159,9 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
     const [error, setError] = useState(null)
     const [metric, setMetric] = useState("Ø Score")
     const [source, setSource] = useState("employee")
-    const [granularity, setGranularity] = useState("overall")
+    const [granularity] = useState("overall")
     const [selectedYear, setSelectedYear] = useState(null)
-    const [years, setYears] = useState([])
+    const [, setYears] = useState([])
     const [modalOpen, setModalOpen] = useState(false)
     
     // Kommuniziere Loading-State nach außen

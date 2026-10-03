@@ -143,7 +143,8 @@ def build_monthly_series(
 
 def fetch_review_rows(source: str, company_id: int, column: str) -> List[Dict[str, Any]]:
     """Alle Zeilen (id, datum, ``column``) eines Unternehmens aus der Tabelle
-    ``source``; nur SELECT, vollständig paginiert."""
+    ``source``; nur SELECT, vollständig paginiert. ``column`` darf eine
+    kommagetrennte Spaltenliste sein (siehe ``monthly_series_by_dimension``)."""
     from database.supabase_client import get_supabase_client  # lazy, damit Tests ohne DB laufen
 
     query = (
@@ -182,6 +183,23 @@ def monthly_series(
     }
 
 
+def monthly_series_by_dimension(
+    company_id: int,
+    source: str,
+    min_reviews: int = MIN_REVIEWS_PER_MONTH,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Monatsreihen aller Dimensionen einer Quelle aus einer einzigen Abfrage.
+
+    Rückgabe: ``{dimension: series}`` in der Reihenfolge von
+    ``DIMENSIONS_BY_SOURCE[source]``. ValueError bei ungültiger Quelle.
+    """
+    columns = {dimension: value_column(source, dimension) for dimension in DIMENSIONS_BY_SOURCE.get(source, [])}
+    if not columns:
+        value_column(source)  # wirft ValueError mit der Liste erlaubter Quellen
+    rows = fetch_review_rows(source, company_id, ",".join(dict.fromkeys(columns.values())))
+    return {dimension: build_monthly_series(rows, column, min_reviews) for dimension, column in columns.items()}
+
+
 # ── Eignung nach E4 ─────────────────────────────────────────────────────────
 
 def evaluated_months(series: List[Dict[str, Any]]) -> int:
@@ -198,6 +216,6 @@ __all__ = [
     "OVERALL_DIMENSION", "VALID_SOURCES", "DIMENSIONS_BY_SOURCE",
     "MIN_REVIEWS_PER_MONTH", "MIN_EVALUATED_MONTHS",
     "value_column", "month_key", "month_range",
-    "build_monthly_series", "fetch_review_rows", "monthly_series",
+    "build_monthly_series", "fetch_review_rows", "monthly_series", "monthly_series_by_dimension",
     "evaluated_months", "is_eligible",
 ]

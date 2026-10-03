@@ -229,7 +229,7 @@ export default function Welcome() {
                     isChecked: true
                 })
             }
-        } catch (err) {
+        } catch {
             setError(`Fehler bei der Überprüfung von Firma ${companyIndex + 1}`)
         } finally {
             setChecking(null)

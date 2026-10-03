@@ -99,7 +99,6 @@ export default function SorceModal({ open, onOpenChange, companyId }) {
 
   // Overall avg for header subtitle
   const overall = rows.length ? rows.reduce((s, r) => s + r.score, 0) / rows.length : null;
-  const overallTone = overall ? scoreTone(overall) : null;
 
   return (
     <ModalShell

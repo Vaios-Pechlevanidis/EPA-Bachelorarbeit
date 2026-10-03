@@ -20,7 +20,19 @@ Felder je Anomalie:
 - ``delta``: ``after_mean - before_mean`` in Sternen
 - ``before_mean`` / ``after_mean``: Mittel der Monatsmittel im Segment vor bzw.
   nach dem Wechsel (bis zum benachbarten Wechsel)
-- ``n_reviews``: Anzahl der Werte, auf denen die beiden Segmente beruhen
+- ``n_reviews_before`` / ``n_reviews_after``: Anzahl der Werte im Segment vor
+  bzw. nach dem Wechsel
+- ``n_reviews``: Summe beider Segmente
+- ``before_from`` / ``after_to``: erster bzw. letzter bewerteter Monat der beiden
+  Segmente (Grenzen sind die benachbarten erkannten Wechsel, auch wenn diese
+  wegen ``min_delta`` nicht angezeigt werden)
+- ``previous_period``: letzter bewerteter Monat vor ``date``; ``gap_months``:
+  Zahl der nicht bewerteten Kalendermonate dazwischen. Ist sie größer als 0,
+  liegt der Übergang irgendwo in dieser Lücke.
+- ``month_mean``: Monatsmittel von ``date``; ``month_near_previous_level``: True,
+  wenn dieses Monatsmittel näher an ``before_mean`` als an ``after_mean`` liegt.
+  Das kommt vor, wenn ein kurzer Einbruch über die Mindestlänge ``min_size``
+  auf drei Monate aufgefüllt wird; der sichtbare Übergang liegt dann später.
 - ``severity``: ``"high"`` ab ``SEVERITY_HIGH`` (0,5 Sterne, Richtwert des
   Annotationsprotokolls), sonst ``"medium"`` ab ``min_delta``
 - ``method`` / ``params``: Verfahren und Parameter der Erkennung
@@ -48,6 +60,7 @@ from services.rating_series_service import (
     evaluated_months,
     is_eligible,
     monthly_series,
+    monthly_series_by_dimension,
 )
 
 DEFAULT_MIN_DELTA = 0.3   # Sterne; vorläufig, siehe E9
@@ -58,6 +71,18 @@ _DIRECTION_ORDER = {"fall": 0, "rise": 1}
 
 def _severity(delta: float) -> str:
     return "high" if abs(delta) >= SEVERITY_HIGH else "medium"
+
+
+def _months_between(a: str, b: str) -> int:
+    """Kalendermonate von ``a`` nach ``b`` (``YYYY-MM``), z. B. 2023-01 → 2023-03: 2."""
+    ya, ma = (int(x) for x in a.split("-"))
+    yb, mb = (int(x) for x in b.split("-"))
+    return (yb * 12 + mb) - (ya * 12 + ma)
+
+
+def _n_values(months: List[Dict[str, Any]]) -> int:
+    """Anzahl der Werte, auf denen die Monatsmittel eines Segments beruhen."""
+    return sum(int(m.get("n_values", m.get("count", 0))) for m in months)
 
 
 def eligibility(series: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -109,8 +134,12 @@ def detect_anomalies(
         delta = shift["delta"]
         if abs(delta) < min_delta:
             continue
-        period = evaluated[shift["index"]]["period"]
-        segment = evaluated[shift["before_start"]:shift["after_end"]]
+        idx = shift["index"]
+        period = evaluated[idx]["period"]
+        previous = evaluated[idx - 1]["period"]  # idx >= min_size, es gibt immer einen Vormonat
+        month_mean = float(evaluated[idx]["mean"])
+        n_before = _n_values(evaluated[shift["before_start"]:shift["index"]])
+        n_after = _n_values(evaluated[shift["index"]:shift["after_end"]])
         anomalies.append({
             "id": f"{source}:{dimension}:{period}",
             "company_id": company_id,
@@ -121,7 +150,15 @@ def detect_anomalies(
             "delta": round(delta, 3),
             "before_mean": round(shift["before_mean"], 3),
             "after_mean": round(shift["after_mean"], 3),
-            "n_reviews": sum(int(m.get("n_values", m.get("count", 0))) for m in segment),
+            "n_reviews_before": n_before,
+            "n_reviews_after": n_after,
+            "n_reviews": n_before + n_after,
+            "before_from": evaluated[shift["before_start"]]["period"],
+            "after_to": evaluated[shift["after_end"] - 1]["period"],
+            "previous_period": previous,
+            "gap_months": _months_between(previous, period) - 1,
+            "month_mean": round(month_mean, 3),
+            "month_near_previous_level": abs(month_mean - shift["before_mean"]) < abs(month_mean - shift["after_mean"]),
             "severity": _severity(delta),
             "method": result.method,
             "params": params,
@@ -155,7 +192,10 @@ def company_anomalies(
         "source": source,
         "dimension": dimension,
         "series": [
-            {"period": m["period"], "mean": m["mean"], "count": m["count"], "evaluated": m["evaluated"]}
+            {
+                "period": m["period"], "mean": m["mean"], "count": m["count"],
+                "n_values": m["n_values"], "evaluated": m["evaluated"],
+            }
             for m in series
         ],
         "anomalies": anomalies,
@@ -171,7 +211,51 @@ def company_anomalies(
     }
 
 
+def company_anomalies_all(
+    company_id: int,
+    source: str = "employee",
+    penalty: float = DEFAULT_PENALTY,
+    min_delta: float = DEFAULT_MIN_DELTA,
+) -> Dict[str, Any]:
+    """Eignung und Anomalien aller Dimensionen einer Quelle (``dimension=all``).
+
+    Ohne Monatsreihen, um die Antwort klein zu halten; die Reihe einer
+    Dimension liefert ``company_anomalies``. ``anomalies`` ist die über alle
+    Dimensionen zusammengeführte und nach ``sort_anomalies`` sortierte Liste.
+    ValueError bei ungültiger Quelle.
+    """
+    series_by_dimension = monthly_series_by_dimension(company_id, source)
+    dimensions: List[Dict[str, Any]] = []
+    combined: List[Dict[str, Any]] = []
+    for dimension, series in series_by_dimension.items():
+        elig = eligibility(series)
+        found = (
+            detect_anomalies(
+                series, company_id=company_id, source=source, dimension=dimension,
+                penalty=penalty, min_delta=min_delta,
+            )
+            if elig["eligible"] else []
+        )
+        dimensions.append({"dimension": dimension, "eligibility": elig, "anomalies": found})
+        combined.extend(found)
+    return {
+        "company_id": company_id,
+        "source": source,
+        "dimension": "all",
+        "dimensions": dimensions,
+        "anomalies": sort_anomalies(combined),
+        "params": {
+            "method": "pelt",
+            "model": DEFAULT_MODEL,
+            "min_size": DEFAULT_MIN_SIZE,
+            "penalty": penalty,
+            "min_delta": min_delta,
+            "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
+        },
+    }
+
+
 __all__ = [
     "DEFAULT_MIN_DELTA", "SEVERITY_HIGH",
-    "eligibility", "sort_anomalies", "detect_anomalies", "company_anomalies",
+    "eligibility", "sort_anomalies", "detect_anomalies", "company_anomalies", "company_anomalies_all",
 ]

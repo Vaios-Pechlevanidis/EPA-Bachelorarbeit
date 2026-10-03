@@ -1464,7 +1464,6 @@ export const exportCompareAsPDF = async (compareData) => {
     const titleLabel = companyNames.join(' vs. ');
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    let currentPage = 1;
 
     // ── chart images ──────────────────────────────────────────────────────
     let radarImg = null, barImg = null, timelineImg = null;
@@ -1584,7 +1583,7 @@ export const exportCompareAsPDF = async (compareData) => {
     // ═════════════════════════════════════════════════════════════════════
     // PAGE 2 — KPI comparison
     // ═════════════════════════════════════════════════════════════════════
-    doc.addPage(); currentPage++;
+    doc.addPage();
     doc.setFillColor(...C.s100);
     doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
 
@@ -1664,7 +1663,7 @@ export const exportCompareAsPDF = async (compareData) => {
     // PAGE 3 — category comparison (radar + bar)
     // ═════════════════════════════════════════════════════════════════════
     if (radarImg || barImg) {
-        doc.addPage(); currentPage++;
+        doc.addPage();
         doc.setFillColor(...C.s100);
         doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
         let y3 = _cmpAddTitle(doc, 'Kategorievergleich', PAGE.my + 5, 'Bewertung der Firmen in den einzelnen Kategorien');
@@ -1688,7 +1687,7 @@ export const exportCompareAsPDF = async (compareData) => {
     // PAGE 4 — timeline
     // ═════════════════════════════════════════════════════════════════════
     if (timelineImg) {
-        doc.addPage(); currentPage++;
+        doc.addPage();
         doc.setFillColor(...C.s100);
         doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
         const y4 = _cmpAddTitle(doc, 'Bewertungsverlauf', PAGE.my + 5, 'Historische Entwicklung der Bewertungen im Vergleich');
@@ -1699,7 +1698,7 @@ export const exportCompareAsPDF = async (compareData) => {
     // PAGE 5+ — detail table
     // ═════════════════════════════════════════════════════════════════════
     if (categoryData.length > 0) {
-        doc.addPage(); currentPage++;
+        doc.addPage();
         doc.setFillColor(...C.s100);
         doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
         let yT = _cmpAddTitle(doc, 'Detailvergleich', PAGE.my + 5, 'Bewertungen nach Kategorien mit Differenzanalyse');
@@ -1727,7 +1726,7 @@ export const exportCompareAsPDF = async (compareData) => {
 
         categoryData.forEach((row, idx) => {
             if (yT > PAGE.h - PAGE.my - 10) {
-                doc.addPage(); currentPage++;
+                doc.addPage();
                 doc.setFillColor(...C.s100);
                 doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
                 yT = PAGE.my;

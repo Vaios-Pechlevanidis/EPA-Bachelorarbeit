@@ -47,7 +47,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
   const [detailModalOpen,  setDetailModalOpen]  = useState(false)
   const [tableModalOpen,   setTableModalOpen]   = useState(false)
   const [sourceFilter,     setSourceFilter]     = useState("all")
-  const [isModalOpen,      setIsModalOpen]      = useState(false)
+  const [,                 setIsModalOpen]      = useState(false)
 
   // Loading-State nach außen kommunizieren
   useEffect(() => {
