@@ -51,10 +51,14 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod }) {
     return (
         <div className="bg-slate-900 border border-slate-700 rounded-md shadow-lg px-3 py-2 text-[12px] min-w-[170px]">
             <p className="font-mono text-[10px] tracking-[0.05em] uppercase text-slate-400 mb-1.5">{fmtPeriod(point.period)}</p>
-            <p className="flex items-center justify-between gap-3">
-                <span className="text-slate-400">Monatsmittel</span>
-                <span className="font-semibold tnum text-white">{fmt(point.mean)}</span>
-            </p>
+            {point.evaluated ? (
+                <p className="flex items-center justify-between gap-3">
+                    <span className="text-slate-400">Monatsmittel</span>
+                    <span className="font-semibold tnum text-white">{fmt(point.mean)}</span>
+                </p>
+            ) : (
+                <p className="text-slate-400 italic m-0">nicht bewertet (unter {point.minReviews} Bewertungen)</p>
+            )}
             <p className="flex items-center justify-between gap-3">
                 <span className="text-slate-400">Bewertungen</span>
                 <span className="tnum text-slate-300">{point.count}</span>
@@ -83,7 +87,25 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod }) {
     )
 }
 
-export function AnomalyList({ anomalies }) {
+/* Zähler für Untertitel (FA-26); bei nicht geeigneter Reihe kein "0". */
+function countLabel(anomalies, eligibility) {
+    if (eligibility && !eligibility.eligible) return "keine automatische Erkennung"
+    const n = anomalies.length
+    return `${n} ${n === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
+}
+
+/* Hinweis, wenn die Reihe für die automatische Erkennung zu dünn ist (E4). */
+export function IneligibleNotice({ eligibility }) {
+    return (
+        <p className="text-[12px] text-slate-500 m-0">
+            <span className="font-medium text-slate-700">Keine automatische Erkennung.</span>{" "}
+            {eligibility?.reason}
+        </p>
+    )
+}
+
+export function AnomalyList({ anomalies, eligibility }) {
+    if (eligibility && !eligibility.eligible) return <IneligibleNotice eligibility={eligibility} />
     if (!anomalies.length) {
         return <p className="text-[12px] text-slate-500 m-0">Keine auffälligen Veränderungen erkannt.</p>
     }
@@ -107,31 +129,56 @@ export function AnomalyList({ anomalies }) {
     )
 }
 
+/* Punkt nur für bewertete Monate ohne bewerteten Nachbarn; sonst wären sie
+   zwischen zwei Lücken unsichtbar, weil eine Linie zwei Punkte braucht. */
+function isolatedDot(chartData) {
+    function IsolatedDot({ cx, cy, index }) {
+        const isolated = chartData[index]?.value != null
+            && chartData[index - 1]?.value == null
+            && chartData[index + 1]?.value == null
+        if (!isolated || cx == null || cy == null) return <g key={`iso-${index}`} />
+        return <circle key={`iso-${index}`} cx={cx} cy={cy} r={2} fill="#3b82f6" />
+    }
+    return IsolatedDot
+}
+
 /* Diagramm mit Lade-, Fehler- und Leerzustand; Höhe frei wählbar (Karte 220, Seite größer). */
 export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) {
     const anomaliesByPeriod = useMemo(
         () => Object.fromEntries(anomalies.map((a) => [a.date, a])),
         [anomalies],
     )
-    const chartData = useMemo(
-        () => (data?.series ?? []).filter((m) => m.evaluated && m.mean != null),
-        [data],
-    )
+    const minReviews = data?.params?.min_reviews_per_month
+    const series = useMemo(() => data?.series ?? [], [data])
+    // Achse nur aus bewerteten Monaten; dünne Monate würden sie verzerren.
     const yDomain = useMemo(() => {
-        if (!chartData.length) return [1, 5]
-        const vals = chartData.map((m) => m.mean)
+        const vals = series.filter((m) => m.evaluated && m.mean != null).map((m) => m.mean)
+        if (!vals.length) return [1, 5]
         return [Math.max(1, Math.floor((Math.min(...vals) - 0.2) * 2) / 2), Math.min(5, Math.ceil((Math.max(...vals) + 0.2) * 2) / 2)]
-    }, [chartData])
+    }, [series])
+    // Alle Kalendermonate der Reihe: bewertete tragen "value" (Linie), nicht
+    // bewertete unterbrechen die Linie und erhalten eine Markierung an der Grundlinie.
+    const chartData = useMemo(
+        () => series.map((m) => ({
+            ...m,
+            minReviews,
+            value: m.evaluated ? m.mean : null,
+            gap: m.evaluated ? null : yDomain[0],
+        })),
+        [series, minReviews, yDomain],
+    )
+    const hasGaps = chartData.some((m) => !m.evaluated)
 
     return (
+        <div className="w-full">
         <div className="relative w-full" style={{ height }}>
             {error ? (
                 <div className="h-full flex items-center justify-center">
                     <p className="text-[13px] text-slate-500">Anomalien konnten nicht geladen werden: {error}</p>
                 </div>
-            ) : chartData.length === 0 && !loading ? (
+            ) : series.length === 0 && !loading ? (
                 <div className="h-full flex items-center justify-center">
-                    <p className="text-[13px] text-slate-500">Keine bewerteten Monate vorhanden.</p>
+                    <p className="text-[13px] text-slate-500">Keine datierten Bewertungen vorhanden.</p>
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height={height}>
@@ -161,11 +208,20 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) 
                         />
                         <Line
                             type="monotone"
-                            dataKey="mean"
+                            dataKey="value"
                             stroke="#3b82f6"
                             strokeWidth={1.5}
-                            dot={false}
+                            dot={isolatedDot(chartData)}
                             activeDot={{ r: 3 }}
+                            connectNulls={false}
+                            isAnimationActive={false}
+                        />
+                        <Line
+                            dataKey="gap"
+                            stroke="none"
+                            dot={{ r: 2, fill: "none", stroke: "var(--color-fg-subtle)", strokeWidth: 1 }}
+                            activeDot={false}
+                            legendType="none"
                             isAnimationActive={false}
                         />
                         {anomalies.map((a) => {
@@ -196,6 +252,18 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220 }) 
                 </div>
             )}
         </div>
+        {!error && minReviews != null && (
+            <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                {hasGaps && (
+                    <span className="inline-flex items-center gap-1">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full border border-slate-400" />
+                        nicht bewertet
+                    </span>
+                )}
+                <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen</span>
+            </p>
+        )}
+        </div>
     )
 }
 
@@ -204,8 +272,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
 
     if (!companyId) return null
 
-    const count = anomalies.length
-    const subtitle = `${SOURCE_LABEL[SOURCE]} · Gesamtbewertung · ${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
+    const subtitle = `${SOURCE_LABEL[SOURCE]} · Gesamtbewertung · ${countLabel(anomalies, data?.eligibility)}`
     const open = () => onOpen?.()
 
     return (
@@ -228,7 +295,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} />
 
                 <div className="mt-3 pt-3 border-t border-slate-100">
-                    {!loading && !error && <AnomalyList anomalies={anomalies} />}
+                    {!loading && !error && <AnomalyList anomalies={anomalies} eligibility={data?.eligibility} />}
                 </div>
 
                 <p className="text-[11px] text-slate-400 text-center mt-3 m-0 inline-flex w-full items-center justify-center gap-1">

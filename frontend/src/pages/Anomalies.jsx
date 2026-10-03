@@ -135,14 +135,9 @@ export default function AnomaliesPage() {
                             icon={<Activity />}
                             eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
                             title="Monatsverlauf der Gesamtbewertung"
-                            subtitle={`Mitarbeiter · ${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`}
+                            subtitle={`Mitarbeiter · ${eligibility && !eligibility.eligible ? "keine automatische Erkennung" : `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`}`}
                         >
                             <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={380} />
-                            {eligibility && !eligibility.eligible && (
-                                <p className="m-0 mt-3 text-[12px] text-slate-500">
-                                    Keine automatische Erkennung: {eligibility.reason}
-                                </p>
-                            )}
                         </Section>
 
                         <Section
@@ -151,7 +146,7 @@ export default function AnomaliesPage() {
                             title="Auffällige Veränderungen"
                             subtitle="Abfälle zuerst, innerhalb nach Größe der Veränderung"
                         >
-                            {!loading && !error && <AnomalyList anomalies={anomalies} />}
+                            {!loading && !error && <AnomalyList anomalies={anomalies} eligibility={eligibility} />}
                         </Section>
                     </>
                 )}
