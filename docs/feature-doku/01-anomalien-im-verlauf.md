@@ -23,6 +23,12 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
 - eine **Liste** der Veränderungen unter dem Diagramm, Abfälle zuerst, innerhalb nach Größe,
 - die **Anzahl** der auffälligen Veränderungen im Untertitel der Karte (Zähler aus FA-26).
 
+**Detailseite:** Ein Klick auf die Karte oder auf „Anomalien“ in der linken Navigation
+öffnet die eigene Seite `/anomalies?company=ID`, ähnlich wie der Firmenvergleich. Dort
+stehen ein größeres Diagramm und die Liste. Oben rechts lässt sich die Firma wechseln,
+„Zurück“ führt mit derselben Firma zum Dashboard. Weil die Firma in der Adresse steht,
+lässt sich die Seite neu laden, als Lesezeichen speichern oder weitergeben.
+
 Nutzen: Statt einen langen Verlauf selbst nach Brüchen abzusuchen, sieht man sofort,
 *wann* sich die Stimmung der Mitarbeitenden spürbar verschoben hat und *wie stark*.
 Diese Zeitpunkte sind der Ausgangspunkt für die spätere Kontextsuche (Nachrichten, Kurse),
@@ -217,6 +223,7 @@ dringendere Anlass zum Handeln.
 | Synthetisches Beispiel (In-Memory-Demo 3) | `fall` 2023-01 (−0,46), `rise` 2023-12 (+0,41); Demo 1 und Demo 2 ohne Anomalie |
 | Gehostete Demo 3 (id 18) | `fall` 2023-01 (−1,38), `rise` 2024-01 (+1,19), `rise` 2025-01 (+0,36) |
 | Dashboard | geprüft im hellen und dunklen Theme, Tooltip und Liste, keine Konsolenfehler; PDF-Export-Pfad unverändert |
+| Detailseite | Klick auf Karte → `/anomalies?company=18`; Neuladen über die URL lädt den Firmennamen nach; gespeichertes Theme wird angewendet; „Zurück“ zeigt das Dashboard mit derselben Firma |
 | Commits | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte) |
 
 ## 6. Offene Punkte

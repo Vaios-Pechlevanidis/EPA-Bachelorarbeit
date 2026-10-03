@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { Loader2, Upload, Clock } from "lucide-react"
+import { Loader2, Upload, Clock, Activity } from "lucide-react"
 
 import { WorkPulseLogo }     from "@/components/WorkPulseLogo"
 import { TimelineCard }      from "@/components/dashboard/TimelineCard"
@@ -368,6 +368,14 @@ export default function Dashboard() {
   const handleTopicOverviewDataChange   = useCallback((d) => setTopicOverviewData(d), [])
   const handleTopicOverviewLoadingChange = useCallback((v) => setDashboardLoadingStates((p) => ({ ...p, topicOverview: v })), [])
 
+  /* ---- Anomalien-Detailseite (analog zum Vergleich) ---- */
+  const openAnomalies = useCallback(() => {
+    if (!effectiveCompanyId) return
+    navigate(`/anomalies?company=${encodeURIComponent(effectiveCompanyId)}`, {
+      state: { company: { id: effectiveCompanyId, name: selectedCompanyName } },
+    })
+  }, [effectiveCompanyId, selectedCompanyName, navigate])
+
   /* ---- Theme ---- */
   const { isDark, toggle: toggleTheme } = useTheme()
 
@@ -400,6 +408,15 @@ export default function Dashboard() {
             >
               <Compare />
               Vergleich
+            </button>
+            <button
+              className="ds-nav-link"
+              onClick={openAnomalies}
+              disabled={!effectiveCompanyId}
+              title={effectiveCompanyId ? "Anomalien im Verlauf" : "Erst eine Firma auswählen"}
+            >
+              <Activity style={{ width: 16, height: 16 }} />
+              Anomalien
             </button>
           </div>
 
@@ -604,7 +621,7 @@ export default function Dashboard() {
 
             {/* Anomalies (Inkrement 1) */}
             <div style={{ marginBottom: 16 }}>
-              <AnomalyCard companyId={selectedCompany || selectedCompanyId} />
+              <AnomalyCard companyId={selectedCompany || selectedCompanyId} onOpen={openAnomalies} />
             </div>
 
             {/* Topic overview */}
