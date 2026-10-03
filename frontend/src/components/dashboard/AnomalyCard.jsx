@@ -9,6 +9,7 @@ import {
     Tooltip,
     ResponsiveContainer,
     ReferenceLine,
+    ReferenceDot,
 } from "recharts"
 import { ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../../icons"
@@ -56,6 +57,16 @@ export function StepGlyph({ direction, severity = "high", color, size = 12 }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
+        </svg>
+    )
+}
+
+/* Punkt-Symbol für die Legende der Karte (gefüllt = deutlich, hohl = mäßig). */
+function DotGlyph({ direction, hollow = false, color }) {
+    const c = color ?? DIRECTION[direction].color
+    return (
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" className="flex-none">
+            <circle cx="5" cy="5" r="3.5" fill={hollow ? "none" : c} stroke={c} strokeWidth="1.5" />
         </svg>
     )
 }
@@ -221,7 +232,8 @@ function isolatedDot(chartData, opacity = 1) {
    trotzdem auf der ganzen Reihe, damit Linien am Fensterrand richtig
    weiterlaufen. */
 /* compact (Dashboard-Karte): Die Niveaulinie ist die Hauptlinie, die Monatswerte
-   laufen blass im Hintergrund, die Legende ist eine kurze Zeile ohne Erklärtexte.
+   laufen blass im Hintergrund, Veränderungen sind Punkte auf dem neuen Niveau statt
+   Stufen, die Legende ist eine kurze Zeile ohne Erklärtexte.
    Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
 export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false }) {
     const minReviews = data?.params?.min_reviews_per_month
@@ -362,14 +374,27 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             connectNulls={false}
                             isAnimationActive={false}
                         />
-                        {visibleAnomalies.map((a) => (
+                        {visibleAnomalies.map((a) => (compact ? (
+                            // Karte: Punkt am markierten Monat auf dem neuen Niveau, also am
+                            // Sprung der Niveaulinie; gefüllt = deutlich, hohl = mäßig.
+                            <ReferenceDot
+                                key={a.id}
+                                x={a.date}
+                                y={a.after_mean}
+                                r={4}
+                                fill={a.severity === "high" ? DIRECTION[a.direction].color : "var(--color-bg-card)"}
+                                stroke={DIRECTION[a.direction].color}
+                                strokeWidth={1.5}
+                                ifOverflow="visible"
+                            />
+                        ) : (
                             <ReferenceLine
                                 key={a.id}
                                 segment={[{ x: a.date, y: a.before_mean }, { x: a.date, y: a.after_mean }]}
                                 shape={stepShape(a, stepHalfWidth)}
                                 ifOverflow="visible"
                             />
-                        ))}
+                        )))}
                     </LineChart>
                 </ResponsiveContainer>
             )}
@@ -409,8 +434,9 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 )}
                 {visibleAnomalies.length > 0 && (
                     <>
-                        <span className="inline-flex items-center gap-1"><StepGlyph direction="fall" /> Abfall</span>
-                        <span className="inline-flex items-center gap-1"><StepGlyph direction="rise" /> Anstieg</span>
+                        <span className="inline-flex items-center gap-1"><DotGlyph direction="fall" /> Abfall</span>
+                        <span className="inline-flex items-center gap-1"><DotGlyph direction="rise" /> Anstieg</span>
+                        <span className="inline-flex items-center gap-1"><DotGlyph direction="fall" hollow color="var(--color-fg-muted)" /> hohl = mäßig</span>
                     </>
                 )}
             </p>
