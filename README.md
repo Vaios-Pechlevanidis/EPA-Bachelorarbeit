@@ -35,6 +35,7 @@ Here you can find all central resources and tools of the project:
 | **Entscheidungen Zyklus 2** | Design decisions for cycle 2 (detection series, thresholds, metadata, sources) | [docs/entscheidungen.md](docs/entscheidungen.md) |
 | **Datenbasis** | Review density per company and source (generated) | [docs/datenbasis.md](docs/datenbasis.md) |
 | **Referenzzeiträume** | Literature note and annotation protocol for the manual reference periods (DZ1) | [docs/referenzzeitraeume-literatur.md](docs/referenzzeitraeume-literatur.md) |
+| **Feature-Doku** | Each new dashboard feature presented, explained and justified (German) | [docs/feature-doku/](docs/feature-doku/README.md) |
 | **Quellen-Spike** | Which news source delivers historical items (GDELT, Google News RSS, EQS, yfinance) | [docs/quellen-spike.md](docs/quellen-spike.md) |
 
 ---
