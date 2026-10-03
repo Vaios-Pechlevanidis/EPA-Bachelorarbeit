@@ -65,9 +65,9 @@ Detects lasting level shifts in the monthly rating series and shows them in the 
 |---|---|---|
 | Change point detector | `backend/models/changepoint_detector.py` | PELT from `ruptures` (`model="l2"`, `min_size=3`, `penalty=0.5`), moving-mean fallback for short series, `ChangePointDetector` protocol for further methods |
 | Anomaly service | `backend/services/anomaly_service.py` | Uses `monthly_series` and `is_eligible` (E3/E4), detects on evaluated months only, filters `min_delta` (0.3 stars), sorts falls before rises; reviews before/after per change |
-| API | `backend/routes/anomalies.py` | `GET /api/analytics/company/{company_id}/anomalies?source=employee&dimension=durchschnittsbewertung&penalty=&min_delta=` — returns series, anomalies, parameters, eligibility; `dimension=all` returns eligibility and anomalies per dimension plus one combined list. Computed live, read-only, no migration |
-| Dashboard card | `frontend/src/components/dashboard/AnomalyCard.jsx` | Below the chart row; dimension picker, visible gaps, eligibility notice; click opens the detail page |
-| Detail page | `frontend/src/pages/Anomalies.jsx`, route `/anomalies?company=ID&dimension=KEY` | Larger chart and list, dimension and company switcher, also reachable via "Anomalien" in the sidebar |
+| API | `backend/routes/anomalies.py` | `GET /api/analytics/company/{company_id}/anomalies?source=employee&dimension=durchschnittsbewertung&penalty=&min_delta=` — returns series (period, mean, count, n_values, evaluated), anomalies, parameters, eligibility; `dimension=all` returns eligibility and anomalies per dimension plus one combined list. Computed live, read-only, no migration |
+| Dashboard card | `frontend/src/components/dashboard/AnomalyCard.jsx` | Below the chart row; dimension picker, gaps between evaluated months bridged by a dashed (display-only) line, eligibility notice; click opens the detail page |
+| Detail page | `frontend/src/pages/Anomalies.jsx`, route `/anomalies?company=ID&dimension=KEY&range=5y\|3y\|1y` | Larger chart and list, dimension and company switcher, time filter (view window counted back from the last month of the series; detection always uses the full series), also reachable via "Anomalien" in the sidebar |
 | Parameter overview | `backend/scripts/explore_anomaly_params.py` → `backend/data/calibration/` | `cd backend && uv run python scripts/explore_anomaly_params.py` (read-only; evidence for checkpoint 1, not a calibration against reference periods) |
 | Tests | `backend/tests/anomaly/` (detector, service, route; in-memory store, no network) | `cd backend && uv run python -m pytest tests/anomaly tests/forecast tests/test_rating_series_service.py -q` |
 
@@ -337,6 +337,7 @@ epa-analytics/
 │   │   │   ├── chartValidator.js # Chart Validation
 │   │   │   └── pdf/           # PDF Utilities
 │   │   └── lib/               # Utilities
+│   │       ├── anomalySeries.js # Time window and display-only interpolation for anomaly charts
 │   │       ├── ratingCategories.js # Rating dimensions: key → label
 │   │       └── utils.ts
 │   ├── public/                # Static Assets

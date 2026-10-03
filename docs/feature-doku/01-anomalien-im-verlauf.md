@@ -5,7 +5,7 @@
 | Inkrement | 1 (Zyklus 2) |
 | Anforderungen | FA-01 bis FA-04, Zähler aus FA-26 |
 | Entscheidungen | E3 (Erkennungsreihe), E4 (Mindestdichte), E5 (Referenzzeiträume, aktualisiert), E9 (Verfahren und Parameter) |
-| Status | Inkrement 1 abgeschlossen: Karte und Detailseite mit Dimensionsauswahl (Quelle Mitarbeitende), sichtbaren Lücken und Eignungshinweis. Parameter **vorläufig** (E9) |
+| Status | Inkrement 1 abgeschlossen: Karte und Detailseite mit Dimensionsauswahl (Quelle Mitarbeitende), gestrichelt überbrückten Lücken, Eignungshinweis und Zeitfilter auf der Detailseite. Parameter **vorläufig** (E9) |
 | Stand | 2026-10-03 |
 
 ## 1. Vorstellung
@@ -16,16 +16,25 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
 - den **Monatsverlauf** der gewählten Dimension, also den Durchschnitt der Sterne je
   Kalendermonat. Standard ist die Gesamtbewertung; über das Auswahlfeld „Dimension“ lassen
   sich die 13 Einzelkategorien wählen (Arbeitsatmosphäre, Kommunikation, …),
-- **Lücken:** Monate mit weniger als 5 Bewertungen unterbrechen die Linie und tragen an der
-  Grundlinie einen kleinen hohlen Kreis („nicht bewertet“),
+- **Lücken:** Monate mit weniger als 5 Bewertungen mit Wert in der gewählten Dimension
+  („nicht bewertet“) unterbrechen die
+  durchgezogene Linie. Liegt eine solche Lücke zwischen zwei bewerteten Monaten, wird sie
+  mit einer dünnen, grau **gestrichelten** Linie überbrückt (lineare Interpolation, nur
+  Darstellung). Lücken am Anfang oder Ende der Reihe bleiben leer. Ein bewerteter Monat
+  zwischen zwei Lücken erhält einen kleinen Punkt,
 - **dezente Punkte** an den Monaten, in denen sich das Bewertungsniveau auffällig
   verändert hat: rot für einen Abfall, grün für einen Anstieg, etwas größer bei
   deutlichen Veränderungen,
-- einen **Tooltip** je Monat mit dem Monatsmittel und der Zahl der Bewertungen, bei nicht
-  bewerteten Monaten mit dem Vermerk „nicht bewertet“. Auf einem markierten Monat zeigt er
+- einen **Tooltip** je Monat mit dem Monatsmittel und der Zahl der Bewertungen (bei
+  Einzeldimensionen zusätzlich „davon mit Wert“, wenn nicht jede Bewertung diese Kategorie
+  bewertet hat), bei nicht
+  bewerteten Monaten mit dem Vermerk „nicht bewertet“ und, wenn die Linie dort überbrückt
+  ist, „Linie interpoliert, nur Darstellung“; ein interpolierter Zahlenwert wird nie
+  angezeigt. Auf einem markierten Monat zeigt er
   zusätzlich Delta, Mittel davor und danach und die Bewertungen davor / danach,
 - unter dem Diagramm den **Hinweis zur Datenbasis**: „Sternebewertung, Monatsmittel, Monate
-  mit mindestens 5 Bewertungen“,
+  mit mindestens 5 Bewertungen mit Wert“, bei überbrückten Lücken zusätzlich die Legende
+  „interpoliert (Monat mit weniger als 5 Bewertungen mit Wert, nicht in der Erkennung)“,
 - eine **Liste** der Veränderungen unter dem Diagramm, Abfälle zuerst, innerhalb nach Größe,
 - die **Anzahl** der auffälligen Veränderungen im Untertitel der Karte (Zähler aus FA-26),
 - bei Unternehmen mit zu wenig Daten statt einer leeren Liste den Hinweis **„Keine
@@ -36,9 +45,16 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
 **Detailseite:** Ein Klick auf die Karte oder auf „Anomalien“ in der linken Navigation
 öffnet die eigene Seite `/anomalies?company=ID&dimension=KEY`, ähnlich wie der
 Firmenvergleich; die auf der Karte gewählte Dimension wird übernommen. Dort stehen ein
-größeres Diagramm und die Liste. Oben rechts lassen sich Dimension und Firma wechseln,
-„Zurück“ führt mit derselben Firma zum Dashboard. Weil Firma und Dimension in der Adresse
-stehen, lässt sich die Seite neu laden, als Lesezeichen speichern oder weitergeben.
+größeres Diagramm und die Liste. Oben rechts lassen sich Dimension und Firma wechseln.
+Über dem Diagramm steht ein **Zeitfilter** mit „Gesamt“, „5 Jahre“, „3 Jahre“ und
+„12 Monate“. Er wählt den sichtbaren Ausschnitt, gezählt vom letzten Monat der Reihe
+zurück; die Y-Achse passt sich dem Ausschnitt an. Der Untertitel nennt den Zeitraum und
+wie viele der auffälligen Veränderungen darin liegen („2 von 9 … im Zeitraum“). Die Liste
+zeigt nur die Veränderungen im Zeitraum und nennt darunter, wie viele außerhalb liegen,
+mit dem Link „Gesamten Zeitraum zeigen“. Der Zeitfilter ändert **nicht** die Erkennung.
+„Zurück“ führt mit derselben Firma zum Dashboard. Weil Firma, Dimension und Zeitraum in
+der Adresse stehen (`&range=5y|3y|1y`), lässt sich die Seite neu laden, als Lesezeichen
+speichern oder weitergeben. Die Karte im Dashboard zeigt immer die ganze Reihe.
 
 Nutzen: Statt einen langen Verlauf selbst nach Brüchen abzusuchen, sieht man sofort,
 *wann* sich die Stimmung der Mitarbeitenden spürbar verschoben hat und *wie stark*.
@@ -55,8 +71,13 @@ die in einem folgenden Inkrement entsteht.
 2. Je Kalendermonat wird der Mittelwert der Spalte `durchschnittsbewertung` gebildet.
    Das ist die Gesamtnote, die Kununu je Bewertung anzeigt (Entscheidung **E3**). Für eine
    Einzelkategorie wird analog die jeweilige `sternebewertung_*`-Spalte gemittelt.
-3. Ein Monat gilt als **bewertet**, wenn mindestens **5 Bewertungen** vorliegen. Monate mit
-   weniger Bewertungen bleiben Lücken und gehen nicht in die Erkennung ein (**E4**).
+3. Ein Monat gilt als **bewertet**, wenn mindestens **5 Bewertungen** mit Wert in der
+   gewählten Spalte vorliegen (`n_values`). Bei der Gesamtbewertung ist das praktisch die
+   Zahl der Bewertungen; bei Einzeldimensionen kann sie kleiner sein, weil nicht jede
+   Bewertung jede Kategorie bewertet (Beispiel Open Grid Europe, 2018-08, „Umgang mit
+   älteren Kollegen“: 5 Bewertungen, davon 3 mit Wert, also nicht bewertet). Monate mit
+   weniger Werten bleiben Lücken und gehen nicht in die Erkennung ein (**E4**). Die API
+   liefert je Monat `count` und `n_values`, damit die Anzeige den Grund richtig nennt.
 4. Eine Reihe ist **geeignet**, wenn sie mindestens **12 bewertete Monate** hat (**E4**).
    Für nicht geeignete Reihen wird nichts erkannt; die Antwort nennt den Grund und die
    Zahl der bewerteten Monate.
@@ -188,7 +209,8 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 | Teil | Datei | Aufgabe |
 |---|---|---|
 | Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
-| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`) | Verlauf mit Lücken, Markierungen und Tooltip, Liste oder Eignungshinweis, Dimensionsauswahl; von Karte und Detailseite gemeinsam genutzt |
+| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`) | Verlauf mit gestrichelt überbrückten Lücken, Markierungen und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis, Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
+| Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Zeitfenster relativ zum letzten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
 | Detailseite | `frontend/src/pages/Anomalies.jsx`, Route `/anomalies` in `frontend/src/App.jsx` | großes Diagramm, Liste, Firmenwechsel, Zurück zum Dashboard mit derselben Firma |
@@ -214,8 +236,10 @@ Bibliothek verfügbar. Damit ist es eine nachvollziehbare Basis, gegen die ein z
 Verfahren verglichen werden kann.
 
 **Warum nur bewertete Monate?** Ein Mittel aus ein oder zwei Bewertungen ist Rauschen. Es
-würde Scheinwechsel erzeugen (E4). Lücken aufzufüllen, etwa durch Interpolation, hieße,
-Daten zu erfinden.
+würde Scheinwechsel erzeugen (E4). Lücken für die Erkennung aufzufüllen, etwa durch
+Interpolation, hieße, Daten zu erfinden. Die gestrichelte Überbrückung im Diagramm ist
+deshalb reine Darstellung: Sie geht nicht in die Erkennung ein, ist als „interpoliert“
+beschriftet, und der Tooltip zeigt dort keinen Zahlenwert.
 
 **Warum die Gesamtnote aus `durchschnittsbewertung`?** Das ist dieselbe Reihe, die die
 Timeline-Karte zeigt. Nutzerinnen und Nutzer sehen also keinen zweiten, abweichenden
@@ -239,9 +263,24 @@ Zurück-Button), damit man die Bedienung nicht neu lernen muss. Die Firma steht 
 der Adresse, damit eine Ansicht in einem Interview (DZ3) gezielt geöffnet oder
 weitergegeben werden kann.
 
-**Warum Lücken zeigen?** Ein durchgehender Verlauf über dünn belegte Monate würde
-Stabilität vortäuschen, wo keine Aussage möglich ist. Die unterbrochene Linie zeigt
-ehrlich, auf welchen Monaten die Erkennung beruht.
+**Warum Lücken gestrichelt überbrücken?** Ein durchgehender Verlauf über dünn belegte
+Monate würde Stabilität vortäuschen, wo keine Aussage möglich ist. Eine nur unterbrochene
+Linie zerfällt bei dünnen Reihen (z. B. Open Grid Europe) aber in viele kleine Stücke und
+einzelne Punkte und wird unübersichtlich. Die gestrichelte, graue Verbindung hält das
+Diagramm lesbar und zeigt trotzdem klar, wo keine bewerteten Monate liegen. Sie folgt der
+Darstellung der Timeline-Karte („Gestrichelte Linie = interpolierte Werte“), damit die
+Zeichen im Dashboard einheitlich sind. Aufeinanderfolgende Lücken liegen auf zwei
+getrennten Datenreihen, damit die gestrichelte Linie nie über ein durchgezogenes Stück
+gezeichnet wird.
+
+**Warum ein Zeitfilter, und warum nur als Ausschnitt?** Lange Reihen (Telekom, Bechtle,
+Carl Zeiss: mehr als 200 Monate) sind in voller Länge kaum zu lesen. Der Zeitfilter
+vergrößert einen Ausschnitt. Die Erkennung läuft trotzdem immer auf der ganzen Reihe:
+Würde sie nur den Ausschnitt auswerten, hinge eine auffällige Veränderung vom gewählten
+Zoom ab, und ein 12-Monats-Fenster wäre nach E4 gar nicht geeignet. Bezugspunkt ist der
+letzte Monat der Reihe und nicht das heutige Datum, weil viele Reihen 2025 enden und ein
+Fenster ab heute leer wäre. Die Liste nennt, wie viele Veränderungen außerhalb des
+Ausschnitts liegen, damit nichts unbemerkt ausgeblendet wird.
 
 **Warum die Dimensionsauswahl?** Eine Verschiebung der Gesamtnote sagt nicht, *in welchem
 Bereich* sich etwas verändert hat. Die Einzelkategorien (z. B. Kommunikation,
@@ -265,6 +304,13 @@ dringendere Anlass zum Handeln.
 - Die Parameter sind noch nicht gegen unabhängige Referenzzeiträume geprüft.
 - Der Strafterm wächst nicht mit der Länge der Reihe. Lange, dichte Reihen (Telekom, Cancom,
   1&1) erhalten deshalb deutlich mehr Markierungen als kurze (Abschnitt 5).
+- Die gestrichelte Überbrückung verbindet auch lange Lücken (Open Grid Europe: 20 nicht
+  bewertete Monate zwischen 2019-07 und 2021-04, 18 zwischen 2017-01 und 2018-08). Sie ist
+  dort nur eine Verbindungslinie und kein Verlauf; über die Entwicklung in dieser Zeit sagt
+  sie nichts.
+- Der Zeitfilter zählt vom letzten Monat der jeweiligen Reihe zurück. Zwei Unternehmen mit
+  „12 Monate“ können daher unterschiedliche Kalenderzeiträume zeigen; der Untertitel nennt
+  den Zeitraum.
 
 ## 5. Prüfung und Belege
 
@@ -277,6 +323,8 @@ dringendere Anlass zum Handeln.
 | Detailseite | Klick auf Karte → `/anomalies?company=18`; Neuladen über die URL lädt den Firmennamen nach; gespeichertes Theme wird angewendet; „Zurück“ zeigt das Dashboard mit derselben Firma |
 | Service und Route | `backend/tests/anomaly/test_anomaly_service.py`, `test_anomalies_route.py` (In-Memory-Store, ohne Netzwerk): Demo 3 `fall` ±1 Monat um 2023-01 und `rise` um 2023-12, Demo 1/2 ohne Veränderung, nicht geeignete Reihen, `n_reviews`-Aufteilung, `dimension=all`, 400/422 |
 | Lücken, Eignung, Dimension | geprüft an Open Grid Europe (viele Lücken), PLEdoc (nicht geeignet), Demo 3 mit „Kommunikation“ und „Vorgesetztenverhalten“; helles und dunkles Theme |
+| Review Zeitfilter/Interpolation | Vier unabhängige Prüfer (Interpolation, Zeitfilter, Recharts, UI) und zwei Gegenprüfer, 2026-10-03. `interpolateGaps` wurde erschöpfend über alle 32 767 Muster aus bewerteten Monaten und Lücken bis Länge 14 geprüft, auch mit allen Fensterausschnitten: nie eine gestrichelte Strecke über einer durchgezogenen, Randlücken leer, kein interpolierter Wert als Datenwert. Bestätigt und behoben: Begründung im Tooltip bei Einzeldimensionen (`n_values`), Dativ im Untertitel, Leerhinweis ohne Zeitfilter, Y-Achsenbeschriftung bei Viertelstrichen. 4 Meldungen widerlegt |
+| Interpolation und Zeitfilter | Hilfsfunktionen in `frontend/src/lib/anomalySeries.js` per Node-Prüfskript geprüft (Lücke in der Mitte, Ränder, benachbarte Lücken mit wechselnden Schlüsseln, einzelner Monat zwischen zwei Lücken, nicht bewerteter Monat mit Mittelwert, Fenster über den Jahreswechsel, Fenster größer als die Reihe). Im Browser: Open Grid Europe gesamt und 3 Jahre (Überbrückung am Fensterrand), Telekom 3 Jahre (2 von 9 im Zeitraum, Hinweis auf 7 außerhalb), Demo 3 12 Monate; helles und dunkles Theme |
 | Parameterübersicht | `backend/data/calibration/anomaly_params_employee_durchschnittsbewertung.csv`, Stand 2026-10-03, Mitarbeitende, Gesamtbewertung, 15 geeignete Unternehmen. Summe Abfälle/Anstiege bei min_delta 0,3: penalty 0,25 → 56/60, **0,5 → 31/35 (Startwert)**, 1,0 → 16/19, 2,0 → 4/5. Bei penalty 0,5 und min_delta 0,2/0,3/0,5: 31/36, 31/35, 27/28 |
 | Commits Inkrement 1 | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte), `8c3af1e` (Detailseite) |
 | Commits Abschluss | `1faca39` (Lücken, Eignung, Datenbasis), `6c63607` (Bewertungen davor/danach), `ed9bc3c` (Dimensionsauswahl, `dimension=all`), `67e1377` (Service-/Routentests), `f7fedbb` (Parameterübersicht) |

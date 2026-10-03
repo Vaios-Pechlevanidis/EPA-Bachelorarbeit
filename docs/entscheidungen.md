@@ -53,7 +53,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Kontext:** Viele Monate enthalten nur einzelne Bewertungen; ein Monatsmittel aus einer
   oder zwei Bewertungen ist Rauschen.
 - **Entscheidung:** Monate mit weniger als 5 Bewertungen werden in der Erkennungsreihe
-  nicht bewertet (sie bleiben als Lücke sichtbar). Unternehmen mit weniger als 12 solchen
+  nicht bewertet (sie bleiben als Lücke sichtbar; im Dashboard werden Lücken zwischen zwei
+  bewerteten Monaten nur zur Darstellung gestrichelt überbrückt, siehe
+  `docs/feature-doku/01-anomalien-im-verlauf.md`). Unternehmen mit weniger als 12 solchen
   Monaten in der Mitarbeiterquelle werden nicht in die automatische Erkennung aufgenommen,
   sondern nur als Fallstudie ohne Zeitreihenanalyse geführt; die Liste steht in
   `docs/datenbasis.md`, Abschnitt „Konsequenzen“. Stand 2026-10-02 erfüllen in der
