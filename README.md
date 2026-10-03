@@ -35,6 +35,7 @@ Here you can find all central resources and tools of the project:
 | **Entscheidungen Zyklus 2** | Design decisions for cycle 2 (detection series, thresholds, metadata, sources) | [docs/entscheidungen.md](docs/entscheidungen.md) |
 | **Datenbasis** | Review density per company and source (generated) | [docs/datenbasis.md](docs/datenbasis.md) |
 | **Referenzzeiträume** | Literature note and annotation protocol for the manual reference periods (DZ1) | [docs/referenzzeitraeume-literatur.md](docs/referenzzeitraeume-literatur.md) |
+| **Feature-Doku** | Each new dashboard feature presented, explained and justified (German) | [docs/feature-doku/](docs/feature-doku/README.md) |
 | **Quellen-Spike** | Which news source delivers historical items (GDELT, Google News RSS, EQS, yfinance) | [docs/quellen-spike.md](docs/quellen-spike.md) |
 
 ---
@@ -52,7 +53,22 @@ Groundwork for anomaly detection and explanation (Design Science Research, cycle
 | Annotation check | `backend/scripts/validate_annotations.py` | `cd backend && uv run python scripts/validate_annotations.py` |
 | News-source spike | `backend/scripts/spike_news_sources.py` → `docs/quellen-spike.md` | `cd backend && uv run python scripts/spike_news_sources.py --company "Thyssenkrupp" --month 2023-04 --ticker TKA.DE` |
 
-Reference periods in `backend/data/annotations.json` are entered manually by the author from the series CSVs and must be committed **before** any detection code exists (see `docs/entscheidungen.md`, E5).
+Reference periods in `backend/data/annotations.json` are entered manually by the author from the series CSVs (see `docs/entscheidungen.md`, E5). Status 2026-10-03: the annotations are deferred, and the detection code of increment 1 now exists. The reference periods must therefore be made without looking at the detection results; this deviation from the order planned in E5 is still to be recorded in the decisions (E9).
+
+---
+
+## 🔎 Cycle 2 – Increment 1 "Anomalien im Verlauf" (in progress)
+
+Detects lasting level shifts in the monthly rating series and shows them in the dashboard. The feature is presented, explained and justified in [docs/feature-doku/01-anomalien-im-verlauf.md](docs/feature-doku/01-anomalien-im-verlauf.md); all parameters are preliminary.
+
+| Part | Where | Notes |
+|---|---|---|
+| Change point detector | `backend/models/changepoint_detector.py` | PELT from `ruptures` (`model="l2"`, `min_size=3`, `penalty=0.5`), moving-mean fallback for short series, `ChangePointDetector` protocol for further methods |
+| Anomaly service | `backend/services/anomaly_service.py` | Uses `monthly_series` and `is_eligible` (E3/E4), detects on evaluated months only, filters `min_delta` (0.3 stars), sorts falls before rises |
+| API | `backend/routes/anomalies.py` | `GET /api/analytics/company/{company_id}/anomalies?source=employee&dimension=durchschnittsbewertung&penalty=&min_delta=` — returns series, anomalies, parameters, eligibility; computed live, read-only, no migration |
+| Dashboard card | `frontend/src/components/dashboard/AnomalyCard.jsx` | Below the chart row; click opens the detail page |
+| Detail page | `frontend/src/pages/Anomalies.jsx`, route `/anomalies?company=ID` | Larger chart and list, company switcher, also reachable via "Anomalien" in the sidebar |
+| Tests | `backend/tests/anomaly/` | `cd backend && uv run python -m pytest tests/anomaly tests/forecast tests/test_rating_series_service.py -q` |
 
 ---
 
@@ -235,11 +251,14 @@ epa-analytics/
 │   │   └── 004_add_company_references.sql
 │   │
 │   ├── models/                  # Machine Learning Models
+│   │   ├── changepoint_detector.py # Level-shift detection (PELT, increment 1)
 │   │   ├── lda_topic_model.py  # LDA Topic Modeling
 │   │   ├── sentiment_analyzer.py # Sentiment Analysis
 │   │   └── saved_models/       # Trained models
 │   │
 │   ├── services/                # Business Logic Services
+│   │   ├── rating_series_service.py       # Monthly rating series (E3/E4)
+│   │   ├── anomaly_service.py             # Anomalies in the monthly series (increment 1)
 │   │   ├── excel_service.py               # Excel Import/Export
 │   │   ├── topic_model_service.py         # Topic Modeling DB Service
 │   │   ├── topic_rating_service.py        # Topic-Rating Analysis
@@ -249,6 +268,7 @@ epa-analytics/
 │   │
 │   ├── routes/                  # API Endpoints
 │   │   ├── analytics.py        # Analytics API (12 Endpoints)
+│   │   ├── anomalies.py        # Anomalies API (increment 1)
 │   │   ├── companies.py        # Company Management (9 Endpoints)
 │   │   ├── topics.py           # Topic Modeling API (13 Endpoints)
 │   │   └── upload.py           # File Upload
@@ -260,6 +280,7 @@ epa-analytics/
 │   │   └── test_num_topics_compare.py # Topic Comparison Tests
 │   │
 │   ├── tests/                   # Organized Tests
+│   │   ├── anomaly/            # Change point detection tests
 │   │   ├── topic_modeling/     # Topic Modeling Tests
 │   │   ├── sentiment_analysis/ # Sentiment Tests
 │   │   └── statistical/        # Statistical Tests
@@ -273,6 +294,7 @@ epa-analytics/
 │   │   ├── components/         # React Components
 │   │   │   ├── CompanySearchSelect.jsx  # Optimized with caching
 │   │   │   ├── dashboard/     # Dashboard Components
+│   │   │   │   ├── AnomalyCard.jsx          # Anomalies in the rating history
 │   │   │   │   ├── DominantTopicsCard.jsx   # Dominant Topics
 │   │   │   │   ├── IndividualReviewsCard.jsx # Individual Reviews
 │   │   │   │   ├── TimelineCard.jsx         # React.memo optimized
@@ -303,7 +325,11 @@ epa-analytics/
 │   │   ├── pages/             # Pages
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── Compare.jsx
+│   │   │   ├── Anomalies.jsx  # Detail page for anomalies
 │   │   │   └── Welcome.jsx
+│   │   ├── hooks/             # React Hooks
+│   │   │   ├── useAnomalies.js # Fetches series and anomalies
+│   │   │   └── useTheme.js    # Light/dark theme
 │   │   ├── utils/             # Utility Functions
 │   │   │   ├── pdfExport.js   # PDF Export
 │   │   │   ├── chartValidator.js # Chart Validation
