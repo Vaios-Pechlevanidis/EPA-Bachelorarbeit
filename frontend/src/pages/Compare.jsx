@@ -465,7 +465,7 @@ const ComparePage = () => {
                             }
                         }
                     }
-                } catch (_) { /* ignore fallback errors */ }
+                } catch { /* ignore fallback errors */ }
             }
 
             setCompanyData((prev) => ({
@@ -657,7 +657,7 @@ const ComparePage = () => {
             // Kurz warten damit Charts stabil sind
             await new Promise(r => setTimeout(r, 300))
 
-            const companies = activeSlots.map((slot, i) => {
+            const companies = activeSlots.map((slot) => {
                 const data = companyData[slot.id]
                 return {
                     name: slot.name,
@@ -872,7 +872,7 @@ const ComparePage = () => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
-                                    {activeSlots.map((slot, i) => {
+                                    {activeSlots.map((slot) => {
                                         const score =
                                             companyData[slot.id]?.ratings?.avg_overall
                                         return (
@@ -919,7 +919,7 @@ const ComparePage = () => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
-                                    {activeSlots.map((slot, i) => {
+                                    {activeSlots.map((slot) => {
                                         const trend = companyData[slot.id]?.trend
                                         return (
                                             <div
@@ -981,7 +981,7 @@ const ComparePage = () => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
-                                    {activeSlots.map((slot, i) => {
+                                    {activeSlots.map((slot) => {
                                         const mc = companyData[slot.id]?.mostCritical
                                         return (
                                             <div key={slot.id} className="space-y-0.5">
@@ -1024,7 +1024,7 @@ const ComparePage = () => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
-                                    {activeSlots.map((slot, i) => {
+                                    {activeSlots.map((slot) => {
                                         const nt = companyData[slot.id]?.negativeTopic
                                         const ntName = getNegativeTopicName(nt)
                                         return (
@@ -1224,7 +1224,7 @@ const ComparePage = () => {
                                                 domain={[0, 5]}
                                                 tick={{ fontSize: 10, fill: "#94a3b8" }}
                                             />
-                                            {activeSlots.map((slot, i) => (
+                                            {activeSlots.map((slot) => (
                                                 <Radar
                                                     key={slot.id}
                                                     name={slot.name}
@@ -1272,7 +1272,7 @@ const ComparePage = () => {
                                             />
                                             <Tooltip content={<CategoryChartTooltip />} />
                                             <Legend />
-                                            {activeSlots.map((slot, i) => (
+                                            {activeSlots.map((slot) => (
                                                 <Bar
                                                     key={slot.id}
                                                     dataKey={slot.name}
@@ -1363,7 +1363,7 @@ const ComparePage = () => {
                                                 }}
                                             />
                                             <Legend />
-                                            {activeSlots.map((slot, i) => (
+                                            {activeSlots.map((slot) => (
                                                 <Line
                                                     key={slot.id}
                                                     type="monotone"
@@ -1421,7 +1421,7 @@ const ComparePage = () => {
                                             <th className="text-left py-3 pr-4 font-semibold text-slate-600">
                                                 Kategorie
                                             </th>
-                                            {activeSlots.map((slot, i) => (
+                                            {activeSlots.map((slot) => (
                                                 <th
                                                     key={slot.id}
                                                     className="text-center py-3 px-4 font-semibold"

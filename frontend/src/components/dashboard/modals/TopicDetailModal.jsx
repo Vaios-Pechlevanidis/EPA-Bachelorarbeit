@@ -251,7 +251,7 @@ const VISIBILITY_DEFAULT = {
   exampleReview: true,
 }
 
-export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTable, sourceFilter, onSourceFilterChange }) {
+export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTable }) {
   const [currentExampleIndex, setCurrentExampleIndex] = React.useState(3)
   const [timeFilter, setTimeFilter] = React.useState("all")
   const [reviewDetailModalOpen, setReviewDetailModalOpen] = React.useState(false)

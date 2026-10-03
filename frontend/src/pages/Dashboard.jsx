@@ -108,7 +108,7 @@ export default function Dashboard() {
     navigate("/welcome", name ? { state: { prefillCompanyName: name } } : undefined)
   }
 
-  function getCompanyData(id) {
+  function getCompanyData() {
     /* intentionally empty — data is loaded reactively via effectiveCompanyId useEffect */
   }
 

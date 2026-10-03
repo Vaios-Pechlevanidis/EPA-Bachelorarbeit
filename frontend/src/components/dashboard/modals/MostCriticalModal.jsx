@@ -64,7 +64,6 @@ export default function MostCriticalModal({ open, onOpenChange, companyId = null
     return "Niedrig";
   }, [negP]);
 
-  const impactTone = impact === "Hoch" ? "bad" : impact === "Mittel" ? "warn" : "good";
   const impactColor = {
     Hoch:    "bg-rose-50 text-rose-700 border-rose-200",
     Mittel:  "bg-amber-50 text-amber-700 border-amber-200",

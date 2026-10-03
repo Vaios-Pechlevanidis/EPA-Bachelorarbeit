@@ -265,10 +265,6 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
   }, [topics, topicCounts])
 
   // baseTopics ist immer Top 5 für die Standard-Anzeige
-  const baseTopics = useMemo(() => {
-    return top5Topics
-  }, [top5Topics])
-
   // visibleTopics: alle nicht-hidden Topics (kann mehr als Top 5 sein, wenn User manuell auswählt)
   const visibleTopics = useMemo(() => {
     return (topics || []).filter((t) => !hiddenTopics.has(t))
