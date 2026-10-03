@@ -20,7 +20,9 @@ Felder je Anomalie:
 - ``delta``: ``after_mean - before_mean`` in Sternen
 - ``before_mean`` / ``after_mean``: Mittel der Monatsmittel im Segment vor bzw.
   nach dem Wechsel (bis zum benachbarten Wechsel)
-- ``n_reviews``: Anzahl der Werte, auf denen die beiden Segmente beruhen
+- ``n_reviews_before`` / ``n_reviews_after``: Anzahl der Werte im Segment vor
+  bzw. nach dem Wechsel
+- ``n_reviews``: Summe beider Segmente
 - ``severity``: ``"high"`` ab ``SEVERITY_HIGH`` (0,5 Sterne, Richtwert des
   Annotationsprotokolls), sonst ``"medium"`` ab ``min_delta``
 - ``method`` / ``params``: Verfahren und Parameter der Erkennung
@@ -58,6 +60,11 @@ _DIRECTION_ORDER = {"fall": 0, "rise": 1}
 
 def _severity(delta: float) -> str:
     return "high" if abs(delta) >= SEVERITY_HIGH else "medium"
+
+
+def _n_values(months: List[Dict[str, Any]]) -> int:
+    """Anzahl der Werte, auf denen die Monatsmittel eines Segments beruhen."""
+    return sum(int(m.get("n_values", m.get("count", 0))) for m in months)
 
 
 def eligibility(series: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -110,7 +117,8 @@ def detect_anomalies(
         if abs(delta) < min_delta:
             continue
         period = evaluated[shift["index"]]["period"]
-        segment = evaluated[shift["before_start"]:shift["after_end"]]
+        n_before = _n_values(evaluated[shift["before_start"]:shift["index"]])
+        n_after = _n_values(evaluated[shift["index"]:shift["after_end"]])
         anomalies.append({
             "id": f"{source}:{dimension}:{period}",
             "company_id": company_id,
@@ -121,7 +129,9 @@ def detect_anomalies(
             "delta": round(delta, 3),
             "before_mean": round(shift["before_mean"], 3),
             "after_mean": round(shift["after_mean"], 3),
-            "n_reviews": sum(int(m.get("n_values", m.get("count", 0))) for m in segment),
+            "n_reviews_before": n_before,
+            "n_reviews_after": n_after,
+            "n_reviews": n_before + n_after,
             "severity": _severity(delta),
             "method": result.method,
             "params": params,

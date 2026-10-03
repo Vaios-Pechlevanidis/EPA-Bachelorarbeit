@@ -78,8 +78,8 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod }) {
                         <span className="tnum text-slate-300">{fmt(anomaly.before_mean)} → {fmt(anomaly.after_mean)}</span>
                     </p>
                     <p className="flex items-center justify-between gap-3">
-                        <span className="text-slate-400">Anzahl</span>
-                        <span className="tnum text-slate-300">{anomaly.n_reviews} Bewertungen</span>
+                        <span className="text-slate-400">Bewertungen davor / danach</span>
+                        <span className="tnum text-slate-300">{anomaly.n_reviews_before} / {anomaly.n_reviews_after}</span>
                     </p>
                 </div>
             )}
@@ -119,7 +119,7 @@ export function AnomalyList({ anomalies, eligibility }) {
                         <span className="w-[72px] flex-none text-slate-700 tnum">{fmtPeriod(a.date)}</span>
                         <span className={`w-[92px] flex-none font-semibold tnum ${dir.text}`}>{fmtDelta(a.delta)} Sterne</span>
                         <span className="flex-1 min-w-0 truncate text-slate-500 tnum">
-                            Ø {fmt(a.before_mean)} → {fmt(a.after_mean)} · {a.n_reviews} Bewertungen
+                            Ø {fmt(a.before_mean)} → {fmt(a.after_mean)} · Bewertungen davor / danach {a.n_reviews_before} / {a.n_reviews_after}
                         </span>
                         <span className="flex-none text-[11px] text-slate-500">{SEVERITY_LABEL[a.severity] ?? a.severity}</span>
                     </li>
