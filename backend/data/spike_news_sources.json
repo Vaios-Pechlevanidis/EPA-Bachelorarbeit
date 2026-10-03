@@ -1,0 +1,775 @@
+{
+  "schema": 1,
+  "description": "Ergebnisse des Quellen-Spikes (scripts/spike_news_sources.py); Schlüssel = normalisierter Firmenname|YYYY-MM",
+  "runs": {
+    "thyssenkrupp|2023-04": {
+      "company": "Thyssenkrupp",
+      "company_normalized": "thyssenkrupp",
+      "month": "2023-04",
+      "window": {
+        "start": "2023-04-01",
+        "end": "2023-04-30",
+        "months": 1
+      },
+      "ticker": "TKA.DE",
+      "isin": "DE0007500001",
+      "query": "Thyssenkrupp",
+      "month_selection": {
+        "month": "2023-04",
+        "delta": 1.652,
+        "mean": 4.086,
+        "n": 14,
+        "prev_month": "2023-03",
+        "prev_mean": 2.433,
+        "n_prev": 9,
+        "company_id": 3,
+        "db_name": "Thyssenkrupp",
+        "employee_rows": 446,
+        "rule": "Monat >= 2019-01, n >= 5, max |Δ Monatsmittel durchschnittsbewertung| ggü. Vormonat (Vormonat = letzter Monat mit Daten, unbeschränkt)"
+      },
+      "generated_at": "2026-10-02T19:22:26+00:00",
+      "sources": {
+        "gdelt": {
+          "request_url": "https://api.gdeltproject.org/api/v2/doc/doc?query=Thyssenkrupp&mode=artlist&format=json&startdatetime=20230401000000&enddatetime=20230430235959&maxrecords=75&sort=datedesc",
+          "http_status": 200,
+          "count": 75,
+          "earliest": "2023-04-26T15:45:00+00:00",
+          "latest": "2023-05-01T21:30:00+00:00",
+          "language_guess": "de",
+          "sample_titles": [
+            " - ThyssenKrupp - Aktie : Kein Gerücht , sondern Faktencheck ! () ",
+            "PR - Journal - HR - Portale : Die persönliche Ansprache ist zurück",
+            "WOCHENVORSCHAU : Termine bis 15 . Mai 2023"
+          ],
+          "error": null,
+          "notes": [],
+          "languages_reported": {
+            "German": 63,
+            "English": 11,
+            "Spanish": 1
+          },
+          "source_countries": {
+            "Germany": 46,
+            "Austria": 15,
+            "United States": 8,
+            "": 3,
+            "India": 1
+          },
+          "domains": {
+            "boerse-social.com": 14,
+            "newratings.de": 5,
+            "finanznachrichten.de": 5,
+            "boersennews.de": 4,
+            "wiwo.de": 4
+          },
+          "in_window": 68,
+          "elapsed_s": 15.22
+        },
+        "gnews": {
+          "request_url": "https://news.google.com/rss/search?q=Thyssenkrupp+after%3A2023-04-01+before%3A2023-05-01&hl=de&gl=DE&ceid=DE%3Ade",
+          "http_status": 200,
+          "count": 28,
+          "earliest": "2023-04-02T07:00:00+00:00",
+          "latest": "2023-04-28T07:00:00+00:00",
+          "language_guess": "de",
+          "sample_titles": [
+            "Martina Merz tritt als Thyssenkrupp-Chefin zurück - Spiegel",
+            "Thyssenkrupp: Warum Chefin Martina Merz gehen muss - WiWo",
+            "Martina Merz: Umstrittene Thyssenkrupp-Chefin schmeißt hin - die möglichen Gründe - Wirtschaft - SZ.de - SZ.de"
+          ],
+          "error": null,
+          "notes": [
+            "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
+          ],
+          "channel_language": "de",
+          "in_window": 28,
+          "top_sources": {
+            "SZ.de": 4,
+            "WiWo": 3,
+            "FAZ": 3,
+            "Handelsblatt": 3,
+            "thyssenkrupp Steel": 2
+          },
+          "elapsed_s": 0.44
+        },
+        "eqs": {
+          "request_url": "https://www.eqs-news.com/wp-json/eqsnews/v1/news",
+          "http_status": 200,
+          "count": 5,
+          "earliest": "2023-04-04T08:34:43+00:00",
+          "latest": "2023-04-28T12:47:03+00:00",
+          "language_guess": "en",
+          "sample_titles": [
+            "thyssenkrupp AG: Preliminary announcement of the publication of financial reports according to Articles 114, 115, 117 of the WpHG [the German Securities Act]",
+            "thyssenkrupp AG: Martina Merz asks the Supervisory Board for talks to end her mandate as Chief Executive Officer of thyssenkrupp AG in mutual agreement",
+            "Amundi S.A., Paris, Frankreich"
+          ],
+          "error": null,
+          "notes": [
+            "company_name=<Klarname> liefert keine Datensätze (Backend interpretiert den Wert als companyUUID)",
+            "Endpunkt undokumentiert; per_page ist serverseitig auf 100 begrenzt"
+          ],
+          "attempts": [
+            {
+              "params": {
+                "company_name": "Thyssenkrupp",
+                "start_date": "2023-04-01",
+                "end_date": "2023-04-30",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": null,
+              "backend_error": {
+                "status": 500,
+                "message": "API Unavailable"
+              },
+              "records": 0,
+              "total_items": null
+            },
+            {
+              "params": {
+                "start_date": "2023-04-01",
+                "end_date": "2023-04-30",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": 200,
+              "backend_error": null,
+              "records": 100,
+              "total_items": 4758,
+              "pages_requested": 2
+            },
+            {
+              "params": {
+                "company_name": "5b6db068-ea7c-11e8-902f-2c44fd856d8c",
+                "start_date": "2023-04-01",
+                "end_date": "2023-04-30",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": 200,
+              "backend_error": null,
+              "records": 5,
+              "total_items": 5
+            }
+          ],
+          "company_uuid": "5b6db068-ea7c-11e8-902f-2c44fd856d8c",
+          "uuid_source": "discovery (Seite 2, 'ThyssenKrupp AG', ISIN DE0007500001)",
+          "in_window": 5,
+          "languages_reported": {
+            "en": 4,
+            "de": 1
+          },
+          "categories": {
+            "Advance financial reports": 1,
+            "Ad-hoc": 1,
+            "Voting rights": 3
+          },
+          "company_names_reported": [
+            "ThyssenKrupp AG"
+          ],
+          "elapsed_s": 3.22
+        },
+        "yfinance": {
+          "ticker": "TKA.DE",
+          "error": null,
+          "notes": [
+            "yfinance.Ticker.get_news() hat keinen Datumsfilter; yfinance nutzt eine eigene HTTP-Schicht (kein urllib-Timeout)"
+          ],
+          "get_news": {
+            "count": 0,
+            "in_window": 0,
+            "earliest": null,
+            "latest": null,
+            "language_guess": "unbekannt",
+            "sample_titles": [],
+            "error": null
+          },
+          "search_news": {
+            "query": "Thyssenkrupp",
+            "count": 11,
+            "in_window": 0,
+            "earliest": "2026-07-06T13:42:30+00:00",
+            "latest": "2026-10-02T12:40:02+00:00",
+            "language_guess": "en",
+            "sample_titles": [
+              "Is ThyssenKrupp (TKAMY) Stock Undervalued Right Now?",
+              "Jacobs Extends Contract for Thyssenkrupp Steel Plant in Germany",
+              "Jacobs extends role on German hydrogen-capable direct reduction plant"
+            ],
+            "error": null
+          },
+          "count": 0,
+          "in_window": 0,
+          "earliest": null,
+          "latest": null,
+          "language_guess": "unbekannt",
+          "sample_titles": [],
+          "http_status": null,
+          "elapsed_s": 2.01
+        }
+      }
+    },
+    "bechtle|2020-10": {
+      "company": "Bechtle",
+      "company_normalized": "bechtle",
+      "month": "2020-10",
+      "window": {
+        "start": "2020-10-01",
+        "end": "2020-10-31",
+        "months": 1
+      },
+      "ticker": "BC8.DE",
+      "isin": "DE0005158703",
+      "query": "Bechtle",
+      "month_selection": {
+        "month": "2020-10",
+        "delta": -1.508,
+        "mean": 2.5,
+        "n": 8,
+        "prev_month": "2020-09",
+        "prev_mean": 4.008,
+        "n_prev": 12,
+        "company_id": 24,
+        "db_name": "Bechtle",
+        "employee_rows": 2369,
+        "rule": "Monat >= 2019-01, n >= 5, max |Δ Monatsmittel durchschnittsbewertung| ggü. Vormonat (Vormonat = letzter Monat mit Daten, unbeschränkt)"
+      },
+      "generated_at": "2026-10-02T19:23:08+00:00",
+      "sources": {
+        "gdelt": {
+          "request_url": "https://api.gdeltproject.org/api/v2/doc/doc?query=Bechtle&mode=artlist&format=json&startdatetime=20201001000000&enddatetime=20201031235959&maxrecords=75&sort=datedesc",
+          "http_status": 200,
+          "count": 17,
+          "earliest": "2020-10-01T08:30:00+00:00",
+          "latest": "2020-10-30T10:00:00+00:00",
+          "language_guess": "en",
+          "sample_titles": [
+            "Bechtle Switzerland starts offering IoT services",
+            "Div | Bechtle , Cancom , SAP , Fraport , Deutz oder Patrizia : Schon Kaufkurse oder weiter runter ? - dax _ mdax - Börsennachrichten",
+            "Bechtle shows signs of COVID recovery in Q3"
+          ],
+          "error": null,
+          "notes": [
+            "HTTP 429 (Rate-Limit: eine Anfrage je 5 s) – ein Retry nach 6 s"
+          ],
+          "languages_reported": {
+            "English": 12,
+            "German": 5
+          },
+          "source_countries": {
+            "United States": 6,
+            "Germany": 4,
+            "Netherlands": 3,
+            "United Kingdom": 2,
+            "": 1
+          },
+          "domains": {
+            "telecompaper.com": 3,
+            "channelweb.co.uk": 2,
+            "stock-world.de": 1,
+            "newstimes.com": 1,
+            "ctpost.com": 1
+          },
+          "in_window": 17,
+          "elapsed_s": 31.23
+        },
+        "gnews": {
+          "request_url": "https://news.google.com/rss/search?q=Bechtle+after%3A2020-10-01+before%3A2020-11-01&hl=de&gl=DE&ceid=DE%3Ade",
+          "http_status": 200,
+          "count": 6,
+          "earliest": "2020-10-11T07:00:00+00:00",
+          "latest": "2020-10-30T07:00:00+00:00",
+          "language_guess": "de",
+          "sample_titles": [
+            "Uwe Burk (56) wird neuer Bereichsvorstand im Familienunternehmen Bechtle - FAMILIENUNTERNEHMEN im FOKUS",
+            "Standort an der Hochschule Bonn Rhein-Sieg: IT-Systemhaus Bechtle expandiert nach Sankt Augustin - General-Anzeiger Bonn",
+            "Checkliste für Ihr Depot Ende 2020 - Im Interview mit Dr. Markus Elsässer - finanzen.net"
+          ],
+          "error": null,
+          "notes": [
+            "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
+          ],
+          "channel_language": "de",
+          "in_window": 6,
+          "top_sources": {
+            "FAMILIENUNTERNEHMEN im FOKUS": 2,
+            "General-Anzeiger Bonn": 1,
+            "finanzen.net": 1,
+            "baden.fm": 1,
+            "Netzwoche": 1
+          },
+          "elapsed_s": 0.31
+        },
+        "eqs": {
+          "request_url": "https://www.eqs-news.com/wp-json/eqsnews/v1/news",
+          "http_status": 200,
+          "count": 1,
+          "earliest": "2020-10-26T12:38:40+00:00",
+          "latest": "2020-10-26T12:38:40+00:00",
+          "language_guess": "en",
+          "sample_titles": [
+            "Bechtle AG: Q3 earnings with above-average climb"
+          ],
+          "error": null,
+          "notes": [
+            "company_name=<Klarname> liefert keine Datensätze (Backend interpretiert den Wert als companyUUID)",
+            "Endpunkt undokumentiert; per_page ist serverseitig auf 100 begrenzt"
+          ],
+          "attempts": [
+            {
+              "params": {
+                "company_name": "Bechtle",
+                "start_date": "2020-10-01",
+                "end_date": "2020-10-31",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": null,
+              "backend_error": {
+                "status": 500,
+                "message": "API Unavailable"
+              },
+              "records": 0,
+              "total_items": null
+            },
+            {
+              "params": {
+                "start_date": "2020-10-01",
+                "end_date": "2020-10-31",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": 200,
+              "backend_error": null,
+              "records": 100,
+              "total_items": 2460,
+              "pages_requested": 6
+            },
+            {
+              "params": {
+                "company_name": "5b745f9b-ea7c-11e8-902f-2c44fd856d8c",
+                "start_date": "2020-10-01",
+                "end_date": "2020-10-31",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": 200,
+              "backend_error": null,
+              "records": 1,
+              "total_items": 1
+            }
+          ],
+          "company_uuid": "5b745f9b-ea7c-11e8-902f-2c44fd856d8c",
+          "uuid_source": "discovery (Seite 6, 'Bechtle AG', ISIN DE0005158703)",
+          "in_window": 1,
+          "languages_reported": {
+            "en": 1
+          },
+          "categories": {
+            "Ad-hoc": 1
+          },
+          "company_names_reported": [
+            "Bechtle AG"
+          ],
+          "elapsed_s": 8.87
+        },
+        "yfinance": {
+          "ticker": "BC8.DE",
+          "error": null,
+          "notes": [
+            "yfinance.Ticker.get_news() hat keinen Datumsfilter; yfinance nutzt eine eigene HTTP-Schicht (kein urllib-Timeout)"
+          ],
+          "get_news": {
+            "count": 0,
+            "in_window": 0,
+            "earliest": null,
+            "latest": null,
+            "language_guess": "unbekannt",
+            "sample_titles": [],
+            "error": null
+          },
+          "search_news": {
+            "query": "Bechtle",
+            "count": 2,
+            "in_window": 0,
+            "earliest": "2026-08-12T08:02:13+00:00",
+            "latest": "2026-08-12T15:00:30+00:00",
+            "language_guess": "en",
+            "sample_titles": [
+              "Bechtle AG (BECTY) (Q2 2026) Earnings Call Highlights: Record Order Intake and Raised Guidance ...",
+              "Bechtle Q2 Earnings Call Highlights"
+            ],
+            "error": null
+          },
+          "count": 0,
+          "in_window": 0,
+          "earliest": null,
+          "latest": null,
+          "language_guess": "unbekannt",
+          "sample_titles": [],
+          "http_status": null,
+          "elapsed_s": 1.97
+        }
+      }
+    },
+    "karlsruher institut für technologie|2023-01": {
+      "company": "Karlsruher Institut für Technologie",
+      "company_normalized": "karlsruher institut für technologie",
+      "month": "2023-01",
+      "window": {
+        "start": "2023-01-01",
+        "end": "2023-01-31",
+        "months": 1
+      },
+      "ticker": null,
+      "isin": null,
+      "query": "Karlsruher Institut für Technologie",
+      "month_selection": {
+        "month": "2023-01",
+        "delta": 3.029,
+        "mean": 4.029,
+        "n": 7,
+        "prev_month": "2022-12",
+        "prev_mean": 1.0,
+        "n_prev": 1,
+        "company_id": 14,
+        "db_name": "Karlsruher Institut für Technologie",
+        "employee_rows": 387,
+        "rule": "Monat >= 2019-01, n >= 5, max |Δ Monatsmittel durchschnittsbewertung| ggü. Vormonat (Vormonat = letzter Monat mit Daten, unbeschränkt)"
+      },
+      "generated_at": "2026-10-02T19:23:52+00:00",
+      "sources": {
+        "gdelt": {
+          "request_url": "https://api.gdeltproject.org/api/v2/doc/doc?query=%22Karlsruher+Institut+f%C3%BCr+Technologie%22&mode=artlist&format=json&startdatetime=20230101000000&enddatetime=20230131235959&maxrecords=75&sort=datedesc",
+          "http_status": 200,
+          "count": 1,
+          "earliest": "2023-01-14T08:15:00+00:00",
+          "latest": "2023-01-14T08:15:00+00:00",
+          "language_guess": "en",
+          "sample_titles": [
+            "Carbon Harvested from the Air Using Capture Technology from German Researchers"
+          ],
+          "error": null,
+          "notes": [],
+          "languages_reported": {
+            "English": 1
+          },
+          "source_countries": {
+            "United States": 1
+          },
+          "domains": {
+            "techtimes.com": 1
+          },
+          "in_window": 1,
+          "elapsed_s": 10.84
+        },
+        "gnews": {
+          "request_url": "https://news.google.com/rss/search?q=%22Karlsruher+Institut+f%C3%BCr+Technologie%22+after%3A2023-01-01+before%3A2023-02-01&hl=de&gl=DE&ceid=DE%3Ade",
+          "http_status": 200,
+          "count": 9,
+          "earliest": "2023-01-10T08:00:00+00:00",
+          "latest": "2023-02-01T08:00:00+00:00",
+          "language_guess": "de",
+          "sample_titles": [
+            "Gas: Modernes Fracking laut Karlsruher Institut für Technologie „absolut vertretbar“ - WELT",
+            "Zu Gast im Studio | Valentin Goldberg - Planet Wissen",
+            "Herkulesaufgabe Transformation des Energiesystems - Helmholtz-Gemeinschaft Deutscher Forschungszentren"
+          ],
+          "error": null,
+          "notes": [
+            "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
+          ],
+          "channel_language": "de",
+          "in_window": 8,
+          "top_sources": {
+            "Planet Wissen": 2,
+            "WELT": 1,
+            "Helmholtz-Gemeinschaft Deutscher Forschungszentren": 1,
+            "t3n": 1,
+            "Badische Neueste Nachrichten": 1
+          },
+          "elapsed_s": 0.3
+        },
+        "eqs": {
+          "request_url": "https://www.eqs-news.com/wp-json/eqsnews/v1/news",
+          "http_status": 200,
+          "count": 0,
+          "earliest": null,
+          "latest": null,
+          "language_guess": null,
+          "sample_titles": [],
+          "error": "keine companyUUID bekannt; Klarname/ISIN werden vom Endpunkt nicht aufgelöst (--eqs-uuid oder --eqs-find-uuid verwenden)",
+          "notes": [
+            "company_name=<Klarname> liefert keine Datensätze (Backend interpretiert den Wert als companyUUID)"
+          ],
+          "attempts": [
+            {
+              "params": {
+                "company_name": "Karlsruher Institut für Technologie",
+                "start_date": "2023-01-01",
+                "end_date": "2023-01-31",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": null,
+              "backend_error": {
+                "status": 500,
+                "message": "API Unavailable"
+              },
+              "records": 0,
+              "total_items": null
+            }
+          ],
+          "company_uuid": null,
+          "uuid_source": null,
+          "elapsed_s": 0.21
+        },
+        "yfinance": {
+          "ticker": null,
+          "error": null,
+          "notes": [
+            "yfinance.Ticker.get_news() hat keinen Datumsfilter; yfinance nutzt eine eigene HTTP-Schicht (kein urllib-Timeout)"
+          ],
+          "get_news": {
+            "count": null,
+            "in_window": null,
+            "earliest": null,
+            "latest": null,
+            "language_guess": null,
+            "sample_titles": [],
+            "error": "kein Ticker angegeben (nicht börsennotiert)"
+          },
+          "search_news": {
+            "query": "Karlsruher Institut für Technologie",
+            "count": 0,
+            "in_window": 0,
+            "earliest": null,
+            "latest": null,
+            "language_guess": "unbekannt",
+            "sample_titles": [],
+            "error": null
+          },
+          "count": null,
+          "in_window": null,
+          "earliest": null,
+          "latest": null,
+          "language_guess": null,
+          "sample_titles": [],
+          "http_status": null,
+          "elapsed_s": 1.1
+        }
+      }
+    },
+    "open grid europe|2019-01": {
+      "company": "Open Grid Europe",
+      "company_normalized": "open grid europe",
+      "month": "2019-01",
+      "window": {
+        "start": "2019-01-01",
+        "end": "2019-01-31",
+        "months": 1
+      },
+      "ticker": null,
+      "isin": null,
+      "query": "Open Grid Europe",
+      "month_selection": {
+        "month": "2019-01",
+        "delta": 1.577,
+        "mean": 4.277,
+        "n": 22,
+        "prev_month": "2018-12",
+        "prev_mean": 2.7,
+        "n_prev": 1,
+        "company_id": 4,
+        "db_name": "Open Grid Europe",
+        "employee_rows": 360,
+        "rule": "Monat >= 2019-01, n >= 5, max |Δ Monatsmittel durchschnittsbewertung| ggü. Vormonat (Vormonat = letzter Monat mit Daten, unbeschränkt)"
+      },
+      "generated_at": "2026-10-02T19:26:44+00:00",
+      "sources": {
+        "gdelt": {
+          "request_url": "https://api.gdeltproject.org/api/v2/doc/doc?query=%22Open+Grid+Europe%22&mode=artlist&format=json&startdatetime=20190101000000&enddatetime=20190131235959&maxrecords=75&sort=datedesc",
+          "http_status": 200,
+          "count": 0,
+          "earliest": null,
+          "latest": null,
+          "language_guess": "unbekannt",
+          "sample_titles": [],
+          "error": null,
+          "notes": [],
+          "languages_reported": {},
+          "source_countries": {},
+          "domains": {},
+          "in_window": 0,
+          "elapsed_s": 11.53,
+          "probed_at": "2026-10-02T19:26:56+00:00"
+        },
+        "gnews": {
+          "request_url": "https://news.google.com/rss/search?q=%22Open+Grid+Europe%22+after%3A2019-01-01+before%3A2019-02-01&hl=de&gl=DE&ceid=DE%3Ade",
+          "http_status": 200,
+          "count": 0,
+          "earliest": null,
+          "latest": null,
+          "language_guess": "unbekannt",
+          "sample_titles": [],
+          "error": null,
+          "notes": [
+            "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
+          ],
+          "channel_language": "de",
+          "in_window": 0,
+          "top_sources": {},
+          "elapsed_s": 0.36
+        },
+        "eqs": {
+          "request_url": "https://www.eqs-news.com/wp-json/eqsnews/v1/news",
+          "http_status": 200,
+          "count": 0,
+          "earliest": null,
+          "latest": null,
+          "language_guess": null,
+          "sample_titles": [],
+          "error": "keine companyUUID bekannt; Klarname/ISIN werden vom Endpunkt nicht aufgelöst (--eqs-uuid oder --eqs-find-uuid verwenden)",
+          "notes": [
+            "company_name=<Klarname> liefert keine Datensätze (Backend interpretiert den Wert als companyUUID)"
+          ],
+          "attempts": [
+            {
+              "params": {
+                "company_name": "Open Grid Europe",
+                "start_date": "2019-01-01",
+                "end_date": "2019-01-31",
+                "per_page": 100
+              },
+              "http_status": 200,
+              "backend_status": null,
+              "backend_error": {
+                "status": 500,
+                "message": "API Unavailable"
+              },
+              "records": 0,
+              "total_items": null
+            }
+          ],
+          "company_uuid": null,
+          "uuid_source": null,
+          "elapsed_s": 0.22
+        },
+        "yfinance": {
+          "ticker": null,
+          "error": null,
+          "notes": [
+            "yfinance.Ticker.get_news() hat keinen Datumsfilter; yfinance nutzt eine eigene HTTP-Schicht (kein urllib-Timeout)"
+          ],
+          "get_news": {
+            "count": null,
+            "in_window": null,
+            "earliest": null,
+            "latest": null,
+            "language_guess": null,
+            "sample_titles": [],
+            "error": "kein Ticker angegeben (nicht börsennotiert)"
+          },
+          "search_news": {
+            "query": "Open Grid Europe",
+            "count": 0,
+            "in_window": 0,
+            "earliest": null,
+            "latest": null,
+            "language_guess": "unbekannt",
+            "sample_titles": [],
+            "error": null
+          },
+          "count": null,
+          "in_window": null,
+          "earliest": null,
+          "latest": null,
+          "language_guess": null,
+          "sample_titles": [],
+          "http_status": null,
+          "elapsed_s": 1.15
+        }
+      }
+    },
+    "open grid europe|2019-01+3m": {
+      "company": "Open Grid Europe",
+      "company_normalized": "open grid europe",
+      "month": "2019-01",
+      "window": {
+        "start": "2019-01-01",
+        "end": "2019-03-31",
+        "months": 3
+      },
+      "ticker": null,
+      "isin": null,
+      "query": "Open Grid Europe",
+      "month_selection": null,
+      "generated_at": "2026-10-02T19:26:03+00:00",
+      "sources": {
+        "gdelt": {
+          "request_url": "https://api.gdeltproject.org/api/v2/doc/doc?query=%22Open+Grid+Europe%22&mode=artlist&format=json&startdatetime=20190101000000&enddatetime=20190331235959&maxrecords=75&sort=datedesc",
+          "http_status": 200,
+          "count": 13,
+          "earliest": "2019-02-03T20:30:00+00:00",
+          "latest": "2019-03-26T18:30:00+00:00",
+          "language_guess": "en",
+          "sample_titles": [
+            "Germany Uniper feeds wind power - to - methane into gas grid",
+            "Germany Uniper feeds wind power - to - methane into gas grid | Energy & Oil",
+            "Renewable gas has indispensable role in decarbonised future"
+          ],
+          "error": null,
+          "notes": [
+            "HTTP 429 (Rate-Limit: eine Anfrage je 5 s) – ein Retry nach 6 s"
+          ],
+          "languages_reported": {
+            "English": 13
+          },
+          "source_countries": {
+            "United States": 9,
+            "": 1,
+            "United Kingdom": 1,
+            "China": 1,
+            "Germany": 1
+          },
+          "domains": {
+            "reuters.com": 2,
+            "af.reuters.com": 1,
+            "industryeurope.com": 1,
+            "windpowermonthly.com": 1,
+            "energylivenews.com": 1
+          },
+          "in_window": 13,
+          "elapsed_s": 28.0,
+          "probed_at": "2026-10-02T19:26:31+00:00"
+        },
+        "gnews": {
+          "request_url": "https://news.google.com/rss/search?q=%22Open+Grid+Europe%22+after%3A2019-01-01+before%3A2019-04-01&hl=de&gl=DE&ceid=DE%3Ade",
+          "http_status": 200,
+          "count": 2,
+          "earliest": "2019-02-03T08:00:00+00:00",
+          "latest": "2019-02-12T08:00:00+00:00",
+          "language_guess": "gemischt",
+          "sample_titles": [
+            "Auch Amprion plant Power-to-Gas-Anlage - edison.media",
+            "Platzprobleme bei Aldi Nord: Discounter muss Büros anmieten - WAZ | Westdeutsche Allgemeine Zeitung"
+          ],
+          "error": null,
+          "notes": [
+            "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
+          ],
+          "channel_language": "de",
+          "in_window": 2,
+          "top_sources": {
+            "edison.media": 1,
+            "WAZ | Westdeutsche Allgemeine Zeitung": 1
+          },
+          "elapsed_s": 0.29,
+          "probed_at": "2026-10-02T19:26:31+00:00"
+        }
+      }
+    }
+  },
+  "updated_at": "2026-10-02T19:26:56+00:00"
+}

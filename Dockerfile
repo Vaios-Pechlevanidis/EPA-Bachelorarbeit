@@ -14,7 +14,8 @@ COPY backend/pyproject.toml ./
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir fastapi uvicorn python-dotenv python-multipart \
     gensim pandas openpyxl supabase statsmodels \
-    transformers sentencepiece
+    transformers sentencepiece \
+    ruptures yfinance
 
 COPY backend/ .
 

@@ -1,0 +1,10 @@
+# Nie ins Image: lokale Geheimnisse und Build-Artefakte
+.env
+.env.*
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+models/saved_models/*
+!models/saved_models/README.md
+!models/saved_models/.gitignore

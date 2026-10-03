@@ -1,0 +1,444 @@
+[
+  {
+    "company_id": 3,
+    "name": "Thyssenkrupp",
+    "name_normalized": "Thyssenkrupp",
+    "ticker": "TKA.DE",
+    "isin": null,
+    "sector": "Stahl/Industrie",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "thyssenkrupp AG (Xetra)."
+  },
+  {
+    "company_id": 4,
+    "name": "Open Grid Europe",
+    "name_normalized": "Open Grid Europe",
+    "ticker": null,
+    "isin": null,
+    "sector": "Gasnetz",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "Fernleitungsnetzbetreiber im Besitz eines Infrastrukturinvestoren-Konsortiums (Vier Gas Transport); nicht börsennotiert."
+  },
+  {
+    "company_id": 5,
+    "name": "PLEdoc GmbH",
+    "name_normalized": "PLEdoc GmbH",
+    "ticker": null,
+    "isin": null,
+    "sector": "Gasnetz",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "Ingenieur- und Dokumentationsdienstleister für Leitungsnetze, Tochter der Open Grid Europe; nicht börsennotiert."
+  },
+  {
+    "company_id": 6,
+    "name": "E.ON Digital Technology",
+    "name_normalized": "E.ON Digital Technology",
+    "ticker": null,
+    "isin": null,
+    "sector": "IT-Dienstleistung",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "IT-Tochter der E.ON SE (Konzernmutter: EOAN.DE). Selbst nicht börsennotiert, daher gemäß Vorgabe 'Nicht börsennotiert'."
+  },
+  {
+    "company_id": 7,
+    "name": "E.ON",
+    "name_normalized": "E.ON",
+    "ticker": "EOAN.DE",
+    "isin": null,
+    "sector": "Energie",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "E.ON SE (Xetra). DB-Name enthält einen abschließenden Zeilenumbruch (siehe scripts/fix_company_names.py)."
+  },
+  {
+    "company_id": 8,
+    "name": "RWE",
+    "name_normalized": "RWE",
+    "ticker": "RWE.DE",
+    "isin": null,
+    "sector": "Energie",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "RWE AG (Xetra)."
+  },
+  {
+    "company_id": 9,
+    "name": "Thyssengas GmbH",
+    "name_normalized": "Thyssengas GmbH",
+    "ticker": null,
+    "isin": null,
+    "sector": "Gasnetz",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "Fernleitungsnetzbetreiber im Besitz von Infrastrukturfonds; nicht börsennotiert. DB-Name enthält ein doppeltes Leerzeichen."
+  },
+  {
+    "company_id": 13,
+    "name": "Universität Duisburg-Essen",
+    "name_normalized": "Universität Duisburg-Essen",
+    "ticker": null,
+    "isin": null,
+    "sector": "Hochschule",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "Öffentliche Hochschule. DB-Name enthält ein doppeltes Leerzeichen."
+  },
+  {
+    "company_id": 14,
+    "name": "Karlsruher Institut für Technologie",
+    "name_normalized": "Karlsruher Institut für Technologie",
+    "ticker": null,
+    "isin": null,
+    "sector": "Hochschule",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "Öffentliche Hochschule / Forschungseinrichtung."
+  },
+  {
+    "company_id": 15,
+    "name": "Technische Universität München",
+    "name_normalized": "Technische Universität München",
+    "ticker": null,
+    "isin": null,
+    "sector": "Hochschule",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "Öffentliche Hochschule."
+  },
+  {
+    "company_id": 16,
+    "name": "Universität zu Köln",
+    "name_normalized": "Universität zu Köln",
+    "ticker": null,
+    "isin": null,
+    "sector": "Hochschule",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "Öffentliche Hochschule."
+  },
+  {
+    "company_id": 19,
+    "name": "SAP SE",
+    "name_normalized": "SAP SE",
+    "ticker": "SAP.DE",
+    "isin": null,
+    "sector": "Software",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "SAP SE (DAX, TecDAX)."
+  },
+  {
+    "company_id": 20,
+    "name": "NTT DATA SE",
+    "name_normalized": "NTT DATA SE",
+    "ticker": "9432.T",
+    "isin": null,
+    "sector": "IT-Dienstleistung",
+    "peer_group": "Börsennotiert Ausland",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 487,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Deutsche Landesgesellschaft der NTT DATA Group (Tokio). Deren Aktie (9613.T) wurde 2025 nach dem Übernahmeangebot von NTT von der Börse genommen; yfinance liefert dafür keine Kursdaten mehr. Der in der Vorgabe genannte Ticker 3850.T gehört laut yfinance zu Intramart Corp. Verwendet wird daher die börsennotierte Konzernmutter NTT, Inc. (9432.T, Tokio). DB-Name enthält ein doppeltes Leerzeichen."
+  },
+  {
+    "company_id": 21,
+    "name": "1 und 1",
+    "name_normalized": "1 und 1",
+    "ticker": "1U1.DE",
+    "isin": null,
+    "sector": "Telekommunikation",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "1&1 AG (TecDAX). Das Kununu-Profil könnte auch weitere Marken des 1&1-/United-Internet-Konzerns umfassen."
+  },
+  {
+    "company_id": 22,
+    "name": "Aixtron",
+    "name_normalized": "Aixtron",
+    "ticker": "AIXA.DE",
+    "isin": null,
+    "sector": "Halbleiter",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "AIXTRON SE (TecDAX), Anlagenbau für die Halbleiterindustrie."
+  },
+  {
+    "company_id": 23,
+    "name": "Atoss",
+    "name_normalized": "Atoss",
+    "ticker": "AOF.DE",
+    "isin": null,
+    "sector": "Software",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "ATOSS Software SE (TecDAX)."
+  },
+  {
+    "company_id": 24,
+    "name": "Bechtle",
+    "name_normalized": "Bechtle",
+    "ticker": "BC8.DE",
+    "isin": null,
+    "sector": "IT-Dienstleistung",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Bechtle AG (TecDAX)."
+  },
+  {
+    "company_id": 25,
+    "name": "Cancom",
+    "name_normalized": "Cancom",
+    "ticker": "COK.DE",
+    "isin": null,
+    "sector": "IT-Dienstleistung",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Cancom SE (TecDAX)."
+  },
+  {
+    "company_id": 26,
+    "name": "Carl Zeiss",
+    "name_normalized": "Carl Zeiss",
+    "ticker": "AFX.DE",
+    "isin": null,
+    "sector": "Optik/Medizintechnik",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "TecDAX-Mitglied ist die Carl Zeiss Meditec AG (AFX.DE). Das Kununu-Profil 'Carl Zeiss' bezieht sich möglicherweise auf die nicht börsennotierte Carl Zeiss AG (Stiftungsunternehmen, Konzernmutter) – Zuordnung vor der Analyse prüfen."
+  },
+  {
+    "company_id": 27,
+    "name": "Compugroup Medical Deutschland",
+    "name_normalized": "Compugroup Medical Deutschland",
+    "ticker": null,
+    "isin": null,
+    "sector": "Software (Gesundheitswesen)",
+    "peer_group": "Nicht börsennotiert",
+    "listed": false,
+    "verification": {
+      "ticker_checked_with": null,
+      "rows": 0,
+      "isin_source": null,
+      "checked_at": "2026-10-02"
+    },
+    "note": "CompuGroup Medical SE & Co. KGaA war bis 2025 im TecDAX (Xetra: COP). Nach dem Delisting-Angebot von CVC (2025) nicht mehr börsennotiert: yfinance liefert für COP.DE, COP.F, COP.SG, COP.MU, COP.DU, COP.BE und CMPVF keine Kursdaten (history 2y leer). Daher kein verifizierter Ticker und Vergleichsgruppe 'Nicht börsennotiert'. Historische Kurse für den Bewertungszeitraum bis 2025 müssten aus einer anderen Quelle bezogen werden."
+  },
+  {
+    "company_id": 28,
+    "name": "Telekom",
+    "name_normalized": "Telekom",
+    "ticker": "DTE.DE",
+    "isin": null,
+    "sector": "Telekommunikation",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Deutsche Telekom AG (DAX, TecDAX)."
+  },
+  {
+    "company_id": 29,
+    "name": "Eckert Ziegler",
+    "name_normalized": "Eckert Ziegler",
+    "ticker": "EUZ.DE",
+    "isin": null,
+    "sector": "Medizintechnik",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Eckert & Ziegler SE (TecDAX), Nuklearmedizin und Isotopentechnik."
+  },
+  {
+    "company_id": 30,
+    "name": "Elmos Semiconductor",
+    "name_normalized": "Elmos Semiconductor",
+    "ticker": "ELG.DE",
+    "isin": null,
+    "sector": "Halbleiter",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Elmos Semiconductor SE (TecDAX)."
+  },
+  {
+    "company_id": 31,
+    "name": "Evotec",
+    "name_normalized": "Evotec",
+    "ticker": "EVT.DE",
+    "isin": null,
+    "sector": "Biotechnologie",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Evotec SE (TecDAX)."
+  },
+  {
+    "company_id": 32,
+    "name": "Formycon",
+    "name_normalized": "Formycon",
+    "ticker": "FYB.DE",
+    "isin": null,
+    "sector": "Biotechnologie",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "Formycon AG (TecDAX), Biosimilars."
+  },
+  {
+    "company_id": 33,
+    "name": "Freenet",
+    "name_normalized": "Freenet",
+    "ticker": "FNTN.DE",
+    "isin": null,
+    "sector": "Telekommunikation",
+    "peer_group": "Börsennotiert DE",
+    "listed": true,
+    "verification": {
+      "ticker_checked_with": "yfinance history 2y",
+      "rows": 507,
+      "isin_source": "unverified",
+      "checked_at": "2026-10-02"
+    },
+    "note": "freenet AG (TecDAX)."
+  }
+]

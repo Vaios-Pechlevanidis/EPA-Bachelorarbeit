@@ -32,6 +32,25 @@ Here you can find all central resources and tools of the project:
 | Resource | Description | Link |
 |----------|-------------|------|
 | **Figma** | UI/UX Prototype & Design Documentation | [Figma → Prototype](https://www.figma.com/design/J6DpLLKbuyFah1hdt6lgm3/Prototype?node-id=0-1&t=AheLdS2Z58LItjWB-0) |
+| **Entscheidungen Zyklus 2** | Design decisions for cycle 2 (detection series, thresholds, metadata, sources) | [docs/entscheidungen.md](docs/entscheidungen.md) |
+| **Datenbasis** | Review density per company and source (generated) | [docs/datenbasis.md](docs/datenbasis.md) |
+| **Quellen-Spike** | Which news source delivers historical items (GDELT, Google News RSS, EQS, yfinance) | [docs/quellen-spike.md](docs/quellen-spike.md) |
+
+---
+
+## 🧱 Cycle 2 – Increment 0 "Fundament"
+
+Groundwork for anomaly detection and explanation (Design Science Research, cycle 2):
+
+| Step | Where | How to run |
+|---|---|---|
+| Company metadata (ticker, ISIN, sector, peer group) | `backend/migrations/006_add_company_metadata.sql`, `backend/data/company_metadata.json` | Run the migration in the Supabase SQL editor, then `cd backend && uv run python scripts/seed_company_metadata.py` (dry-run) / `--apply` |
+| Data density report | `backend/scripts/report_data_density.py` → `docs/datenbasis.md`, `backend/data/data_density.json` | `cd backend && uv run python scripts/report_data_density.py` |
+| Annotation basis (monthly series per company) | `backend/scripts/make_annotation_basis.py` → `backend/data/series/*.csv`, `backend/data/annotations.json` | `cd backend && uv run python scripts/make_annotation_basis.py` |
+| Annotation check | `backend/scripts/validate_annotations.py` | `cd backend && uv run python scripts/validate_annotations.py` |
+| News-source spike | `backend/scripts/spike_news_sources.py` → `docs/quellen-spike.md` | `cd backend && uv run python scripts/spike_news_sources.py --company "Thyssenkrupp" --month 2023-04 --ticker TKA.DE` |
+
+Reference periods in `backend/data/annotations.json` are entered manually by the author from the series CSVs and must be committed **before** any detection code exists (see `docs/entscheidungen.md`, E5).
 
 ---
 

@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "hinweise": {
+    "zweck": "Manuell erstellte Referenzannotationen (Gold-Standard) extremer Veränderungen in Kununu-Bewertungsverläufen. Sie dienen in Zyklus 2 der Evaluation der automatischen Erkennung und Erklärung extremer Veränderungen.",
+    "wichtig": "Die Einträge werden MANUELL aus den Serien-CSVs in backend/data/series/ erstellt, und zwar BEVOR Erkennungscode existiert oder ausgeführt wird. Ergebnisse einer automatischen Erkennung dürfen weder als Vorlage noch zur Korrektur der Annotationen verwendet werden; sonst würde die spätere Validierung zirkulär (die Erkennung würde gegen sich selbst geprüft). Dieses Skript befüllt die Liste 'annotations' bewusst nicht.",
+    "vorgehen": [
+      "1. Je Unternehmen und Quelle die CSV backend/data/series/<id>_<slug>_<source>.csv öffnen (Trennzeichen ';', Dezimalpunkt '.').",
+      "2. Spalten: period (Kalendermonat), mean_durchschnittsbewertung (Monatsmittel), count (Anzahl Bewertungen), delta_vs_previous (Differenz zum letzten vorhergehenden Monat mit Wert, nicht zwingend der direkte Vormonat).",
+      "3. Zeiträume markieren, in denen die Bewertung nach eigener fachlicher Einschätzung extrem steigt (rise) oder fällt (fall). Monate mit sehr kleinem count sind mit Vorsicht zu beurteilen; die Dichte je Unternehmen steht in docs/datenbasis.md.",
+      "4. Für Themen-Dimensionen (z. B. 'kommunikation') gibt es keine eigene CSV; sie werden nur annotiert, wenn eine Begründung unabhängig von Erkennungscode möglich ist.",
+      "5. Jeden Eintrag mit einer kurzen deutschen Begründung versehen (Feld 'note').",
+      "6. Danach prüfen: cd backend && uv run python scripts/validate_annotations.py [--offline] [--require-all-companies]."
+    ],
+    "felder": {
+      "company": "Bereinigter Unternehmensname, wie in backend/data/data_density.json unter 'name' (z. B. 'E.ON', 'Thyssengas GmbH'). Der Abgleich erfolgt whitespace-normalisiert und ohne Beachtung der Gross-/Kleinschreibung. Demo 1/2/3 sind nicht erlaubt.",
+      "source": "'employee' (Mitarbeitende) oder 'candidates' (Bewerbende).",
+      "dimension": "'durchschnittsbewertung' oder ein Themen-Schlüssel der jeweiligen Quelle (siehe 'gueltige_dimensionen').",
+      "period_from": "Erster Monat der Veränderung im Format YYYY-MM.",
+      "period_to": "Letzter Monat der Veränderung im Format YYYY-MM; period_from <= period_to. Beide Monate müssen im Datenzeitraum des Unternehmens für diese Quelle liegen.",
+      "direction": "'rise' (Anstieg) oder 'fall' (Abfall).",
+      "note": "Nicht-leere deutsche Begründung, unabhängig von jeder automatischen Erkennung (z. B. beobachteter Sprung des Monatsmittels, Anzahl Bewertungen, Kontext)."
+    },
+    "gueltige_dimensionen": {
+      "employee": [
+        "durchschnittsbewertung",
+        "arbeitsatmosphaere",
+        "image",
+        "work_life_balance",
+        "karriere_weiterbildung",
+        "gehalt_sozialleistungen",
+        "kollegenzusammenhalt",
+        "umwelt_sozialbewusstsein",
+        "vorgesetztenverhalten",
+        "kommunikation",
+        "interessante_aufgaben",
+        "umgang_mit_aelteren_kollegen",
+        "arbeitsbedingungen",
+        "gleichberechtigung"
+      ],
+      "candidates": [
+        "durchschnittsbewertung",
+        "erklaerung_der_weiteren_schritte",
+        "zufriedenstellende_reaktion",
+        "vollstaendigkeit_der_infos",
+        "zufriedenstellende_antworten",
+        "angenehme_atmosphaere",
+        "professionalitaet_des_gespraechs",
+        "wertschaetzende_behandlung",
+        "erwartbarkeit_des_prozesses",
+        "zeitgerechte_zu_oder_absage",
+        "schnelle_antwort"
+      ]
+    },
+    "regeln": [
+      "Jeder Eintrag enthält genau die Felder company, source, dimension, period_from, period_to, direction, note.",
+      "Keine Duplikate (gleiche company, source, dimension, period_from, period_to).",
+      "Ein Unternehmen darf mehrere Einträge haben; Einträge dürfen sich nicht überschneiden, wenn sie dieselbe Dimension derselben Quelle betreffen.",
+      "Entfällt eine Veränderung für ein Unternehmen, bleibt es ohne Eintrag; das ist zulässig und wird vom Validator nur mit --require-all-companies beanstandet."
+    ],
+    "beispiel_format": {
+      "company": "<Name aus data_density.json>",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "YYYY-MM",
+      "period_to": "YYYY-MM",
+      "direction": "rise|fall",
+      "note": "<deutsche Begründung>"
+    }
+  },
+  "annotations": []
+}

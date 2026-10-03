@@ -448,10 +448,12 @@ _D3_CAND_RANGES = {"early": (3.6, 4.2), "mid": (2.2, 3.0), "late": (3.4, 4.1)}
 
 
 def _generate_data():
+    # Metadaten-Spalten aus Migration 006 (ticker, isin, sector, peer_group):
+    # Demo-Unternehmen sind synthetisch und gehören zur Vergleichsgruppe "Demo".
     companies = [
-        {"id": 1, "name": "Demo 1"},
-        {"id": 2, "name": "Demo 2"},
-        {"id": 3, "name": "Demo 3"},
+        {"id": 1, "name": "Demo 1", "ticker": None, "isin": None, "sector": "Demo", "peer_group": "Demo"},
+        {"id": 2, "name": "Demo 2", "ticker": None, "isin": None, "sector": "Demo", "peer_group": "Demo"},
+        {"id": 3, "name": "Demo 3", "ticker": None, "isin": None, "sector": "Demo", "peer_group": "Demo"},
     ]
     employees = []
     candidates = []
@@ -594,7 +596,11 @@ class QueryBuilder:
         self._table_name = table_name
         self._select_cols: Optional[list[str]] = None
         self._count_mode: Optional[str] = None
+        # Gesamtzahl der gefilterten Zeilen VOR limit/range (für count="exact",
+        # wie PostgREST: Content-Range zählt alle Treffer, nicht nur die Seite)
+        self._count_total: Optional[int] = None
         self._insert_rows: Optional[list] = None
+        self._update_data: Optional[dict] = None
         self._is_delete = False
 
     # ---- filtering ----
@@ -641,10 +647,14 @@ class QueryBuilder:
         return self
 
     def limit(self, n: int) -> "QueryBuilder":
+        if self._count_total is None:
+            self._count_total = len(self._rows)
         self._rows = self._rows[:n]
         return self
 
     def range(self, start: int, end: int) -> "QueryBuilder":
+        if self._count_total is None:
+            self._count_total = len(self._rows)
         self._rows = self._rows[start: end + 1]
         return self
 
@@ -654,21 +664,50 @@ class QueryBuilder:
     def not_(self) -> _NotProxy:
         return _NotProxy(self)
 
-    # ---- mutations (no-op in demo mode) ----
+    # ---- mutations ----
+    # insert/update wirken auf den In-Memory-Store (wie PostgREST mit
+    # returning=representation); delete bleibt im Demo-Modus ein No-op.
 
     def insert(self, data: Any) -> "QueryBuilder":
         self._insert_rows = data if isinstance(data, list) else [data]
+        return self
+
+    def update(self, data: dict, **_kwargs: Any) -> "QueryBuilder":
+        self._update_data = dict(data)
         return self
 
     def delete(self) -> "QueryBuilder":
         self._is_delete = True
         return self
 
+    def _project(self, rows: list) -> list:
+        if self._select_cols:
+            return [{col: r.get(col) for col in self._select_cols} for r in rows]
+        return [dict(r) for r in rows]
+
     # ---- terminal ----
 
     def execute(self) -> Response:
         if self._insert_rows is not None:
-            return Response([])
+            table = _TABLES.get(self._table_name)
+            if table is None:
+                table = _TABLES[self._table_name] = []
+            next_id = max((r.get("id") or 0 for r in table), default=0) + 1
+            inserted = []
+            for row in self._insert_rows:
+                new_row = dict(row)
+                if new_row.get("id") is None:
+                    new_row["id"] = next_id
+                    next_id += 1
+                table.append(new_row)
+                inserted.append(new_row)
+            return Response(self._project(inserted))
+        if self._update_data is not None:
+            # Filter (eq etc.) wurden bereits auf self._rows angewendet; die
+            # Dicts sind dieselben Objekte wie im Store, Updates wirken daher dort.
+            for r in self._rows:
+                r.update(self._update_data)
+            return Response(self._project(self._rows))
         if self._is_delete:
             return Response([])
 
@@ -677,7 +716,8 @@ class QueryBuilder:
             result = [{col: r.get(col) for col in self._select_cols} for r in result]
 
         if self._count_mode == "exact":
-            return Response(result, count=len(result))
+            total = self._count_total if self._count_total is not None else len(result)
+            return Response(result, count=total)
         return Response(result)
 
 

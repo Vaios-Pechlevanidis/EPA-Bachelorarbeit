@@ -1,24 +1,149 @@
+import logging
 from fastapi import APIRouter, Query, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from database.supabase_client import get_supabase_client
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Optional
 
 router = APIRouter(prefix="/api", tags=["Companies"])
 supabase = get_supabase_client()
+logger = logging.getLogger(__name__)
+
+# Erlaubte Werte für companies.peer_group (Vergleichsgruppe für Zyklus 2,
+# siehe backend/migrations/006_add_company_metadata.sql).
+PEER_GROUPS: tuple[str, ...] = (
+    "Börsennotiert DE",
+    "Börsennotiert Ausland",
+    "Nicht börsennotiert",
+    "Demo",
+)
+
+# Metadaten-Spalten aus Migration 006; können in einer DB ohne diese
+# Migration fehlen (PostgREST meldet dann SQLSTATE 42703).
+COMPANY_META_COLUMNS: tuple[str, ...] = ("ticker", "isin", "sector", "peer_group")
+COMPANY_SELECT_FULL = "id,name," + ",".join(COMPANY_META_COLUMNS)
+COMPANY_SELECT_BASIC = "id,name"
+
+_meta_columns_warning_logged = False
+
+
+def _is_missing_column_error(exc: Exception) -> bool:
+    """True, wenn PostgREST eine fehlende Spalte meldet (SQLSTATE 42703)."""
+    if getattr(exc, "code", None) == "42703":
+        return True
+    return "42703" in str(exc)
+
+
+def _warn_meta_columns_missing_once() -> None:
+    """Loggt einmalig eine Warnung, dass Migration 006 noch nicht eingespielt ist."""
+    global _meta_columns_warning_logged
+    if _meta_columns_warning_logged:
+        return
+    _meta_columns_warning_logged = True
+    logger.warning(
+        "Die Spalten %s fehlen in der Tabelle companies (PostgREST 42703). "
+        "Bitte Migration backend/migrations/006_add_company_metadata.sql ausführen; "
+        "bis dahin werden nur id und name geladen bzw. gespeichert.",
+        ", ".join(COMPANY_META_COLUMNS),
+    )
+
 
 class CompanyCreate(BaseModel):
+    """Eingabemodell zum Anlegen eines Unternehmens inkl. optionaler Metadaten.
+
+    - ticker: Yahoo-Finance-Notation (z. B. TKA.DE); wird getrimmt und in
+      Großbuchstaben umgewandelt.
+    - isin: ISIN der Aktie; wird getrimmt und in Großbuchstaben umgewandelt.
+    - sector: Branche als Freitext.
+    - peer_group: Vergleichsgruppe, muss einen Wert aus PEER_GROUPS haben.
+    Leere Strings werden zu None.
+    """
+
     name: str
+    ticker: Optional[str] = None
+    isin: Optional[str] = None
+    sector: Optional[str] = None
+    peer_group: Optional[str] = None
+
+    @field_validator("ticker", "isin", mode="before")
+    @classmethod
+    def _upper_or_none(cls, value: Any) -> Any:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            cleaned = value.strip().upper()
+            return cleaned or None
+        return value
+
+    @field_validator("sector", "peer_group", mode="before")
+    @classmethod
+    def _strip_or_none(cls, value: Any) -> Any:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            cleaned = " ".join(value.split())
+            return cleaned or None
+        return value
+
+    @field_validator("peer_group")
+    @classmethod
+    def _check_peer_group(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and value not in PEER_GROUPS:
+            raise ValueError(
+                f"peer_group muss einer der Werte {list(PEER_GROUPS)} sein, nicht {value!r}"
+            )
+        return value
 
 
 def normalize_company_name(raw_name: str) -> str:
-    trimmed = raw_name.strip()
+    """Normalisiert einen Unternehmensnamen für Speicherung und Abgleich.
+
+    Trimmt den Namen, entfernt Zeilenumbrüche und reduziert mehrfachen Whitespace
+    auf ein einzelnes Leerzeichen ('E.ON\\n' -> 'E.ON', 'NTT  DATA SE' ->
+    'NTT DATA SE'). Beginnt der Name mit einem Kleinbuchstaben, wird dieser
+    großgeschrieben; die restliche Schreibweise bleibt unverändert.
+    """
+    if raw_name is None:
+        return ""
+    trimmed = " ".join(str(raw_name).split())
     if not trimmed:
         return trimmed
     first = trimmed[0]
     if first.isalpha() and first.islower():
         return f"{first.upper()}{trimmed[1:]}"
     return trimmed
+
+
+def _select_companies_with_fallback() -> list[dict]:
+    """Lädt alle Unternehmen inkl. Metadaten; ohne Migration 006 nur id und name.
+
+    Fehlen die Metadaten-Spalten (42703), wird einmalig gewarnt und auf
+    "id,name" zurückgefallen; die Metadaten-Schlüssel werden dann mit None
+    ergänzt, damit die Antwortstruktur stabil bleibt.
+    """
+    try:
+        res = (
+            supabase.table("companies")
+            .select(COMPANY_SELECT_FULL)
+            .order("name", desc=False)
+            .execute()
+        )
+        return res.data or []
+    except Exception as exc:  # noqa: BLE001
+        if not _is_missing_column_error(exc):
+            raise
+        _warn_meta_columns_missing_once()
+    res = (
+        supabase.table("companies")
+        .select(COMPANY_SELECT_BASIC)
+        .order("name", desc=False)
+        .execute()
+    )
+    data = res.data or []
+    for row in data:
+        for col in COMPANY_META_COLUMNS:
+            row.setdefault(col, None)
+    return data
 
 @router.get("/companies/search")
 def search_companies(q: str = Query(..., min_length=1)):
@@ -34,13 +159,9 @@ def search_companies(q: str = Query(..., min_length=1)):
     return res.data or []
 @router.get("/companies")
 def get_companies():
-    res = (
-        supabase.table("companies")
-        .select("id,name")
-        .order("name", desc=False)
-        .execute()
-    )
-    data = res.data or []
+    """Liefert alle Unternehmen mit Metadaten (ticker, isin, sector, peer_group)
+    und der Gesamtzahl der Bewertungen (employee + candidates)."""
+    data = _select_companies_with_fallback()
 
     for row in data:
         if "id" in row and row["id"] is not None:
@@ -506,10 +627,17 @@ def get_company_ratings_trend(
 @router.post("/companies/")
 def create_company(company: CompanyCreate):
     """
-    Creates a new company in the database.
-    Returns the created company with its ID.
+    Legt ein neues Unternehmen an und gibt es mit seiner ID zurück.
+
+    Der Name wird normalisiert (siehe normalize_company_name). Existiert bereits
+    ein Unternehmen mit diesem Namen (case-insensitive), wird dieses zurückgegeben.
+    Von den Metadaten (ticker, isin, sector, peer_group) werden nur die gesetzten
+    (nicht-None) Felder gespeichert. Fehlen die Metadaten-Spalten in der DB
+    (Migration 006 nicht eingespielt), wird gewarnt und nur der Name gespeichert.
     """
     normalized_name = normalize_company_name(company.name)
+    if not normalized_name:
+        raise HTTPException(status_code=400, detail="Unternehmensname darf nicht leer sein")
 
     # Check if company already exists
     existing = (
@@ -518,21 +646,44 @@ def create_company(company: CompanyCreate):
         .ilike("name", normalized_name)
         .execute()
     )
-    
+
     if existing.data:
-        # Company already exists, return it
-        return existing.data[0]
-    
-    # Create new company
-    result = (
-        supabase.table("companies")
-        .insert({"name": normalized_name})
-        .execute()
-    )
-    
+        # Unternehmen existiert bereits: unverändert zurückgeben. Mitgeschickte
+        # Metadaten werden bewusst NICHT übernommen (Pflege über
+        # scripts/seed_company_metadata.py), das wird aber protokolliert.
+        ignored = {col: getattr(company, col) for col in COMPANY_META_COLUMNS
+                   if getattr(company, col) is not None}
+        if ignored:
+            logger.warning(
+                "Unternehmen %r existiert bereits (id=%s); mitgeschickte Metadaten "
+                "werden ignoriert: %s", normalized_name, existing.data[0].get("id"), ignored,
+            )
+        rows = [r for r in _select_companies_with_fallback()
+                if str(r.get("id")) == str(existing.data[0].get("id"))]
+        return rows[0] if rows else existing.data[0]
+
+    # Create new company (nur gesetzte Metadaten mitschicken)
+    payload: dict[str, Any] = {"name": normalized_name}
+    for col in COMPANY_META_COLUMNS:
+        value = getattr(company, col)
+        if value is not None:
+            payload[col] = value
+
+    try:
+        result = supabase.table("companies").insert(payload).execute()
+    except Exception as exc:  # noqa: BLE001
+        if len(payload) == 1 or not _is_missing_column_error(exc):
+            raise
+        _warn_meta_columns_missing_once()
+        logger.warning(
+            "Metadaten für Unternehmen %r wurden verworfen, da die Spalten fehlen: %s",
+            normalized_name, {k: v for k, v in payload.items() if k != "name"},
+        )
+        result = supabase.table("companies").insert({"name": normalized_name}).execute()
+
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to create company")
-    
+
     return result.data[0]
 
 

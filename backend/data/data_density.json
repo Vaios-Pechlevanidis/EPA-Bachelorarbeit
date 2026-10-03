@@ -1,0 +1,1677 @@
+{
+  "generated_at": "2026-10-02T22:55:32+02:00",
+  "thresholds": {
+    "min_reviews_per_month": 5,
+    "min_months_with_enough_reviews": 12
+  },
+  "method": {
+    "months_spanned": "Kalendermonate zwischen erster und letzter datierter Bewertung, beide inklusive; Monate ohne Bewertung zählen mit.",
+    "reviews_per_month": "Anzahl datierter Bewertungen je Kalendermonat im Zeitraum; Minimum und Median werden über alle Kalendermonate (inkl. 0-Monate) gebildet.",
+    "months_lt5": "Kalendermonate im Zeitraum mit weniger als min_reviews_per_month Bewertungen (0-Monate eingeschlossen).",
+    "non_null_share": "Anteil der Zeilen mit nicht-leerem Wert je Sternekategorie; Nenner = rows (alle Zeilen, auch ohne Datum).",
+    "company_matching": "Unternehmen werden über den bereinigten Namen (strip, Whitespace-Kollaps, casefold) oder die id identifiziert; Demo 1/2/3 sind ausgeschlossen."
+  },
+  "dimensions": {
+    "employee": [
+      "durchschnittsbewertung",
+      "arbeitsatmosphaere",
+      "image",
+      "work_life_balance",
+      "karriere_weiterbildung",
+      "gehalt_sozialleistungen",
+      "kollegenzusammenhalt",
+      "umwelt_sozialbewusstsein",
+      "vorgesetztenverhalten",
+      "kommunikation",
+      "interessante_aufgaben",
+      "umgang_mit_aelteren_kollegen",
+      "arbeitsbedingungen",
+      "gleichberechtigung"
+    ],
+    "candidates": [
+      "durchschnittsbewertung",
+      "erklaerung_der_weiteren_schritte",
+      "zufriedenstellende_reaktion",
+      "vollstaendigkeit_der_infos",
+      "zufriedenstellende_antworten",
+      "angenehme_atmosphaere",
+      "professionalitaet_des_gespraechs",
+      "wertschaetzende_behandlung",
+      "erwartbarkeit_des_prozesses",
+      "zeitgerechte_zu_oder_absage",
+      "schnelle_antwort"
+    ]
+  },
+  "companies": [
+    {
+      "id": 3,
+      "name": "Thyssenkrupp",
+      "name_raw": "Thyssenkrupp",
+      "name_normalized": "thyssenkrupp",
+      "slug": "thyssenkrupp",
+      "sources": {
+        "employee": {
+          "rows": 446,
+          "rows_without_datum": 0,
+          "first_month": "2022-10",
+          "last_month": "2026-03",
+          "months_spanned": 42,
+          "reviews_per_month_min": 1,
+          "reviews_per_month_median": 9.0,
+          "months_eq0": 0,
+          "months_lt5": 10,
+          "months_ge5": 32,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9978,
+            "image": 0.9843,
+            "work_life_balance": 0.991,
+            "karriere_weiterbildung": 0.9843,
+            "gehalt_sozialleistungen": 0.9955,
+            "kollegenzusammenhalt": 0.9933,
+            "umwelt_sozialbewusstsein": 0.9641,
+            "vorgesetztenverhalten": 0.9933,
+            "kommunikation": 0.9933,
+            "interessante_aufgaben": 0.9865,
+            "umgang_mit_aelteren_kollegen": 0.9709,
+            "arbeitsbedingungen": 0.9933,
+            "gleichberechtigung": 0.9709
+          }
+        },
+        "candidates": {
+          "rows": 424,
+          "rows_without_datum": 1,
+          "first_month": "2008-09",
+          "last_month": "2026-04",
+          "months_spanned": 212,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 72,
+          "months_lt5": 182,
+          "months_ge5": 30,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9976,
+            "erklaerung_der_weiteren_schritte": 0.816,
+            "zufriedenstellende_reaktion": 0.9811,
+            "vollstaendigkeit_der_infos": 0.8208,
+            "zufriedenstellende_antworten": 0.8137,
+            "angenehme_atmosphaere": 0.809,
+            "professionalitaet_des_gespraechs": 0.8302,
+            "wertschaetzende_behandlung": 0.8184,
+            "erwartbarkeit_des_prozesses": 0.9623,
+            "zeitgerechte_zu_oder_absage": 0.8561,
+            "schnelle_antwort": 0.9717
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "Open Grid Europe",
+      "name_raw": "Open Grid Europe",
+      "name_normalized": "open grid europe",
+      "slug": "open_grid_europe",
+      "sources": {
+        "employee": {
+          "rows": 361,
+          "rows_without_datum": 1,
+          "first_month": "2013-02",
+          "last_month": "2026-03",
+          "months_spanned": 158,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 2.0,
+          "months_eq0": 44,
+          "months_lt5": 136,
+          "months_ge5": 22,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9972,
+            "arbeitsatmosphaere": 0.9945,
+            "image": 0.9778,
+            "work_life_balance": 0.9945,
+            "karriere_weiterbildung": 0.9917,
+            "gehalt_sozialleistungen": 0.9917,
+            "kollegenzusammenhalt": 0.9945,
+            "umwelt_sozialbewusstsein": 0.9861,
+            "vorgesetztenverhalten": 0.9945,
+            "kommunikation": 0.9917,
+            "interessante_aufgaben": 0.9945,
+            "umgang_mit_aelteren_kollegen": 0.9529,
+            "arbeitsbedingungen": 0.9945,
+            "gleichberechtigung": 0.9778
+          }
+        },
+        "candidates": {
+          "rows": 66,
+          "rows_without_datum": 1,
+          "first_month": "2015-04",
+          "last_month": "2026-03",
+          "months_spanned": 132,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 85,
+          "months_lt5": 132,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9848,
+            "erklaerung_der_weiteren_schritte": 0.9091,
+            "zufriedenstellende_reaktion": 0.9848,
+            "vollstaendigkeit_der_infos": 0.9091,
+            "zufriedenstellende_antworten": 0.9091,
+            "angenehme_atmosphaere": 0.9091,
+            "professionalitaet_des_gespraechs": 0.9091,
+            "wertschaetzende_behandlung": 0.9091,
+            "erwartbarkeit_des_prozesses": 0.9848,
+            "zeitgerechte_zu_oder_absage": 0.9091,
+            "schnelle_antwort": 0.9848
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "PLEdoc GmbH",
+      "name_raw": "PLEdoc GmbH",
+      "name_normalized": "pledoc gmbh",
+      "slug": "pledoc_gmbh",
+      "sources": {
+        "employee": {
+          "rows": 97,
+          "rows_without_datum": 0,
+          "first_month": "2018-04",
+          "last_month": "2026-02",
+          "months_spanned": 95,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 52,
+          "months_lt5": 90,
+          "months_ge5": 5,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 1.0,
+            "image": 0.9485,
+            "work_life_balance": 1.0,
+            "karriere_weiterbildung": 0.9897,
+            "gehalt_sozialleistungen": 1.0,
+            "kollegenzusammenhalt": 1.0,
+            "umwelt_sozialbewusstsein": 0.9278,
+            "vorgesetztenverhalten": 1.0,
+            "kommunikation": 1.0,
+            "interessante_aufgaben": 0.9897,
+            "umgang_mit_aelteren_kollegen": 0.9175,
+            "arbeitsbedingungen": 0.9897,
+            "gleichberechtigung": 0.9588
+          }
+        },
+        "candidates": {
+          "rows": 7,
+          "rows_without_datum": 1,
+          "first_month": "2019-06",
+          "last_month": "2024-07",
+          "months_spanned": 62,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 57,
+          "months_lt5": 62,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.8571,
+            "erklaerung_der_weiteren_schritte": 0.8571,
+            "zufriedenstellende_reaktion": 0.8571,
+            "vollstaendigkeit_der_infos": 0.8571,
+            "zufriedenstellende_antworten": 0.8571,
+            "angenehme_atmosphaere": 0.8571,
+            "professionalitaet_des_gespraechs": 0.8571,
+            "wertschaetzende_behandlung": 0.8571,
+            "erwartbarkeit_des_prozesses": 0.8571,
+            "zeitgerechte_zu_oder_absage": 0.8571,
+            "schnelle_antwort": 0.8571
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "name": "E.ON Digital Technology",
+      "name_raw": "E.ON Digital Technology",
+      "name_normalized": "e.on digital technology",
+      "slug": "e_on_digital_technology",
+      "sources": {
+        "employee": {
+          "rows": 12,
+          "rows_without_datum": 1,
+          "first_month": "2025-02",
+          "last_month": "2026-04",
+          "months_spanned": 15,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 7,
+          "months_lt5": 15,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9167,
+            "arbeitsatmosphaere": 0.8333,
+            "image": 0.8333,
+            "work_life_balance": 0.8333,
+            "karriere_weiterbildung": 0.8333,
+            "gehalt_sozialleistungen": 0.8333,
+            "kollegenzusammenhalt": 0.8333,
+            "umwelt_sozialbewusstsein": 0.8333,
+            "vorgesetztenverhalten": 0.8333,
+            "kommunikation": 0.9167,
+            "interessante_aufgaben": 0.8333,
+            "umgang_mit_aelteren_kollegen": 0.8333,
+            "arbeitsbedingungen": 0.8333,
+            "gleichberechtigung": 0.8333
+          }
+        },
+        "candidates": {
+          "rows": 10,
+          "rows_without_datum": 1,
+          "first_month": "2025-03",
+          "last_month": "2026-01",
+          "months_spanned": 11,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 4,
+          "months_lt5": 11,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9,
+            "erklaerung_der_weiteren_schritte": 0.8,
+            "zufriedenstellende_reaktion": 0.9,
+            "vollstaendigkeit_der_infos": 0.8,
+            "zufriedenstellende_antworten": 0.8,
+            "angenehme_atmosphaere": 0.8,
+            "professionalitaet_des_gespraechs": 0.8,
+            "wertschaetzende_behandlung": 0.8,
+            "erwartbarkeit_des_prozesses": 0.9,
+            "zeitgerechte_zu_oder_absage": 0.8,
+            "schnelle_antwort": 0.9
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "name": "E.ON",
+      "name_raw": "E.ON\n",
+      "name_normalized": "e.on",
+      "slug": "e_on",
+      "sources": {
+        "employee": {
+          "rows": 486,
+          "rows_without_datum": 0,
+          "first_month": "2018-01",
+          "last_month": "2026-04",
+          "months_spanned": 100,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 3.0,
+          "months_eq0": 16,
+          "months_lt5": 62,
+          "months_ge5": 38,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9959,
+            "image": 0.9753,
+            "work_life_balance": 0.9938,
+            "karriere_weiterbildung": 0.9712,
+            "gehalt_sozialleistungen": 0.9856,
+            "kollegenzusammenhalt": 0.9959,
+            "umwelt_sozialbewusstsein": 0.9733,
+            "vorgesetztenverhalten": 0.9959,
+            "kommunikation": 1.0,
+            "interessante_aufgaben": 0.9918,
+            "umgang_mit_aelteren_kollegen": 0.9568,
+            "arbeitsbedingungen": 0.9815,
+            "gleichberechtigung": 0.9733
+          }
+        },
+        "candidates": {
+          "rows": 315,
+          "rows_without_datum": 1,
+          "first_month": "2008-10",
+          "last_month": "2026-03",
+          "months_spanned": 210,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 88,
+          "months_lt5": 190,
+          "months_ge5": 20,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9968,
+            "erklaerung_der_weiteren_schritte": 0.8603,
+            "zufriedenstellende_reaktion": 0.9841,
+            "vollstaendigkeit_der_infos": 0.8444,
+            "zufriedenstellende_antworten": 0.8508,
+            "angenehme_atmosphaere": 0.8413,
+            "professionalitaet_des_gespraechs": 0.8476,
+            "wertschaetzende_behandlung": 0.8667,
+            "erwartbarkeit_des_prozesses": 0.9651,
+            "zeitgerechte_zu_oder_absage": 0.9079,
+            "schnelle_antwort": 0.981
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "name": "RWE",
+      "name_raw": "RWE",
+      "name_normalized": "rwe",
+      "slug": "rwe",
+      "sources": {
+        "employee": {
+          "rows": 475,
+          "rows_without_datum": 0,
+          "first_month": "2013-05",
+          "last_month": "2026-03",
+          "months_spanned": 155,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 2.0,
+          "months_eq0": 24,
+          "months_lt5": 121,
+          "months_ge5": 34,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9958,
+            "image": 0.9768,
+            "work_life_balance": 0.9874,
+            "karriere_weiterbildung": 0.9916,
+            "gehalt_sozialleistungen": 0.9937,
+            "kollegenzusammenhalt": 0.9937,
+            "umwelt_sozialbewusstsein": 0.9684,
+            "vorgesetztenverhalten": 0.9979,
+            "kommunikation": 1.0,
+            "interessante_aufgaben": 0.9979,
+            "umgang_mit_aelteren_kollegen": 0.9621,
+            "arbeitsbedingungen": 0.9937,
+            "gleichberechtigung": 0.9747
+          }
+        },
+        "candidates": {
+          "rows": 164,
+          "rows_without_datum": 1,
+          "first_month": "2008-12",
+          "last_month": "2025-12",
+          "months_spanned": 205,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 118,
+          "months_lt5": 202,
+          "months_ge5": 3,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9939,
+            "erklaerung_der_weiteren_schritte": 0.8598,
+            "zufriedenstellende_reaktion": 0.9695,
+            "vollstaendigkeit_der_infos": 0.8537,
+            "zufriedenstellende_antworten": 0.8476,
+            "angenehme_atmosphaere": 0.8537,
+            "professionalitaet_des_gespraechs": 0.8598,
+            "wertschaetzende_behandlung": 0.8537,
+            "erwartbarkeit_des_prozesses": 0.9695,
+            "zeitgerechte_zu_oder_absage": 0.8841,
+            "schnelle_antwort": 0.9634
+          }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "name": "Thyssengas GmbH",
+      "name_raw": "Thyssengas  GmbH",
+      "name_normalized": "thyssengas gmbh",
+      "slug": "thyssengas_gmbh",
+      "sources": {
+        "employee": {
+          "rows": 184,
+          "rows_without_datum": 1,
+          "first_month": "2011-09",
+          "last_month": "2026-04",
+          "months_spanned": 176,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 108,
+          "months_lt5": 167,
+          "months_ge5": 9,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9946,
+            "arbeitsatmosphaere": 0.9946,
+            "image": 0.9565,
+            "work_life_balance": 0.9837,
+            "karriere_weiterbildung": 0.9511,
+            "gehalt_sozialleistungen": 0.9891,
+            "kollegenzusammenhalt": 0.9891,
+            "umwelt_sozialbewusstsein": 0.9457,
+            "vorgesetztenverhalten": 0.9891,
+            "kommunikation": 0.9783,
+            "interessante_aufgaben": 0.9837,
+            "umgang_mit_aelteren_kollegen": 0.9565,
+            "arbeitsbedingungen": 0.9783,
+            "gleichberechtigung": 0.9511
+          }
+        },
+        "candidates": {
+          "rows": 363,
+          "rows_without_datum": 1,
+          "first_month": "2019-10",
+          "last_month": "2026-03",
+          "months_spanned": 78,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 3.5,
+          "months_eq0": 12,
+          "months_lt5": 46,
+          "months_ge5": 32,
+          "non_null_share": {
+            "durchschnittsbewertung": 0.9972,
+            "erklaerung_der_weiteren_schritte": 0.989,
+            "zufriedenstellende_reaktion": 0.9725,
+            "vollstaendigkeit_der_infos": 0.9807,
+            "zufriedenstellende_antworten": 0.9449,
+            "angenehme_atmosphaere": 0.9835,
+            "professionalitaet_des_gespraechs": 0.9862,
+            "wertschaetzende_behandlung": 0.9862,
+            "erwartbarkeit_des_prozesses": 0.9835,
+            "zeitgerechte_zu_oder_absage": 0.0275,
+            "schnelle_antwort": 0.9642
+          }
+        }
+      }
+    },
+    {
+      "id": 13,
+      "name": "Universität Duisburg-Essen",
+      "name_raw": "Universität  Duisburg-Essen",
+      "name_normalized": "universität duisburg-essen",
+      "slug": "universitaet_duisburg_essen",
+      "sources": {
+        "employee": {
+          "rows": 261,
+          "rows_without_datum": 0,
+          "first_month": "2008-10",
+          "last_month": "2026-04",
+          "months_spanned": 211,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 112,
+          "months_lt5": 200,
+          "months_ge5": 11,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 1.0,
+            "image": 0.977,
+            "work_life_balance": 0.9885,
+            "karriere_weiterbildung": 0.9847,
+            "gehalt_sozialleistungen": 0.9847,
+            "kollegenzusammenhalt": 0.9962,
+            "umwelt_sozialbewusstsein": 0.9579,
+            "vorgesetztenverhalten": 1.0,
+            "kommunikation": 0.9923,
+            "interessante_aufgaben": 0.9923,
+            "umgang_mit_aelteren_kollegen": 0.9617,
+            "arbeitsbedingungen": 0.9923,
+            "gleichberechtigung": 0.977
+          }
+        },
+        "candidates": {
+          "rows": 9,
+          "rows_without_datum": 0,
+          "first_month": "2015-10",
+          "last_month": "2026-03",
+          "months_spanned": 126,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 118,
+          "months_lt5": 126,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.6667,
+            "zufriedenstellende_reaktion": 1.0,
+            "vollstaendigkeit_der_infos": 0.7778,
+            "zufriedenstellende_antworten": 0.7778,
+            "angenehme_atmosphaere": 0.7778,
+            "professionalitaet_des_gespraechs": 0.6667,
+            "wertschaetzende_behandlung": 0.7778,
+            "erwartbarkeit_des_prozesses": 1.0,
+            "zeitgerechte_zu_oder_absage": 0.6667,
+            "schnelle_antwort": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "name": "Karlsruher Institut für Technologie",
+      "name_raw": "Karlsruher Institut für Technologie",
+      "name_normalized": "karlsruher institut für technologie",
+      "slug": "karlsruher_institut_fuer_technologie",
+      "sources": {
+        "employee": {
+          "rows": 387,
+          "rows_without_datum": 0,
+          "first_month": "2011-02",
+          "last_month": "2026-04",
+          "months_spanned": 183,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 65,
+          "months_lt5": 156,
+          "months_ge5": 27,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9948,
+            "image": 0.969,
+            "work_life_balance": 0.9716,
+            "karriere_weiterbildung": 0.9742,
+            "gehalt_sozialleistungen": 0.9793,
+            "kollegenzusammenhalt": 0.9845,
+            "umwelt_sozialbewusstsein": 0.9638,
+            "vorgesetztenverhalten": 0.9845,
+            "kommunikation": 0.9871,
+            "interessante_aufgaben": 0.9793,
+            "umgang_mit_aelteren_kollegen": 0.9328,
+            "arbeitsbedingungen": 0.9819,
+            "gleichberechtigung": 0.9638
+          }
+        },
+        "candidates": {
+          "rows": 28,
+          "rows_without_datum": 0,
+          "first_month": "2012-08",
+          "last_month": "2026-02",
+          "months_spanned": 163,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 137,
+          "months_lt5": 163,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.6429,
+            "zufriedenstellende_reaktion": 0.9286,
+            "vollstaendigkeit_der_infos": 0.6429,
+            "zufriedenstellende_antworten": 0.6429,
+            "angenehme_atmosphaere": 0.6429,
+            "professionalitaet_des_gespraechs": 0.6429,
+            "wertschaetzende_behandlung": 0.6429,
+            "erwartbarkeit_des_prozesses": 1.0,
+            "zeitgerechte_zu_oder_absage": 0.6429,
+            "schnelle_antwort": 0.9643
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "name": "Technische Universität München",
+      "name_raw": "Technische Universität München",
+      "name_normalized": "technische universität münchen",
+      "slug": "technische_universitaet_muenchen",
+      "sources": {
+        "employee": {
+          "rows": 302,
+          "rows_without_datum": 0,
+          "first_month": "2008-07",
+          "last_month": "2026-03",
+          "months_spanned": 213,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 92,
+          "months_lt5": 200,
+          "months_ge5": 13,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9934,
+            "image": 0.9868,
+            "work_life_balance": 0.9868,
+            "karriere_weiterbildung": 0.9768,
+            "gehalt_sozialleistungen": 0.9834,
+            "kollegenzusammenhalt": 0.9934,
+            "umwelt_sozialbewusstsein": 0.9603,
+            "vorgesetztenverhalten": 0.9901,
+            "kommunikation": 0.9934,
+            "interessante_aufgaben": 0.9901,
+            "umgang_mit_aelteren_kollegen": 0.9636,
+            "arbeitsbedingungen": 0.9901,
+            "gleichberechtigung": 0.9735
+          }
+        },
+        "candidates": {
+          "rows": 19,
+          "rows_without_datum": 0,
+          "first_month": "2012-02",
+          "last_month": "2026-03",
+          "months_spanned": 170,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 153,
+          "months_lt5": 170,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.6316,
+            "zufriedenstellende_reaktion": 0.8947,
+            "vollstaendigkeit_der_infos": 0.5789,
+            "zufriedenstellende_antworten": 0.5263,
+            "angenehme_atmosphaere": 0.5263,
+            "professionalitaet_des_gespraechs": 0.5263,
+            "wertschaetzende_behandlung": 0.5263,
+            "erwartbarkeit_des_prozesses": 1.0,
+            "zeitgerechte_zu_oder_absage": 0.6316,
+            "schnelle_antwort": 0.8947
+          }
+        }
+      }
+    },
+    {
+      "id": 16,
+      "name": "Universität zu Köln",
+      "name_raw": "Universität zu Köln",
+      "name_normalized": "universität zu köln",
+      "slug": "universitaet_zu_koeln",
+      "sources": {
+        "employee": {
+          "rows": 181,
+          "rows_without_datum": 0,
+          "first_month": "2008-06",
+          "last_month": "2026-03",
+          "months_spanned": 214,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 125,
+          "months_lt5": 207,
+          "months_ge5": 7,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 1.0,
+            "image": 0.9669,
+            "work_life_balance": 1.0,
+            "karriere_weiterbildung": 0.9834,
+            "gehalt_sozialleistungen": 0.9945,
+            "kollegenzusammenhalt": 1.0,
+            "umwelt_sozialbewusstsein": 0.9558,
+            "vorgesetztenverhalten": 1.0,
+            "kommunikation": 1.0,
+            "interessante_aufgaben": 1.0,
+            "umgang_mit_aelteren_kollegen": 0.9227,
+            "arbeitsbedingungen": 1.0,
+            "gleichberechtigung": 0.9834
+          }
+        },
+        "candidates": {
+          "rows": 20,
+          "rows_without_datum": 0,
+          "first_month": "2012-05",
+          "last_month": "2026-01",
+          "months_spanned": 165,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 146,
+          "months_lt5": 165,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.4,
+            "zufriedenstellende_reaktion": 0.95,
+            "vollstaendigkeit_der_infos": 0.45,
+            "zufriedenstellende_antworten": 0.4,
+            "angenehme_atmosphaere": 0.4,
+            "professionalitaet_des_gespraechs": 0.4,
+            "wertschaetzende_behandlung": 0.45,
+            "erwartbarkeit_des_prozesses": 0.95,
+            "zeitgerechte_zu_oder_absage": 0.55,
+            "schnelle_antwort": 0.95
+          }
+        }
+      }
+    },
+    {
+      "id": 19,
+      "name": "SAP SE",
+      "name_raw": "SAP SE",
+      "name_normalized": "sap se",
+      "slug": "sap_se",
+      "sources": {
+        "employee": {
+          "rows": 496,
+          "rows_without_datum": 0,
+          "first_month": "2020-07",
+          "last_month": "2026-06",
+          "months_spanned": 72,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 37,
+          "months_lt5": 46,
+          "months_ge5": 26,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.998,
+            "image": 0.9778,
+            "work_life_balance": 0.9879,
+            "karriere_weiterbildung": 0.9839,
+            "gehalt_sozialleistungen": 0.9919,
+            "kollegenzusammenhalt": 0.9899,
+            "umwelt_sozialbewusstsein": 0.9657,
+            "vorgesetztenverhalten": 0.9859,
+            "kommunikation": 0.9859,
+            "interessante_aufgaben": 0.9798,
+            "umgang_mit_aelteren_kollegen": 0.9294,
+            "arbeitsbedingungen": 0.9798,
+            "gleichberechtigung": 0.9556
+          }
+        },
+        "candidates": {
+          "rows": 259,
+          "rows_without_datum": 0,
+          "first_month": "2011-08",
+          "last_month": "2026-05",
+          "months_spanned": 178,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 49,
+          "months_lt5": 172,
+          "months_ge5": 6,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.8533,
+            "zufriedenstellende_reaktion": 0.9653,
+            "vollstaendigkeit_der_infos": 0.8456,
+            "zufriedenstellende_antworten": 0.8378,
+            "angenehme_atmosphaere": 0.8378,
+            "professionalitaet_des_gespraechs": 0.8456,
+            "wertschaetzende_behandlung": 0.8533,
+            "erwartbarkeit_des_prozesses": 0.9691,
+            "zeitgerechte_zu_oder_absage": 0.861,
+            "schnelle_antwort": 0.973
+          }
+        }
+      }
+    },
+    {
+      "id": 20,
+      "name": "NTT DATA SE",
+      "name_raw": "NTT  DATA SE",
+      "name_normalized": "ntt data se",
+      "slug": "ntt_data_se",
+      "sources": {
+        "employee": {
+          "rows": 430,
+          "rows_without_datum": 0,
+          "first_month": "2015-07",
+          "last_month": "2026-07",
+          "months_spanned": 133,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 3.0,
+          "months_eq0": 17,
+          "months_lt5": 93,
+          "months_ge5": 40,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9953,
+            "image": 0.9674,
+            "work_life_balance": 0.9837,
+            "karriere_weiterbildung": 0.9837,
+            "gehalt_sozialleistungen": 0.9907,
+            "kollegenzusammenhalt": 0.993,
+            "umwelt_sozialbewusstsein": 0.893,
+            "vorgesetztenverhalten": 0.9907,
+            "kommunikation": 0.9977,
+            "interessante_aufgaben": 0.993,
+            "umgang_mit_aelteren_kollegen": 0.9372,
+            "arbeitsbedingungen": 0.9884,
+            "gleichberechtigung": 0.9674
+          }
+        },
+        "candidates": {
+          "rows": 0,
+          "rows_without_datum": 0,
+          "first_month": null,
+          "last_month": null,
+          "months_spanned": 0,
+          "reviews_per_month_min": null,
+          "reviews_per_month_median": null,
+          "months_eq0": 0,
+          "months_lt5": 0,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": null,
+            "erklaerung_der_weiteren_schritte": null,
+            "zufriedenstellende_reaktion": null,
+            "vollstaendigkeit_der_infos": null,
+            "zufriedenstellende_antworten": null,
+            "angenehme_atmosphaere": null,
+            "professionalitaet_des_gespraechs": null,
+            "wertschaetzende_behandlung": null,
+            "erwartbarkeit_des_prozesses": null,
+            "zeitgerechte_zu_oder_absage": null,
+            "schnelle_antwort": null
+          }
+        }
+      }
+    },
+    {
+      "id": 21,
+      "name": "1 und 1",
+      "name_raw": "1 und 1",
+      "name_normalized": "1 und 1",
+      "slug": "1_und_1",
+      "sources": {
+        "employee": {
+          "rows": 1291,
+          "rows_without_datum": 0,
+          "first_month": "2007-06",
+          "last_month": "2025-07",
+          "months_spanned": 218,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 4.0,
+          "months_eq0": 23,
+          "months_lt5": 111,
+          "months_ge5": 107,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9721,
+            "image": 0.9535,
+            "work_life_balance": 0.9651,
+            "karriere_weiterbildung": 0.952,
+            "gehalt_sozialleistungen": 0.9644,
+            "kollegenzusammenhalt": 0.9706,
+            "umwelt_sozialbewusstsein": 0.9187,
+            "vorgesetztenverhalten": 0.969,
+            "kommunikation": 0.9682,
+            "interessante_aufgaben": 0.9644,
+            "umgang_mit_aelteren_kollegen": 0.9132,
+            "arbeitsbedingungen": 0.9644,
+            "gleichberechtigung": 0.9466
+          }
+        },
+        "candidates": {
+          "rows": 195,
+          "rows_without_datum": 0,
+          "first_month": "2008-10",
+          "last_month": "2025-06",
+          "months_spanned": 201,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 87,
+          "months_lt5": 201,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.8821,
+            "zufriedenstellende_reaktion": 0.9128,
+            "vollstaendigkeit_der_infos": 0.9795,
+            "zufriedenstellende_antworten": 0.9179,
+            "angenehme_atmosphaere": 0.9128,
+            "professionalitaet_des_gespraechs": 0.9641,
+            "wertschaetzende_behandlung": 0.9077,
+            "erwartbarkeit_des_prozesses": 0.8769,
+            "zeitgerechte_zu_oder_absage": 0.9128,
+            "schnelle_antwort": 0.9897
+          }
+        }
+      }
+    },
+    {
+      "id": 22,
+      "name": "Aixtron",
+      "name_raw": "Aixtron",
+      "name_normalized": "aixtron",
+      "slug": "aixtron",
+      "sources": {
+        "employee": {
+          "rows": 109,
+          "rows_without_datum": 0,
+          "first_month": "2011-02",
+          "last_month": "2025-07",
+          "months_spanned": 174,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 111,
+          "months_lt5": 171,
+          "months_ge5": 3,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 1.0,
+            "image": 0.9633,
+            "work_life_balance": 1.0,
+            "karriere_weiterbildung": 0.9633,
+            "gehalt_sozialleistungen": 1.0,
+            "kollegenzusammenhalt": 1.0,
+            "umwelt_sozialbewusstsein": 0.9817,
+            "vorgesetztenverhalten": 0.9908,
+            "kommunikation": 1.0,
+            "interessante_aufgaben": 1.0,
+            "umgang_mit_aelteren_kollegen": 0.9633,
+            "arbeitsbedingungen": 1.0,
+            "gleichberechtigung": 0.9541
+          }
+        },
+        "candidates": {
+          "rows": 116,
+          "rows_without_datum": 0,
+          "first_month": "2018-09",
+          "last_month": "2025-07",
+          "months_spanned": 83,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 54,
+          "months_lt5": 71,
+          "months_ge5": 12,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.9914,
+            "zufriedenstellende_reaktion": 0.9914,
+            "vollstaendigkeit_der_infos": 0.9741,
+            "zufriedenstellende_antworten": 0.9914,
+            "angenehme_atmosphaere": 0.9828,
+            "professionalitaet_des_gespraechs": 0.9828,
+            "wertschaetzende_behandlung": 0.9483,
+            "erwartbarkeit_des_prozesses": 0.0603,
+            "zeitgerechte_zu_oder_absage": 0.9914,
+            "schnelle_antwort": 0.9914
+          }
+        }
+      }
+    },
+    {
+      "id": 23,
+      "name": "Atoss",
+      "name_raw": "Atoss",
+      "name_normalized": "atoss",
+      "slug": "atoss",
+      "sources": {
+        "employee": {
+          "rows": 171,
+          "rows_without_datum": 0,
+          "first_month": "2008-10",
+          "last_month": "2025-03",
+          "months_spanned": 198,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 102,
+          "months_lt5": 194,
+          "months_ge5": 4,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9591,
+            "image": 0.9006,
+            "work_life_balance": 0.9532,
+            "karriere_weiterbildung": 0.9357,
+            "gehalt_sozialleistungen": 0.9474,
+            "kollegenzusammenhalt": 0.9532,
+            "umwelt_sozialbewusstsein": 0.8596,
+            "vorgesetztenverhalten": 0.9591,
+            "kommunikation": 0.9532,
+            "interessante_aufgaben": 0.9474,
+            "umgang_mit_aelteren_kollegen": 0.8947,
+            "arbeitsbedingungen": 0.9532,
+            "gleichberechtigung": 0.9298
+          }
+        },
+        "candidates": {
+          "rows": 192,
+          "rows_without_datum": 0,
+          "first_month": "2012-08",
+          "last_month": "2025-06",
+          "months_spanned": 155,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 59,
+          "months_lt5": 151,
+          "months_ge5": 4,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.9115,
+            "zufriedenstellende_reaktion": 0.8958,
+            "vollstaendigkeit_der_infos": 0.9948,
+            "zufriedenstellende_antworten": 0.9115,
+            "angenehme_atmosphaere": 0.8958,
+            "professionalitaet_des_gespraechs": 0.974,
+            "wertschaetzende_behandlung": 0.9062,
+            "erwartbarkeit_des_prozesses": 0.8906,
+            "zeitgerechte_zu_oder_absage": 0.8906,
+            "schnelle_antwort": 0.9896
+          }
+        }
+      }
+    },
+    {
+      "id": 24,
+      "name": "Bechtle",
+      "name_raw": "Bechtle",
+      "name_normalized": "bechtle",
+      "slug": "bechtle",
+      "sources": {
+        "employee": {
+          "rows": 2369,
+          "rows_without_datum": 0,
+          "first_month": "2007-12",
+          "last_month": "2025-07",
+          "months_spanned": 212,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 9.0,
+          "months_eq0": 23,
+          "months_lt5": 73,
+          "months_ge5": 139,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9675,
+            "image": 0.9472,
+            "work_life_balance": 0.9595,
+            "karriere_weiterbildung": 0.946,
+            "gehalt_sozialleistungen": 0.9599,
+            "kollegenzusammenhalt": 0.965,
+            "umwelt_sozialbewusstsein": 0.9164,
+            "vorgesetztenverhalten": 0.9641,
+            "kommunikation": 0.9633,
+            "interessante_aufgaben": 0.9607,
+            "umgang_mit_aelteren_kollegen": 0.9054,
+            "arbeitsbedingungen": 0.9569,
+            "gleichberechtigung": 0.927
+          }
+        },
+        "candidates": {
+          "rows": 295,
+          "rows_without_datum": 0,
+          "first_month": "2011-10",
+          "last_month": "2025-07",
+          "months_spanned": 166,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 43,
+          "months_lt5": 157,
+          "months_ge5": 9,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.8271,
+            "zufriedenstellende_reaktion": 0.8237,
+            "vollstaendigkeit_der_infos": 0.9831,
+            "zufriedenstellende_antworten": 0.8237,
+            "angenehme_atmosphaere": 0.8203,
+            "professionalitaet_des_gespraechs": 0.9593,
+            "wertschaetzende_behandlung": 0.8203,
+            "erwartbarkeit_des_prozesses": 0.8339,
+            "zeitgerechte_zu_oder_absage": 0.8203,
+            "schnelle_antwort": 0.9864
+          }
+        }
+      }
+    },
+    {
+      "id": 25,
+      "name": "Cancom",
+      "name_raw": "Cancom",
+      "name_normalized": "cancom",
+      "slug": "cancom",
+      "sources": {
+        "employee": {
+          "rows": 1474,
+          "rows_without_datum": 0,
+          "first_month": "2008-01",
+          "last_month": "2025-07",
+          "months_spanned": 211,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 5.0,
+          "months_eq0": 34,
+          "months_lt5": 96,
+          "months_ge5": 115,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9464,
+            "image": 0.903,
+            "work_life_balance": 0.9308,
+            "karriere_weiterbildung": 0.9281,
+            "gehalt_sozialleistungen": 0.9423,
+            "kollegenzusammenhalt": 0.9376,
+            "umwelt_sozialbewusstsein": 0.8833,
+            "vorgesetztenverhalten": 0.945,
+            "kommunikation": 0.945,
+            "interessante_aufgaben": 0.9383,
+            "umgang_mit_aelteren_kollegen": 0.8745,
+            "arbeitsbedingungen": 0.9301,
+            "gleichberechtigung": 0.8915
+          }
+        },
+        "candidates": {
+          "rows": 139,
+          "rows_without_datum": 0,
+          "first_month": "2011-03",
+          "last_month": "2025-06",
+          "months_spanned": 172,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 87,
+          "months_lt5": 167,
+          "months_ge5": 5,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.8777,
+            "zufriedenstellende_reaktion": 0.8705,
+            "vollstaendigkeit_der_infos": 0.9784,
+            "zufriedenstellende_antworten": 0.8849,
+            "angenehme_atmosphaere": 0.8777,
+            "professionalitaet_des_gespraechs": 0.9784,
+            "wertschaetzende_behandlung": 0.8777,
+            "erwartbarkeit_des_prozesses": 0.8705,
+            "zeitgerechte_zu_oder_absage": 0.8633,
+            "schnelle_antwort": 0.9856
+          }
+        }
+      }
+    },
+    {
+      "id": 26,
+      "name": "Carl Zeiss",
+      "name_raw": "Carl Zeiss",
+      "name_normalized": "carl zeiss",
+      "slug": "carl_zeiss",
+      "sources": {
+        "employee": {
+          "rows": 1700,
+          "rows_without_datum": 0,
+          "first_month": "2007-09",
+          "last_month": "2025-07",
+          "months_spanned": 215,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 4.0,
+          "months_eq0": 40,
+          "months_lt5": 116,
+          "months_ge5": 99,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9829,
+            "image": 0.97,
+            "work_life_balance": 0.9771,
+            "karriere_weiterbildung": 0.9653,
+            "gehalt_sozialleistungen": 0.9776,
+            "kollegenzusammenhalt": 0.9794,
+            "umwelt_sozialbewusstsein": 0.9553,
+            "vorgesetztenverhalten": 0.9788,
+            "kommunikation": 0.9788,
+            "interessante_aufgaben": 0.9729,
+            "umgang_mit_aelteren_kollegen": 0.9324,
+            "arbeitsbedingungen": 0.9724,
+            "gleichberechtigung": 0.9547
+          }
+        },
+        "candidates": {
+          "rows": 704,
+          "rows_without_datum": 0,
+          "first_month": "2011-04",
+          "last_month": "2025-07",
+          "months_spanned": 172,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 3.0,
+          "months_eq0": 47,
+          "months_lt5": 107,
+          "months_ge5": 65,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.9091,
+            "zufriedenstellende_reaktion": 0.8991,
+            "vollstaendigkeit_der_infos": 0.973,
+            "zufriedenstellende_antworten": 0.8991,
+            "angenehme_atmosphaere": 0.8991,
+            "professionalitaet_des_gespraechs": 0.9815,
+            "wertschaetzende_behandlung": 0.8977,
+            "erwartbarkeit_des_prozesses": 0.9062,
+            "zeitgerechte_zu_oder_absage": 0.8906,
+            "schnelle_antwort": 0.9773
+          }
+        }
+      }
+    },
+    {
+      "id": 27,
+      "name": "Compugroup Medical Deutschland",
+      "name_raw": "Compugroup Medical Deutschland",
+      "name_normalized": "compugroup medical deutschland",
+      "slug": "compugroup_medical_deutschland",
+      "sources": {
+        "employee": {
+          "rows": 980,
+          "rows_without_datum": 0,
+          "first_month": "2008-06",
+          "last_month": "2025-07",
+          "months_spanned": 206,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 3.0,
+          "months_eq0": 40,
+          "months_lt5": 130,
+          "months_ge5": 76,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9286,
+            "image": 0.9031,
+            "work_life_balance": 0.9265,
+            "karriere_weiterbildung": 0.8918,
+            "gehalt_sozialleistungen": 0.9255,
+            "kollegenzusammenhalt": 0.9316,
+            "umwelt_sozialbewusstsein": 0.8531,
+            "vorgesetztenverhalten": 0.9214,
+            "kommunikation": 0.9276,
+            "interessante_aufgaben": 0.9133,
+            "umgang_mit_aelteren_kollegen": 0.851,
+            "arbeitsbedingungen": 0.9153,
+            "gleichberechtigung": 0.8796
+          }
+        },
+        "candidates": {
+          "rows": 169,
+          "rows_without_datum": 0,
+          "first_month": "2011-03",
+          "last_month": "2025-07",
+          "months_spanned": 173,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 85,
+          "months_lt5": 168,
+          "months_ge5": 5,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.8876,
+            "zufriedenstellende_reaktion": 0.8876,
+            "vollstaendigkeit_der_infos": 0.9941,
+            "zufriedenstellende_antworten": 0.8935,
+            "angenehme_atmosphaere": 0.8876,
+            "professionalitaet_des_gespraechs": 0.9645,
+            "wertschaetzende_behandlung": 0.8935,
+            "erwartbarkeit_des_prozesses": 0.8994,
+            "zeitgerechte_zu_oder_absage": 0.8817,
+            "schnelle_antwort": 0.9822
+          }
+        }
+      }
+    },
+    {
+      "id": 28,
+      "name": "Telekom",
+      "name_raw": "Telekom",
+      "name_normalized": "telekom",
+      "slug": "telekom",
+      "sources": {
+        "employee": {
+          "rows": 6899,
+          "rows_without_datum": 0,
+          "first_month": "2007-09",
+          "last_month": "2025-07",
+          "months_spanned": 215,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 18.0,
+          "months_eq0": 8,
+          "months_lt5": 50,
+          "months_ge5": 165,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.8784,
+            "image": 0.869,
+            "work_life_balance": 0.8751,
+            "karriere_weiterbildung": 0.872,
+            "gehalt_sozialleistungen": 0.874,
+            "kollegenzusammenhalt": 0.8761,
+            "umwelt_sozialbewusstsein": 0.8627,
+            "vorgesetztenverhalten": 0.8771,
+            "kommunikation": 0.8736,
+            "interessante_aufgaben": 0.874,
+            "umgang_mit_aelteren_kollegen": 0.8656,
+            "arbeitsbedingungen": 0.8739,
+            "gleichberechtigung": 0.8698
+          }
+        },
+        "candidates": {
+          "rows": 219,
+          "rows_without_datum": 0,
+          "first_month": "2009-11",
+          "last_month": "2025-07",
+          "months_spanned": 189,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 1.0,
+          "months_eq0": 66,
+          "months_lt5": 186,
+          "months_ge5": 3,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.8128,
+            "zufriedenstellende_reaktion": 0.8174,
+            "vollstaendigkeit_der_infos": 0.9817,
+            "zufriedenstellende_antworten": 0.8128,
+            "angenehme_atmosphaere": 0.8174,
+            "professionalitaet_des_gespraechs": 0.9498,
+            "wertschaetzende_behandlung": 0.8037,
+            "erwartbarkeit_des_prozesses": 0.8082,
+            "zeitgerechte_zu_oder_absage": 0.79,
+            "schnelle_antwort": 0.9772
+          }
+        }
+      }
+    },
+    {
+      "id": 29,
+      "name": "Eckert Ziegler",
+      "name_raw": "Eckert Ziegler",
+      "name_normalized": "eckert ziegler",
+      "slug": "eckert_ziegler",
+      "sources": {
+        "employee": {
+          "rows": 27,
+          "rows_without_datum": 0,
+          "first_month": "2011-02",
+          "last_month": "2025-07",
+          "months_spanned": 174,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 150,
+          "months_lt5": 174,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.7778,
+            "image": 0.7407,
+            "work_life_balance": 0.7778,
+            "karriere_weiterbildung": 0.7778,
+            "gehalt_sozialleistungen": 0.7778,
+            "kollegenzusammenhalt": 0.7778,
+            "umwelt_sozialbewusstsein": 0.7407,
+            "vorgesetztenverhalten": 0.7778,
+            "kommunikation": 0.7778,
+            "interessante_aufgaben": 0.7778,
+            "umgang_mit_aelteren_kollegen": 0.7407,
+            "arbeitsbedingungen": 0.7037,
+            "gleichberechtigung": 0.7407
+          }
+        },
+        "candidates": {
+          "rows": 4,
+          "rows_without_datum": 0,
+          "first_month": "2014-11",
+          "last_month": "2018-08",
+          "months_spanned": 46,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 42,
+          "months_lt5": 46,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.5,
+            "zufriedenstellende_reaktion": 0.5,
+            "vollstaendigkeit_der_infos": 1.0,
+            "zufriedenstellende_antworten": 0.5,
+            "angenehme_atmosphaere": 0.5,
+            "professionalitaet_des_gespraechs": 1.0,
+            "wertschaetzende_behandlung": 0.5,
+            "erwartbarkeit_des_prozesses": 0.5,
+            "zeitgerechte_zu_oder_absage": 0.5,
+            "schnelle_antwort": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": 30,
+      "name": "Elmos Semiconductor",
+      "name_raw": "Elmos Semiconductor",
+      "name_normalized": "elmos semiconductor",
+      "slug": "elmos_semiconductor",
+      "sources": {
+        "employee": {
+          "rows": 72,
+          "rows_without_datum": 0,
+          "first_month": "2008-05",
+          "last_month": "2025-07",
+          "months_spanned": 207,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 152,
+          "months_lt5": 207,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9722,
+            "image": 0.9306,
+            "work_life_balance": 0.9722,
+            "karriere_weiterbildung": 0.9583,
+            "gehalt_sozialleistungen": 0.9722,
+            "kollegenzusammenhalt": 0.9722,
+            "umwelt_sozialbewusstsein": 0.9306,
+            "vorgesetztenverhalten": 0.9722,
+            "kommunikation": 0.9722,
+            "interessante_aufgaben": 0.9722,
+            "umgang_mit_aelteren_kollegen": 0.9167,
+            "arbeitsbedingungen": 0.9583,
+            "gleichberechtigung": 0.9167
+          }
+        },
+        "candidates": {
+          "rows": 10,
+          "rows_without_datum": 0,
+          "first_month": "2018-09",
+          "last_month": "2025-05",
+          "months_spanned": 81,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 71,
+          "months_lt5": 81,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 1.0,
+            "zufriedenstellende_reaktion": 1.0,
+            "vollstaendigkeit_der_infos": 1.0,
+            "zufriedenstellende_antworten": 1.0,
+            "angenehme_atmosphaere": 1.0,
+            "professionalitaet_des_gespraechs": 0.9,
+            "wertschaetzende_behandlung": 0.9,
+            "erwartbarkeit_des_prozesses": 1.0,
+            "zeitgerechte_zu_oder_absage": 1.0,
+            "schnelle_antwort": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": 31,
+      "name": "Evotec",
+      "name_raw": "Evotec",
+      "name_normalized": "evotec",
+      "slug": "evotec",
+      "sources": {
+        "employee": {
+          "rows": 102,
+          "rows_without_datum": 0,
+          "first_month": "2014-04",
+          "last_month": "2025-07",
+          "months_spanned": 136,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 79,
+          "months_lt5": 135,
+          "months_ge5": 1,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.9902,
+            "image": 0.9412,
+            "work_life_balance": 0.9706,
+            "karriere_weiterbildung": 0.951,
+            "gehalt_sozialleistungen": 0.9804,
+            "kollegenzusammenhalt": 1.0,
+            "umwelt_sozialbewusstsein": 0.8922,
+            "vorgesetztenverhalten": 0.9902,
+            "kommunikation": 0.9804,
+            "interessante_aufgaben": 0.9902,
+            "umgang_mit_aelteren_kollegen": 0.8725,
+            "arbeitsbedingungen": 0.9412,
+            "gleichberechtigung": 0.9412
+          }
+        },
+        "candidates": {
+          "rows": 23,
+          "rows_without_datum": 0,
+          "first_month": "2015-11",
+          "last_month": "2024-12",
+          "months_spanned": 110,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 92,
+          "months_lt5": 110,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.7826,
+            "zufriedenstellende_reaktion": 0.7826,
+            "vollstaendigkeit_der_infos": 1.0,
+            "zufriedenstellende_antworten": 0.7826,
+            "angenehme_atmosphaere": 0.7826,
+            "professionalitaet_des_gespraechs": 1.0,
+            "wertschaetzende_behandlung": 0.7826,
+            "erwartbarkeit_des_prozesses": 0.8696,
+            "zeitgerechte_zu_oder_absage": 0.7826,
+            "schnelle_antwort": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": 32,
+      "name": "Formycon",
+      "name_raw": "Formycon",
+      "name_normalized": "formycon",
+      "slug": "formycon",
+      "sources": {
+        "employee": {
+          "rows": 15,
+          "rows_without_datum": 0,
+          "first_month": "2016-11",
+          "last_month": "2025-01",
+          "months_spanned": 99,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 85,
+          "months_lt5": 99,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 1.0,
+            "image": 0.8667,
+            "work_life_balance": 1.0,
+            "karriere_weiterbildung": 1.0,
+            "gehalt_sozialleistungen": 0.9333,
+            "kollegenzusammenhalt": 1.0,
+            "umwelt_sozialbewusstsein": 0.9333,
+            "vorgesetztenverhalten": 1.0,
+            "kommunikation": 1.0,
+            "interessante_aufgaben": 0.9333,
+            "umgang_mit_aelteren_kollegen": 0.8,
+            "arbeitsbedingungen": 0.9333,
+            "gleichberechtigung": 1.0
+          }
+        },
+        "candidates": {
+          "rows": 4,
+          "rows_without_datum": 0,
+          "first_month": "2017-08",
+          "last_month": "2024-09",
+          "months_spanned": 86,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 82,
+          "months_lt5": 86,
+          "months_ge5": 0,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.75,
+            "zufriedenstellende_reaktion": 0.5,
+            "vollstaendigkeit_der_infos": 0.5,
+            "zufriedenstellende_antworten": 0.5,
+            "angenehme_atmosphaere": 0.75,
+            "professionalitaet_des_gespraechs": 1.0,
+            "wertschaetzende_behandlung": 0.5,
+            "erwartbarkeit_des_prozesses": 0.5,
+            "zeitgerechte_zu_oder_absage": 0.5,
+            "schnelle_antwort": 0.5
+          }
+        }
+      }
+    },
+    {
+      "id": 33,
+      "name": "Freenet",
+      "name_raw": "Freenet",
+      "name_normalized": "freenet",
+      "slug": "freenet",
+      "sources": {
+        "employee": {
+          "rows": 1027,
+          "rows_without_datum": 0,
+          "first_month": "2007-11",
+          "last_month": "2025-08",
+          "months_spanned": 214,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 3.0,
+          "months_eq0": 55,
+          "months_lt5": 128,
+          "months_ge5": 86,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "arbeitsatmosphaere": 0.8637,
+            "image": 0.8442,
+            "work_life_balance": 0.8608,
+            "karriere_weiterbildung": 0.853,
+            "gehalt_sozialleistungen": 0.8588,
+            "kollegenzusammenhalt": 0.8637,
+            "umwelt_sozialbewusstsein": 0.8403,
+            "vorgesetztenverhalten": 0.8637,
+            "kommunikation": 0.8647,
+            "interessante_aufgaben": 0.8588,
+            "umgang_mit_aelteren_kollegen": 0.8306,
+            "arbeitsbedingungen": 0.8559,
+            "gleichberechtigung": 0.8491
+          }
+        },
+        "candidates": {
+          "rows": 130,
+          "rows_without_datum": 0,
+          "first_month": "2011-10",
+          "last_month": "2025-08",
+          "months_spanned": 167,
+          "reviews_per_month_min": 0,
+          "reviews_per_month_median": 0.0,
+          "months_eq0": 86,
+          "months_lt5": 165,
+          "months_ge5": 2,
+          "non_null_share": {
+            "durchschnittsbewertung": 1.0,
+            "erklaerung_der_weiteren_schritte": 0.8923,
+            "zufriedenstellende_reaktion": 0.9231,
+            "vollstaendigkeit_der_infos": 0.9923,
+            "zufriedenstellende_antworten": 0.9154,
+            "angenehme_atmosphaere": 0.9154,
+            "professionalitaet_des_gespraechs": 0.9769,
+            "wertschaetzende_behandlung": 0.9154,
+            "erwartbarkeit_des_prozesses": 0.8923,
+            "zeitgerechte_zu_oder_absage": 0.9154,
+            "schnelle_antwort": 0.9923
+          }
+        }
+      }
+    }
+  ],
+  "excluded_companies": [
+    {
+      "id": 10,
+      "name": "Demo 1",
+      "name_raw": "Demo 1"
+    },
+    {
+      "id": 17,
+      "name": "Demo 2",
+      "name_raw": "Demo 2"
+    },
+    {
+      "id": 18,
+      "name": "Demo 3",
+      "name_raw": "Demo 3"
+    }
+  ],
+  "warnings": []
+}
