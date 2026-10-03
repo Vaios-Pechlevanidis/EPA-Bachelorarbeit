@@ -182,7 +182,7 @@ export default function AnomaliesPage() {
                                 />
                             }
                         >
-                            <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={380} range={range} />
+                            <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={380} range={range} showLevels />
                         </Section>
 
                         <Section

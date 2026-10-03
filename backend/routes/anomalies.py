@@ -35,7 +35,9 @@ def get_company_anomalies(
                       "evaluated": true}, ...],   # evaluated: n_values >= min_reviews_per_month
           "anomalies": [{"id", "company_id", "source", "dimension", "date", "direction",
                          "delta", "before_mean", "after_mean", "n_reviews_before",
-                         "n_reviews_after", "n_reviews", "severity", "method", "params"}, ...],
+                         "n_reviews_after", "n_reviews", "severity", "before_from", "after_to",
+                         "previous_period", "gap_months", "month_mean",
+                         "month_near_previous_level", "method", "params"}, ...],
           "params": {"method", "model", "min_size", "penalty", "min_delta", "min_reviews_per_month"},
           "eligibility": {"eligible", "evaluated_months", "min_evaluated_months", "reason"}
         }

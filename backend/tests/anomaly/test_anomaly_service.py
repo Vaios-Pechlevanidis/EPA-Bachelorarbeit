@@ -77,6 +77,32 @@ class TestDemoCompanies:
             assert a["n_reviews_before"] > 0 and a["n_reviews_after"] > 0
             assert a["n_reviews_before"] + a["n_reviews_after"] == a["n_reviews"]
 
+    def test_segment_bounds_and_gap_fields(self, in_memory_db):
+        """Test: Abschnittsgrenzen, Vormonat und Lücke sind konsistent mit der Reihe."""
+        result = svc.company_anomalies(DEMO_3, "employee")
+        evaluated = [m["period"] for m in result["series"] if m["evaluated"]]
+        for a in result["anomalies"]:
+            i = evaluated.index(a["date"])
+            assert a["previous_period"] == evaluated[i - 1]
+            assert a["gap_months"] == svc._months_between(a["previous_period"], a["date"]) - 1 >= 0
+            assert a["before_from"] <= a["previous_period"] < a["date"] <= a["after_to"]
+            assert a["before_from"] in evaluated and a["after_to"] in evaluated
+            month = next(m for m in result["series"] if m["period"] == a["date"])
+            assert a["month_mean"] == month["mean"]
+            near = abs(a["month_mean"] - a["before_mean"]) < abs(a["month_mean"] - a["after_mean"])
+            assert a["month_near_previous_level"] is near
+
+    def test_adjacent_segments_share_bounds(self, in_memory_db):
+        """Test: Nach-Abschnitt einer Veränderung endet direkt vor der nächsten."""
+        anomalies = sorted(svc.company_anomalies(DEMO_3, "employee")["anomalies"], key=lambda a: a["date"])
+        for a, b in zip(anomalies, anomalies[1:]):
+            assert a["after_to"] == b["previous_period"]
+            assert a["after_mean"] == b["before_mean"]
+
+    def test_months_between(self):
+        assert svc._months_between("2023-01", "2023-03") == 2
+        assert svc._months_between("2022-12", "2023-01") == 1
+
     def test_series_covers_all_months(self, in_memory_db):
         """Test: Reihe enthält alle Monate mit period, mean, count, n_values, evaluated."""
         series = svc.company_anomalies(DEMO_3, "employee")["series"]

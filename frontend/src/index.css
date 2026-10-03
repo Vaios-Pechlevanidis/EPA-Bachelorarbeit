@@ -27,6 +27,9 @@
   --rose-50:     #fff1f2;
   --rose-500:    #f43f5e;
   --rose-700:    #be123c;
+  /* Auffällige Veränderungen (Anomalie-Markierung): hell 700er-Töne für Kontrast ≥ 4,5:1 */
+  --anomaly-fall: #be123c;
+  --anomaly-rise: #047857;
   --amber-50:    #fffbeb;
   --amber-500:   #f59e0b;
   --amber-700:   #b45309;
@@ -131,6 +134,8 @@
   --color-border-focus:  #818cf8;   /* indigo-400 — etwas heller in Dark */
   --color-grid:          #1e293b;
   --color-axis:          #475569;
+  --anomaly-fall:        #fb7185;   /* rose-400 */
+  --anomaly-rise:        #34d399;   /* emerald-400 */
 
   /* WorkPulse logo colours — dark mode */
   --wp-bubble: #ffffff;

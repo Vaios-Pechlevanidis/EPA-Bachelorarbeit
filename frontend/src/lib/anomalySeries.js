@@ -117,3 +117,25 @@ export function interpolateGaps(series) {
   }
   return out
 }
+
+/* Niveau je Kalendermonat aus den erkannten Veränderungen: Mittel des
+ * Abschnitts zwischen zwei Wechseln (before_mean / after_mean der API).
+ * Ein Abschnitt reicht von before_from bis zum Monat vor date (alt) bzw. von
+ * date bis after_to (neu); nicht bewertete Monate dazwischen behalten das
+ * alte Niveau, die Stufe liegt am markierten Monat. Monate außerhalb der
+ * Abschnitte (ohne Veränderungen oder hinter einem nicht angezeigten
+ * Wechsel) bleiben leer. Rückgabe: {period: level}. */
+export function levelsFromAnomalies(anomalies) {
+  const levels = {}
+  const fill = (from, to, value) => {
+    for (let i = periodIndex(from); i <= periodIndex(to); i++) levels[periodFromIndex(i)] = value
+  }
+  const sorted = [...(anomalies ?? [])]
+    .filter((a) => a.before_from && a.after_to)
+    .sort((a, b) => periodIndex(a.date) - periodIndex(b.date))
+  for (const a of sorted) {
+    fill(a.before_from, periodFromIndex(periodIndex(a.date) - 1), a.before_mean)
+    fill(a.date, a.after_to, a.after_mean)
+  }
+  return levels
+}
