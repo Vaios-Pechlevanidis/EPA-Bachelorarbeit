@@ -3,7 +3,7 @@ fix_company_names.py gegen Fake-Clients, ohne gehostete DB."""
 import json, os, sys, copy
 import pytest
 
-BACKEND = "/Users/vaios/EPA-Bachelorarbeit/EPA-Bachelorarbeit/backend"
+BACKEND = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, BACKEND)
 sys.path.insert(0, os.path.join(BACKEND, "scripts"))
 
