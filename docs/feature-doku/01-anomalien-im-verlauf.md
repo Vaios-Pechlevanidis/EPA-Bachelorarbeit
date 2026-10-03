@@ -29,9 +29,16 @@ Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Kart
   Europe „Feb. 2013 – Dez. 2016 (47 Monate), März 2026 (1 Monat)“. Mit Zeitfilter bleibt der
   hintere Rand genannt, weil das Fenster am letzten bewerteten Monat endet (Universität
   Duisburg-Essen, „12 Monate“: „Dez. 2024 – Apr. 2026 (17 Monate)“),
-- **dezente Punkte** an den Monaten, in denen sich das Bewertungsniveau auffällig
-  verändert hat: rot für einen Abfall, grün für einen Anstieg, etwas größer bei
-  deutlichen Veränderungen,
+- eine dezente **Stufe** an jedem Monat, ab dem das Bewertungsniveau auffällig anders
+  liegt: ein kurzer Strich auf dem Ø davor, ein senkrechter Strich bis zum Ø danach und
+  ein kurzer Strich auf dem neuen Niveau. Die **Höhe** der Stufe ist das Ausmaß im Maßstab
+  der Y-Achse, die **Form** zeigt die Richtung (nach unten = Abfall, nach oben = Anstieg)
+  und ist auch ohne Farbe lesbar; zusätzlich rot bzw. grün. Ein **kräftiger** Strich heißt
+  „deutlich“ (ab 0,5 Sternen), ein dünner „mäßig“. Eine Legende unter dem Diagramm erklärt
+  die Zeichen,
+- auf der Detailseite zusätzlich eine dünne graue **Niveaulinie**: das Mittel jedes
+  Abschnitts zwischen zwei erkannten Wechseln, also genau die Werte, die die Erkennung
+  verglichen hat. Auf der Karte entfällt sie, damit die Karte ruhig bleibt,
 - einen **Tooltip** je Monat mit dem Monatsmittel und der Zahl der Bewertungen (bei
   Einzeldimensionen zusätzlich „davon mit Wert“, wenn nicht jede Bewertung diese Kategorie
   bewertet hat), bei nicht
@@ -168,7 +175,7 @@ PELT alle Zerlegungen gemeinsam ab.
 - **Richtung:** Abfall (`fall`), wenn das Niveau danach niedriger ist, sonst Anstieg (`rise`).
 - **Stärke:** „deutlich“ (`high`) ab 0,5 Sternen, sonst „mäßig“ (`medium`). 0,5 Sterne ist
   der Richtwert des Annotationsprotokolls (E5); festgehalten in E9, Status vorläufig.
-  „Deutlich“ markierte Punkte sind im Diagramm etwas größer.
+  „Deutlich“ markierte Stufen haben im Diagramm einen kräftigen Strich (2,25 px statt 1,25 px).
 
 **Beispiel (gehostete Demo 3, synthetisch):**
 
@@ -180,7 +187,13 @@ PELT alle Zerlegungen gemeinsam ab.
 
 **Was nicht markiert wird:**
 
-- ein einzelner Ausreißermonat oder ein Ausreißer über zwei Monate (Bedingung 2),
+- ein einzelner Ausreißermonat oder ein Ausreißer über zwei Monate **als eigener Abschnitt**
+  (Bedingung 2). Ein kurzer, starker Einbruch kann aber trotzdem markiert werden: PELT füllt
+  ihn dann mit einem unauffälligen Nachbarmonat auf die Mindestlänge von 3 Monaten auf.
+  Beispiel Telekom: 2022-10 (3,98), 2022-11 (3,63), 2022-12 (2,60). Markiert wird 2022-10,
+  obwohl dieser Monat noch nahe am alten Niveau 4,07 liegt; der Abschnitt Okt.–Dez. 2022
+  hat das Mittel 3,40. Die API kennzeichnet solche Fälle (`month_near_previous_level`), und
+  der Tooltip weist darauf hin,
 - Monate mit weniger als 5 Bewertungen; sie gehen gar nicht in die Erkennung ein (Bedingung 1),
 - Verschiebungen unter 0,3 Sternen (Bedingung 4),
 - ein Bruch in den letzten 1–2 bewerteten Monaten, weil das neue Niveau noch keine 3 Monate hat (Bedingung 2),
@@ -200,9 +213,12 @@ ist ein eigener, späterer Schritt und bleibt eine Plausibilisierung.
 | `direction` | `fall` (Abfall) oder `rise` (Anstieg) |
 | `before_mean` / `after_mean` | Mittel der Monatsmittel im Abschnitt vor bzw. nach dem Wechsel, jeweils bis zum benachbarten Wechsel |
 | `delta` | `after_mean − before_mean` in Sternen |
-| `n_reviews_before` / `n_reviews_after` | Zahl der Bewertungen im Abschnitt vor bzw. nach dem Wechsel; im Dashboard „Bewertungen davor / danach“ |
+| `n_reviews_before` / `n_reviews_after` | Zahl der Bewertungen mit Wert in der gewählten Dimension im Abschnitt vor bzw. nach dem Wechsel (bei der Gesamtbewertung gleich der Zahl der Bewertungen); im Dashboard „Bewertungen davor / danach“ |
 | `n_reviews` | Summe aus beiden |
 | `severity` | `high` („deutlich“) ab 0,5 Sternen, sonst `medium` („mäßig“) (E9) |
+| `before_from` / `after_to` | erster bzw. letzter bewerteter Monat der beiden Abschnitte; Grundlage für die Zeiträume im Tooltip und die Niveaulinie |
+| `previous_period` / `gap_months` | letzter bewerteter Monat vor `date` und Zahl der nicht bewerteten Monate dazwischen |
+| `month_mean` / `month_near_previous_level` | Monatsmittel des markierten Monats und ob es näher am alten als am neuen Niveau liegt (Hinweis im Tooltip) |
 | `method`, `params` | verwendetes Verfahren und seine Parameter, damit jedes Ergebnis nachvollziehbar bleibt |
 
 Umsetzung: `backend/services/anomaly_service.py`. Die API dazu ist
@@ -216,7 +232,7 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 | Teil | Datei | Aufgabe |
 |---|---|---|
 | Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
-| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`) | Verlauf mit gestrichelt überbrückten Lücken, Markierungen und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis, Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
+| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), optionaler Niveaulinie (`showLevels`, Detailseite), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis, Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
 | Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Anzeigebereich vom ersten bis zum letzten bewerteten Monat (`trimToEvaluated`), Zeitfenster relativ zum letzten angezeigten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
@@ -261,8 +277,19 @@ anderem zur Standardabweichung der Quartalsänderung von etwa 0,45 Sternen bei G
 ihnen abhängt (Abschnitt 5). Gegen Referenzzeiträume (DZ1) sind sie noch nicht gemessen.
 
 **Warum dezente Markierungen und das Wort „auffällig“?** Die Arbeit liefert eine
-Plausibilisierung, keine Kausalaussage. Ein auffälliger Punkt soll zum Nachsehen einladen,
-nicht als Alarm oder als Ursache gelesen werden.
+Plausibilisierung, keine Kausalaussage. Eine auffällige Markierung soll zum Nachsehen
+einladen, nicht als Alarm oder als Ursache gelesen werden.
+
+**Warum eine Stufe statt eines Punkts?** Bis 2026-10-03 markierte ein Ring das
+Monatsmittel des markierten Monats. Eine Prüfung mit drei Prüfern, drei unabhängigen
+Gestaltungsentwürfen und zwei Juroren ergab: Bei verrauschten Reihen saßen die Ringe auf
+Spitzen und Tälern der Linie, das erkannte Niveau war unsichtbar, die Richtung war nur
+über die Farbe kodiert und das Ausmaß nur über 1 px Radiusunterschied. Bei Telekom 2022-10
+saß ein Abfall-Ring auf einem Monat, der noch auf dem alten Niveau lag. Die Stufe zeigt
+dagegen genau, was die Erkennung gefunden hat (Ø davor → Ø danach), mit der Höhe als
+Ausmaß, der Form als Richtung und der Strichstärke als Schweregrad. Die Niveaulinie auf
+der Detailseite macht die Abschnitte sichtbar, auf denen die Mittel beruhen. Der
+Monatswert selbst bleibt auf der blauen Linie.
 
 **Warum eine eigene Detailseite?** Auf dem Dashboard teilt sich die Karte den Platz mit
 anderen Kennzahlen. Für das Lesen eines langen Verlaufs über Jahre ist ein breites
@@ -317,8 +344,17 @@ dringendere Anlass zum Handeln.
 - Wegen `min_size` braucht jeder Abschnitt 3 bewertete Monate. Ein Wechsel liegt deshalb
   frühestens im 4. bewerteten Monat, und ein Bruch in den letzten 1–2 bewerteten Monaten
   ist noch nicht erkennbar. Das ist für aktuelle Entwicklungen wichtig.
-- Liegt eine Lücke direkt nach dem Wechsel, wird der erste *bewertete* Monat danach
-  gemeldet. Der tatsächliche Wechsel kann früher liegen.
+- Liegt eine Lücke direkt vor dem markierten Monat, wird der erste *bewertete* Monat danach
+  gemeldet; der tatsächliche Übergang kann irgendwo in der Lücke liegen. Die API liefert
+  dafür `previous_period` und `gap_months`, Tooltip und Liste nennen die Lücke (z. B.
+  Telekom 2009-12: 13 nicht bewertete Monate seit Okt. 2008).
+- Die Mindestlänge von 3 Monaten dämpft Ausreißer, schließt sie aber nicht aus: Ein kurzer,
+  starker Einbruch kann als 3-Monats-Abschnitt erscheinen, dessen erster Monat noch auf dem
+  alten Niveau liegt (siehe 2.3, Telekom 2022-10). Die Prüfung zählte 6 solcher Fälle in 7
+  dichten Reihen. Ob `min_size` angepasst werden soll, ist eine offene Frage für E9.
+- Die Abschnitte einer Veränderung reichen bis zum benachbarten *erkannten* Wechsel, auch
+  wenn dieser wegen `min_delta` nicht angezeigt wird. In den aktuellen Daten betrifft das
+  nur Carl Zeiss 2021-05 (+0,25), ohne Nachbarn; die Niveaulinie bleibt dort leer.
 - Die Parameter sind noch nicht gegen unabhängige Referenzzeiträume geprüft.
 - Der Strafterm wächst nicht mit der Länge der Reihe. Lange, dichte Reihen (Telekom, Cancom,
   1&1) erhalten deshalb deutlich mehr Markierungen als kurze (Abschnitt 5).
@@ -342,6 +378,7 @@ dringendere Anlass zum Handeln.
 | Service und Route | `backend/tests/anomaly/test_anomaly_service.py`, `test_anomalies_route.py` (In-Memory-Store, ohne Netzwerk): Demo 3 `fall` ±1 Monat um 2023-01 und `rise` um 2023-12, Demo 1/2 ohne Veränderung, nicht geeignete Reihen, `n_reviews`-Aufteilung, `dimension=all`, 400/422 |
 | Lücken, Eignung, Dimension | geprüft an Open Grid Europe (viele Lücken), PLEdoc (nicht geeignet), Demo 3 mit „Kommunikation“ und „Vorgesetztenverhalten“; helles und dunkles Theme |
 | Review Zeitfilter/Interpolation | Vier unabhängige Prüfer (Interpolation, Zeitfilter, Recharts, UI) und zwei Gegenprüfer, 2026-10-03. `interpolateGaps` wurde erschöpfend über alle 32 767 Muster aus bewerteten Monaten und Lücken bis Länge 14 geprüft, auch mit allen Fensterausschnitten: nie eine gestrichelte Strecke über einer durchgezogenen, Randlücken leer, kein interpolierter Wert als Datenwert. Bestätigt und behoben: Begründung im Tooltip bei Einzeldimensionen (`n_values`), Dativ im Untertitel, Leerhinweis ohne Zeitfilter, Y-Achsenbeschriftung bei Viertelstrichen. 4 Meldungen widerlegt |
+| Review Kennzeichnung | Drei Prüfer (Daten, Darstellung, Anforderungen), drei unabhängige Markierungsentwürfe (Niveaustufen, Niveaupfeil, Stufen-Marker), zwei Juroren, ein Gegenprüfer, 2026-10-03; 25 Befunde, keiner widerlegt. Umgesetzt: Stufe statt Ring, Niveaulinie auf der Detailseite, Legende, Schweregrad über Strichstärke, Theme-Tokens `--anomaly-fall` / `--anomaly-rise` (hell 700er-, dunkel 400er-Töne), Tooltip mit Abschnittszeiträumen, Lücken- und Nahe-am-alten-Niveau-Hinweis, Liste mit „ab Monat“ und Lückenhinweis. Geprüft im Browser: Telekom 3 Jahre (2022-10), Cancom (16 Veränderungen), E.ON, hell und dunkel |
 | Review Anzeigebereich/Icon | Zwei Prüfer (Logik, UI) und ein Gegenprüfer, 2026-10-03. Bestätigt und behoben: Im Zeitausschnitt fehlte der Hinweis auf ausgeblendete jüngere Monate (Universität Duisburg-Essen: 17 Monate mit 30 Bewertungen nach dem letzten bewerteten Monat). Widerlegt bzw. als Gestaltungsfrage eingestuft: Lesbarkeit des Rings im Icon bei 14 px auf 1x-Bildschirmen, Kontrast der Hinweiszeile (entspricht der Konvention der übrigen Karten), Formulierung des Hinweises (trotzdem geglättet) |
 | Interpolation und Zeitfilter | Hilfsfunktionen in `frontend/src/lib/anomalySeries.js` per Node-Prüfskript geprüft (Lücke in der Mitte, Ränder, benachbarte Lücken mit wechselnden Schlüsseln, einzelner Monat zwischen zwei Lücken, nicht bewerteter Monat mit Mittelwert, Fenster über den Jahreswechsel, Fenster größer als die Reihe). Im Browser: Open Grid Europe gesamt und 3 Jahre (Überbrückung am Fensterrand), Telekom 3 Jahre (2 von 9 im Zeitraum, Hinweis auf 7 außerhalb), Demo 3 12 Monate; helles und dunkles Theme |
 | Parameterübersicht | `backend/data/calibration/anomaly_params_employee_durchschnittsbewertung.csv`, Stand 2026-10-03, Mitarbeitende, Gesamtbewertung, 15 geeignete Unternehmen. Summe Abfälle/Anstiege bei min_delta 0,3: penalty 0,25 → 56/60, **0,5 → 31/35 (Startwert)**, 1,0 → 16/19, 2,0 → 4/5. Bei penalty 0,5 und min_delta 0,2/0,3/0,5: 31/36, 31/35, 27/28 |
@@ -358,3 +395,9 @@ dringendere Anlass zum Handeln.
 - Messung gegen die Referenzzeiträume (DZ1) steht aus; bis dahin bleiben die Parameter
   vorläufig (E9). Dabei auch prüfen, ob der Strafterm mit der Reihenlänge skaliert werden
   sollte.
+- `min_size` (3): Kurze, starke Einbrüche werden mit einem unauffälligen Nachbarmonat auf
+  3 Monate aufgefüllt (Telekom 2022-10). Mit `min_size=2` läge die Markierung dort auf
+  2022-11. Ob das gewünscht ist, ist eine Entscheidung des Autors (E9).
+- Trefferfläche des Tooltips: Bei langen Reihen ist eine Monatsspalte nur wenige Pixel
+  breit; die Details einer Veränderung stehen immer auch in der Liste.
+- Die Anforderungstexte FA-01 bis FA-04 und FA-26 liegen nicht im Repository.

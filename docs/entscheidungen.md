@@ -174,12 +174,21 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     (geplant: Günnemann et al. 2014), ohne Service, API oder Frontend zu ändern.
   - **Kennzahlen je Veränderung:** Monat (erster bewerteter Monat auf dem neuen Niveau),
     Richtung, Delta, Mittel davor und danach, Bewertungen davor und danach
-    (`n_reviews_before`, `n_reviews_after`, Summe `n_reviews`), Verfahren und Parameter.
+    (`n_reviews_before`, `n_reviews_after`, Summe `n_reviews`), Abschnittsgrenzen
+    (`before_from`, `after_to`), Lücke vor dem Monat (`previous_period`, `gap_months`),
+    Verfahren und Parameter.
+  - **Darstellung (2026-10-03):** Je Veränderung eine Stufe von Ø davor zu Ø danach am
+    markierten Monat (Höhe = Ausmaß, Form = Richtung, Strichstärke = Schweregrad), auf der
+    Detailseite zusätzlich die Niveaulinie der Abschnitte; Begründung in
+    `docs/feature-doku/01-anomalien-im-verlauf.md`, Abschnitt 3.
     Umsetzung: `backend/services/anomaly_service.py`,
     API `GET /api/analytics/company/{id}/anomalies` (auch `dimension=all`).
 - **Begründung:** PELT findet die beste Zerlegung exakt in linearer Zeit, ohne die Zahl der
-  Wechsel vorzugeben; `l2` passt zur Frage nach Niveauverschiebungen. `min_size=3` schließt
-  Ausreißermonate aus. Die Zahlenwerte sind Setzungen des Autors innerhalb der Größenordnungen
+  Wechsel vorzugeben; `l2` passt zur Frage nach Niveauverschiebungen. `min_size=3` dämpft
+  Ausreißermonate, schließt sie aber nicht vollständig aus: Ein kurzer, starker Einbruch kann
+  als 3-Monats-Abschnitt mit einem unauffälligen Randmonat erscheinen (Telekom 2022-10; 6 Fälle
+  in 7 dichten Reihen, Prüfung vom 2026-10-03). Die API kennzeichnet das
+  (`month_near_previous_level`). Die Zahlenwerte sind Setzungen des Autors innerhalb der Größenordnungen
   aus `docs/referenzzeitraeume-literatur.md` (u. a. SD der Quartalsänderung ≈ 0,45 Sterne bei
   Green et al. 2019; Richtwert 0,5 Sterne im Annotationsprotokoll).
 - **Prüfung bisher:**
