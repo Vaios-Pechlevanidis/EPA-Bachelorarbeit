@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E15 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -467,4 +467,48 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance für die Verwendung in der Arbeit (Abbildungen,
   Weitergabe der Daten); Zuordnung Carl Zeiss; ob für Compugroup historische Kurse aus einer
   anderen Quelle nachgetragen werden.
+- **Status:** vorläufig.
+
+## E16 – Aktien-Dashboard
+
+- **Kontext:** Der Autor wünschte am 2026-10-04 ein eigenes Dashboard zum Aktienkurs mit
+  den Elementen Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn („Revenue vs.
+  Earnings“) und Nachrichten, angelehnt an die Kursseite von Yahoo Finance. Die
+  Finanzseite der Test-Kopie (E1) hing an Tabellen, die am 2026-10-02 gelöscht wurden; sie
+  wurde daher nicht übernommen, sondern auf dem Kursdienst aus E15 neu gebaut.
+- **Entscheidung (2026-10-04):**
+  - Eigene Seite `/aktie?company=ID` (Link „Aktie“ in der Seitenleiste des Dashboards und
+    auf der Anomalien-Detailseite). Firma, Zeitfenster (`range`) und Jahres- oder
+    Quartalsansicht (`periode=quartal`) stehen in der URL.
+  - **Kursverlauf:** die bereinigten Monatsschlusskurse aus E15, Fenster 1, 3, 5 (Standard),
+    10 Jahre oder alles; dazu die Kennzahlenzeile, Quelle und der Hinweis aus E15.
+  - **Analystenempfehlungen:** `yfinance.Ticker.recommendations`, Zahl der Empfehlungen je
+    Stufe (stark kaufen, kaufen, halten, verkaufen, stark verkaufen) für den Monat des
+    Abrufs und die drei Monate davor; yfinance nennt die Monate relativ (`0m`, `-1m`), sie
+    werden auf den Monat des Abrufs bezogen.
+  - **Umsatz und Nettoergebnis:** „Total Revenue“ und „Net Income“ aus
+    `income_stmt` bzw. `quarterly_income_stmt` in Berichtswährung. Ein Zeitraum entfällt
+    nur, wenn beide Werte fehlen.
+  - **Nachrichten:** Google-News-RSS mit dem Unternehmensnamen ohne Rechtsform, deutsch,
+    letzte 90 Tage, höchstens 30 Meldungen, neueste zuerst (Quelle nach E7). yfinance liefert
+    für keinen der 17 Ticker Nachrichten (geprüft 2026-10-04). Zwischenspeicher
+    `backend/data/market/news/<company_id>.json`, nach 12 Stunden neu abgerufen; schlägt
+    das fehl, gilt der ältere Stand mit Hinweis.
+  - Endpunkte `GET /api/analytics/company/{id}/finance` (Kurs, Kennzahlen, Empfehlungen,
+    Umsatz und Gewinn) und `GET /api/analytics/company/{id}/news`; `/market` bleibt
+    unverändert. Datenbank nur lesend, keine neuen Abhängigkeiten.
+- **Begründung:** Die Seite sammelt die Marktinformationen an einer Stelle, ohne die
+  Anomalien-Ansicht zu überladen. Sie bleibt eine Einordnung: Es gibt keine Verknüpfung von
+  Empfehlungen, Gewinn oder Meldungen mit den Bewertungen, keine Bewertung der Meldungen und
+  keine Zuordnung zu auffälligen Veränderungen. Kurs und Empfehlungen werden nicht
+  kommentiert; die Seite gibt keine Anlageempfehlung.
+- **Grenzen:** Empfehlungen gibt es nur für die letzten vier Monate, Umsatz und Gewinn nur
+  für etwa vier Geschäftsjahre bzw. sechs Quartale (bei NTT und Formycon keine Quartale);
+  der Bewertungszeitraum reicht weiter zurück. Die Nachrichten sind aktuell und reichen nicht
+  in die Zeiträume der auffälligen Veränderungen zurück. Die Namenssuche liefert bei
+  mehrdeutigen Namen fremde Treffer (z. B. „Carl Zeiss“ auch den FC Carl Zeiss Jena) und bei
+  sehr kleinen Unternehmen keine (PLEdoc). Für NTT DATA SE stammen Kurs, Empfehlungen und
+  Zahlen von der Konzernmutter, die Nachrichten von der Suche nach „NTT DATA“.
+- **Offen:** Nutzungsbedingungen von Yahoo Finance und Google News für die Arbeit (wie E7,
+  E15); ob die Seite in der Evaluation (DZ3) gezeigt wird.
 - **Status:** vorläufig.
