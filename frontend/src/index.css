@@ -30,6 +30,8 @@
   /* Auffällige Veränderungen (Anomalie-Markierung): hell 700er-Töne für Kontrast ≥ 4,5:1 */
   --anomaly-fall: #be123c;
   --anomaly-rise: #047857;
+  /* Aktienkurs als Einordnung (Inkrement 3): eigene, zurückhaltende Farbe, weder Bewertung noch Richtung */
+  --market-price: #7c3aed;
   --amber-50:    #fffbeb;
   --amber-500:   #f59e0b;
   --amber-700:   #b45309;
@@ -136,6 +138,7 @@
   --color-axis:          #475569;
   --anomaly-fall:        #fb7185;   /* rose-400 */
   --anomaly-rise:        #34d399;   /* emerald-400 */
+  --market-price:        #a78bfa;   /* violet-400 */
 
   /* WorkPulse logo colours — dark mode */
   --wp-bubble: #ffffff;

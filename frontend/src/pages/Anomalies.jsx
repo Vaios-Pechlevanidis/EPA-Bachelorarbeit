@@ -5,12 +5,15 @@ import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
+import { PriceToggle } from "@/components/dashboard/MarketContext"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, monthSpan, outlierCountText, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
+import { PRICE_OFF, PRICE_PARAM } from "@/lib/market"
 import { groupLabel, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison } from "@/hooks/useAnomalyComparison"
+import { useMarket } from "@/hooks/useMarket"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
 import { API_URL } from "../config"
@@ -27,6 +30,8 @@ import { API_URL } from "../config"
    aus (?anomaly=id); darunter stehen der Vorher-Nachher-Vergleich und die
    Bewertungen der Vergleichsfenster. Auffällige Einzelmonate (E14) stehen in
    einer eigenen Liste; Auswahl per ?month=YYYY-MM zeigt die Bewertungen des Monats.
+   Inkrement 3 (E15): Der Aktienkurs läuft im Diagramm als Einordnung mit
+   (Standard an, wenn ein Kurs vorliegt; ?kurs=aus blendet ihn aus).
    ============================================================================ */
 
 function Section({ icon, eyebrow, title, subtitle, actions, children }) {
@@ -103,6 +108,10 @@ export default function AnomaliesPage() {
     }, [companyId, names])
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
+    // Aktienkurs als Einordnung; ohne Kurs bleibt die Ansicht wie bisher.
+    const market = useMarket(companyId)
+    const hasPrice = Boolean(market.data?.available && market.data.prices?.length)
+    const showPrice = hasPrice && searchParams.get(PRICE_PARAM) !== PRICE_OFF
     const selectedId = searchParams.get("anomaly")
     const selectedAnomaly = useMemo(() => anomalies.find((a) => a.id === selectedId) ?? null, [anomalies, selectedId])
     const windows = useMemo(() => comparisonWindows(selectedAnomaly), [selectedAnomaly])
@@ -243,10 +252,18 @@ export default function AnomaliesPage() {
                             title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
                             subtitle={chartSubtitle}
                             actions={
-                                <TimeRangeFilter
-                                    value={rangeKey}
-                                    onChange={(key) => updateParams({ range: key === DEFAULT_TIME_RANGE ? null : key })}
-                                />
+                                <>
+                                    {hasPrice && (
+                                        <PriceToggle
+                                            checked={showPrice}
+                                            onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })}
+                                        />
+                                    )}
+                                    <TimeRangeFilter
+                                        value={rangeKey}
+                                        onChange={(key) => updateParams({ range: key === DEFAULT_TIME_RANGE ? null : key })}
+                                    />
+                                </>
                             }
                         >
                             <AnomalyChart
@@ -261,6 +278,7 @@ export default function AnomaliesPage() {
                                 onSelect={selectAnomaly}
                                 selectedOutlier={selectedOutlier?.date ?? null}
                                 onSelectOutlier={selectOutlier}
+                                market={showPrice ? market.data : null}
                             />
                         </Section>
 

@@ -19,6 +19,7 @@ import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
 import { groupLabel, statusOptions } from "@/lib/reviewerStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, trimToEvaluated } from "@/lib/anomalySeries"
+import { fmtPrice, fmtPriceTick } from "@/lib/market"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -28,6 +29,8 @@ import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, inter
    Wortwahl: "auffällige Veränderung", keine Aussage über Ursachen.
    Inkrement 2: Quelle (Mitarbeiter, Bewerber) und Status wählen die
    Bewertendengruppe; die Erkennung läuft je Gruppe neu (E13).
+   Inkrement 3: Auf der Detailseite läuft der Aktienkurs als Einordnung auf einer
+   zweiten Y-Achse mit (prop "market"); die Karte zeigt ihn nicht.
    ============================================================================ */
 
 // Farbe je Richtung als Theme-Token (index.css: hell 700er-, dunkel 400er-Töne).
@@ -138,7 +141,7 @@ const fmtDelta = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(v))
 
 const fmtSpan = (from, to) => (from && to && from !== to ? `${fmtPeriod(from)} – ${fmtPeriod(to)}` : fmtPeriod(from ?? to))
 
-function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod = {} }) {
+function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod = {}, priceCurrency = null }) {
     if (!active || !payload?.length) return null
     const point = payload[0].payload
     const anomaly = anomaliesByPeriod[point.period]
@@ -165,6 +168,12 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod =
                 <p className="flex items-center justify-between gap-3">
                     <span className="text-slate-400">davon mit Wert</span>
                     <span className="tnum text-slate-300">{point.n_values}</span>
+                </p>
+            )}
+            {priceCurrency && point.price != null && (
+                <p className="flex items-center justify-between gap-3">
+                    <span className="text-slate-400">Aktienkurs (Monatsschluss)</span>
+                    <span className="tnum text-slate-300">{fmtPrice(point.price)} {priceCurrency}</span>
                 </p>
             )}
             {anomaly && (
@@ -347,12 +356,21 @@ function isolatedDot(chartData, opacity = 1) {
    Stufen, Niveaulinie, ausführliche Legende und ausgeblendete Ränder stehen auf
    der Detailseite.
    Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null }) {
+/* market (nur Detailseite, Inkrement 3, E15): {prices: [{period, close}], currency,
+   ticker} oder null. Der Kurs läuft als dünne Linie auf einer rechten Y-Achse mit,
+   nur für die angezeigten Monate. Er ist eine Einordnung des Marktumfelds; es wird
+   kein Zusammenhang mit den Bewertungen berechnet. */
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
     const trimmed = useMemo(() => trimToEvaluated(series), [series])
     // Niveau je Monat (Mittel des Abschnitts zwischen zwei erkannten Wechseln), nur mit showLevels.
     const levels = useMemo(() => (showLevels ? levelsFromAnomalies(anomalies) : {}), [anomalies, showLevels])
+    // Monatsschlusskurs je Monat; Monate ohne Kurs bleiben leer.
+    const priceByPeriod = useMemo(
+        () => (!compact && market?.prices?.length ? Object.fromEntries(market.prices.map((p) => [p.period, p.close])) : null),
+        [market, compact],
+    )
     const fullData = useMemo(() => {
         const interp = interpolateGaps(series)
         return series.map((m, i) => ({
@@ -361,8 +379,9 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
             minReviews,
             value: m.evaluated ? m.mean : null,
             level: levels[m.period] ?? null,
+            price: priceByPeriod?.[m.period] ?? null,
         }))
-    }, [series, minReviews, levels])
+    }, [series, minReviews, levels, priceByPeriod])
     const chartData = useMemo(() => {
         const shown = trimmed.series.length
             ? fullData.filter((m) => inWindow(m.period, { from: trimmed.series[0].period, to: trimmed.series[trimmed.series.length - 1].period }))
@@ -437,6 +456,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
     const hasInterpolation = chartData.some((m) => m.interpolated)
     const hasVisibleValues = chartData.some((m) => m.value != null)
     const hasLevels = chartData.some((m) => m.level != null)
+    const showPrice = Boolean(priceByPeriod) && chartData.some((m) => m.price != null)
     const stepHalfWidth = compact ? 4 : height >= 300 ? 6 : 5
     const style = { valueOpacity: 1, valueWidth: 1.5, interpOpacity: 1, levelColor: "var(--color-fg-subtle)", levelWidth: 1, levelOpacity: 0.8 }
 
@@ -453,7 +473,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height={height}>
-                    <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8, bottom: 5 }} onClick={onSelect || onSelectOutlier ? handleChartClick : undefined}>
+                    <LineChart data={chartData} margin={{ left: 0, right: showPrice ? 4 : 16, top: 8, bottom: 5 }} onClick={onSelect || onSelectOutlier ? handleChartClick : undefined}>
                         <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
                         {windowAreas.map((a) => (
                             <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill={a.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
@@ -477,8 +497,21 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             width={34}
                             tickFormatter={(v) => (Number.isInteger(v * 2) ? v.toFixed(1) : v.toFixed(2))}
                         />
+                        {showPrice && (
+                            <YAxis
+                                yAxisId="price"
+                                orientation="right"
+                                domain={["auto", "auto"]}
+                                tick={{ fontSize: 10, fill: "var(--color-axis)" }}
+                                tickLine={false}
+                                axisLine={false}
+                                width={58}
+                                tickFormatter={fmtPriceTick}
+                                label={{ value: `Kurs in ${market.currency ?? "?"}`, angle: 90, position: "insideRight", offset: 0, fontSize: 10, fill: "var(--color-axis)" }}
+                            />
+                        )}
                         <Tooltip
-                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} outliersByPeriod={outliersByPeriod} />}
+                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} outliersByPeriod={outliersByPeriod} priceCurrency={showPrice ? market.currency ?? "" : null} />}
                             cursor={{ stroke: "var(--color-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
                             filterNull={false}
                         />
@@ -507,6 +540,22 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                                 strokeOpacity={style.levelOpacity}
                                 dot={false}
                                 activeDot={false}
+                                connectNulls={false}
+                                legendType="none"
+                                isAnimationActive={false}
+                            />
+                        )}
+                        {showPrice && (
+                            // Aktienkurs: dünn und zurückhaltend unter der Bewertungslinie.
+                            <Line
+                                yAxisId="price"
+                                type="linear"
+                                dataKey="price"
+                                stroke="var(--market-price)"
+                                strokeWidth={1}
+                                strokeOpacity={0.7}
+                                dot={false}
+                                activeDot={{ r: 2.5, fill: "var(--market-price)", stroke: "var(--color-bg-card)", strokeWidth: 1 }}
                                 connectNulls={false}
                                 legendType="none"
                                 isAnimationActive={false}
@@ -581,6 +630,12 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                     </span>
                 )}
                 <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen mit Wert</span>
+                {showPrice && (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-4 h-0 border-t" style={{ borderColor: "var(--market-price)" }} />
+                        Aktienkurs{market.ticker ? ` ${market.ticker}` : ""}, Monatsschluss in {market.currency ?? "?"}, bereinigt (rechte Achse)
+                    </span>
+                )}
             </p>
         )}
         {!error && compact && visibleAnomalies.length > 0 && (
