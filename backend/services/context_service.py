@@ -280,3 +280,79 @@ def market_record(ticker: str, fetcher: Optional[RawFetcher] = None, cache_dir: 
         reason = f"Kursdaten für {ticker} konnten nicht abgerufen werden ({type(exc).__name__}: {exc})."
         _failed_fetches[ticker] = (time.monotonic(), reason)
         return None, reason
+
+
+# ---------------------------------------------------------------------------
+# Antwort des Endpunkts
+# ---------------------------------------------------------------------------
+
+NO_TICKER_REASONS = {
+    "Nicht börsennotiert": "Kein Aktienkurs: nicht börsennotiert",
+    "Demo": "Kein Aktienkurs: synthetisches Demo-Unternehmen",
+}
+NO_TICKER_DEFAULT = "Kein Aktienkurs: kein Ticker hinterlegt"
+
+
+def _check_period(name: str, value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    if not _PERIOD_RE.match(value):
+        raise ValueError(f"{name} muss im Format YYYY-MM angegeben werden, nicht {value!r}")
+    return value
+
+
+def company_market(
+    company_id: int,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    fetcher: Optional[RawFetcher] = None,
+    cache_dir: Optional[Path] = None,
+) -> Optional[Dict[str, Any]]:
+    """Kursreihe eines Unternehmens für ``GET /analytics/company/{id}/market``.
+
+    ``start``/``end`` (``YYYY-MM``, einschließlich) begrenzen ``prices``.
+    None, wenn es das Unternehmen nicht gibt; ValueError bei ungültigem
+    Zeitraum. Ohne Ticker oder ohne Kursdaten ``available: false`` mit ``reason``.
+    """
+    start = _check_period("start", start)
+    end = _check_period("end", end)
+    if start and end and start > end:
+        raise ValueError(f"start ({start}) liegt nach end ({end})")
+    info = company_ticker_info(company_id)
+    if info is None:
+        return None
+    result: Dict[str, Any] = {
+        "company_id": int(company_id),
+        "ticker": info["ticker"],
+        "ticker_scope": info["ticker_scope"],
+        "ticker_name": None,
+        "currency": None,
+        "available": False,
+        "reason": None,
+        "prices": [],
+        "metrics": {},
+        "fetched_at": None,
+        "source": None,
+    }
+    if not info["ticker"]:
+        result["reason"] = NO_TICKER_REASONS.get(info["peer_group"], NO_TICKER_DEFAULT)
+        return result
+    record, reason = market_record(info["ticker"], fetcher=fetcher, cache_dir=cache_dir)
+    if record is None:
+        result["reason"] = reason
+        return result
+    prices = [
+        p for p in record.get("prices") or []
+        if (start is None or p["period"] >= start) and (end is None or p["period"] <= end)
+    ]
+    result.update({
+        "ticker_name": record.get("ticker_name"),
+        "currency": record.get("currency"),
+        "available": bool(record.get("prices")),
+        "reason": None if record.get("prices") else f"Keine Monatskurse für {info['ticker']} gespeichert.",
+        "prices": prices,
+        "metrics": record.get("metrics") or {},
+        "fetched_at": record.get("fetched_at"),
+        "source": record.get("source"),
+    })
+    return result
