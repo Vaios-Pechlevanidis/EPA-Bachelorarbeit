@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowLeft, Building2, ListOrdered, MessageSquareText } from "lucide-react"
+import { ArrowLeft, Building2, GitCompareArrows, ListOrdered, MessageSquareText } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, DimensionPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { PeriodReviewList, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
 import { useAnomalies } from "@/hooks/useAnomalies"
+import { useAnomalyComparison } from "@/hooks/useAnomalyComparison"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
 import { API_URL } from "../config"
@@ -20,7 +22,8 @@ import { API_URL } from "../config"
    Dimension und Zeitraum stehen ebenfalls in der URL (?dimension=key&range=1y).
    Der Zeitraum wählt nur den Ausschnitt; erkannt wird auf der ganzen Reihe.
    Inkrement 2: Ein Klick auf eine Stufe oder Listenzeile wählt die Veränderung
-   aus (?anomaly=id); darunter stehen die Bewertungen der Vergleichsfenster.
+   aus (?anomaly=id); darunter stehen der Vorher-Nachher-Vergleich und die
+   Bewertungen der Vergleichsfenster.
    ============================================================================ */
 
 // Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
@@ -104,6 +107,7 @@ export default function AnomaliesPage() {
     const side = sideState.id === selectedId ? sideState.side : "before"
     const sideWindow = windows?.[side] ?? null
     const reviewPages = useReviewPages(companyId, { source: SOURCE, start: sideWindow?.start, end: sideWindow?.end })
+    const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source: SOURCE, dimension })
     const selectAnomaly = (id) => updateParams({ anomaly: id })
     const eligibility = data?.eligibility
     const count = anomalies.length
@@ -248,6 +252,19 @@ export default function AnomaliesPage() {
                                 </p>
                             )}
                         </Section>
+
+                        {selectedAnomaly && windows && (
+                            <Section
+                                icon={<GitCompareArrows />}
+                                eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                title="Vorher-Nachher-Vergleich"
+                                subtitle={comparison.data
+                                    ? `Mitarbeiter · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
+                                    : "Mitarbeiter · Verschiebungen in den Bewertungen zwischen den Vergleichsfenstern"}
+                            >
+                                <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} />
+                            </Section>
+                        )}
 
                         {selectedAnomaly && windows && (
                             <Section

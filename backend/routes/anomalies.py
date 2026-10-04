@@ -2,7 +2,8 @@
 API-Route für auffällige Veränderungen im Bewertungsverlauf (Zyklus 2, Inkrement 1).
 
 Live berechnet aus der Monatsreihe (E3/E4), ohne Cache-Tabelle; die Datenbank
-wird nur gelesen. Logik in ``services/anomaly_service.py``.
+wird nur gelesen. Logik in ``services/anomaly_service.py``; der
+Vorher-Nachher-Vergleich (Inkrement 2) in ``services/explanation_service.py``.
 """
 
 from typing import Optional
@@ -11,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from models.changepoint_detector import DEFAULT_PENALTY_FACTOR
 from services.anomaly_service import DEFAULT_MIN_DELTA, company_anomalies, company_anomalies_all
+from services.explanation_service import DEFAULT_WINDOW_MONTHS, explain_anomaly
 from services.rating_series_service import OVERALL_DIMENSION
 
 router = APIRouter(prefix="/api/analytics", tags=["Anomalies"])
@@ -88,3 +90,46 @@ def get_company_anomalies(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error detecting anomalies: {str(e)}")
+
+
+@router.get("/company/{company_id}/anomalies/{anomaly_id}/explanations")
+def get_anomaly_explanations(
+    company_id: int,
+    anomaly_id: str,
+    source: Optional[str] = Query(None, description="Quelle; Standard aus anomaly_id"),
+    dimension: Optional[str] = Query(None, description="Dimension; Standard aus anomaly_id"),
+    window_months: int = Query(DEFAULT_WINDOW_MONTHS, ge=1, le=36, description=f"Monate je Vergleichsfenster (Standard {DEFAULT_WINDOW_MONTHS}, E12)"),
+):
+    """
+    Vorher-Nachher-Vergleich einer auffälligen Veränderung (Inkrement 2).
+
+    Die Veränderungen werden mit den Standardparametern neu berechnet und
+    ``anomaly_id`` (``"{source}:{dimension}:{YYYY-MM}"``) darunter gesucht::
+
+        {
+          "company_id", "source", "dimension",
+          "anomaly": {...},                       # wie in /anomalies
+          "windows": {"window_months": 6,
+                      "before": {"from", "to", "start", "end", "months", "n_reviews"},
+                      "after": {...}},
+          "comparison": {"before": {"n_reviews", "mean_rating", "n_rated", "sentiment"},
+                         "after": {...}, "rating_shift", "polarity_shift",
+                         "topics": [{"topic", "before": {"mentions", "share", "sentiment"},
+                                     "after": {...}, "share_shift_pp", "polarity_shift",
+                                     "low_basis"}, ...],
+                         "low_basis", "low_basis_rule", "sentiment_mode", "sentiment_sample"},
+          "explanations": []                      # folgt in Inkrement 5
+        }
+
+    Der Vergleich beschreibt Veränderungen in den Bewertungen, keine Ursachen.
+    Unbekannte ``anomaly_id``: 404; ungültige Quelle oder Dimension: 400.
+    """
+    try:
+        result = explain_anomaly(company_id, anomaly_id, source=source, dimension=dimension, window_months=window_months)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error comparing periods: {str(e)}")
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Auffällige Veränderung '{anomaly_id}' nicht gefunden.")
+    return result
