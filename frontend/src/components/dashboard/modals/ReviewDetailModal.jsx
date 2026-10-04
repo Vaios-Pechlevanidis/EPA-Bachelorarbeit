@@ -1,6 +1,7 @@
 import * as React from "react"
 import { RATING_CATEGORIES as ratingCategories } from "@/lib/ratingCategories"
 import { statusLabel } from "@/lib/reviewerStatus"
+import { HighlightedText } from "../HighlightedText"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import {
   Calendar, User, Star,
@@ -117,6 +118,7 @@ function Section({ icon, title, eyebrow, tone = "neutral", action, children }) {
    ============================================================================ */
 export default function ReviewDetailModal({
   open, onOpenChange, reviewDetail, allReviewDetails = [], currentIndex = 0, onNavigate,
+  highlightTopic = null,  // Name des Schlüsselwort-Themas, dessen Fundstellen markiert sind (reviewDetail.highlights)
 }) {
   if (!reviewDetail || !reviewDetail.fullReview) return null
 
@@ -138,6 +140,13 @@ export default function ReviewDetailModal({
         {i < arr.length - 1 && <br />}
       </span>
     ))
+  }
+
+  // Textfeld mit markierten Fundstellen, wenn reviewDetail.highlights sie liefert.
+  const fieldText = (field) => {
+    const spans = reviewDetail.highlights?.[field]
+    if (!spans?.length) return field === "titel" ? fullReview.titel : formatText(fullReview[field])
+    return <HighlightedText text={fullReview[field]} spans={spans} title={highlightTopic ? `Thema ${highlightTopic}` : undefined} />
   }
 
   return (
@@ -170,6 +179,11 @@ export default function ReviewDetailModal({
                 <User />
                 {fullReview.sourceType || "Unbekannt"}
               </span>
+              {highlightTopic && reviewDetail.highlights && Object.keys(reviewDetail.highlights).length > 0 && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-100 text-slate-700 font-medium text-[10.5px]">
+                  {highlightTopic} markiert
+                </span>
+              )}
               {statusLabel(fullReview.status) && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[10.5px] uppercase tracking-wider">
                   {statusLabel(fullReview.status)}
@@ -246,7 +260,7 @@ export default function ReviewDetailModal({
                 {fullReview.titel && (
                   <Section icon={<FileText />} eyebrow="TITEL" title="Review-Titel">
                     <p className="m-0 text-[14px] font-medium text-slate-800 leading-snug">
-                      {fullReview.titel}
+                      {fieldText("titel")}
                     </p>
                   </Section>
                 )}
@@ -254,7 +268,7 @@ export default function ReviewDetailModal({
                 {fullReview.stellenbeschreibung && (
                   <Section icon={<FileText />} eyebrow="POSITION" title="Stellenbeschreibung">
                     <p className="m-0 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
-                      {formatText(fullReview.stellenbeschreibung)}
+                      {fieldText("stellenbeschreibung")}
                     </p>
                   </Section>
                 )}
@@ -262,7 +276,7 @@ export default function ReviewDetailModal({
                 {fullReview.jobbeschreibung && (
                   <Section icon={<Briefcase />} eyebrow="JOB" title="Jobbeschreibung">
                     <p className="m-0 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
-                      {formatText(fullReview.jobbeschreibung)}
+                      {fieldText("jobbeschreibung")}
                     </p>
                   </Section>
                 )}
@@ -271,7 +285,7 @@ export default function ReviewDetailModal({
                 <Section icon={<ThumbsUp />} eyebrow="POSITIV" title="Gut am Arbeitgeber" tone="good">
                   {fullReview.gut_am_arbeitgeber ? (
                     <p className="m-0 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
-                      {formatText(fullReview.gut_am_arbeitgeber)}
+                      {fieldText("gut_am_arbeitgeber")}
                     </p>
                   ) : (
                     <p className="m-0 text-[13px] text-slate-400 italic">Keine Angabe</p>
@@ -281,7 +295,7 @@ export default function ReviewDetailModal({
                 <Section icon={<ThumbsDown />} eyebrow="NEGATIV" title="Schlecht am Arbeitgeber" tone="bad">
                   {fullReview.schlecht_am_arbeitgeber ? (
                     <p className="m-0 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
-                      {formatText(fullReview.schlecht_am_arbeitgeber)}
+                      {fieldText("schlecht_am_arbeitgeber")}
                     </p>
                   ) : (
                     <p className="m-0 text-[13px] text-slate-400 italic">Keine Angabe</p>
@@ -292,7 +306,7 @@ export default function ReviewDetailModal({
                 {fullReview.verbesserungsvorschlaege && (
                   <Section icon={<Lightbulb />} eyebrow="VORSCHLÄGE" title="Verbesserungsvorschläge" tone="info">
                     <p className="m-0 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
-                      {formatText(fullReview.verbesserungsvorschlaege)}
+                      {fieldText("verbesserungsvorschlaege")}
                     </p>
                   </Section>
                 )}

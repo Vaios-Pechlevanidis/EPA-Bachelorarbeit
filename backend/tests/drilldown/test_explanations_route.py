@@ -39,7 +39,9 @@ class TestShape:
         res = client.get(EXPLAIN.format(DEMO_3, anomaly_id))
         assert res.status_code == 200
         body = res.json()
-        assert set(body) == {"company_id", "source", "dimension", "status", "anomaly", "windows", "comparison", "explanations"}
+        assert set(body) == {"company_id", "source", "dimension", "status", "dimension_topic", "anomaly", "windows",
+                             "comparison", "explanations"}
+        assert body["dimension_topic"] is None  # Gesamtbewertung
         assert body["explanations"] == [] and body["status"] is None
         assert body["anomaly"]["id"] == anomaly_id
         assert set(body["windows"]) == {"window_months", "before", "after"}

@@ -7,7 +7,7 @@ from database.supabase_client import get_supabase_client
 from typing import Optional, List, Dict, Any, Literal
 from services.topic_average_rating_service import _fetch_all_rows, get_topic_rating_timeseries
 import services.review_service as review_service
-from services.keyword_topic_service import analyze_topic, topic_definitions_for
+from services.keyword_topic_service import analyze_topic, topic_definitions_for, topic_for_dimension, topic_spans, topics_in_review
 from services.review_service import (
     clean_html_text,
     fetch_review_rows_in_range,
@@ -374,10 +374,14 @@ def _reviews_in_range(
     offset: int,
     limit: int,
     full: bool,
+    dimension: Optional[str] = None,
+    topic_only: bool = False,
 ) -> Dict[str, Any]:
     """Bewertungen eines Zeitraums (Drill-down, Inkrement 2), vollständig
     paginiert gelesen, nach Status gefiltert, nach Datum absteigend sortiert;
-    davon ``limit`` ab ``offset``. ValueError bei ungültigen Parametern."""
+    davon ``limit`` ab ``offset``. Mit ``dimension`` (braucht ``source``) werden
+    die Fundstellen des zugehörigen Schlüsselwort-Themas markiert.
+    ValueError bei ungültigen Parametern."""
     if source is not None and source not in ("employee", "candidates"):
         raise ValueError(f"source '{source}' ungültig; erlaubt: employee, candidates.")
     if status is not None and source is None:
@@ -386,6 +390,9 @@ def _reviews_in_range(
     if start_day and end_day and start_day > end_day:
         raise ValueError("start liegt nach end.")
     validate_status(source, status) if source else None
+    if dimension is not None and source is None:
+        raise ValueError("dimension braucht source (employee oder candidates).")
+    topic = topic_for_dimension(source, dimension) if dimension is not None else None
 
     sources = [source] if source else ["candidates", "employee"]
     tagged = []
@@ -393,18 +400,45 @@ def _reviews_in_range(
         rows = fetch_review_rows_in_range(src, company_id, start_day, end_day)
         tagged.extend({**row, "_source": src} for row in filter_by_status(rows, src, status))
     ordered = sort_newest_first(tagged)
+    mentioning = [r for r in ordered if topic in topics_in_review(r, r["_source"])] if topic else []
+    if topic_only:
+        if dimension is None:
+            raise ValueError("topic_only braucht dimension.")
+        ordered = mentioning
     page = ordered[offset: offset + max(limit, 0)]
 
     def item(row: Dict[str, Any]) -> Dict[str, Any]:
         src = row.pop("_source")
-        return full_review_item(row, src) if full else _review_list_item(row, src)
+        out = full_review_item(row, src) if full else _review_list_item(row, src)
+        if topic is not None:
+            out["mentions_topic"] = topic in topics_in_review(row, src)
+            if full:
+                texts = {"preview": out["preview"], **{k: out["fullReview"].get(k) for k in HIGHLIGHT_FIELDS}}
+                spans = {k: topic_spans(v, topic, src) for k, v in texts.items()}
+                out["highlights"] = {k: v for k, v in spans.items() if v}
+        return out
 
-    return {
+    result = {
         "reviews": [item(dict(row)) for row in page],
         "total": len(ordered),
         "offset": offset,
         "limit": limit,
     }
+    if dimension is not None:
+        result["highlight"] = {
+            "dimension": dimension,
+            "topic": topic,
+            "mentions": len(mentioning) if topic else None,
+            "topic_only": topic_only,
+        }
+    return result
+
+
+# Textfelder von fullReview, in denen Fundstellen markiert werden.
+HIGHLIGHT_FIELDS = (
+    "titel", "gut_am_arbeitgeber", "schlecht_am_arbeitgeber", "verbesserungsvorschlaege",
+    "stellenbeschreibung", "jobbeschreibung",
+)
 
 
 @router.get("/company/{company_id}/reviews")
@@ -417,6 +451,8 @@ async def get_company_reviews(
     status: Optional[str] = Query(default=None, description="Statusschlüssel der Bewertendengruppe, braucht source"),
     offset: Optional[int] = Query(default=None, ge=0, description="Anzahl übersprungener Bewertungen"),
     format_: Optional[Literal["full"]] = Query(default=None, alias="format", description="'full': je Bewertung id, preview, fullReview"),
+    dimension: Optional[str] = Query(default=None, description="Dimension; markiert Fundstellen des zugehörigen Schlüsselwort-Themas, braucht source"),
+    topic_only: bool = Query(default=False, description="Nur Bewertungen, die das Thema der Dimension nennen; braucht dimension"),
 ):
     """Get detailed reviews for a company.
 
@@ -429,11 +465,21 @@ async def get_company_reviews(
     ``offset``. ``total`` ist die Zahl aller Treffer. Mit ``format=full`` hat
     jede Bewertung ``id``, ``preview`` (Textauszug) und ``fullReview`` (Format der
     Themenübersicht für ``ReviewDetailModal``). Ungültige Angaben: 400.
+
+    Mit ``dimension`` (z. B. ``image``, braucht ``source``): ``highlight`` nennt das
+    zugehörige Schlüsselwort-Thema (E10) und wie viele Bewertungen des Zeitraums es
+    nennen (``mentions``); jede Bewertung hat ``mentions_topic`` und mit
+    ``format=full`` ``highlights``: je Textfeld (``preview``, ``titel``,
+    ``gut_am_arbeitgeber``, …) die Fundstellen ``[[start, ende], ...]``
+    (Zeichenpositionen im gelieferten Text, Ende exklusiv). Für die
+    Gesamtbewertung ist ``topic`` None. ``topic_only=true`` liefert nur die
+    Bewertungen, die das Thema nennen; ``total`` zählt dann nur diese.
     """
-    if any(p is not None for p in (start, end, status, offset, format_)):
+    if any(p is not None for p in (start, end, status, offset, format_, dimension)):
         try:
             return _reviews_in_range(
                 company_id, source, start, end, status, offset or 0, limit, full=format_ == "full",
+                dimension=dimension, topic_only=topic_only,
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))

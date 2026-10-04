@@ -120,7 +120,31 @@ berechnet die Veränderungen mit den Standardparametern neu, sucht `anomaly_id` 
 `anomaly`, `windows` (mit Anzahl je Fenster), `comparison` und `explanations` (leer, folgt in
 Inkrement 5). Eine unbekannte `anomaly_id` ergibt 404. Die Datenbank wird nur gelesen.
 
-### 2.8 Beispiel aus den echten Daten (2026-10-04)
+### 2.8 Hervorhebung des Themas der gewählten Dimension (Nachtrag 2026-10-04)
+
+Ist auf der Detailseite eine Einzeldimension gewählt (z. B. „Image“), gehört dazu das
+gleichnamige Schlüsselwort-Thema (über die Sternespalte in `rating_fields`,
+`topic_for_dimension`). Dann gilt:
+
+- In den Listen „Bewertungen des Zeitraums“ und „Bewertungen <Monat>“ sind die
+  Fundstellen der Schlüsselwörter im Textauszug **markiert**, Bewertungen mit Treffer
+  tragen das Kennzeichen „nennt Image“, und der Untertitel nennt die Zahl („720
+  Bewertungen · davon 7 nennen Image“).
+- Der Schalter **„nur Bewertungen, die Image nennen“** (`?thema=nur`) zeigt nur diese
+  Bewertungen.
+- Im Detailfenster sind die Fundstellen in allen Textfeldern markiert („Image markiert“).
+- Im Vorher-Nachher-Vergleich ist die Zeile des Themas hervorgehoben („gewählte
+  Dimension“) und immer sichtbar, auch wenn sie nicht unter den sechs größten
+  Verschiebungen ist.
+
+Die Fundstellen berechnet das Backend (`topic_spans`, gleiche Muster wie
+`topics_in_review`): `GET /reviews?…&dimension=image&format=full` liefert je Bewertung
+`mentions_topic` und `highlights` (je Textfeld die Zeichenbereiche), dazu
+`highlight.mentions`; `topic_only=true` filtert. So folgt die Markierung genau der
+Themenregel; im Browser nachgebaute reguläre Ausdrücke würden Wortgrenzen bei Umlauten
+anders behandeln. Für die Gesamtbewertung gibt es kein Thema und keine Markierung.
+
+### 2.9 Beispiel aus den echten Daten (2026-10-04)
 
 Freenet, Mitarbeitende, Gesamtbewertung, Abfall ab 2021-09 (−1,06 Sterne, Ø der
 Monatsmittel 4,20 → 3,14):
@@ -170,7 +194,10 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
 - **Freitext fehlt oft:** Bei älteren Bewertungen gibt es wenig Text (Telekom 2010: 6 von 27
   Bewertungen davor). Die Stimmung beruht dann auf wenigen Texten.
 - **Schlüsselwörter:** nur deutsch, mehrdeutige Wörter zählen mit, keine Validierung
-  (E10).
+  (E10). Bei der Hervorhebung sieht man das direkt: „ansehen“ (Image) wird auch als Verb
+  markiert. Viele Bewertungen nennen das Thema ihrer Dimension gar nicht (Telekom, Image,
+  Mai bis Oktober 2018: 7 von 720); die Sternebewertung der Dimension und der Text
+  hängen nur lose zusammen.
 - **Stimmung:** Modellschätzung je ganzer Bewertung; der Lexikon-Modus erkennt Wörter mit
   Satzzeichen nicht (E11).
 - **Bewerberquelle:** Die meisten Statusgruppen sind für die automatische Erkennung zu dünn
@@ -185,6 +212,7 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
 | Vergleich | `backend/tests/drilldown/test_explanation_service.py`: Fenster, Anteile, Verschiebung, Sortierung, `low_basis`, `sentiment_sample`, Zwischenspeicher, Modus (konstruierte Zeilen, Lexikon bzw. Stub) |
 | Endpunkt | `backend/tests/drilldown/test_explanations_route.py`: Form, 404, 400, `window_months`, `status` |
 | Erkennung je Status | `backend/tests/anomaly/test_status_filter.py`: Zuordnung der Rohwerte, Reihen je Gruppe, Demo 3 je Status gültige Antwort |
+| Hervorhebung | `backend/tests/drilldown/test_topic_highlight.py`: Zuordnung Dimension → Thema (alle Dimensionen), Fundstellen nur als ganzes Wort, Fundstellen genau dann wenn `topics_in_review` das Thema nennt, `topic_only`, 400 bei ungültigen Angaben, Antwort ohne `dimension` unverändert. Browser: Telekom, Image, Abfall ab 2018-11 (7 von 720, Markierung in Liste und Detailfenster, Vergleichszeile hervorgehoben) |
 | Ohne Netzwerk | alle neuen Tests gegen den In-Memory-Store; zusätzlich mit unerreichbarer `SUPABASE_URL` grün |
 | Browser | Demo 3 (gehostet, id 18): Auswahl per Stufe und Zeile, Umschalter, Nachladen (25 → 50), Detailfenster mit Blättern, Vergleich im Transformer-Modus; Carl Zeiss Bewerber mit Status „Eingestellt“; Karte → Detailseite mit Quelle; helles und dunkles Theme |
 | Antwortzeit (2026-10-04, Entwicklungsrechner) | Lexikon 0,4–0,7 s je Anfrage; Transformer: Laden 3,6–4,0 s einmal je Prozess, erste Anfrage 1,6 s (Freenet, 39 Texte) bis 8,4 s (SAP, 285 Texte), Telekom 457 Texte 10,8 s nur Vergleich; mit Zwischenspeicher 0,2–0,5 s |
