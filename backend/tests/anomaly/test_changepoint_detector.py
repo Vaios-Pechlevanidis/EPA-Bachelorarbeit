@@ -1,7 +1,9 @@
 """
 Test Suite für die Erkennung von Niveauwechseln (Zyklus 2, Inkrement 1).
-Überprüft PELT mit Startwerten (model="l2", min_size=3, penalty=0.5), den
-Fallback über gleitende Mittel und die Kennzahlen je Wechsel.
+Überprüft PELT im festen Modus (model="l2", min_size=3, penalty=0.5, der
+Standard bis 2026-10-04), den skalierten Strafterm (Standard seit 2026-10-04,
+penalty = Faktor · sigma² · ln(n)), noise_sigma, den Fallback über gleitende
+Mittel und die Kennzahlen je Wechsel.
 
 Ausführung:
     uv run python -m pytest tests/anomaly/test_changepoint_detector.py -v
@@ -19,9 +21,15 @@ from models.changepoint_detector import (  # noqa: E402
     ChangePointDetector,
     MovingMeanDetector,
     PeltDetector,
+    DEFAULT_PENALTY_FACTOR,
+    MIN_NOISE_SIGMA,
     detect_changepoints,
     level_shifts,
+    noise_sigma,
+    scaled_penalty,
 )
+
+FIXED = PeltDetector(penalty=0.5)  # bisheriger Standard, fester Modus
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -38,12 +46,12 @@ def _series(levels: list[tuple[float, int]], noise: float = 0.08, seed: int = 0)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestPeltDetection:
-    """Tests für Niveauwechsel mit PELT und Startwerten."""
+    """Tests für Niveauwechsel mit PELT im festen Modus (penalty 0.5, bisheriger Standard)."""
 
     def test_single_fall_detected(self):
         """Test: Abfall von 4,0 auf 3,2 nach 12 Monaten → ein Wechsel bei Index 12."""
         values = _series([(4.0, 12), (3.2, 12)])
-        result = detect_changepoints(values)
+        result = detect_changepoints(values, FIXED)
         assert result.method == "pelt"
         assert result.indices == [12]
         shift = level_shifts(values, result.indices)[0]
@@ -53,7 +61,7 @@ class TestPeltDetection:
     def test_single_rise_detected(self):
         """Test: Anstieg von 3,0 auf 3,8 → ein Wechsel mit positivem Delta."""
         values = _series([(3.0, 10), (3.8, 14)], seed=1)
-        result = detect_changepoints(values)
+        result = detect_changepoints(values, FIXED)
         assert result.indices == [10]
         shift = level_shifts(values, result.indices)[0]
         assert shift["delta"] > 0.6
@@ -64,7 +72,7 @@ class TestPeltDetection:
     def test_fall_then_rise_detected(self):
         """Test: V-Form → zwei Wechsel; Kennzahlen beziehen sich auf die Nachbarsegmente."""
         values = _series([(4.0, 12), (3.0, 12), (3.9, 12)], seed=2)
-        result = detect_changepoints(values)
+        result = detect_changepoints(values, FIXED)
         assert result.indices == [12, 24]
         fall, rise = level_shifts(values, result.indices)
         assert fall["delta"] < 0 < rise["delta"]
@@ -82,7 +90,7 @@ class TestPeltDetection:
     def test_noise_only_no_change(self, seed):
         """Test: Nur Rauschen (SD 0,15 Sterne) → kein Wechsel."""
         values = _series([(3.6, 36)], noise=0.15, seed=seed)
-        result = detect_changepoints(values)
+        result = detect_changepoints(values, FIXED)
         assert result.indices == []
 
     def test_penalty_is_configurable(self):
@@ -102,7 +110,110 @@ class TestPeltDetection:
     def test_params_reported(self):
         """Test: Parameter werden für die Ausgabe mitgeliefert."""
         result = detect_changepoints(_series([(4.0, 12)]), PeltDetector(penalty=1.0))
-        assert result.params == {"model": "l2", "min_size": 3, "penalty": 1.0, "jump": 1}
+        assert result.params == {
+            "model": "l2", "min_size": 3, "penalty": 1.0, "penalty_mode": "fixed",
+            "penalty_factor": None, "noise_sigma": result.params["noise_sigma"], "jump": 1,
+        }
+        assert result.params["noise_sigma"] >= MIN_NOISE_SIGMA
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 1b. Skalierter Strafterm (Standard seit 2026-10-04)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _noisy(n: int, sigma: float, seed: int, jump: float = 0.0) -> list[float]:
+    """Helper: Reihe um 3,6 Sterne mit Normalrauschen, optional Sprung in der Mitte."""
+    rng = np.random.default_rng(seed)
+    x = 3.6 + rng.normal(0, sigma, n)
+    x[n // 2:] += jump
+    return list(x)
+
+
+def _shifts_over(values, detector, min_delta=0.3):
+    result = detect_changepoints(values, detector)
+    return [s for s in level_shifts(values, result.indices) if abs(s["delta"]) >= min_delta]
+
+
+class TestNoiseSigma:
+    """noise_sigma: robuste Streuung aus den ersten Differenzen."""
+
+    def test_constant_series_gives_floor(self):
+        """Test: Konstante Reihe → Untergrenze, kein Fehler, keine Division durch null."""
+        assert noise_sigma([3.7] * 24) == MIN_NOISE_SIGMA
+
+    @pytest.mark.parametrize("values", [[], [4.0], [4.0, 4.0]])
+    def test_short_series_gives_floor(self, values):
+        assert noise_sigma(values) == MIN_NOISE_SIGMA
+
+    def test_estimates_true_sigma(self):
+        """Test: Normalrauschen sigma 0,5 über 1000 Werte → Schätzung nahe 0,5."""
+        assert noise_sigma(_noisy(1000, 0.5, seed=3)) == pytest.approx(0.5, rel=0.1)
+
+    def test_robust_to_single_level_shift(self):
+        """Test: Ein Sprung von 1 Stern ändert die Schätzung kaum (nur eine große Differenz)."""
+        plain = noise_sigma(_noisy(120, 0.3, seed=4))
+        shifted = noise_sigma(_noisy(120, 0.3, seed=4, jump=1.0))
+        assert shifted == pytest.approx(plain, rel=0.1)
+
+
+class TestScaledPenalty:
+    """Strafterm = Faktor · sigma² · ln(n); fester Wert hat Vorrang."""
+
+    def test_default_is_scaled_with_factor_2(self):
+        result = detect_changepoints(_noisy(60, 0.3, seed=5))
+        assert result.params["penalty_mode"] == "scaled"
+        assert result.params["penalty_factor"] == DEFAULT_PENALTY_FACTOR == 2.0
+        expected = scaled_penalty(_noisy(60, 0.3, seed=5), 2.0)
+        assert result.params["penalty"] == pytest.approx(expected["penalty"], rel=1e-6)
+        assert result.params["noise_sigma"] == pytest.approx(expected["noise_sigma"], rel=1e-6)
+
+    def test_penalty_grows_with_n(self):
+        """Test: Gleiche Streuung, mehr Monate → größerer Strafterm (ln n)."""
+        base = [3.6 + (0.2 if i % 2 else -0.2) for i in range(200)]
+        p_short = scaled_penalty(base[:24])["penalty"]
+        p_long = scaled_penalty(base[:200])["penalty"]
+        assert p_long > p_short
+        assert p_long / p_short == pytest.approx(np.log(200) / np.log(24), rel=1e-6)
+
+    def test_penalty_grows_with_sigma(self):
+        """Test: Gleiche Länge, größere Streuung → größerer Strafterm (sigma²)."""
+        assert scaled_penalty(_noisy(60, 0.5, seed=6))["penalty"] > scaled_penalty(_noisy(60, 0.2, seed=6))["penalty"]
+
+    def test_fixed_penalty_has_priority(self):
+        """Test: Übergebener fester Wert wird verwendet, Faktor ignoriert."""
+        result = detect_changepoints(_noisy(60, 0.3, seed=7), PeltDetector(penalty=0.5, penalty_factor=4.0))
+        assert result.params["penalty_mode"] == "fixed"
+        assert result.params["penalty"] == 0.5
+        assert result.params["penalty_factor"] is None
+
+    def test_fixed_mode_matches_previous_behaviour(self):
+        """Test: Fester Modus 0.5 liefert dieselben Indizes wie ruptures direkt mit pen=0.5."""
+        import ruptures as rpt
+        values = _series([(4.0, 12), (3.0, 12), (3.9, 12)], seed=2)
+        direct = rpt.Pelt(model="l2", min_size=3, jump=1).fit(np.asarray(values).reshape(-1, 1)).predict(pen=0.5)
+        assert detect_changepoints(values, FIXED).indices == [b for b in direct if b < len(values)]
+
+    def test_long_noisy_series_without_jump(self):
+        """Test: 120 Monate, sigma 0,5, kein Sprung (fester Startwert) → keine Veränderung."""
+        assert _shifts_over(_noisy(120, 0.5, seed=11), PeltDetector()) == []
+
+    def test_long_noisy_series_with_jump(self):
+        """Test: Dieselbe Reihe mit Sprung von 1,0 Sternen → genau dieser Wechsel."""
+        shifts = _shifts_over(_noisy(120, 0.5, seed=11, jump=1.0), PeltDetector())
+        assert len(shifts) == 1
+        assert abs(shifts[0]["index"] - 60) <= 1
+        assert shifts[0]["delta"] == pytest.approx(1.0, abs=0.25)
+
+    def test_false_alarm_rate_on_noise(self):
+        """Test: Über 50 Startwerte (120 Monate, sigma 0,5) höchstens 10 % Fehlalarme
+        mit Faktor 2 und min_delta 0,3 (gemessen 2026-10-04: 6 % über 200 Startwerte)."""
+        alarms = sum(bool(_shifts_over(_noisy(120, 0.5, seed=s), PeltDetector())) for s in range(50))
+        assert alarms <= 5
+
+    def test_fixed_05_oversegments_noisy_series(self):
+        """Test: Der alte feste Wert 0,5 übersegmentiert verrauschte Reihen (Befund für E9)."""
+        alarms = sum(bool(_shifts_over(_noisy(120, 0.5, seed=s), FIXED)) for s in range(50))
+        assert alarms >= 40
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
