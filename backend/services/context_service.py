@@ -1,0 +1,282 @@
+"""
+Aktienkurs als Einordnung neben dem Bewertungsverlauf (Zyklus 2, Inkrement 3).
+
+Kurs und Kennzahlen zeigen das Marktumfeld eines Unternehmens. Sie sind eine
+Einordnung, keine Erklärung: Dieser Dienst berechnet keinen Zusammenhang
+zwischen Kurs und Bewertungen und liefert keinen Vergleichswert.
+
+Ablauf je Unternehmen:
+
+1. Ticker aus ``companies.ticker`` (nur lesend). Fehlt die Spalte (Migration
+   006 nicht eingespielt) oder der Wert, gilt ``backend/data/company_metadata.json``
+   über ``company_id``, aber nur, wenn der Name dort zum Namen in der Datenbank
+   passt (Schutz gegen andere IDs, etwa im In-Memory-Store).
+2. Kursreihe aus dem Zwischenspeicher ``backend/data/market/<ticker>.json``
+   (nicht eingecheckt, gefüllt mit ``scripts/fetch_market_data.py``).
+3. Fehlt der Zwischenspeicher und ist ``MARKET_LIVE_FETCH`` nicht ``0``, wird
+   einmal live über yfinance abgerufen und gespeichert. Schlägt das fehl, gibt
+   es keinen Fehler, sondern ``available: false`` mit Begründung; derselbe
+   Ticker wird dann für ``FAILED_FETCH_TTL`` Sekunden nicht erneut versucht.
+
+Kursreihe: Monatsschlusskurse über den ganzen verfügbaren Zeitraum
+(``interval="1mo"``, ``auto_adjust=True``, also um Splits und Dividenden
+bereinigt), je Monat ``{"period": "YYYY-MM", "close": float}``. Der Monat des
+Abrufs fehlt, weil er noch nicht abgeschlossen ist.
+
+Der Netzabruf liegt hinter ``fetch_raw`` (austauschbar über den Parameter
+``fetcher``); ``build_record`` formt die Rohdaten ohne Netzwerk um. So laufen
+die Tests mit nachgebildeten Rohdaten.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import math
+import os
+import re
+import tempfile
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
+from database.supabase_client import get_supabase_client
+
+logger = logging.getLogger(__name__)
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+METADATA_PATH = BACKEND_DIR / "data" / "company_metadata.json"
+CACHE_DIR = BACKEND_DIR / "data" / "market"
+
+SOURCE = "Yahoo Finance über yfinance"
+ADJUSTMENT = "Monatsschluss, um Splits und Dividenden bereinigt"
+LIVE_FETCH_ENV = "MARKET_LIVE_FETCH"
+FAILED_FETCH_TTL = 15 * 60  # Sekunden ohne neuen Live-Versuch nach einem Fehlschlag
+
+_PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+RawFetcher = Callable[[str], Dict[str, Any]]
+
+# Fehlgeschlagene Live-Abrufe je Ticker: (Zeitpunkt, Begründung).
+_failed_fetches: Dict[str, tuple[float, str]] = {}
+
+
+# ---------------------------------------------------------------------------
+# Ticker
+# ---------------------------------------------------------------------------
+
+def _normalize_name(raw: Optional[str]) -> str:
+    """Wie ``scripts/seed_company_metadata.normalize_for_match``."""
+    return " ".join(str(raw or "").split()).casefold()
+
+
+def _is_missing_column_error(exc: Exception) -> bool:
+    """True, wenn PostgREST eine fehlende Spalte meldet (SQLSTATE 42703), wie in
+    ``routes/companies.py``."""
+    return getattr(exc, "code", None) == "42703" or "42703" in str(exc)
+
+
+def load_metadata(path: Path = METADATA_PATH) -> Dict[int, Dict[str, Any]]:
+    """Einträge aus ``company_metadata.json`` nach ``company_id``."""
+    with open(path, "r", encoding="utf-8") as fh:
+        return {int(e["company_id"]): e for e in json.load(fh)}
+
+
+def _company_row(company_id: int) -> Optional[Dict[str, Any]]:
+    """Zeile aus ``companies`` (nur lesend); ohne Migration 006 nur id und name."""
+    supabase = get_supabase_client()
+    try:
+        res = supabase.table("companies").select("id,name,ticker,peer_group").eq("id", company_id).execute()
+    except Exception as exc:  # noqa: BLE001
+        if not _is_missing_column_error(exc):
+            raise
+        res = supabase.table("companies").select("id,name").eq("id", company_id).execute()
+    rows = res.data or []
+    return rows[0] if rows else None
+
+
+def company_ticker_info(company_id: int, metadata: Optional[Dict[int, Dict[str, Any]]] = None) -> Optional[Dict[str, Any]]:
+    """Ticker und Einordnung eines Unternehmens oder None, wenn es die ID nicht gibt.
+
+    Rückgabe: ``{"company_id", "name", "ticker", "ticker_scope", "peer_group",
+    "ticker_source"}`` mit ``ticker_source`` ``"db"``, ``"metadata"`` oder None.
+    ``ticker_scope`` (``"eigene Aktie"`` oder ``"Konzernmutter"``) steht nur in
+    der Metadatei; ohne passenden Eintrag bleibt er None.
+    """
+    row = _company_row(company_id)
+    if row is None:
+        return None
+    meta_all = load_metadata() if metadata is None else metadata
+    meta = meta_all.get(int(company_id))
+    if meta is not None and _normalize_name(meta.get("name")) != _normalize_name(row.get("name")):
+        meta = None
+    ticker = (row.get("ticker") or "").strip().upper() or None
+    ticker_source = "db" if ticker else None
+    if ticker is None and meta is not None and meta.get("ticker"):
+        ticker = str(meta["ticker"]).strip().upper()
+        ticker_source = "metadata"
+    peer_group = row.get("peer_group") or (meta or {}).get("peer_group")
+    return {
+        "company_id": int(company_id),
+        "name": row.get("name"),
+        "ticker": ticker,
+        "ticker_scope": (meta or {}).get("ticker_scope") if ticker else None,
+        "peer_group": peer_group,
+        "ticker_source": ticker_source,
+    }
+
+
+def ticker_for_company(company_id: int) -> Optional[str]:
+    """Ticker in Yahoo-Notation oder None (kein Unternehmen oder kein Ticker)."""
+    info = company_ticker_info(company_id)
+    return info["ticker"] if info else None
+
+
+# ---------------------------------------------------------------------------
+# Abruf und Umformung
+# ---------------------------------------------------------------------------
+
+def fetch_raw(ticker: str) -> Dict[str, Any]:
+    """Rohdaten über yfinance (Netzwerk). Einzige Stelle mit Netzabruf.
+
+    Rückgabe: ``{"currency", "name", "history": [{"date": "YYYY-MM-DD",
+    "close": float}, ...], "info": {...}, "revenue": [...]}``.
+    """
+    import yfinance as yf  # erst hier: Tests und Start ohne Netz brauchen es nicht
+
+    tk = yf.Ticker(ticker)
+    hist = tk.history(period="max", interval="1mo", auto_adjust=True)
+    history = [
+        {"date": idx.strftime("%Y-%m-%d"), "close": float(close)}
+        for idx, close in zip(hist.index, hist["Close"])
+    ] if hist is not None and len(hist) else []
+    meta = getattr(tk, "history_metadata", None) or {}
+    return {
+        "currency": meta.get("currency"),
+        "name": meta.get("longName") or meta.get("shortName"),
+        "history": history,
+        "yfinance_version": getattr(yf, "__version__", None),
+    }
+
+
+def _finite(value: Any) -> Optional[float]:
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+def monthly_closes(history: List[Dict[str, Any]], fetched_at: datetime) -> List[Dict[str, Any]]:
+    """Monatsreihe ``[{"period", "close"}]`` aus den Kursbalken.
+
+    Je Kalendermonat zählt der letzte Balken (yfinance hängt teils einen
+    zusätzlichen Balken mit Tagesdatum an). Fehlende Kurse entfallen. Der
+    Monat des Abrufs und spätere Monate entfallen, weil sie nicht abgeschlossen sind.
+    """
+    current = fetched_at.strftime("%Y-%m")
+    by_period: Dict[str, float] = {}
+    for bar in sorted(history, key=lambda b: str(b.get("date"))):
+        period = str(bar.get("date", ""))[:7]
+        close = _finite(bar.get("close"))
+        if not _PERIOD_RE.match(period) or close is None or period >= current:
+            continue
+        by_period[period] = round(close, 4)
+    return [{"period": p, "close": c} for p, c in sorted(by_period.items())]
+
+
+def build_record(ticker: str, raw: Dict[str, Any], fetched_at: Optional[datetime] = None) -> Dict[str, Any]:
+    """Speicherbarer Datensatz aus Rohdaten (ohne Netzwerk)."""
+    fetched_at = fetched_at or datetime.now(timezone.utc)
+    version = raw.get("yfinance_version")
+    return {
+        "ticker": ticker,
+        "ticker_name": raw.get("name"),
+        "currency": raw.get("currency"),
+        "fetched_at": fetched_at.replace(microsecond=0).isoformat(),
+        "source": f"{SOURCE} {version}".strip() if version else SOURCE,
+        "adjustment": ADJUSTMENT,
+        "prices": monthly_closes(raw.get("history") or [], fetched_at),
+        "metrics": {},
+    }
+
+
+# ---------------------------------------------------------------------------
+# Zwischenspeicher
+# ---------------------------------------------------------------------------
+
+def _cache_path(ticker: str, cache_dir: Optional[Path] = None) -> Path:
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", ticker)
+    return Path(cache_dir or CACHE_DIR) / f"{safe}.json"
+
+
+def load_cached(ticker: str, cache_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    """Datensatz aus dem Zwischenspeicher oder None (fehlt oder unlesbar)."""
+    path = _cache_path(ticker, cache_dir)
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            record = json.load(fh)
+    except (OSError, ValueError) as exc:
+        logger.warning("Zwischenspeicher %s nicht lesbar: %s", path.name, exc)
+        return None
+    return record if isinstance(record, dict) and record.get("ticker") == ticker else None
+
+
+def save_cached(record: Dict[str, Any], cache_dir: Optional[Path] = None) -> Path:
+    """Schreibt den Datensatz atomar (temporäre Datei, dann umbenennen)."""
+    path = _cache_path(record["ticker"], cache_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(record, fh, ensure_ascii=False, indent=1)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    return path
+
+
+def fetch_and_store(ticker: str, fetcher: Optional[RawFetcher] = None, cache_dir: Optional[Path] = None) -> Dict[str, Any]:
+    """Ruft ab, formt um und speichert; Fehler des Abrufs werden weitergereicht.
+
+    Liefert der Abruf keinen einzigen Monatskurs, wird nichts gespeichert und
+    ein ValueError ausgelöst (etwa bei nicht mehr notierten Titeln).
+    """
+    raw = (fetcher or fetch_raw)(ticker)
+    record = build_record(ticker, raw)
+    if not record["prices"]:
+        raise ValueError(f"yfinance liefert für {ticker} keine Monatskurse")
+    save_cached(record, cache_dir)
+    return record
+
+
+def live_fetch_enabled() -> bool:
+    return os.getenv(LIVE_FETCH_ENV, "1").strip() != "0"
+
+
+def market_record(ticker: str, fetcher: Optional[RawFetcher] = None, cache_dir: Optional[Path] = None) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """Datensatz zur Laufzeit: Zwischenspeicher, sonst einmal live.
+
+    Rückgabe ``(record, None)`` oder ``(None, Begründung)``; wirft nicht.
+    """
+    record = load_cached(ticker, cache_dir)
+    if record is not None:
+        return record, None
+    if not live_fetch_enabled():
+        return None, (f"Keine gespeicherten Kursdaten für {ticker}; der Live-Abruf ist abgeschaltet "
+                      f"({LIVE_FETCH_ENV}=0).")
+    failed = _failed_fetches.get(ticker)
+    if failed and time.monotonic() - failed[0] < FAILED_FETCH_TTL:
+        return None, failed[1]
+    try:
+        return fetch_and_store(ticker, fetcher=fetcher, cache_dir=cache_dir), None
+    except Exception as exc:  # noqa: BLE001 – Netz, yfinance, Dateisystem
+        logger.warning("Kursabruf für %s fehlgeschlagen: %s", ticker, exc)
+        reason = f"Kursdaten für {ticker} konnten nicht abgerufen werden ({type(exc).__name__}: {exc})."
+        _failed_fetches[ticker] = (time.monotonic(), reason)
+        return None, reason
