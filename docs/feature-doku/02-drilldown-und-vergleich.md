@@ -175,8 +175,6 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
   Satzzeichen nicht (E11).
 - **Bewerberquelle:** Die meisten Statusgruppen sind für die automatische Erkennung zu dünn
   (E13); die Seite zeigt dann den Eignungshinweis.
-- **Themenübersicht:** `topic-overview` liest je Quelle höchstens 1000 Bewertungen (siehe
-  Offene Punkte); der Vergleich ist davon nicht betroffen, er liest paginiert.
 
 ## 5. Prüfung und Belege
 
@@ -195,11 +193,13 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
 
 ## 6. Offene Punkte
 
-- **topic-overview schneidet ab:** Die Route liest je Quelle mit einer einzigen Abfrage
-  ohne Paginierung; PostgREST liefert höchstens 1000 Zeilen. Gemessen 2026-10-04: Telekom
-  (6 899 Mitarbeiterbewertungen), Bechtle (2 369), Carl Zeiss (1 700) liefern
-  `total_reviews` 1000; betroffen sind auch 1&1 (1 291), Cancom (1 474) und Freenet
-  (1 027). Nicht geändert (Auftrag); Entscheidung des Autors.
+- **topic-overview schnitt ab (behoben 2026-10-04):** Die Route las je Quelle mit einer
+  einzigen Abfrage höchstens 1000 Zeilen (PostgREST-Grenze); Telekom, Bechtle, Carl Zeiss,
+  1&1, Cancom und Freenet waren betroffen. Auf Wunsch des Autors liest sie jetzt alle Zeilen
+  seitenweise (`_fetch_all_rows`, nach `id`). Danach `total_reviews` Mitarbeitende: Telekom
+  6 899 (3,7 s), Bechtle 2 369 (2,2 s), Carl Zeiss 1 700, Cancom 1 474, 1&1 1 291, Freenet
+  1 027. Für Unternehmen mit mehr als 1000 Bewertungen ändern sich damit Themenübersicht
+  und Dashboard-Werte, die darauf beruhen; Demo 1–3 unverändert (Hash-Test).
 - Gewichtung Monatsmittel gegen Bewertungen (siehe Grenzen): zusätzlich das Mittel der
   Monatsmittel je Fenster zeigen?
 - Fensterlänge 6 Monate, Stichprobe 300 und Schwellen der kleinen Basis (10 / 5) sind

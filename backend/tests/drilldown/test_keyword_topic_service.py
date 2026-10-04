@@ -85,6 +85,17 @@ class TestEndDate:
         for topic in body["topics"]:
             assert all((p["year"], p["monthNum"]) <= (2023, 6) for p in topic["timelineData"])
 
+    def test_reads_all_rows_over_several_pages(self, api, monkeypatch):
+        """Test: Mit kleiner Seitengröße zählt topic-overview trotzdem alle Bewertungen
+        (früher höchstens eine Abfrage, also 1000 Zeilen bei PostgREST)."""
+        import services.review_service as rv
+
+        full = _get(api, 3, source="employee")
+        monkeypatch.setattr(rv, "PAGE_SIZE", 37)
+        paged = _get(api, 3, source="employee")
+        assert paged["total_reviews"] == len(store_rows("employee", 3)) > 37 * 10
+        assert response_hash(paged) == response_hash(full)
+
     def test_invalid_end_date_gives_400(self, api):
         """Test: end_date in falschem Format → 400 {"detail": ...}."""
         res = api.get(URL.format(3), params={"end_date": "30.06.2023"})

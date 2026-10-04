@@ -5,7 +5,8 @@ API routes for analytics and company data.
 from fastapi import APIRouter, HTTPException, Query
 from database.supabase_client import get_supabase_client
 from typing import Optional, List, Dict, Any, Literal
-from services.topic_average_rating_service import get_topic_rating_timeseries
+from services.topic_average_rating_service import _fetch_all_rows, get_topic_rating_timeseries
+import services.review_service as review_service
 from services.keyword_topic_service import analyze_topic, topic_definitions_for
 from services.review_service import (
     clean_html_text,
@@ -555,6 +556,10 @@ async def get_topic_overview(
 
     Themen-Definitionen und ``analyze_topic`` stehen in
     ``services/keyword_topic_service.py``.
+
+    Alle Bewertungen werden seitenweise gelesen (``_fetch_all_rows``, nach ``id``
+    sortiert); bis 2026-10-04 las die Route je Quelle nur eine Abfrage und damit
+    höchstens 1000 Zeilen (PostgREST-Grenze).
     """
     try:
         end_day = parse_day(end_date, "end_date")
@@ -575,7 +580,7 @@ async def get_topic_overview(
                 candidates_query = candidates_query.gte("datum", start_date)
             if end_exclusive:
                 candidates_query = candidates_query.lt("datum", end_exclusive)
-            candidates_data = candidates_query.execute().data or []
+            candidates_data = _fetch_all_rows(candidates_query.order("id"), page_size=review_service.PAGE_SIZE)
 
         if source is None or source == "employee":
             employee_query = supabase.table("employee")\
@@ -585,7 +590,7 @@ async def get_topic_overview(
                 employee_query = employee_query.gte("datum", start_date)
             if end_exclusive:
                 employee_query = employee_query.lt("datum", end_exclusive)
-            employee_data = employee_query.execute().data or []
+            employee_data = _fetch_all_rows(employee_query.order("id"), page_size=review_service.PAGE_SIZE)
         
         all_reviews = candidates_data + employee_data
         
