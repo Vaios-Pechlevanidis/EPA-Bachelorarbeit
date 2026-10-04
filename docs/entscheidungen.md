@@ -163,7 +163,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Entscheidung:**
   - **Verfahren:** PELT (Killick, Fearnhead & Eckley 2012) aus `ruptures` mit Kostenfunktion
     `model="l2"` (Wechsel des Mittelwerts), `min_size=3` bewertete Monate je Abschnitt und
-    Strafterm `penalty=0.5`. Umsetzung: `backend/models/changepoint_detector.py`.
+    Strafterm `penalty=0.5` (fester Wert, gültig bis 2026-10-04; seitdem skalierter
+    Strafterm, siehe „Aktualisierung 2026-10-04“ unten). Umsetzung:
+    `backend/models/changepoint_detector.py`.
   - **Fallback:** Für Reihen, die für PELT zu kurz sind (unter `2 × min_size` Werten),
     Differenz der Mittel zweier angrenzender Fenster von 3 Monaten mit Schwelle 0,3 Sterne.
     Im Dashboard greift er nicht, weil geeignete Reihen mindestens 12 Monate haben.
@@ -202,7 +204,48 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     116; 0,5: 66; 1,0: 35; 2,0: 9 bei min_delta 0,3); `min_delta` wirkt ab penalty 0,5 kaum.
     Lange, dichte Reihen (Cancom, 1&1, Telekom) erhalten die meisten Markierungen, weil der
     Strafterm nicht mit der Reihenlänge wächst.
-- **Status:** **vorläufig.** Die Werte sind Setzungen des Autors, geprüft an Demo 3 und an der
-  Parameterübersicht, **nicht an Referenzzeiträumen**. Die Messung gegen die Referenzzeiträume
-  für DZ1 (F1 mit ±1 Monat Toleranz, E5) steht aus; danach wird dieser Eintrag mit Beleg
-  aktualisiert.
+- **Status (2026-10-03):** **vorläufig.** Die Werte sind Setzungen des Autors, geprüft an Demo 3
+  und an der Parameterübersicht, **nicht an Referenzzeiträumen**. Die Messung gegen die
+  Referenzzeiträume für DZ1 (F1 mit ±1 Monat Toleranz, E5) steht aus; danach wird dieser
+  Eintrag mit Beleg aktualisiert.
+
+### E9 – Aktualisierung 2026-10-04: skalierter Strafterm
+
+- **Alte Regel:** fester Strafterm `penalty = 0,5` (quadrierte Sterne) für jede Reihe.
+- **Befund:** Der feste Wert berücksichtigt weder die Länge noch die Streuung einer Reihe.
+  Mit den Startwerten entstanden 66 Markierungen bei 15 geeigneten Unternehmen (Cancom 16,
+  1&1 und Telekom je 9), 55 davon „deutlich“. Reihen mit stark schwankenden Monatsmitteln
+  wurden übersegmentiert. Auf synthetischen Reihen ohne Sprung (120 Monate, σ 0,5) meldet
+  der feste Wert 0,5 in mindestens 40 von 50 Fällen eine Veränderung über 0,3 Sterne
+  (`backend/tests/anomaly/test_changepoint_detector.py`,
+  `test_fixed_05_oversegments_noisy_series`).
+- **Neue Regel:** Standard ist der skalierte Strafterm
+  `penalty = penalty_factor · σ² · ln(n)` mit `penalty_factor = 2,0`, `n` = Zahl der
+  bewerteten Monate und `σ = noise_sigma(values) = 1,4826 · MAD(diff(values)) / √2`
+  (robuste Streuung der Monatsmittel aus den ersten Differenzen, Untergrenze 0,05 Sterne).
+  Die Differenzen machen die Schätzung unempfindlich gegen Niveauwechsel, der Median gegen
+  Ausreißer. Der Strafterm wächst damit mit der Streuung (σ²) und langsam mit der Länge
+  (ln n). Mit Faktor 2 entspricht die Form dem BIC-Strafterm für einen Mittelwertwechsel bei
+  bekannter Varianz; Beleg offen (Autor), vgl. Truong et al. 2020 zu prüfen. Ein ausdrücklich
+  übergebener fester `penalty` bleibt möglich und hat Vorrang (fester Modus). `model`,
+  `min_size`, `min_delta`, Schweregrad und das Protocol bleiben unverändert. Die API nennt je
+  Antwort und je Anomalie `penalty_mode` („scaled“/„fixed“), `penalty_factor`,
+  `noise_sigma` und den verwendeten `penalty`; bei `dimension=all` je Dimension.
+- **Ergebnis der neuen Parameterübersicht** (`backend/scripts/explore_anomaly_params.py`,
+  `backend/data/calibration/anomaly_params_scaled_employee_durchschnittsbewertung.csv`,
+  Stand 2026-10-04, Mitarbeitende, Gesamtbewertung, 15 geeignete Unternehmen; die CSV vom
+  2026-10-03 bleibt als Beleg): Markierungen gesamt (davon „deutlich“) bei `min_delta` 0,3:
+  Faktor 1: 44 (33), **Faktor 2: 19 (15)**, Faktor 3: 13 (9), Faktor 4: 10 (9); zum Vergleich
+  fest 0,5: 66 (55). Mit Faktor 2 je Unternehmen: Freenet 5, Telekom 4, NTT DATA 4, je 1 bei
+  SAP, 1&1, Bechtle, Compugroup, E.ON und RWE, keine bei Cancom, Thyssenkrupp, Carl Zeiss,
+  KIT, TU München und Open Grid Europe. Der verwendete Strafterm reicht von 0,42 (Open Grid
+  Europe, σ 0,26, n 22) bis 2,39 (Cancom, σ 0,50, n 115). Synthetisch (je 200 Reihen,
+  `min_delta` 0,3): Fehlalarme ohne Sprung bei 120 Monaten und σ 0,5 mit Faktor 2 in 6 %,
+  ein Sprung von 1,0 Sternen wird in 77 % genau getroffen (Faktor 3: 3 % / 82 %).
+- **Folgen:** Das Beispiel Telekom 2022-10 (Mindestlänge füllt einen kurzen Einbruch auf,
+  siehe oben) wird mit dem neuen Standard nicht mehr markiert. Demo 3 liefert weiter Abfall
+  um 2023-01 und Anstieg um 2023-12, Demo 1 und 2 keine Veränderung. Bei sehr verrauschten
+  Reihen braucht ein Wechsel jetzt einen größeren Sprung (Cancom bei 12/12 Monaten
+  0,63 statt 0,29 Sterne); echte, aber kleine Veränderungen können dort unerkannt bleiben.
+- **Status:** **vorläufig.** Faktor 2 ist eine Setzung des Autors, geprüft an Demo 1–3, an
+  synthetischen Reihen und an der Parameterübersicht, **nicht an Referenzzeiträumen** (DZ1).
