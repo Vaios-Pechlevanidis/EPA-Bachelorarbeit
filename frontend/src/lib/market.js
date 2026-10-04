@@ -38,3 +38,15 @@ export function fiscalYearLabel(end) {
   const [y, m] = String(end).split("-")
   return m === "12" ? `GJ ${y}` : `GJ bis ${m}/${y}`
 }
+
+/* Fester Hinweis bei Kurs und Kennzahlen (E15), in zwei Teilen für die Hervorhebung. */
+export const MARKET_DISCLAIMER_LEAD = "Einordnung, keine Erklärung."
+export const MARKET_DISCLAIMER_TEXT = "Der Kurs zeigt das Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht behauptet."
+
+export const PARENT_SCOPE = "Konzernmutter"
+
+/* Grund ohne Kurs, immer mit "Kein Aktienkurs" am Anfang. */
+export function noPriceText(reason) {
+  if (!reason) return "Kein Aktienkurs."
+  return reason.startsWith("Kein Aktienkurs") ? reason : `Kein Aktienkurs: ${reason}`
+}

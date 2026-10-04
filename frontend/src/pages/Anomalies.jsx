@@ -5,7 +5,7 @@ import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
-import { MarketMetrics, PriceToggle } from "@/components/dashboard/MarketContext"
+import { MarketContext, PriceToggle } from "@/components/dashboard/MarketContext"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, monthSpan, outlierCountText, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
@@ -280,9 +280,9 @@ export default function AnomaliesPage() {
                                 onSelectOutlier={selectOutlier}
                                 market={showPrice ? market.data : null}
                             />
-                            {market.data?.available && (
+                            {market.data && !market.loading && !market.error && (
                                 <div className="mt-4 pt-3 border-t border-slate-100">
-                                    <MarketMetrics metrics={market.data.metrics} />
+                                    <MarketContext market={market.data} loading={market.loading} error={market.error} companyName={companyName} />
                                 </div>
                             )}
                         </Section>

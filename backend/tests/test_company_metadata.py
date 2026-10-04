@@ -44,7 +44,7 @@ MIGRATION_PATH = os.path.join(BACKEND_DIR, "migrations", "006_add_company_metada
 EXPECTED_IDS = {3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
                 26, 27, 28, 29, 30, 31, 32, 33}
 REQUIRED_FIELDS = {
-    "company_id", "name", "name_normalized", "ticker", "isin", "sector",
+    "company_id", "name", "name_normalized", "ticker", "ticker_scope", "isin", "sector",
     "peer_group", "listed", "verification", "note",
 }
 VERIFICATION_FIELDS = {"ticker_checked_with", "rows", "isin_source", "checked_at"}
@@ -90,6 +90,10 @@ def test_metadata_json_structure_and_types(entries):
         assert isinstance(e["note"], str)
         for key in ("ticker", "isin"):
             assert e[key] is None or (isinstance(e[key], str) and e[key].strip())
+        # ticker_scope (Inkrement 3, E15): None ohne Ticker; bei Carl Zeiss offen (None)
+        assert e["ticker_scope"] in ("eigene Aktie", "Konzernmutter", None)
+        if e["ticker"] is None:
+            assert e["ticker_scope"] is None
         assert set(e["verification"]) == VERIFICATION_FIELDS
         v = e["verification"]
         assert v["ticker_checked_with"] in ("yfinance history 2y", None)

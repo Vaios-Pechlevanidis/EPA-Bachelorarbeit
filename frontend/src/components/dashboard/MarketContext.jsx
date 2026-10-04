@@ -4,7 +4,7 @@
    Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht behauptet und
    nicht berechnet.
    ============================================================================ */
-import { fiscalYearLabel, fmtAmount, fmtDay } from "@/lib/market"
+import { MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE, fiscalYearLabel, fmtAmount, fmtDay, noPriceText } from "@/lib/market"
 
 /* Umschalter "Aktienkurs" im Kopf des Diagrammabschnitts. */
 export function PriceToggle({ checked, onChange }) {
@@ -68,6 +68,37 @@ export function MarketMetrics({ metrics }) {
                     </p>
                 </div>
             )}
+        </div>
+    )
+}
+
+/* Wessen Kurs gezeigt wird: Wertpapier und Ticker; bei der Konzernmutter ausdrücklich. */
+function securityText(market, companyName) {
+    const security = market.ticker_name ? `${market.ticker_name} (${market.ticker})` : market.ticker
+    if (market.ticker_scope === PARENT_SCOPE) {
+        return `Kurs und Kennzahlen der Konzernmutter ${security}, nicht${companyName ? ` von ${companyName}` : " des Unternehmens"} selbst.`
+    }
+    return `Kurs und Kennzahlen: ${security}.`
+}
+
+/* Block unter dem Diagramm: Kennzahlen mit Herkunft und festem Hinweis oder,
+   ohne Kurs, nur der Grund. Während des Ladens und bei einem Ladefehler
+   bleibt die Ansicht wie ohne Kurs. */
+export function MarketContext({ market, loading, error, companyName }) {
+    if (loading || error || !market) return null
+    if (!market.available) {
+        return <p className="m-0 text-[11px] text-slate-500">{noPriceText(market.reason)}</p>
+    }
+    return (
+        <div className="space-y-3">
+            <MarketMetrics metrics={market.metrics} />
+            <p className="m-0 text-[11px] text-slate-500 leading-4">
+                {securityText(market, companyName)} Quelle: {market.source}, Kurse als Monatsschluss, um Splits und Dividenden
+                bereinigt; abgerufen am {fmtDay(market.fetched_at?.slice(0, 10))}.
+            </p>
+            <p className="m-0 text-[11px] text-slate-500 leading-4">
+                <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}
+            </p>
         </div>
     )
 }
