@@ -4,7 +4,6 @@ from collections import defaultdict
 
 from database.supabase_client import get_supabase_client
 
-supabase = get_supabase_client()
 
 Source = Literal["employee", "candidates"]
 Granularity = Literal["month", "year"]
@@ -79,6 +78,7 @@ def get_topic_rating_timeseries(
     start: Optional[str] = None,  # ISO, z.B. 2023-01-01
     end: Optional[str] = None,    # ISO, z.B. 2024-12-31
 ) -> Dict[str, Any]:
+    supabase = get_supabase_client()
     topic_cols = TOPIC_COLUMNS_BY_SOURCE[source]
 
     select_cols = ["datum", "company_id"] + list(topic_cols.values())

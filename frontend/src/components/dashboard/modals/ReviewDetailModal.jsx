@@ -1,5 +1,6 @@
 import * as React from "react"
 import { RATING_CATEGORIES as ratingCategories } from "@/lib/ratingCategories"
+import { statusLabel } from "@/lib/reviewerStatus"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import {
   Calendar, User, Star,
@@ -18,16 +19,6 @@ const formatDate = (dateString) => {
       year: "numeric", month: "long", day: "numeric",
     })
   } catch { return "Unbekannt" }
-}
-
-const formatStatus = (status) => {
-  if (!status) return null
-  const s = String(status).trim()
-  if (s === "1" || s === "1.0") return "Angestellt"
-  if (s === "0" || s === "0.0") return "Ex-Angestellt"
-  const normalized = s.toLowerCase().replace(/\s+/g, "-")
-  if (/^ex-?angestell/i.test(normalized)) return "Ex-Angestellt"
-  return s
 }
 
 const ratingTone = (s) => {
@@ -179,9 +170,9 @@ export default function ReviewDetailModal({
                 <User />
                 {fullReview.sourceType || "Unbekannt"}
               </span>
-              {fullReview.status && (
+              {statusLabel(fullReview.status) && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[10.5px] uppercase tracking-wider">
-                  {formatStatus(fullReview.status)}
+                  {statusLabel(fullReview.status)}
                 </span>
               )}
             </div>

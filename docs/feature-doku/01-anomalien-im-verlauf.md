@@ -430,7 +430,8 @@ dringendere Anlass zum Handeln.
 ## 6. Offene Punkte
 
 - Detailseite im selben Browser-Tab (wie der Vergleich) oder in einem neuen Tab öffnen?
-- Quellenauswahl (Bewerbende) folgt in Inkrement 2.
+- Quellenauswahl (Bewerbende): umgesetzt in Inkrement 2 zusammen mit dem Statusfilter,
+  siehe [02 – Drill-down und Vorher-Nachher-Vergleich](02-drilldown-und-vergleich.md) und E13.
 - Referenzzeiträume: Die Einträge wurden am 2026-10-03 zurückgestellt; Ersatzregel und
   Einschränkung für DZ1 stehen in E5 (Annotation vor der Evaluation, ohne Einsicht in
   Erkennungsergebnisse).

@@ -10,13 +10,15 @@ import {
     ResponsiveContainer,
     ReferenceLine,
     ReferenceDot,
+    ReferenceArea,
 } from "recharts"
-import { ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight, Layers, Maximize2, Users } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../../icons"
 import { useAnomalies } from "@/hooks/useAnomalies"
-import { ChartCardHeader, DropdownPicker } from "./ChartHeader"
-import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
-import { INTERP_KEYS, TIME_RANGES, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, trimToEvaluated } from "@/lib/anomalySeries"
+import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
+import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
+import { groupLabel, statusOptions } from "@/lib/reviewerStatus"
+import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, periodIndex, trimToEvaluated } from "@/lib/anomalySeries"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -24,12 +26,9 @@ import { INTERP_KEYS, TIME_RANGES, fmtPeriod, inWindow, interpolateGaps, levelsF
    Die Karte zeigt Verlauf und Zähler; die Liste der Veränderungen steht nur auf
    der Detailseite /anomalies, die ein Klick auf die Karte öffnet (onOpen).
    Wortwahl: "auffällige Veränderung", keine Aussage über Ursachen.
+   Inkrement 2: Quelle (Mitarbeiter, Bewerber) und Status wählen die
+   Bewertendengruppe; die Erkennung läuft je Gruppe neu (E13).
    ============================================================================ */
-
-// Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
-const SOURCE = "employee"
-
-const SOURCE_LABEL = { employee: "Mitarbeiter", candidates: "Bewerber" }
 
 // Farbe je Richtung als Theme-Token (index.css: hell 700er-, dunkel 400er-Töne).
 // "glyph" ist der mittlere 500er-Ton für den Tooltip, dessen Hintergrund mit dem
@@ -61,21 +60,39 @@ export function StepGlyph({ direction, severity = "high", color, size = 12 }) {
     )
 }
 
+/* Ring-Symbol der Karte (Legende): wie die ReferenceDot-Markierung im Diagramm. */
+function RingGlyph({ direction, size = 10 }) {
+    const color = DIRECTION[direction].color
+    return (
+        <svg width={size} height={size} viewBox="0 0 10 10" aria-hidden="true" className="flex-none">
+            <circle cx="5" cy="5" r="3.75" fill={color} fillOpacity={0.35} stroke={color} strokeWidth={1.5} />
+        </svg>
+    )
+}
+
 /* Markierung im Diagramm: Stufe am markierten Monat von Ø davor (links) zu
    Ø danach (rechts). Höhe = Ausmaß im Maßstab der Y-Achse, Form = Richtung,
    Strichstärke = Schweregrad. Der Monatswert selbst bleibt auf der Linie. */
-function stepShape(anomaly, halfWidth) {
+function stepShape(anomaly, halfWidth, { selected = false, onSelect = null } = {}) {
     function StepMarker({ x1, y1, y2 }) {
         if (![x1, y1, y2].every(Number.isFinite)) return <g />
+        const d = `M${x1 - halfWidth} ${y1} H${x1} V${y2} H${x1 + halfWidth}`
         return (
-            <path
-                d={`M${x1 - halfWidth} ${y1} H${x1} V${y2} H${x1 + halfWidth}`}
-                fill="none"
-                stroke={DIRECTION[anomaly.direction].color}
-                strokeWidth={STEP_WIDTH[anomaly.severity] ?? 1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
+            <g
+                onClick={onSelect ? () => onSelect(anomaly.id) : undefined}
+                style={onSelect ? { cursor: "pointer" } : undefined}
+            >
+                {/* Breitere, unsichtbare Trefferfläche, damit die Stufe gut anklickbar ist. */}
+                {onSelect && <path d={d} fill="none" stroke="transparent" strokeWidth={12} pointerEvents="stroke" />}
+                <path
+                    d={d}
+                    fill="none"
+                    stroke={DIRECTION[anomaly.direction].color}
+                    strokeWidth={(STEP_WIDTH[anomaly.severity] ?? 1.5) + (selected ? 1.25 : 0)}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </g>
         )
     }
     return StepMarker
@@ -173,7 +190,7 @@ export function IneligibleNotice({ eligibility }) {
     )
 }
 
-export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffälligen Veränderungen erkannt." }) {
+export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffälligen Veränderungen erkannt.", selectedId = null, onSelect = null }) {
     if (eligibility && !eligibility.eligible) return <IneligibleNotice eligibility={eligibility} />
     if (!anomalies.length) {
         return <p className="text-[12px] text-slate-500 m-0">{emptyText}</p>
@@ -182,8 +199,24 @@ export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffäl
         <ul className="m-0 p-0 list-none">
             {anomalies.map((a) => {
                 const dir = DIRECTION[a.direction]
+                const selected = a.id === selectedId
+                const rowClass = [
+                    "flex items-center gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0",
+                    onSelect ? "cursor-pointer px-2 -mx-2 rounded-md hover:bg-slate-50" : "",
+                    selected ? "bg-slate-100 hover:bg-slate-100" : "",
+                ].join(" ")
+                const select = () => onSelect?.(a.id)
                 return (
-                    <li key={a.id} className="flex items-center gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0">
+                    <li
+                        key={a.id}
+                        className={rowClass}
+                        onClick={onSelect ? select : undefined}
+                        onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select() } } : undefined}
+                        role={onSelect ? "button" : undefined}
+                        tabIndex={onSelect ? 0 : undefined}
+                        aria-pressed={onSelect ? selected : undefined}
+                        title={onSelect ? "Auswählen: Bewertungen und Vergleich des Zeitraums zeigen" : undefined}
+                    >
                         <dir.Icon className="w-4 h-4 flex-none" style={{ color: dir.color }} aria-label={dir.label} />
                         <span className="w-[84px] flex-none text-slate-700 tnum">ab {fmtPeriod(a.date)}</span>
                         <span className="w-[92px] flex-none font-semibold tnum" style={{ color: dir.color }}>{fmtDelta(a.delta)} Sterne</span>
@@ -227,7 +260,7 @@ function isolatedDot(chartData, opacity = 1) {
    Stufen, Niveaulinie, ausführliche Legende und ausgeblendete Ränder stehen auf
    der Detailseite.
    Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false }) {
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
     const trimmed = useMemo(() => trimToEvaluated(series), [series])
@@ -278,6 +311,32 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
         for (let v = yDomain[0]; v <= yDomain[1] + 1e-9; v += step) ticks.push(+v.toFixed(2))
         return ticks
     }, [yDomain])
+    // Vergleichsfenster der ausgewählten Veränderung als Flächen, auf den sichtbaren Ausschnitt begrenzt.
+    const windowAreas = useMemo(() => {
+        const selected = anomalies.find((a) => a.id === selectedId)
+        const windows = selected && !compact ? comparisonWindows(selected) : null
+        if (!windows || !chartData.length) return []
+        const first = periodIndex(chartData[0].period)
+        const last = periodIndex(chartData[chartData.length - 1].period)
+        return [
+            { key: "before", win: windows.before, color: "var(--color-fg-subtle)" },
+            { key: "after", win: windows.after, color: DIRECTION[selected.direction].color },
+        ].flatMap(({ key, win, color }) => {
+            const from = Math.max(periodIndex(win.from), first)
+            const to = Math.min(periodIndex(win.to), last)
+            if (from > to) return []
+            const period = (i) => chartData.find((m) => periodIndex(m.period) === i)?.period
+            return [{ key, x1: period(from), x2: period(to), color }]
+        }).filter((a) => a.x1 && a.x2)
+    }, [anomalies, selectedId, chartData, compact])
+    // Klick auf den Monat einer Veränderung wählt sie aus (zusätzlich zur Stufe selbst).
+    const handleChartClick = (state) => {
+        if (!onSelect) return
+        const idx = Number(state?.activeTooltipIndex)
+        const period = state?.activeLabel ?? (Number.isInteger(idx) ? chartData[idx]?.period : null)
+        const hit = period ? anomaliesByPeriod[period] : null
+        if (hit) onSelect(hit.id)
+    }
     const hasInterpolation = chartData.some((m) => m.interpolated)
     const hasVisibleValues = chartData.some((m) => m.value != null)
     const hasLevels = chartData.some((m) => m.level != null)
@@ -297,8 +356,11 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height={height}>
-                    <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8, bottom: 5 }}>
+                    <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8, bottom: 5 }} onClick={onSelect ? handleChartClick : undefined}>
                         <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
+                        {windowAreas.map((a) => (
+                            <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill={a.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
+                        ))}
                         <XAxis
                             dataKey="period"
                             tickFormatter={fmtPeriod}
@@ -381,7 +443,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             <ReferenceLine
                                 key={a.id}
                                 segment={[{ x: a.date, y: a.before_mean }, { x: a.date, y: a.after_mean }]}
-                                shape={stepShape(a, stepHalfWidth)}
+                                shape={stepShape(a, stepHalfWidth, { selected: a.id === selectedId, onSelect })}
                                 ifOverflow="visible"
                             />
                         )))}
@@ -415,6 +477,13 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen mit Wert</span>
             </p>
         )}
+        {!error && compact && visibleAnomalies.length > 0 && (
+            <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span>Ring = auffällige Veränderung ab diesem Monat:</span>
+                <span className="inline-flex items-center gap-1"><RingGlyph direction="fall" /> Abfall</span>
+                <span className="inline-flex items-center gap-1"><RingGlyph direction="rise" /> Anstieg</span>
+            </p>
+        )}
         {!error && visibleAnomalies.length > 0 && !compact && (
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span>Auffällige Veränderung des Niveaus ab dem markierten Monat, Stufe von Ø davor zu Ø danach:</span>
@@ -430,6 +499,13 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                         Niveau (Mittel je Abschnitt)
                     </span>
                 )}
+                {windowAreas.length > 0 && (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-3 h-2.5 rounded-[2px] bg-slate-200" />
+                        Vergleichsfenster der ausgewählten Veränderung
+                    </span>
+                )}
+                {onSelect && windowAreas.length === 0 && <span>Stufe anklicken, um die Bewertungen des Zeitraums zu sehen.</span>}
             </p>
         )}
         {!error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (
@@ -464,14 +540,14 @@ export function TimeRangeFilter({ value, onChange }) {
     )
 }
 
-/* Auswahl der Dimension (Mitarbeiterquelle), Standard Gesamtbewertung. */
-export function DimensionPicker({ value, onChange, compact = false }) {
+/* Auswahl der Dimension der Quelle, Standard Gesamtbewertung. */
+export function DimensionPicker({ value, onChange, source = DEFAULT_SOURCE, compact = false }) {
     return (
         <DropdownPicker
             label="Dimension"
             icon={<Layers />}
             value={dimensionLabel(value)}
-            options={EMPLOYEE_DIMENSIONS.map((d) => ({ value: d.key, label: d.label }))}
+            options={dimensionsFor(source).map((d) => ({ value: d.key, label: d.label }))}
             onChange={onChange}
             align="start"
             compact={compact}
@@ -479,14 +555,42 @@ export function DimensionPicker({ value, onChange, compact = false }) {
     )
 }
 
+/* Quelle der Bewertungen (Mitarbeiter, Bewerber). */
+export function AnomalySourceToggle({ value, onChange, compact = false }) {
+    return <SourceToggle value={value} onChange={onChange} options={SOURCES} compact={compact} />
+}
+
+/* Auswahl des Status innerhalb der Quelle; null = alle (E13). */
+export function StatusPicker({ source, value, onChange, compact = false }) {
+    const options = statusOptions(source)
+    return (
+        <DropdownPicker
+            label="Status"
+            icon={<Users />}
+            value={options.find((o) => o.key === value)?.label ?? "Alle"}
+            options={options.map((o) => ({ value: o.key ?? "", label: o.label }))}
+            onChange={(key) => onChange(key || null)}
+            align="start"
+            compact={compact}
+        />
+    )
+}
+
 export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
-    const [dimension, setDimension] = useState(OVERALL_DIMENSION.key)
-    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
+    const [selection, setSelection] = useState({ source: DEFAULT_SOURCE, dimension: OVERALL_DIMENSION.key, status: null })
+    const { source, dimension, status } = selection
+    const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
 
     if (!companyId) return null
 
-    const subtitle = `${SOURCE_LABEL[SOURCE]} · ${dimensionLabel(dimension)} · ${countLabel(anomalies, data?.eligibility)}`
-    const open = () => onOpen?.(dimension)
+    const subtitle = `${groupLabel(source, status)} · ${dimensionLabel(dimension)} · ${countLabel(anomalies, data?.eligibility)}`
+    const open = () => onOpen?.(selection)
+    // Quellenwechsel: Status zurücksetzen, Dimension nur behalten, wenn es sie in der neuen Quelle gibt.
+    const changeSource = (next) => setSelection((s) => ({
+        source: next,
+        status: null,
+        dimension: isDimensionOf(next, s.dimension) ? s.dimension : OVERALL_DIMENSION.key,
+    }))
 
     return (
         <div
@@ -503,7 +607,13 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 title="Anomalien im Verlauf"
                 subtitle={subtitle}
                 expandable
-                actions={<DimensionPicker value={dimension} onChange={setDimension} compact />}
+                actions={
+                    <>
+                        <AnomalySourceToggle value={source} onChange={changeSource} compact />
+                        <DimensionPicker source={source} value={dimension} onChange={(key) => setSelection((s) => ({ ...s, dimension: key }))} compact />
+                        <StatusPicker source={source} value={status} onChange={(key) => setSelection((s) => ({ ...s, status: key }))} compact />
+                    </>
+                }
             />
             <div className="px-4 pt-4 pb-4">
                 <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />

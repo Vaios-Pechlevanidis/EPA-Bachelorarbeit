@@ -46,6 +46,11 @@ bewerteten Monatsmittel, ``n`` = Zahl der bewerteten Monate, Faktor 2,0). Ein
 
 Die Ergebnisse sind Hinweise auf auffällige Veränderungen, keine Aussagen über
 Ursachen. Sortierung: ``fall`` vor ``rise``, innerhalb nach ``|delta|`` absteigend.
+
+Bewertendengruppe (E13, Inkrement 2): Mit ``status`` laufen Reihe, Eignung,
+Strafterm und Erkennung nur auf den Bewertungen dieses Status; jede
+Kombination aus Quelle, Dimension und Status ist eine eigene Reihe. Die
+Antwort enthält dann zusätzlich ``status``; ohne ``status`` ist sie unverändert.
 """
 
 from __future__ import annotations
@@ -207,12 +212,14 @@ def company_anomalies(
     penalty: Optional[float] = None,
     min_delta: float = DEFAULT_MIN_DELTA,
     penalty_factor: float = DEFAULT_PENALTY_FACTOR,
+    status: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Reihe, Eignung und Anomalien eines Unternehmens aus der Datenbank.
 
-    ValueError bei ungültiger Quelle oder Dimension (aus ``monthly_series``).
+    ``status`` wählt eine Bewertendengruppe (None = alle). ValueError bei
+    ungültiger Quelle, Dimension oder ungültigem Status (aus ``monthly_series``).
     """
-    data = monthly_series(company_id, source, dimension)
+    data = monthly_series(company_id, source, dimension, status=status)
     series = data["series"]
     elig = eligibility(series)
     anomalies = (
@@ -222,7 +229,7 @@ def company_anomalies(
         )
         if elig["eligible"] else []
     )
-    return {
+    result = {
         "company_id": company_id,
         "source": source,
         "dimension": dimension,
@@ -240,6 +247,9 @@ def company_anomalies(
         },
         "eligibility": elig,
     }
+    if status is not None:
+        result["status"] = status
+    return result
 
 
 def company_anomalies_all(
@@ -248,8 +258,11 @@ def company_anomalies_all(
     penalty: Optional[float] = None,
     min_delta: float = DEFAULT_MIN_DELTA,
     penalty_factor: float = DEFAULT_PENALTY_FACTOR,
+    status: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Eignung und Anomalien aller Dimensionen einer Quelle (``dimension=all``).
+
+    ``status`` wie in ``company_anomalies``.
 
     Im skalierten Modus hat jede Dimension ihr eigenes ``noise_sigma`` und ``n``;
     die Parameter stehen deshalb je Dimension unter ``dimensions[i].params``.
@@ -259,7 +272,7 @@ def company_anomalies_all(
     Dimensionen zusammengeführte und nach ``sort_anomalies`` sortierte Liste.
     ValueError bei ungültiger Quelle.
     """
-    series_by_dimension = monthly_series_by_dimension(company_id, source)
+    series_by_dimension = monthly_series_by_dimension(company_id, source, status=status)
     dimensions: List[Dict[str, Any]] = []
     combined: List[Dict[str, Any]] = []
     for dimension, series in series_by_dimension.items():
@@ -276,7 +289,7 @@ def company_anomalies_all(
             "params": detection_params(series, penalty, penalty_factor, min_delta),
         })
         combined.extend(found)
-    return {
+    result = {
         "company_id": company_id,
         "source": source,
         "dimension": "all",
@@ -293,6 +306,9 @@ def company_anomalies_all(
             "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
         },
     }
+    if status is not None:
+        result["status"] = status
+    return result
 
 
 __all__ = [

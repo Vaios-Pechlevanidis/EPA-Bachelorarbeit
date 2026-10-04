@@ -596,9 +596,11 @@ class QueryBuilder:
         self._table_name = table_name
         self._select_cols: Optional[list[str]] = None
         self._count_mode: Optional[str] = None
-        # Gesamtzahl der gefilterten Zeilen VOR limit/range (für count="exact",
-        # wie PostgREST: Content-Range zählt alle Treffer, nicht nur die Seite)
-        self._count_total: Optional[int] = None
+        # limit/range werden wie bei PostgREST erst in execute() angewendet,
+        # nach allen Filtern und der Sortierung; ein erneuter Aufruf ersetzt den
+        # vorherigen (wichtig für die seitenweise Abfrage über range()).
+        self._limit: Optional[int] = None
+        self._range: Optional[tuple] = None
         self._insert_rows: Optional[list] = None
         self._update_data: Optional[dict] = None
         self._is_delete = False
@@ -647,16 +649,19 @@ class QueryBuilder:
         return self
 
     def limit(self, n: int) -> "QueryBuilder":
-        if self._count_total is None:
-            self._count_total = len(self._rows)
-        self._rows = self._rows[:n]
+        self._limit = n
         return self
 
     def range(self, start: int, end: int) -> "QueryBuilder":
-        if self._count_total is None:
-            self._count_total = len(self._rows)
-        self._rows = self._rows[start: end + 1]
+        self._range = (start, end)
         return self
+
+    def _page(self, rows: list) -> list:
+        if self._range is not None:
+            rows = rows[self._range[0]: self._range[1] + 1]
+        if self._limit is not None:
+            rows = rows[: self._limit]
+        return rows
 
     # ---- not_ proxy ----
 
@@ -711,12 +716,14 @@ class QueryBuilder:
         if self._is_delete:
             return Response([])
 
-        result = self._rows
+        # Gesamtzahl der gefilterten Zeilen VOR limit/range (für count="exact",
+        # wie PostgREST: Content-Range zählt alle Treffer, nicht nur die Seite)
+        total = len(self._rows)
+        result = self._page(self._rows)
         if self._select_cols:
             result = [{col: r.get(col) for col in self._select_cols} for r in result]
 
         if self._count_mode == "exact":
-            total = self._count_total if self._count_total is not None else len(result)
             return Response(result, count=total)
         return Response(result)
 

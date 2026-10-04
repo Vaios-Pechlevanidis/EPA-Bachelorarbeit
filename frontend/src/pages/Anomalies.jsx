@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowLeft, Building2, ListOrdered } from "lucide-react"
+import { ArrowLeft, Building2, GitCompareArrows, ListOrdered, MessageSquareText } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, DimensionPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
-import { DEFAULT_TIME_RANGE, fmtPeriod, inWindow, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
-import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
+import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
+import { PeriodReviewList, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
+import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
+import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
+import { groupLabel, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
+import { useAnomalyComparison } from "@/hooks/useAnomalyComparison"
+import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
 import { API_URL } from "../config"
 
@@ -15,12 +20,13 @@ import { API_URL } from "../config"
    Geöffnet per Klick auf die AnomalyCard im Dashboard, analog zum Vergleich.
    Die Firma steht in der URL (?company=ID), damit Neuladen und Teilen
    funktionieren; der Name kommt aus dem Navigationszustand oder /companies.
-   Dimension und Zeitraum stehen ebenfalls in der URL (?dimension=key&range=1y).
+   Dimension und Zeitraum stehen ebenfalls in der URL (?dimension=key&range=1y),
+   seit Inkrement 2 auch Quelle und Status (?source=candidates&status=eingestellt).
    Der Zeitraum wählt nur den Ausschnitt; erkannt wird auf der ganzen Reihe.
+   Inkrement 2: Ein Klick auf eine Stufe oder Listenzeile wählt die Veränderung
+   aus (?anomaly=id); darunter stehen der Vorher-Nachher-Vergleich und die
+   Bewertungen der Vergleichsfenster.
    ============================================================================ */
-
-// Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
-const SOURCE = "employee"
 
 function Section({ icon, eyebrow, title, subtitle, actions, children }) {
     return (
@@ -53,8 +59,12 @@ export default function AnomaliesPage() {
     )
     const [query, setQuery] = useState(location.state?.company?.name ?? "")
     const companyName = companyId ? names[companyId] ?? "" : ""
+    const sourceParam = searchParams.get("source")
+    const source = isSource(sourceParam) ? sourceParam : DEFAULT_SOURCE
+    const status = validStatus(source, searchParams.get("status"))
+    const group = groupLabel(source, status)
     const dimensionParam = searchParams.get("dimension")
-    const dimension = EMPLOYEE_DIMENSIONS.some((d) => d.key === dimensionParam) ? dimensionParam : OVERALL_DIMENSION.key
+    const dimension = isDimensionOf(source, dimensionParam) ? dimensionParam : OVERALL_DIMENSION.key
     const rangeParam = searchParams.get("range")
     const rangeKey = isTimeRangeKey(rangeParam) ? rangeParam : DEFAULT_TIME_RANGE
 
@@ -91,7 +101,17 @@ export default function AnomaliesPage() {
         return () => controller.abort()
     }, [companyId, names])
 
-    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
+    const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
+    const selectedId = searchParams.get("anomaly")
+    const selectedAnomaly = useMemo(() => anomalies.find((a) => a.id === selectedId) ?? null, [anomalies, selectedId])
+    const windows = useMemo(() => comparisonWindows(selectedAnomaly), [selectedAnomaly])
+    // Fenster der Bewertungsliste; beim Wechsel der Veränderung wieder "davor".
+    const [sideState, setSideState] = useState({ id: null, side: "before" })
+    const side = sideState.id === selectedId ? sideState.side : "before"
+    const sideWindow = windows?.[side] ?? null
+    const reviewPages = useReviewPages(companyId, { source, status, start: sideWindow?.start, end: sideWindow?.end })
+    const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
+    const selectAnomaly = (id) => updateParams({ anomaly: id })
     const eligibility = data?.eligibility
     const count = anomalies.length
     // Sichtbares Fenster relativ zum letzten angezeigten (bewerteten) Monat; null = alles.
@@ -99,13 +119,16 @@ export default function AnomaliesPage() {
     const visibleAnomalies = useMemo(() => anomalies.filter((a) => inWindow(a.date, range)), [anomalies, range])
     const hiddenCount = count - visibleAnomalies.length
     const countText = `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
-    const chartSubtitle = eligibility && !eligibility.eligible
-        ? "Mitarbeiter · keine automatische Erkennung"
+    // Im Fehlerfall und beim Laden kein Zähler: "0" wäre dort eine falsche Aussage.
+    const chartSubtitle = error || loading
+        ? group
+        : eligibility && !eligibility.eligible
+        ? `${group} · keine automatische Erkennung`
         : range
-            ? `Mitarbeiter · ${fmtPeriod(range.from)} – ${fmtPeriod(range.to)} · ${count
+            ? `${group} · ${fmtPeriod(range.from)} – ${fmtPeriod(range.to)} · ${count
                 ? `${visibleAnomalies.length} von ${count} ${count === 1 ? "auffälligen Veränderung" : "auffälligen Veränderungen"} im Zeitraum`
                 : "keine auffälligen Veränderungen"}`
-            : `Mitarbeiter · ${countText}`
+            : `${group} · ${countText}`
 
     // Zurück mit der gewählten Firma, damit das Dashboard sie wieder anzeigt.
     const backToDashboard = () =>
@@ -116,7 +139,7 @@ export default function AnomaliesPage() {
         const id = String(company.id)
         setNames((n) => ({ ...n, [id]: company.name }))
         setQuery(company.name)
-        updateParams({ company: id })
+        updateParams({ company: id, anomaly: null })
     }
 
     return (
@@ -145,9 +168,28 @@ export default function AnomaliesPage() {
                     </div>
                 </div>
                 {companyId && (
+                    <AnomalySourceToggle
+                        value={source}
+                        onChange={(key) => updateParams({
+                            source: key === DEFAULT_SOURCE ? null : key,
+                            status: null,
+                            dimension: isDimensionOf(key, dimension) && dimension !== OVERALL_DIMENSION.key ? dimension : null,
+                            anomaly: null,
+                        })}
+                    />
+                )}
+                {companyId && (
+                    <StatusPicker
+                        source={source}
+                        value={status}
+                        onChange={(key) => updateParams({ status: key, anomaly: null })}
+                    />
+                )}
+                {companyId && (
                     <DimensionPicker
+                        source={source}
                         value={dimension}
-                        onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key })}
+                        onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key, anomaly: null })}
                     />
                 )}
                 <div className="w-[260px] flex-none">
@@ -182,7 +224,17 @@ export default function AnomaliesPage() {
                                 />
                             }
                         >
-                            <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={380} range={range} showLevels />
+                            <AnomalyChart
+                                data={data}
+                                anomalies={anomalies}
+                                loading={loading}
+                                error={error}
+                                height={380}
+                                range={range}
+                                showLevels
+                                selectedId={selectedId}
+                                onSelect={selectAnomaly}
+                            />
                         </Section>
 
                         <Section
@@ -197,6 +249,8 @@ export default function AnomaliesPage() {
                                     anomalies={visibleAnomalies}
                                     eligibility={eligibility}
                                     emptyText={range ? "Im gewählten Zeitraum keine auffälligen Veränderungen." : undefined}
+                                    selectedId={selectedId}
+                                    onSelect={selectAnomaly}
                                 />}
                             {!loading && !error && range && hiddenCount > 0 && (
                                 <p className="m-0 mt-2 text-[11px] text-slate-500">
@@ -210,7 +264,51 @@ export default function AnomaliesPage() {
                                     </button>
                                 </p>
                             )}
+                            {!loading && !error && selectedId && !selectedAnomaly && (
+                                <p className="m-0 mt-2 text-[11px] text-slate-500">
+                                    Die ausgewählte Veränderung gibt es mit den aktuellen Einstellungen nicht.{" "}
+                                    <button
+                                        type="button"
+                                        className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                        onClick={() => updateParams({ anomaly: null })}
+                                    >
+                                        Auswahl aufheben
+                                    </button>
+                                </p>
+                            )}
                         </Section>
+
+                        {selectedAnomaly && windows && (
+                            <Section
+                                icon={<GitCompareArrows />}
+                                eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                title="Vorher-Nachher-Vergleich"
+                                subtitle={comparison.data
+                                    ? `${group} · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
+                                    : `${group} · Verschiebungen in den Bewertungen zwischen den Vergleichsfenstern`}
+                            >
+                                <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} />
+                            </Section>
+                        )}
+
+                        {selectedAnomaly && windows && (
+                            <Section
+                                icon={<MessageSquareText />}
+                                eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                title="Bewertungen des Zeitraums"
+                                subtitle={`${group} · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
+                                    reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}`}`}
+                                actions={
+                                    <WindowSideToggle value={side} onChange={(key) => setSideState({ id: selectedId, side: key })} />
+                                }
+                            >
+                                <PeriodReviewList key={`${selectedId}:${side}`} pages={reviewPages} />
+                                <p className="m-0 mt-3 text-[11px] text-slate-400">
+                                    Vergleichsfenster: bis zu {windows.windowMonths} Kalendermonate vor dem markierten Monat und ab ihm, begrenzt
+                                    durch die benachbarten Veränderungen; alle Bewertungen dieser Monate, auch aus Monaten mit wenigen Bewertungen.
+                                </p>
+                            </Section>
+                        )}
                     </>
                 )}
             </div>

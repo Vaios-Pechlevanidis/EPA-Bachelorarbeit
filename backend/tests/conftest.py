@@ -1,5 +1,6 @@
 """
-Gemeinsame Fixtures der Anomalie-Tests.
+Gemeinsame Fixtures der Tests gegen den In-Memory-Store (Anomalien seit
+Inkrement 1, Drill-down und Vergleich seit Inkrement 2).
 
 ``in_memory_db`` schaltet ``database.supabase_client`` auf den In-Memory-Store
 (Demo 1 bis 3) um, und zwar über denselben Weg wie die Anwendung: Fehlen
@@ -20,7 +21,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 _ENV_KEYS = ("SUPABASE_URL", "SUPABASE_KEY", "SUPABASE_SERVICE_KEY")
 

@@ -212,8 +212,13 @@ def get_star_columns(df: pd.DataFrame) -> List[str]:
 class ExcelProcessor:
     """Process Excel files and import data into database."""
 
-    def __init__(self):
-        self.supabase = get_supabase_client()
+    @property
+    def supabase(self):
+        """Supabase-Client des aktuellen Threads. Die Instanz liegt modulweit in
+        einer Route und wird von mehreren Threadpool-Threads genutzt; ein beim
+        Erzeugen gespeicherter Client wäre zwischen ihnen geteilt (siehe
+        database/supabase_client.py)."""
+        return get_supabase_client()
 
     async def process_excel_file(self, file: UploadFile, company_id: int) -> Dict[str, Any]:
         """Process an uploaded Excel (.xlsx / .xls) file."""

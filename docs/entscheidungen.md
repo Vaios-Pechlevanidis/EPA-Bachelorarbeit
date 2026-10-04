@@ -1,6 +1,6 @@
-# Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“ und Inkrement 1 „Anomalien im Verlauf“
+# Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“ und Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“
 
-Stand: 2026-10-03 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E13 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -249,3 +249,123 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   0,63 statt 0,29 Sterne); echte, aber kleine Veränderungen können dort unerkannt bleiben.
 - **Status:** **vorläufig.** Faktor 2 ist eine Setzung des Autors, geprüft an Demo 1–3, an
   synthetischen Reihen und an der Parameterübersicht, **nicht an Referenzzeiträumen** (DZ1).
+
+## E10 – Themenweg für den Vorher-Nachher-Vergleich
+
+- **Kontext:** Inkrement 2 vergleicht die Bewertungen vor und ab einer auffälligen
+  Veränderung und nennt je Thema, wie sich der Anteil der Bewertungen verschiebt, die es
+  ansprechen. Im Repository gibt es zwei Themenwege: die Schlüsselwort-Themen der
+  Themenübersicht (`topic-overview`, je Quelle 13 bzw. 10 Themen, benannt wie die
+  Kununu-Kategorien) und das LDA-Modell aus Zyklus 1 (`backend/models/lda_topic_model.py`,
+  Themenzahl über die Kohärenz c_v gewählt, `backend/scripts/sweep_num_topics_db.py`).
+- **Entscheidung (Autor, 2026-10-04):** Schlüsselwort-Themen, kein LDA. Die Definitionen je
+  Quelle und `analyze_topic` sind aus `backend/routes/analytics.py` nach
+  `backend/services/keyword_topic_service.py` umgezogen; die Ausgabe von `topic-overview`
+  ist unverändert (geprüft gegen Commit 4ad0a80 für Demo 1–3). Ein Thema gilt in einer
+  Bewertung als genannt, wenn eines seiner Schlüsselwörter (regulärer Ausdruck) in einem
+  Textfeld vorkommt (`topics_in_review`).
+- **Begründung:** Die Themen sind dieselben, die das Dashboard schon zeigt, und tragen die
+  Namen der Kununu-Kategorien; damit lässt sich eine Verschiebung im Text direkt neben die
+  Sternebewertung derselben Kategorie stellen. Die Zuordnung ist nachvollziehbar (ein
+  Schlüsselwort, eine Textstelle) und für jede Bewertung gleich, ohne Training und ohne
+  Abhängigkeit von der Themenzahl. Sie ist schnell genug, um je Anfrage live zu laufen.
+- **Grenzen:**
+  - Es ist **nicht** das per c_v validierte LDA-Modell aus Zyklus 1. Die Schlüsselwortlisten
+    sind Setzungen und nicht gegen eine Kohärenz oder eine manuelle Zuordnung geprüft.
+  - Die Schlüsselwörter sind deutsch. Englische Texte werden kaum erfasst
+    (Test `test_english_text_is_not_matched`); bei Unternehmen mit vielen englischen
+    Bewertungen sind die Anteile zu niedrig. Relevant für Inkrement 5 (Erklärungen).
+  - Mehrdeutige Wörter zählen mit (z. B. „Klima“ bei Arbeitsatmosphäre und Umwelt,
+    „Entwicklung“ bei Karriere auch im Sinn von Softwareentwicklung).
+- **Status:** endgültig für Inkrement 2 (Entscheidung des Autors); die Grenzen werden in
+  Inkrement 5 neu bewertet.
+
+## E11 – Stimmung im Vorher-Nachher-Vergleich
+
+- **Kontext:** Der Vergleich nennt neben den Themenanteilen die Stimmung der Texte, gesamt
+  und je Thema. Im Repository gibt es `SentimentAnalyzer`
+  (`backend/models/sentiment_analyzer.py`) mit den Modi `transformer` (German Sentiment
+  BERT mit Abgleich gegen das Lexikon) und `lexicon` (Wortlisten), mit eingebautem Rückfall
+  auf das Lexikon, wenn das Modell nicht lädt.
+- **Entscheidung (Autor, 2026-10-04):** Modus `transformer` mit der Sternebewertung
+  (`durchschnittsbewertung`) als Hinweis; lädt das Modell nicht, gilt der Lexikon-Modus. Die
+  Antwort nennt den tatsächlich verwendeten Modus (`sentiment_mode`).
+  - Ein Analyzer je Prozess, nicht je Anfrage; Ergebnisse je Quelle, Bewertungs-ID und
+    Modus im Prozess zwischengespeichert.
+  - Text einer Bewertung: die Freitextfelder ohne Titel (Mitarbeitende: gut, schlecht,
+    Verbesserungsvorschläge; Bewerbende: Stellenbeschreibung, Verbesserungsvorschläge).
+    Bewertungen ohne Freitext gehen nicht in die Stimmung ein.
+  - Stichprobe: höchstens 300 Bewertungen mit Freitext je Fenster, bei mehr die jüngsten
+    300; die Antwort nennt das (`sentiment_sample`).
+  - Kennzahlen: Anteile positiv, neutral, negativ und mittlere Polarität (−1 bis 1).
+- **Begründung:** Der Transformer ist im Projekt der Hauptmodus, das Lexikon die Reserve.
+  Die Stichprobe begrenzt die Antwortzeit: gemessen 2026-10-04 auf dem Entwicklungsrechner
+  rund 23 bis 26 ms je Text im Transformer-Modus (Telekom, 457 Texte: 10,8 s), dazu einmal je
+  Prozess rund 4 s für das Laden des Modells; mit Zwischenspeicher 0,2 bis 0,4 s. Die
+  jüngsten 300 liegen am nächsten am markierten Monat.
+- **Grenzen:** Die Stimmung ist eine Modellschätzung je Bewertung, nicht je Thema; die
+  Stimmung „je Thema“ ist die Stimmung der ganzen Bewertungen, die das Thema nennen. Die
+  Sternebewertung als Hinweis kann die Stimmung zur Note hin ziehen. Der Lexikon-Modus
+  trennt Wörter nur an Leerzeichen; ein Wort mit Satzzeichen („schlecht.“) wird nicht
+  erkannt. Die Stichprobe ist nicht zufällig, sondern zeitlich.
+- **Status:** vorläufig (Stichprobengröße 300 ist eine Setzung).
+
+## E12 – Vergleichsfenster
+
+- **Kontext:** Für Drill-down und Vergleich braucht jede auffällige Veränderung einen
+  Zeitraum davor und danach.
+- **Entscheidung:** Für eine Veränderung mit Monat `date`:
+  - davor: die `window_months` Kalendermonate vor `date`, nicht früher als `before_from`
+    (Beginn des Abschnitts vor dem Wechsel),
+  - danach: `date` und die folgenden Monate, zusammen `window_months`, nicht später als
+    `after_to` (Ende des Abschnitts nach dem Wechsel),
+  - Standard `window_months = 6`. In die Fenster gehen **alle** Bewertungen dieser Monate
+    ein, auch aus Monaten mit weniger als 5 Bewertungen (anders als in der
+    Erkennungsreihe, E4).
+  - Kleine Basis (`low_basis`): ein Fenster mit weniger als 10 Bewertungen, oder je Thema
+    weniger als 5 Nennungen in beiden Fenstern zusammen.
+  - Umsetzung: `comparison_windows` in `backend/services/explanation_service.py`; dieselbe
+    Regel rechnet `comparisonWindows` in `frontend/src/lib/anomalySeries.js` für die
+    Bewertungsliste.
+- **Begründung:** Sechs Monate geben auch bei mäßig dichten Reihen genug Bewertungen für
+  Anteile; die Begrenzung durch die Nachbarabschnitte verhindert, dass ein Fenster über
+  einen weiteren erkannten Wechsel reicht.
+- **Grenzen:** Die Fenster sind nach Bewertungen gewichtet, die Erkennung nach
+  Monatsmitteln. Bei ungleich verteilten Bewertungen kann die mittlere Gesamtnote im
+  Vergleich in die andere Richtung zeigen als die erkannte Veränderung (SAP SE, Anstieg
+  ab 2024-07: Ø der Monatsmittel 3,07 → 3,74, Ø je Bewertung 3,79 → 3,65, weil der März 2024
+  174 der 246 Bewertungen des Fensters davor mit Ø 4,16 enthält).
+- **Status:** vorläufig (Fensterlänge und Schwellen der kleinen Basis sind Setzungen).
+
+## E13 – Statusfilter (Bewertendengruppe)
+
+- **Kontext:** Die Bewertungen tragen eine Spalte `status`. Die Werte sind uneinheitlich
+  (nur lesend geprüft am 2026-10-04): Mitarbeitende `1.0` (13 815), `0.0` (4 030), leer
+  (2 494), `Angestellt` (889) und `Ex-Angestellt` (719, beide nur Demo), `True` (11) und
+  `False` (4, beide nur Formycon); Bewerbende `hired` (1 235), leer (799), `Bewerber` (792,
+  nur Demo), `offerDeclined` (711), `rejected` (625), `deferred` (514).
+- **Entscheidung:** Eine Bewertendengruppe ist Quelle plus Status. Die Rohwerte werden auf
+  feste Schlüssel zurückgeführt (`normalize_status` in
+  `backend/services/review_service.py`, Vorbild `formatStatus` im Frontend):
+  - Mitarbeitende: `angestellt` (1, 1.0, True, Angestellt), `ex-angestellt` (0, 0.0, False,
+    Ex-Angestellt), `unbekannt` (leer),
+  - Bewerbende: `eingestellt` (hired), `angebot-abgelehnt` (offerDeclined), `abgelehnt`
+    (rejected), `zurueckgestellt` (deferred), `unbekannt` (leer und „Bewerber“, das keinen
+    Ausgang nennt).
+  Mit `status` laufen Monatsreihe, Eignung (E4), Strafterm (E9) und Erkennung nur auf
+  dieser Gruppe; jede Kombination aus Quelle, Dimension und Status ist eine eigene Reihe.
+  Vergleich und Bewertungsliste nutzen dieselbe Gruppe. Ohne `status` ist alles wie in
+  Inkrement 1.
+- **Begründung:** Aktuelle und ehemalige Mitarbeitende bzw. eingestellte und abgelehnte
+  Bewerbende bewerten aus verschiedenen Lagen; eine Veränderung kann in einer Gruppe
+  auftreten und in der Mischung verdeckt sein. Die Zuordnung `True`/`False` folgt der von
+  `1.0`/`0.0` (Annahme des Entwicklers, 15 Bewertungen).
+- **Ergebnis (2026-10-04, 26 reale Unternehmen, Gesamtbewertung):** geeignete Reihen
+  Mitarbeitende alle 15, `angestellt` 15, `ex-angestellt` 6, `unbekannt` 3; Bewerbende
+  alle 5, `eingestellt` 1 (Carl Zeiss), `unbekannt` 1 (Thyssengas), übrige 0. Erkannte
+  Veränderungen (Mitarbeitende, Gesamtbewertung): alle 19, `angestellt` 11,
+  `ex-angestellt` 1.
+- **Grenzen:** Die meisten Gruppen der Bewerberquelle sind für die automatische Erkennung
+  zu dünn; die Detailseite zeigt dann den Hinweis zur Eignung. Die Bedeutung von
+  `deferred` ist aus den Daten nicht eindeutig („zurückgestellt“ ist eine Übersetzung).
+- **Status:** vorläufig (Zuordnung der Rohwerte vom Autor zu bestätigen).

@@ -12,6 +12,9 @@ Eingabe für die Anomalieerkennung in Zyklus 2 (Inkrement 1). Die Reihe ist in
   ``MIN_REVIEWS_PER_MONTH`` = 5 Werten beruht. Eine Reihe ist für die
   automatische Erkennung geeignet, wenn sie mindestens
   ``MIN_EVALUATED_MONTHS`` = 12 bewertete Monate hat.
+- E13 (Inkrement 2): Optional nur die Bewertungen eines Status
+  (Bewertendengruppe, ``review_service.normalize_status``); Monatsmittel,
+  Mindestdichte und Eignung gelten dann für diese Gruppe allein.
 
 Die Reihe enthält jeden Kalendermonat zwischen der ersten und der letzten
 datierten Bewertung, auch Monate ohne Bewertung (``count`` 0, ``mean`` None),
@@ -42,6 +45,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from services.review_service import filter_by_status, validate_status
 from services.topic_average_rating_service import TOPIC_COLUMNS_BY_SOURCE, _fetch_all_rows
 
 OVERALL_DIMENSION = "durchschnittsbewertung"
@@ -141,20 +145,31 @@ def build_monthly_series(
     return series
 
 
-def fetch_review_rows(source: str, company_id: int, column: str) -> List[Dict[str, Any]]:
+def fetch_review_rows(
+    source: str, company_id: int, column: str, status: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """Alle Zeilen (id, datum, ``column``) eines Unternehmens aus der Tabelle
     ``source``; nur SELECT, vollständig paginiert. ``column`` darf eine
-    kommagetrennte Spaltenliste sein (siehe ``monthly_series_by_dimension``)."""
+    kommagetrennte Spaltenliste sein (siehe ``monthly_series_by_dimension``).
+    Mit ``status`` nur die Zeilen dieser Bewertendengruppe (E13)."""
     from database.supabase_client import get_supabase_client  # lazy, damit Tests ohne DB laufen
 
+    columns = f"id,datum,{column}" + (",status" if status is not None else "")
     query = (
         get_supabase_client()
         .table(source)
-        .select(f"id,datum,{column}")
+        .select(columns)
         .eq("company_id", company_id)
         .order("id")  # stabile Reihenfolge für die range()-Paginierung
     )
-    return _fetch_all_rows(query, page_size=1000)
+    return filter_by_status(_fetch_all_rows(query, page_size=1000), source, status)
+
+
+def _fetch_group_rows(source: str, company_id: int, column: str, status: Optional[str]) -> List[Dict[str, Any]]:
+    """``fetch_review_rows`` ohne Status wie bisher mit drei Argumenten aufrufen."""
+    if status is None:
+        return fetch_review_rows(source, company_id, column)
+    return fetch_review_rows(source, company_id, column, status)
 
 
 def monthly_series(
@@ -162,20 +177,24 @@ def monthly_series(
     source: str,
     dimension: str = OVERALL_DIMENSION,
     min_reviews: int = MIN_REVIEWS_PER_MONTH,
+    status: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Monatsreihe eines Unternehmens direkt aus der Datenbank.
 
-    Rückgabe: ``{"company_id", "source", "dimension", "column", "min_reviews",
-    "evaluated_months", "series": [...]}``. ValueError bei ungültiger
-    Quelle oder Dimension.
+    Rückgabe: ``{"company_id", "source", "dimension", "status", "column",
+    "min_reviews", "evaluated_months", "series": [...]}``. ``status`` (None =
+    alle) wählt eine Bewertendengruppe. ValueError bei ungültiger Quelle,
+    Dimension oder ungültigem Status.
     """
     column = value_column(source, dimension)
-    rows = fetch_review_rows(source, company_id, column)
+    validate_status(source, status)
+    rows = _fetch_group_rows(source, company_id, column, status)
     series = build_monthly_series(rows, column, min_reviews)
     return {
         "company_id": company_id,
         "source": source,
         "dimension": dimension,
+        "status": status,
         "column": column,
         "min_reviews": min_reviews,
         "evaluated_months": evaluated_months(series),
@@ -187,16 +206,19 @@ def monthly_series_by_dimension(
     company_id: int,
     source: str,
     min_reviews: int = MIN_REVIEWS_PER_MONTH,
+    status: Optional[str] = None,
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Monatsreihen aller Dimensionen einer Quelle aus einer einzigen Abfrage.
 
     Rückgabe: ``{dimension: series}`` in der Reihenfolge von
-    ``DIMENSIONS_BY_SOURCE[source]``. ValueError bei ungültiger Quelle.
+    ``DIMENSIONS_BY_SOURCE[source]``. ``status`` wie in ``monthly_series``.
+    ValueError bei ungültiger Quelle oder ungültigem Status.
     """
     columns = {dimension: value_column(source, dimension) for dimension in DIMENSIONS_BY_SOURCE.get(source, [])}
     if not columns:
         value_column(source)  # wirft ValueError mit der Liste erlaubter Quellen
-    rows = fetch_review_rows(source, company_id, ",".join(dict.fromkeys(columns.values())))
+    validate_status(source, status)
+    rows = _fetch_group_rows(source, company_id, ",".join(dict.fromkeys(columns.values())), status)
     return {dimension: build_monthly_series(rows, column, min_reviews) for dimension, column in columns.items()}
 
 

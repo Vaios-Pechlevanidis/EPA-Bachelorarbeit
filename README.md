@@ -73,6 +73,21 @@ Detects lasting level shifts in the monthly rating series and shows them in the 
 
 ---
 
+## 🔍 Cycle 2 – Increment 2 "Drill-down und Vorher-Nachher-Vergleich"
+
+Select a change on the detail page to see the reviews of the periods before and after it and a comparison of what shifted in those reviews (topic shares, sentiment). The comparison describes changes in the reviews; it makes no statement about causes. Feature doc: [docs/feature-doku/02-drilldown-und-vergleich.md](docs/feature-doku/02-drilldown-und-vergleich.md); decisions E10–E13 in `docs/entscheidungen.md` (comparison windows and thresholds preliminary).
+
+| Part | Where | Notes |
+|---|---|---|
+| Reviews of a period | `backend/services/review_service.py`, `GET /api/analytics/company/{id}/reviews?source=&start=&end=&status=&offset=&limit=&format=full` | Dates inclusive, paginated read (more than 1000 rows), newest first, `total` = all matches; `format=full` returns `id`, `preview`, `fullReview` (format of the topic overview). Without the new parameters the response is unchanged |
+| Keyword topics | `backend/services/keyword_topic_service.py` | Topic definitions per source and `analyze_topic` (moved from `routes/analytics.py`, output unchanged), `topics_in_review(row, source)`; `topic-overview` gains `end_date` |
+| Comparison | `backend/services/explanation_service.py`, `GET /api/analytics/company/{id}/anomalies/{anomaly_id}/explanations?source=&dimension=&status=&window_months=6` | Windows (E12), count and mean rating, share per topic and sentiment (overall and per topic), shift in percentage points, `low_basis`; one `SentimentAnalyzer` per process (transformer with star rating as hint, lexicon fallback), at most 300 newest reviews with text per window, cached per review id; `explanations` is empty until increment 5; unknown id → 404 |
+| Reviewer group | `rating_series_service`, `anomaly_service`, `/anomalies?status=` | Status keys per source (`angestellt`, `ex-angestellt`, `eingestellt`, `abgelehnt`, …, `unbekannt`); detection, eligibility and penalty run per source, dimension and status (E13) |
+| Frontend | `frontend/src/pages/Anomalies.jsx` (`?anomaly=&source=&status=`), `components/dashboard/AnomalyComparison.jsx`, `PeriodReviews.jsx`, `hooks/useReviewPages.js`, `useAnomalyComparison.js`, `lib/reviewerStatus.js` | Click a step or list row to select; sections "Vorher-Nachher-Vergleich" and "Bewertungen des Zeitraums" (25 per page, opens `ReviewDetailModal`); source toggle and status picker on card and detail page |
+| Tests | `backend/tests/drilldown/`, `backend/tests/anomaly/test_status_filter.py` (in-memory store, lexicon mode, no network) | `cd backend && uv run python -m pytest tests/anomaly tests/drilldown tests/forecast tests/test_rating_series_service.py -q` |
+
+---
+
 ## ⚡ Quick Start
 
 ```bash
@@ -260,6 +275,9 @@ epa-analytics/
 │   ├── services/                # Business Logic Services
 │   │   ├── rating_series_service.py       # Monthly rating series (E3/E4)
 │   │   ├── anomaly_service.py             # Anomalies in the monthly series (increment 1)
+│   │   ├── review_service.py              # Reviews of a period, fullReview, status groups (increment 2)
+│   │   ├── keyword_topic_service.py       # Keyword topics, topics_in_review (increment 2)
+│   │   ├── explanation_service.py         # Before/after comparison of a change (increment 2)
 │   │   ├── excel_service.py               # Excel Import/Export
 │   │   ├── topic_model_service.py         # Topic Modeling DB Service
 │   │   ├── topic_rating_service.py        # Topic-Rating Analysis
@@ -269,7 +287,7 @@ epa-analytics/
 │   │
 │   ├── routes/                  # API Endpoints
 │   │   ├── analytics.py        # Analytics API (12 Endpoints)
-│   │   ├── anomalies.py        # Anomalies API (increment 1)
+│   │   ├── anomalies.py        # Anomalies and comparison API (increments 1 and 2)
 │   │   ├── companies.py        # Company Management (9 Endpoints)
 │   │   ├── topics.py           # Topic Modeling API (13 Endpoints)
 │   │   └── upload.py           # File Upload
@@ -283,6 +301,7 @@ epa-analytics/
 │   │
 │   ├── tests/                   # Organized Tests
 │   │   ├── anomaly/            # Change point detection tests
+│   │   ├── drilldown/          # Reviews, keyword topics, comparison (increment 2)
 │   │   ├── topic_modeling/     # Topic Modeling Tests
 │   │   ├── sentiment_analysis/ # Sentiment Tests
 │   │   └── statistical/        # Statistical Tests
@@ -297,6 +316,8 @@ epa-analytics/
 │   │   │   ├── CompanySearchSelect.jsx  # Optimized with caching
 │   │   │   ├── dashboard/     # Dashboard Components
 │   │   │   │   ├── AnomalyCard.jsx          # Anomalies in the rating history
+│   │   │   │   ├── AnomalyComparison.jsx    # Before/after comparison (increment 2)
+│   │   │   │   ├── PeriodReviews.jsx        # Reviews of a comparison window (increment 2)
 │   │   │   │   ├── DominantTopicsCard.jsx   # Dominant Topics
 │   │   │   │   ├── IndividualReviewsCard.jsx # Individual Reviews
 │   │   │   │   ├── TimelineCard.jsx         # React.memo optimized
@@ -331,6 +352,8 @@ epa-analytics/
 │   │   │   └── Welcome.jsx
 │   │   ├── hooks/             # React Hooks
 │   │   │   ├── useAnomalies.js # Fetches series and anomalies
+│   │   │   ├── useAnomalyComparison.js # Fetches the before/after comparison
+│   │   │   ├── useReviewPages.js # Loads reviews of a period page by page
 │   │   │   └── useTheme.js    # Light/dark theme
 │   │   ├── utils/             # Utility Functions
 │   │   │   ├── pdfExport.js   # PDF Export
@@ -338,7 +361,8 @@ epa-analytics/
 │   │   │   └── pdf/           # PDF Utilities
 │   │   └── lib/               # Utilities
 │   │       ├── anomalySeries.js # Time window and display-only interpolation for anomaly charts
-│   │       ├── ratingCategories.js # Rating dimensions: key → label
+│   │       ├── ratingCategories.js # Rating dimensions per source: key → label
+│   │       ├── reviewerStatus.js # Reviewer status labels and options
 │   │       └── utils.ts
 │   ├── public/                # Static Assets
 │   └── package.json           # Node.js Dependencies
