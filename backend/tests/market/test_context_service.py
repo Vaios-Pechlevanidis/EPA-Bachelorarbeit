@@ -64,7 +64,7 @@ class TestBuildRecord:
     def test_record_fields(self):
         record = cs.build_record("TST.DE", raw_data(), FETCHED_AT)
         assert set(record) == {"ticker", "ticker_name", "currency", "fetched_at", "source", "adjustment",
-                               "prices", "metrics"}
+                               "prices", "metrics", "analysts", "earnings"}
         assert record["ticker"] == "TST.DE" and record["currency"] == "EUR"
         assert record["fetched_at"] == "2024-03-15T12:00:00+00:00"
         assert record["source"] == "Yahoo Finance über yfinance 0.0-test"

@@ -34,6 +34,17 @@ Kennzahlen (``metrics``) aus yfinance, ohne Schätzung fehlender Werte:
 
 Fehlt ein Wert, bleibt die Kennzahl ``None`` bzw. das Jahr fehlt in ``revenue``.
 
+Für das Aktien-Dashboard (``/aktie``, E16) speichert der Datensatz zusätzlich:
+
+- ``analysts``: Zahl der Analystenempfehlungen je Stufe (stark kaufen bis stark
+  verkaufen) für den Monat des Abrufs und die drei Monate davor
+  (``Ticker.recommendations``), Stand = Abrufdatum,
+- ``earnings``: Umsatz (``Total Revenue``) und Nettoergebnis (``Net Income``) je
+  Geschäftsjahr und je Quartal in Berichtswährung, so weit yfinance sie liefert.
+
+Ältere Zwischenspeicher ohne diese Felder bleiben für die Kursreihe gültig; die
+Felder sind dann ``None``, bis ``scripts/fetch_market_data.py`` erneut läuft.
+
 Der Netzabruf liegt hinter ``fetch_raw`` (austauschbar über den Parameter
 ``fetcher``); ``build_record`` formt die Rohdaten ohne Netzwerk um. So laufen
 die Tests mit nachgebildeten Rohdaten.
@@ -173,6 +184,7 @@ def fetch_raw(ticker: str) -> Dict[str, Any]:
         logger.info("yfinance info für %s nicht verfügbar: %s", ticker, exc)
         info = {}
     revenue = []
+    income_annual = []
     try:
         stmt = tk.income_stmt
         if stmt is not None and "Total Revenue" in stmt.index:
@@ -180,16 +192,44 @@ def fetch_raw(ticker: str) -> Dict[str, Any]:
                 {"period_end": col.strftime("%Y-%m-%d"), "value": val}
                 for col, val in stmt.loc["Total Revenue"].items()
             ]
+        income_annual = _income_rows(stmt)
     except Exception as exc:  # noqa: BLE001
         logger.info("yfinance income_stmt für %s nicht verfügbar: %s", ticker, exc)
+    try:
+        income_quarterly = _income_rows(tk.quarterly_income_stmt)
+    except Exception as exc:  # noqa: BLE001
+        logger.info("yfinance quarterly_income_stmt für %s nicht verfügbar: %s", ticker, exc)
+        income_quarterly = []
+    try:
+        rec = tk.recommendations
+        recommendations = rec.to_dict("records") if rec is not None and len(rec) else []
+    except Exception as exc:  # noqa: BLE001
+        logger.info("yfinance recommendations für %s nicht verfügbar: %s", ticker, exc)
+        recommendations = []
     return {
         "currency": meta.get("currency"),
         "name": meta.get("longName") or meta.get("shortName"),
         "history": history,
         "info": info,
         "revenue": revenue,
+        "income_annual": income_annual,
+        "income_quarterly": income_quarterly,
+        "recommendations": recommendations,
         "yfinance_version": getattr(yf, "__version__", None),
     }
+
+
+def _income_rows(stmt: Any) -> List[Dict[str, Any]]:
+    """Umsatz und Nettoergebnis je Spalte einer yfinance-Erfolgsrechnung."""
+    if stmt is None or not len(stmt.columns):
+        return []
+    def row(name: str) -> Dict[Any, Any]:
+        return stmt.loc[name].to_dict() if name in stmt.index else {}
+    revenue, net_income = row("Total Revenue"), row("Net Income")
+    return [
+        {"period_end": col.strftime("%Y-%m-%d"), "revenue": revenue.get(col), "net_income": net_income.get(col)}
+        for col in stmt.columns
+    ]
 
 
 def _finite(value: Any) -> Optional[float]:
@@ -247,6 +287,60 @@ def build_metrics(raw: Dict[str, Any], fetched_at: datetime) -> Dict[str, Any]:
     }
 
 
+RATINGS = ("strongBuy", "buy", "hold", "sell", "strongSell")
+RATING_KEYS = ("strong_buy", "buy", "hold", "sell", "strong_sell")
+_REL_MONTH_RE = re.compile(r"^(0|-\d+)m$")
+
+
+def _shift_month(day: datetime, months: int) -> str:
+    index = day.year * 12 + day.month - 1 + months
+    return f"{index // 12}-{index % 12 + 1:02d}"
+
+
+def build_analysts(raw: Dict[str, Any], fetched_at: datetime) -> Optional[Dict[str, Any]]:
+    """Analystenempfehlungen je Monat (älteste zuerst) oder None.
+
+    yfinance nennt den Monat relativ (``0m`` = laufender Monat, ``-1m`` = Vormonat);
+    er wird auf den Monat des Abrufs bezogen. Monate ohne gültige Zahlen entfallen.
+    """
+    months = []
+    for row in raw.get("recommendations") or []:
+        match = _REL_MONTH_RE.match(str(row.get("period", "")))
+        counts = [_finite(row.get(k)) for k in RATINGS]
+        if not match or any(c is None or c < 0 for c in counts):
+            continue
+        entry = {"month": _shift_month(fetched_at, int(match.group(1))), **{k: int(c) for k, c in zip(RATING_KEYS, counts)}}
+        entry["total"] = sum(entry[k] for k in RATING_KEYS)
+        if entry["total"] > 0:
+            months.append(entry)
+    if not months:
+        return None
+    return {"as_of": fetched_at.strftime("%Y-%m-%d"), "months": sorted(months, key=lambda m: m["month"])}
+
+
+def _earnings_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    out = []
+    for r in rows or []:
+        revenue, net_income = _finite(r.get("revenue")), _finite(r.get("net_income"))
+        if revenue is None and net_income is None:
+            continue
+        out.append({"period_end": str(r.get("period_end"))[:10], "revenue": revenue, "net_income": net_income})
+    return sorted(out, key=lambda r: r["period_end"])
+
+
+def build_earnings(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Umsatz und Nettoergebnis je Geschäftsjahr und Quartal oder None.
+
+    Ein Zeitraum entfällt nur, wenn beide Werte fehlen; fehlt einer, bleibt er None.
+    """
+    annual = _earnings_rows(raw.get("income_annual"))
+    quarterly = _earnings_rows(raw.get("income_quarterly"))
+    if not annual and not quarterly:
+        return None
+    info = raw.get("info") or {}
+    return {"currency": info.get("financialCurrency") or raw.get("currency"), "annual": annual, "quarterly": quarterly}
+
+
 def build_record(ticker: str, raw: Dict[str, Any], fetched_at: Optional[datetime] = None) -> Dict[str, Any]:
     """Speicherbarer Datensatz aus Rohdaten (ohne Netzwerk)."""
     fetched_at = fetched_at or datetime.now(timezone.utc)
@@ -260,6 +354,8 @@ def build_record(ticker: str, raw: Dict[str, Any], fetched_at: Optional[datetime
         "adjustment": ADJUSTMENT,
         "prices": monthly_closes(raw.get("history") or [], fetched_at),
         "metrics": build_metrics(raw, fetched_at),
+        "analysts": build_analysts(raw, fetched_at),
+        "earnings": build_earnings(raw),
     }
 
 
@@ -375,6 +471,37 @@ def company_market(
     None, wenn es das Unternehmen nicht gibt; ValueError bei ungültigem
     Zeitraum. Ohne Ticker oder ohne Kursdaten ``available: false`` mit ``reason``.
     """
+    found = _market_with_record(company_id, start, end, fetcher, cache_dir)
+    return found[0] if found else None
+
+
+def company_finance(
+    company_id: int,
+    fetcher: Optional[RawFetcher] = None,
+    cache_dir: Optional[Path] = None,
+) -> Optional[Dict[str, Any]]:
+    """Daten des Aktien-Dashboards (``GET /analytics/company/{id}/finance``, E16).
+
+    Wie ``company_market`` ohne Zeitraum, dazu ``analysts`` und ``earnings``
+    (je None, wenn yfinance oder der Zwischenspeicher sie nicht enthält).
+    """
+    found = _market_with_record(company_id, None, None, fetcher, cache_dir)
+    if found is None:
+        return None
+    result, record = found
+    result["analysts"] = (record or {}).get("analysts")
+    result["earnings"] = (record or {}).get("earnings")
+    return result
+
+
+def _market_with_record(
+    company_id: int,
+    start: Optional[str],
+    end: Optional[str],
+    fetcher: Optional[RawFetcher],
+    cache_dir: Optional[Path],
+) -> Optional[tuple[Dict[str, Any], Optional[Dict[str, Any]]]]:
+    """Antwort von ``company_market`` und der zugrunde liegende Datensatz."""
     start = _check_period("start", start)
     end = _check_period("end", end)
     if start and end and start > end:
@@ -397,11 +524,11 @@ def company_market(
     }
     if not info["ticker"]:
         result["reason"] = NO_TICKER_REASONS.get(info["peer_group"], NO_TICKER_DEFAULT)
-        return result
+        return result, None
     record, reason = market_record(info["ticker"], fetcher=fetcher, cache_dir=cache_dir)
     if record is None:
         result["reason"] = reason
-        return result
+        return result, None
     prices = [
         p for p in record.get("prices") or []
         if (start is None or p["period"] >= start) and (end is None or p["period"] <= end)
@@ -416,4 +543,4 @@ def company_market(
         "fetched_at": record.get("fetched_at"),
         "source": record.get("source"),
     })
-    return result
+    return result, record
