@@ -60,6 +60,16 @@ export function StepGlyph({ direction, severity = "high", color, size = 12 }) {
     )
 }
 
+/* Ring-Symbol der Karte (Legende): wie die ReferenceDot-Markierung im Diagramm. */
+function RingGlyph({ direction, size = 10 }) {
+    const color = DIRECTION[direction].color
+    return (
+        <svg width={size} height={size} viewBox="0 0 10 10" aria-hidden="true" className="flex-none">
+            <circle cx="5" cy="5" r="3.75" fill={color} fillOpacity={0.35} stroke={color} strokeWidth={1.5} />
+        </svg>
+    )
+}
+
 /* Markierung im Diagramm: Stufe am markierten Monat von Ø davor (links) zu
    Ø danach (rechts). Höhe = Ausmaß im Maßstab der Y-Achse, Form = Richtung,
    Strichstärke = Schweregrad. Der Monatswert selbst bleibt auf der Linie. */
@@ -465,6 +475,13 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                     </span>
                 )}
                 <span>Sternebewertung, Monatsmittel, Monate mit mindestens {minReviews} Bewertungen mit Wert</span>
+            </p>
+        )}
+        {!error && compact && visibleAnomalies.length > 0 && (
+            <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span>Ring = auffällige Veränderung ab diesem Monat:</span>
+                <span className="inline-flex items-center gap-1"><RingGlyph direction="fall" /> Abfall</span>
+                <span className="inline-flex items-center gap-1"><RingGlyph direction="rise" /> Anstieg</span>
             </p>
         )}
         {!error && visibleAnomalies.length > 0 && !compact && (

@@ -119,7 +119,10 @@ export default function AnomaliesPage() {
     const visibleAnomalies = useMemo(() => anomalies.filter((a) => inWindow(a.date, range)), [anomalies, range])
     const hiddenCount = count - visibleAnomalies.length
     const countText = `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
-    const chartSubtitle = eligibility && !eligibility.eligible
+    // Im Fehlerfall und beim Laden kein Zähler: "0" wäre dort eine falsche Aussage.
+    const chartSubtitle = error || loading
+        ? group
+        : eligibility && !eligibility.eligible
         ? `${group} · keine automatische Erkennung`
         : range
             ? `${group} · ${fmtPeriod(range.from)} – ${fmtPeriod(range.to)} · ${count
