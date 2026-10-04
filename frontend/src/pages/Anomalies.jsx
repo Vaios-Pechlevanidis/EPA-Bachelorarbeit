@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowLeft, Building2, GitCompareArrows, ListOrdered, MessageSquareText } from "lucide-react"
+import { ArrowLeft, Building2, Diamond, GitCompareArrows, ListOrdered, MessageSquareText } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { PeriodReviewList, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
-import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
+import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, monthSpan, outlierCountText, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
 import { groupLabel, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
@@ -25,7 +25,8 @@ import { API_URL } from "../config"
    Der Zeitraum wählt nur den Ausschnitt; erkannt wird auf der ganzen Reihe.
    Inkrement 2: Ein Klick auf eine Stufe oder Listenzeile wählt die Veränderung
    aus (?anomaly=id); darunter stehen der Vorher-Nachher-Vergleich und die
-   Bewertungen der Vergleichsfenster.
+   Bewertungen der Vergleichsfenster. Auffällige Einzelmonate (E14) stehen in
+   einer eigenen Liste; Auswahl per ?month=YYYY-MM zeigt die Bewertungen des Monats.
    ============================================================================ */
 
 function Section({ icon, eyebrow, title, subtitle, actions, children }) {
@@ -109,15 +110,22 @@ export default function AnomaliesPage() {
     const [sideState, setSideState] = useState({ id: null, side: "before" })
     const side = sideState.id === selectedId ? sideState.side : "before"
     const sideWindow = windows?.[side] ?? null
-    const reviewPages = useReviewPages(companyId, { source, status, start: sideWindow?.start, end: sideWindow?.end })
+    const outliers = useMemo(() => data?.outlier_months ?? [], [data])
+    const selectedMonth = searchParams.get("month")
+    const selectedOutlier = selectedAnomaly ? null : outliers.find((o) => o.date === selectedMonth) ?? null
+    const outlierSpan = selectedOutlier ? monthSpan(selectedOutlier.date) : null
+    const reviewSpan = selectedAnomaly ? sideWindow : outlierSpan
+    const reviewPages = useReviewPages(companyId, { source, status, start: reviewSpan?.start, end: reviewSpan?.end })
     const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
-    const selectAnomaly = (id) => updateParams({ anomaly: id })
+    const selectAnomaly = (id) => updateParams({ anomaly: id, month: null })
+    const selectOutlier = (period) => updateParams({ month: period, anomaly: null })
     const eligibility = data?.eligibility
     const count = anomalies.length
     // Sichtbares Fenster relativ zum letzten angezeigten (bewerteten) Monat; null = alles.
     const range = useMemo(() => timeWindow(trimToEvaluated(data?.series).series, rangeKey), [data, rangeKey])
     const visibleAnomalies = useMemo(() => anomalies.filter((a) => inWindow(a.date, range)), [anomalies, range])
     const hiddenCount = count - visibleAnomalies.length
+    const visibleOutliers = useMemo(() => outliers.filter((o) => inWindow(o.date, range)), [outliers, range])
     const countText = `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
     // Im Fehlerfall und beim Laden kein Zähler: "0" wäre dort eine falsche Aussage.
     const chartSubtitle = error || loading
@@ -127,8 +135,8 @@ export default function AnomaliesPage() {
         : range
             ? `${group} · ${fmtPeriod(range.from)} – ${fmtPeriod(range.to)} · ${count
                 ? `${visibleAnomalies.length} von ${count} ${count === 1 ? "auffälligen Veränderung" : "auffälligen Veränderungen"} im Zeitraum`
-                : "keine auffälligen Veränderungen"}`
-            : `${group} · ${countText}`
+                : "keine auffälligen Veränderungen"}${outlierCountText(visibleOutliers.length)}`
+            : `${group} · ${countText}${outlierCountText(outliers.length)}`
 
     // Zurück mit der gewählten Firma, damit das Dashboard sie wieder anzeigt.
     const backToDashboard = () =>
@@ -139,7 +147,7 @@ export default function AnomaliesPage() {
         const id = String(company.id)
         setNames((n) => ({ ...n, [id]: company.name }))
         setQuery(company.name)
-        updateParams({ company: id, anomaly: null })
+        updateParams({ company: id, anomaly: null, month: null })
     }
 
     return (
@@ -174,7 +182,7 @@ export default function AnomaliesPage() {
                             source: key === DEFAULT_SOURCE ? null : key,
                             status: null,
                             dimension: isDimensionOf(key, dimension) && dimension !== OVERALL_DIMENSION.key ? dimension : null,
-                            anomaly: null,
+                            anomaly: null, month: null,
                         })}
                     />
                 )}
@@ -182,14 +190,14 @@ export default function AnomaliesPage() {
                     <StatusPicker
                         source={source}
                         value={status}
-                        onChange={(key) => updateParams({ status: key, anomaly: null })}
+                        onChange={(key) => updateParams({ status: key, anomaly: null, month: null })}
                     />
                 )}
                 {companyId && (
                     <DimensionPicker
                         source={source}
                         value={dimension}
-                        onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key, anomaly: null })}
+                        onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key, anomaly: null, month: null })}
                     />
                 )}
                 <div className="w-[260px] flex-none">
@@ -234,6 +242,8 @@ export default function AnomaliesPage() {
                                 showLevels
                                 selectedId={selectedId}
                                 onSelect={selectAnomaly}
+                                selectedOutlier={selectedOutlier?.date ?? null}
+                                onSelectOutlier={selectOutlier}
                             />
                         </Section>
 
@@ -270,13 +280,44 @@ export default function AnomaliesPage() {
                                     <button
                                         type="button"
                                         className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
-                                        onClick={() => updateParams({ anomaly: null })}
+                                        onClick={() => updateParams({ anomaly: null, month: null })}
                                     >
                                         Auswahl aufheben
                                     </button>
                                 </p>
                             )}
                         </Section>
+
+                        {!loading && !error && eligibility?.eligible && (
+                            <Section
+                                icon={<Diamond />}
+                                eyebrow="LISTE · E14"
+                                title="Auffällige Einzelmonate"
+                                subtitle="Monate, die stark von ihren Nachbarmonaten abweichen, ohne ein neues Niveau zu bilden (mindestens 3 σ und 0,5 Sterne); größte Abweichung zuerst"
+                            >
+                                <OutlierList
+                                    outliers={visibleOutliers}
+                                    selectedPeriod={selectedOutlier?.date ?? null}
+                                    onSelect={selectOutlier}
+                                    emptyText={range ? "Im gewählten Zeitraum keine auffälligen Einzelmonate." : undefined}
+                                />
+                            </Section>
+                        )}
+
+                        {selectedOutlier && outlierSpan && (
+                            <Section
+                                icon={<MessageSquareText />}
+                                eyebrow={`EINZELBEWERTUNGEN · AUFFÄLLIGER EINZELMONAT`}
+                                title={`Bewertungen ${fmtPeriod(selectedOutlier.date)}`}
+                                subtitle={`${group} · ${fmtPeriod(selectedOutlier.date)}${reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}`}`}
+                            >
+                                <PeriodReviewList key={`month:${selectedOutlier.date}`} pages={reviewPages} />
+                                <p className="m-0 mt-3 text-[11px] text-slate-400">
+                                    Alle Bewertungen dieses Kalendermonats. Der Monat weicht um {String(selectedOutlier.deviation).replace(".", ",")} Sterne vom
+                                    Niveau seiner Nachbarmonate ab; das ist ein Hinweis auf einen auffälligen Monat, keine Aussage über Ursachen.
+                                </p>
+                            </Section>
+                        )}
 
                         {selectedAnomaly && windows && (
                             <Section

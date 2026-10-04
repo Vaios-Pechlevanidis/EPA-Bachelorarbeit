@@ -47,6 +47,16 @@ bewerteten Monatsmittel, ``n`` = Zahl der bewerteten Monate, Faktor 2,0). Ein
 Die Ergebnisse sind Hinweise auf auffällige Veränderungen, keine Aussagen über
 Ursachen. Sortierung: ``fall`` vor ``rise``, innerhalb nach ``|delta|`` absteigend.
 
+Auffällige Einzelmonate (E14, 2026-10-04): Neben den Niveauwechseln meldet
+``detect_outlier_months`` bewertete Monate, die stark von ihren Nachbarmonaten
+abweichen, ohne ein neues Niveau zu bilden (ein Monat, davor und danach das
+gleiche Niveau). Vergleich mit dem Median der bis zu 3 bewerteten Monate davor
+und danach; Schwelle ``max(3 · noise_sigma, 0,5 Sterne)``. Felder: ``id``
+(``"{source}:{dimension}:{YYYY-MM}:einzelmonat"``), ``date``, ``direction``
+(``fall`` = unter, ``rise`` = über dem Niveau), ``month_mean``, ``level``,
+``deviation``, ``n_values``, ``neighbours_from``/``neighbours_to``,
+``noise_sigma``, ``threshold``. Sortierung nach ``|deviation|`` absteigend.
+
 Bewertendengruppe (E13, Inkrement 2): Mit ``status`` laufen Reihe, Eignung,
 Strafterm und Erkennung nur auf den Bewertungen dieses Status; jede
 Kombination aus Quelle, Dimension und Status ist eine eigene Reihe. Die
@@ -57,6 +67,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from statistics import median
+
 from models.changepoint_detector import (
     DEFAULT_MIN_SIZE,
     DEFAULT_MODEL,
@@ -64,6 +76,7 @@ from models.changepoint_detector import (
     PeltDetector,
     detect_changepoints,
     level_shifts,
+    noise_sigma,
 )
 from services.rating_series_service import (
     MIN_EVALUATED_MONTHS,
@@ -77,6 +90,8 @@ from services.rating_series_service import (
 
 DEFAULT_MIN_DELTA = 0.3   # Sterne; vorläufig, siehe E9
 SEVERITY_HIGH = 0.5       # Sterne; Richtwert aus dem Annotationsprotokoll (E5)
+OUTLIER_SIGMA_FACTOR = 3.0  # E14, vorläufig: Abweichung in Vielfachen von noise_sigma
+OUTLIER_MIN_DELTA = 0.5     # E14, vorläufig: Mindestabweichung in Sternen
 
 _DIRECTION_ORDER = {"fall": 0, "rise": 1}
 
@@ -108,6 +123,9 @@ def detection_params(
         "n_evaluated": len(values),
         "min_delta": min_delta,
         "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
+        "outlier_sigma_factor": OUTLIER_SIGMA_FACTOR,
+        "outlier_min_delta": OUTLIER_MIN_DELTA,
+        "outlier_neighbours": OUTLIER_NEIGHBOURS,
     }
 
 
@@ -205,6 +223,74 @@ def detect_anomalies(
     return sort_anomalies(anomalies)
 
 
+OUTLIER_NEIGHBOURS = 3      # E14: bewertete Monate je Seite für das Vergleichsniveau
+
+
+def detect_outlier_months(
+    series: List[Dict[str, Any]],
+    *,
+    company_id: int,
+    source: str,
+    dimension: str = OVERALL_DIMENSION,
+    sigma_factor: float = OUTLIER_SIGMA_FACTOR,
+    min_deviation: float = OUTLIER_MIN_DELTA,
+    neighbours: int = OUTLIER_NEIGHBOURS,
+) -> List[Dict[str, Any]]:
+    """Auffällige Einzelmonate einer fertigen Monatsreihe (E14); reine Funktion.
+
+    Nur bewertete Monate. Schwelle ``T = max(sigma_factor · noise_sigma,
+    min_deviation)``. Ein Monat wird gemeldet, wenn
+
+    - er vom Median der bis zu ``neighbours`` bewerteten Monate davor **und**
+      vom Median der bis zu ``neighbours`` danach um mindestens ``T`` abweicht,
+      beide Male in dieselbe Richtung (je Seite mindestens 2 Monate), und
+    - seine direkten bewerteten Nachbarn selbst nicht um ``T`` oder mehr in
+      dieselbe Richtung vom Niveau abweichen (sonst ist es kein einzelner Monat).
+
+    Niveau (``level``) ist der Median beider Seiten zusammen. Am Rand einer
+    Reihe und an einem Niveauwechsel wird nichts gemeldet, weil dort eine Seite
+    auf dem Niveau des Monats liegt. Prüft die Eignung nicht.
+    """
+    evaluated = [m for m in series if m.get("evaluated") and m.get("mean") is not None]
+    values = [float(m["mean"]) for m in evaluated]
+    if len(values) < 5:
+        return []
+    sigma = noise_sigma(values)
+    threshold = max(sigma_factor * sigma, min_deviation)
+    found: List[Dict[str, Any]] = []
+    for i, value in enumerate(values):
+        left = values[max(0, i - neighbours):i]
+        right = values[i + 1:i + 1 + neighbours]
+        if len(left) < 2 or len(right) < 2:
+            continue
+        dev_left, dev_right = value - median(left), value - median(right)
+        if min(abs(dev_left), abs(dev_right)) < threshold or (dev_left > 0) != (dev_right > 0):
+            continue
+        level = float(median(left + right))
+        deviation = value - level
+        sign = 1 if deviation > 0 else -1
+        if any(sign * (values[j] - level) >= threshold for j in (i - 1, i + 1)):
+            continue
+        period = evaluated[i]["period"]
+        found.append({
+            "id": f"{source}:{dimension}:{period}:einzelmonat",
+            "company_id": company_id,
+            "source": source,
+            "dimension": dimension,
+            "date": period,
+            "direction": "fall" if deviation < 0 else "rise",
+            "month_mean": round(value, 3),
+            "level": round(level, 3),
+            "deviation": round(deviation, 3),
+            "n_values": int(evaluated[i].get("n_values", evaluated[i].get("count", 0))),
+            "neighbours_from": evaluated[i - len(left)]["period"],
+            "neighbours_to": evaluated[i + len(right)]["period"],
+            "noise_sigma": round(sigma, 6),
+            "threshold": round(threshold, 6),
+        })
+    return sorted(found, key=lambda o: (-abs(o["deviation"]), o["date"]))
+
+
 def company_anomalies(
     company_id: int,
     source: str = "employee",
@@ -229,6 +315,10 @@ def company_anomalies(
         )
         if elig["eligible"] else []
     )
+    outliers = (
+        detect_outlier_months(series, company_id=company_id, source=source, dimension=dimension)
+        if elig["eligible"] else []
+    )
     result = {
         "company_id": company_id,
         "source": source,
@@ -241,6 +331,7 @@ def company_anomalies(
             for m in series
         ],
         "anomalies": anomalies,
+        "outlier_months": outliers,
         "params": {
             **detection_params(series, penalty, penalty_factor, min_delta),
             "min_reviews_per_month": data["min_reviews"],
@@ -275,6 +366,7 @@ def company_anomalies_all(
     series_by_dimension = monthly_series_by_dimension(company_id, source, status=status)
     dimensions: List[Dict[str, Any]] = []
     combined: List[Dict[str, Any]] = []
+    combined_outliers: List[Dict[str, Any]] = []
     for dimension, series in series_by_dimension.items():
         elig = eligibility(series)
         found = (
@@ -284,17 +376,23 @@ def company_anomalies_all(
             )
             if elig["eligible"] else []
         )
+        outliers = (
+            detect_outlier_months(series, company_id=company_id, source=source, dimension=dimension)
+            if elig["eligible"] else []
+        )
         dimensions.append({
-            "dimension": dimension, "eligibility": elig, "anomalies": found,
+            "dimension": dimension, "eligibility": elig, "anomalies": found, "outlier_months": outliers,
             "params": detection_params(series, penalty, penalty_factor, min_delta),
         })
         combined.extend(found)
+        combined_outliers.extend(outliers)
     result = {
         "company_id": company_id,
         "source": source,
         "dimension": "all",
         "dimensions": dimensions,
         "anomalies": sort_anomalies(combined),
+        "outlier_months": sorted(combined_outliers, key=lambda o: (-abs(o["deviation"]), o["date"])),
         "params": {
             "method": "pelt",
             "model": DEFAULT_MODEL,
@@ -304,6 +402,9 @@ def company_anomalies_all(
             "penalty": penalty,  # im skalierten Modus je Dimension, siehe dimensions[i].params
             "min_delta": min_delta,
             "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
+            "outlier_sigma_factor": OUTLIER_SIGMA_FACTOR,
+            "outlier_min_delta": OUTLIER_MIN_DELTA,
+            "outlier_neighbours": OUTLIER_NEIGHBOURS,
         },
     }
     if status is not None:
@@ -312,7 +413,7 @@ def company_anomalies_all(
 
 
 __all__ = [
-    "DEFAULT_MIN_DELTA", "SEVERITY_HIGH",
+    "DEFAULT_MIN_DELTA", "SEVERITY_HIGH", "OUTLIER_SIGMA_FACTOR", "OUTLIER_MIN_DELTA", "OUTLIER_NEIGHBOURS", "detect_outlier_months",
     "eligibility", "detection_params", "sort_anomalies", "detect_anomalies", "company_anomalies",
     "company_anomalies_all",
 ]

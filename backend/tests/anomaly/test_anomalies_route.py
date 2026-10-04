@@ -39,7 +39,7 @@ class TestSingleDimension:
         res = client.get(URL.format(3))
         assert res.status_code == 200
         body = res.json()
-        assert set(body) == {"company_id", "source", "dimension", "series", "anomalies", "params", "eligibility"}
+        assert set(body) == {"company_id", "source", "dimension", "series", "anomalies", "outlier_months", "params", "eligibility"}
         assert body["dimension"] == "durchschnittsbewertung"
         assert body["params"]["min_reviews_per_month"] == 5
 
@@ -118,11 +118,11 @@ class TestAllDimensions:
         res = client.get(URL.format(3), params={"dimension": "all"})
         assert res.status_code == 200
         body = res.json()
-        assert set(body) == {"company_id", "source", "dimension", "dimensions", "anomalies", "params"}
+        assert set(body) == {"company_id", "source", "dimension", "dimensions", "anomalies", "outlier_months", "params"}
         assert body["dimension"] == "all"
         assert [d["dimension"] for d in body["dimensions"]] == DIMENSIONS_BY_SOURCE["employee"]
         for entry in body["dimensions"]:
-            assert set(entry) == {"dimension", "eligibility", "anomalies", "params"}
+            assert set(entry) == {"dimension", "eligibility", "anomalies", "outlier_months", "params"}
         assert len(body["anomalies"]) == sum(len(d["anomalies"]) for d in body["dimensions"])
 
     def test_candidates_source(self, client):
