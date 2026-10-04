@@ -126,7 +126,7 @@ gesetzt, wenn er die Reihe deutlich besser erklärt, als er „kostet“.
 |---|---|---|
 | `model` | `"l2"` | Kostenfunktion: quadrierte Abweichung vom Abschnittsmittel. Reagiert auf Verschiebungen des Mittelwerts |
 | `min_size` | 3 | Ein Abschnitt umfasst mindestens 3 bewertete Monate. Ein einzelner Ausreißermonat ist damit kein neues Niveau |
-| `penalty` | 0,5 | Strafterm je zusätzlichem Wechsel (Einheit: quadrierte Sterne). Größer heißt weniger, aber robustere Wechsel |
+| Strafterm | `penalty_factor` 2,0 (skaliert) | Strafterm je zusätzlichem Wechsel, je Reihe berechnet: `penalty = penalty_factor · σ² · ln(n)` (Einheit: quadrierte Sterne). `σ` ist die robuste Streuung der bewerteten Monatsmittel (`noise_sigma`), `n` die Zahl der bewerteten Monate. Größer heißt weniger, aber robustere Wechsel. Bis 2026-10-04 galt der feste Wert `penalty` 0,5, er ist weiter als fester Modus wählbar (E9) |
 | `min_delta` | 0,3 Sterne | Erkannte Wechsel mit kleinerem Betrag werden nicht angezeigt |
 
 Die Erkennung läuft **nur auf den bewerteten Monaten**; Lücken werden übersprungen, nicht
@@ -155,7 +155,7 @@ Ein Monat wird nur markiert, wenn **alle vier Bedingungen** erfüllt sind:
 |---|---|---|---|
 | 1 | Die Reihe ist **geeignet**. | mind. 12 bewertete Monate mit je mind. 5 Bewertungen (E4) | Ohne genug Monate gibt es kein verlässliches „davor“ und „danach“. |
 | 2 | **Beide Abschnitte** um den Wechsel sind lang genug. | mind. 3 bewertete Monate davor und danach (`min_size`) | Das neue Niveau muss halten; ein Ausreißermonat reicht nicht. |
-| 3 | Der Wechsel **erklärt die Reihe deutlich besser**, als er kostet. | Gewinn > Strafterm 0,5 (`penalty`), siehe unten | Zufällige Schwankungen sollen keine Wechsel erzeugen. |
+| 3 | Der Wechsel **erklärt die Reihe deutlich besser**, als er kostet. | Gewinn > Strafterm `2 · σ² · ln(n)` der Reihe, siehe unten | Zufällige Schwankungen sollen keine Wechsel erzeugen; je stärker eine Reihe schwankt, desto mehr muss ein Wechsel erklären. |
 | 4 | Der Unterschied ist **groß genug**. | \|Delta\| ≥ 0,3 Sterne (`min_delta`) | Statistisch erkennbare, aber praktisch belanglose Verschiebungen fallen weg. |
 
 **Bedingung 3 in Zahlen:** Teilt man einen Abschnitt in zwei Teile mit *n₁* und *n₂*
@@ -163,19 +163,22 @@ Monaten und den Mitteln *m₁* und *m₂*, sinkt die Summe der quadrierten Abwei
 
 > Gewinn = n₁ · n₂ / (n₁ + n₂) · (m₂ − m₁)²
 
-PELT setzt den Wechsel nur, wenn dieser Gewinn den Strafterm 0,5 übersteigt. Daraus folgt
-eine einfache Faustregel: **Je kürzer die Abschnitte, desto größer muss der Sprung sein.**
+PELT setzt den Wechsel nur, wenn dieser Gewinn den Strafterm der Reihe übersteigt. Daraus
+folgen zwei Faustregeln: **Je kürzer die Abschnitte, desto größer muss der Sprung sein**, und
+**je stärker eine Reihe schwankt, desto größer muss der Sprung sein.** Nötiger Sprung allein
+durch den Strafterm, für drei reale Reihen (Faktor 2) und den früheren festen Wert:
 
-| Monate davor / danach | nötiger Sprung allein durch den Strafterm | wirksame Schwelle (mit `min_delta` 0,3) |
-|---|---|---|
-| 3 / 3 | 0,58 Sterne | 0,58 Sterne |
-| 3 / 12 | 0,46 Sterne | 0,46 Sterne |
-| 6 / 6 | 0,41 Sterne | 0,41 Sterne |
-| 12 / 12 | 0,29 Sterne | 0,30 Sterne |
-| 24 / 24 | 0,20 Sterne | 0,30 Sterne |
+| Monate davor / danach | fest 0,5 (bis 2026-10-04) | Telekom (σ 0,28, n 165, Strafterm 0,82) | E.ON (σ 0,42, n 38, 1,27) | Cancom (σ 0,50, n 115, 2,39) |
+|---|---|---|---|---|
+| 3 / 3 | 0,58 | 0,74 | 0,92 | 1,26 |
+| 3 / 12 | 0,46 | 0,58 | 0,73 | 1,00 |
+| 6 / 6 | 0,41 | 0,52 | 0,65 | 0,89 |
+| 12 / 12 | 0,29 | 0,37 | 0,46 | 0,63 |
+| 24 / 24 | 0,20 | 0,26 | 0,32 | 0,45 |
 
-Bei kurzen Abschnitten entscheidet also der Strafterm, bei langen der Mindestbetrag
-`min_delta`. Die Faustregel gilt für einen einzelnen Wechsel; bei mehreren Wechseln wägt
+Angezeigt wird zusätzlich nur, was `min_delta` 0,3 erreicht. Bei ruhigen Reihen entscheidet
+daher bei langen Abschnitten der Mindestbetrag, bei verrauschten Reihen fast immer der
+Strafterm. Die Faustregel gilt für einen einzelnen Wechsel; bei mehreren Wechseln wägt
 PELT alle Zerlegungen gemeinsam ab.
 
 **Einordnung nach Richtung und Stärke:**
@@ -185,13 +188,13 @@ PELT alle Zerlegungen gemeinsam ab.
   der Richtwert des Annotationsprotokolls (E5); festgehalten in E9, Status vorläufig.
   „Deutlich“ markierte Stufen haben im Diagramm einen kräftigen Strich (2,25 px statt 1,25 px).
 
-**Beispiel (gehostete Demo 3, synthetisch):**
+**Beispiel (gehostete Demo 3, synthetisch, ruhige Reihe: σ 0,11, n 50, Strafterm 0,10):**
 
 | Monat | davor / danach (bewertete Monate) | Delta | Gewinn | Ergebnis |
 |---|---|---|---|---|
 | 2023-01 | 12 / 12 | −1,38 | 11,3 | Abfall, deutlich |
 | 2024-01 | 12 / 11 | +1,19 | 8,1 | Anstieg, deutlich |
-| 2025-01 | 11 / 15 | +0,36 | 0,8 | Anstieg, mäßig (knapp über beiden Schwellen) |
+| 2025-01 | 11 / 15 | +0,36 | 0,8 | Anstieg, mäßig (knapp über `min_delta`; Gewinn deutlich über dem Strafterm) |
 
 **Was nicht markiert wird:**
 
@@ -284,6 +287,18 @@ anderem zur Standardabweichung der Quartalsänderung von etwa 0,45 Sternen bei G
 (`backend/scripts/explore_anomaly_params.py`) zeigt, wie stark die Zahl der Markierungen von
 ihnen abhängt (Abschnitt 5). Gegen Referenzzeiträume (DZ1) sind sie noch nicht gemessen.
 
+**Warum ein skalierter Strafterm?** Der feste Wert 0,5 behandelte eine ruhige Reihe mit 30
+Monaten wie eine stark schwankende mit 160 Monaten. Verrauschte Reihen wurden dadurch
+übersegmentiert: 66 Markierungen bei 15 Unternehmen, davon 16 bei Cancom, und auf
+synthetischen Rauschreihen ohne jeden Sprung meldete der feste Wert fast immer eine
+Veränderung. Der skalierte Strafterm `2 · σ² · ln(n)` misst die Kosten eines Wechsels in
+Einheiten der Streuung der jeweiligen Reihe: Ein Wechsel muss sich gegen das übliche
+Auf und Ab dieser Reihe abheben. Die Streuung wird aus den Monat-zu-Monat-Differenzen
+geschätzt und ist dadurch unempfindlich gegen die Niveauwechsel, die gesucht werden. Mit
+Faktor 2 bleiben 19 Markierungen (15 deutlich). Faktor 2 entspricht der Form des
+BIC-Strafterms; Beleg offen (Autor), vgl. Truong et al. 2020 zu prüfen. Der Faktor ist eine
+Setzung des Autors und vorläufig (E9).
+
 **Warum dezente Markierungen und das Wort „auffällig“?** Die Arbeit liefert eine
 Plausibilisierung, keine Kausalaussage. Eine auffällige Markierung soll zum Nachsehen
 einladen, nicht als Alarm oder als Ursache gelesen werden.
@@ -373,8 +388,17 @@ dringendere Anlass zum Handeln.
   wenn dieser wegen `min_delta` nicht angezeigt wird. In den aktuellen Daten betrifft das
   nur Carl Zeiss 2021-05 (+0,25), ohne Nachbarn; die Niveaulinie bleibt dort leer.
 - Die Parameter sind noch nicht gegen unabhängige Referenzzeiträume geprüft.
-- Der Strafterm wächst nicht mit der Länge der Reihe. Lange, dichte Reihen (Telekom, Cancom,
-  1&1) erhalten deshalb deutlich mehr Markierungen als kurze (Abschnitt 5).
+- Der skalierte Strafterm (seit 2026-10-04) wächst mit der Streuung und der Länge der Reihe.
+  Bei sehr verrauschten Reihen braucht ein Wechsel deshalb einen großen Sprung (Cancom bei
+  12/12 Monaten 0,63 Sterne); echte, aber kleinere Veränderungen können dort unerkannt
+  bleiben. Mit dem neuen Standard hat Cancom keine Markierung mehr.
+- `σ` wird aus derselben Reihe geschätzt, in der gesucht wird. Bei kurzen Reihen ist die
+  Schätzung unsicher; die Untergrenze von 0,05 Sternen verhindert nur, dass der Strafterm
+  bei fast konstanten Reihen gegen null geht.
+- Mehrere Beispiele in diesem Dokument (u. a. Telekom 2022-10, Cancom mit 16 Veränderungen)
+  stammen aus der Zeit des festen Strafterms 0,5. Telekom 2022-10 wird mit dem neuen
+  Standard nicht mehr markiert; mit `penalty=0.5` (fester Modus) lassen sich die damaligen
+  Ergebnisse reproduzieren.
 - Die gestrichelte Überbrückung verbindet auch lange Lücken (Open Grid Europe: 20 nicht
   bewertete Monate zwischen 2019-07 und 2021-04, 18 zwischen 2017-01 und 2018-08). Sie ist
   dort nur eine Verbindungslinie und kein Verlauf; über die Entwicklung in dieser Zeit sagt
@@ -399,6 +423,7 @@ dringendere Anlass zum Handeln.
 | Review Anzeigebereich/Icon | Zwei Prüfer (Logik, UI) und ein Gegenprüfer, 2026-10-03. Bestätigt und behoben: Im Zeitausschnitt fehlte der Hinweis auf ausgeblendete jüngere Monate (Universität Duisburg-Essen: 17 Monate mit 30 Bewertungen nach dem letzten bewerteten Monat). Widerlegt bzw. als Gestaltungsfrage eingestuft: Lesbarkeit des Rings im Icon bei 14 px auf 1x-Bildschirmen, Kontrast der Hinweiszeile (entspricht der Konvention der übrigen Karten), Formulierung des Hinweises (trotzdem geglättet) |
 | Interpolation und Zeitfilter | Hilfsfunktionen in `frontend/src/lib/anomalySeries.js` per Node-Prüfskript geprüft (Lücke in der Mitte, Ränder, benachbarte Lücken mit wechselnden Schlüsseln, einzelner Monat zwischen zwei Lücken, nicht bewerteter Monat mit Mittelwert, Fenster über den Jahreswechsel, Fenster größer als die Reihe). Im Browser: Open Grid Europe gesamt und 3 Jahre (Überbrückung am Fensterrand), Telekom 3 Jahre (2 von 9 im Zeitraum, Hinweis auf 7 außerhalb), Demo 3 12 Monate; helles und dunkles Theme |
 | Parameterübersicht | `backend/data/calibration/anomaly_params_employee_durchschnittsbewertung.csv`, Stand 2026-10-03, Mitarbeitende, Gesamtbewertung, 15 geeignete Unternehmen. Summe Abfälle/Anstiege bei min_delta 0,3: penalty 0,25 → 56/60, **0,5 → 31/35 (Startwert)**, 1,0 → 16/19, 2,0 → 4/5. Bei penalty 0,5 und min_delta 0,2/0,3/0,5: 31/36, 31/35, 27/28 |
+| Parameterübersicht skaliert | `backend/data/calibration/anomaly_params_scaled_employee_durchschnittsbewertung.csv`, Stand 2026-10-04, 15 geeignete Unternehmen. Gesamt (davon deutlich) bei `min_delta` 0,3: Faktor 1 → 44 (33), **Faktor 2 → 19 (15) (Standard)**, Faktor 3 → 13 (9), Faktor 4 → 10 (9); fest 0,5 → 66 (55). Synthetische Prüfung in `backend/tests/anomaly/test_changepoint_detector.py` (120 Monate, σ 0,5: ohne Sprung keine Veränderung, mit Sprung 1,0 genau dieser; höchstens 5 Fehlalarme in 50 Rauschreihen) |
 | Commits Inkrement 1 | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte), `8c3af1e` (Detailseite) |
 | Commits Abschluss | `1faca39` (Lücken, Eignung, Datenbasis), `6c63607` (Bewertungen davor/danach), `ed9bc3c` (Dimensionsauswahl, `dimension=all`), `67e1377` (Service-/Routentests), `f7fedbb` (Parameterübersicht) |
 
@@ -410,8 +435,8 @@ dringendere Anlass zum Handeln.
   Einschränkung für DZ1 stehen in E5 (Annotation vor der Evaluation, ohne Einsicht in
   Erkennungsergebnisse).
 - Messung gegen die Referenzzeiträume (DZ1) steht aus; bis dahin bleiben die Parameter
-  vorläufig (E9). Dabei auch prüfen, ob der Strafterm mit der Reihenlänge skaliert werden
-  sollte.
+  vorläufig (E9). Dabei den Faktor des skalierten Strafterms (2) prüfen; Faktor 3 und 4
+  liefern 13 bzw. 10 Markierungen.
 - `min_size` (3): Kurze, starke Einbrüche werden mit einem unauffälligen Nachbarmonat auf
   3 Monate aufgefüllt (Telekom 2022-10). Mit `min_size=2` läge die Markierung dort auf
   2022-11. Ob das gewünscht ist, ist eine Entscheidung des Autors (E9).

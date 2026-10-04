@@ -7,6 +7,7 @@ Ausführung:
     uv run python -m pytest tests/anomaly/test_anomaly_service.py -v
 """
 
+import math
 import os
 import sys
 
@@ -68,7 +69,9 @@ class TestDemoCompanies:
         assert a["company_id"] == DEMO_3
         assert a["severity"] in ("high", "medium")
         assert a["method"] == "pelt"
-        assert a["params"]["penalty"] == 0.5 and a["params"]["min_delta"] == 0.3
+        assert a["params"]["penalty_mode"] == "scaled" and a["params"]["penalty_factor"] == 2.0
+        assert a["params"]["penalty"] > 0 and a["params"]["noise_sigma"] >= 0.05
+        assert a["params"]["min_delta"] == 0.3
         assert round(a["after_mean"] - a["before_mean"], 2) == round(a["delta"], 2)
 
     def test_n_reviews_is_sum_of_before_and_after(self, in_memory_db):
@@ -109,6 +112,56 @@ class TestDemoCompanies:
         assert set(series[0]) == {"period", "mean", "count", "n_values", "evaluated"}
         assert all(m["evaluated"] == (m["n_values"] >= 5) for m in series)
         assert [m["period"] for m in series] == rs.month_range(series[0]["period"], series[-1]["period"])
+
+
+class TestPenaltyModes:
+    """Skalierter Strafterm (Standard) und fester Modus im Service."""
+
+    def test_response_params_scaled(self, in_memory_db):
+        """Test: Antwort nennt Modus, Faktor, noise_sigma, verwendeten Strafterm und n."""
+        params = svc.company_anomalies(DEMO_3, "employee")["params"]
+        assert params["penalty_mode"] == "scaled"
+        assert params["penalty_factor"] == 2.0
+        assert params["n_evaluated"] == 40
+        expected = 2.0 * params["noise_sigma"] ** 2 * math.log(params["n_evaluated"])
+        assert params["penalty"] == pytest.approx(expected, rel=1e-4)
+
+    def test_anomaly_params_equal_response_params(self, in_memory_db):
+        """Test: params je Anomalie enthalten denselben verwendeten Strafterm wie die Antwort."""
+        result = svc.company_anomalies(DEMO_3, "employee")
+        for a in result["anomalies"]:
+            assert a["params"]["penalty"] == result["params"]["penalty"]
+            assert a["params"]["noise_sigma"] == result["params"]["noise_sigma"]
+
+    def test_fixed_mode_reproduces_previous_results(self, in_memory_db):
+        """Test: penalty=0.5 (fester Modus) liefert die bisherigen Ergebnisse für Demo 1–3."""
+        demo3 = svc.company_anomalies(DEMO_3, "employee", penalty=0.5)
+        assert demo3["params"]["penalty_mode"] == "fixed" and demo3["params"]["penalty"] == 0.5
+        assert demo3["params"]["penalty_factor"] is None
+        assert len(_find(demo3["anomalies"], "fall", "2023-01")) == 1
+        assert len(_find(demo3["anomalies"], "rise", "2023-12")) == 1
+        for company_id in (DEMO_1, DEMO_2):
+            assert svc.company_anomalies(company_id, "employee", penalty=0.5)["anomalies"] == []
+
+    def test_higher_factor_never_adds_changes(self, in_memory_db):
+        """Test: Größerer Faktor → nicht mehr Veränderungen (Demo 3, alle Dimensionen)."""
+        counts = [len(svc.company_anomalies_all(DEMO_3, "employee", penalty_factor=f)["anomalies"]) for f in (1, 2, 4)]
+        assert counts[0] >= counts[1] >= counts[2]
+
+    def test_all_dimensions_have_own_sigma(self, in_memory_db):
+        """Test: dimension=all berechnet sigma, n und Strafterm je Dimension."""
+        result = svc.company_anomalies_all(DEMO_3, "employee")
+        assert result["params"]["penalty_mode"] == "scaled" and result["params"]["penalty"] is None
+        sigmas = {d["params"]["noise_sigma"] for d in result["dimensions"]}
+        assert len(sigmas) > 1
+        for d in result["dimensions"]:
+            single = svc.company_anomalies(DEMO_3, "employee", d["dimension"])["params"]
+            assert d["params"]["penalty"] == single["penalty"]
+
+    def test_ineligible_series_reports_params(self, in_memory_db):
+        """Test: Auch ohne Erkennung stehen Modus und Faktor in params."""
+        params = svc.company_anomalies(UNKNOWN_COMPANY, "employee")["params"]
+        assert params["penalty_mode"] == "scaled" and params["n_evaluated"] == 0
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -161,7 +214,7 @@ class TestAllDimensions:
         assert result["dimension"] == "all"
         assert [d["dimension"] for d in result["dimensions"]] == rs.DIMENSIONS_BY_SOURCE["employee"]
         for entry in result["dimensions"]:
-            assert set(entry) == {"dimension", "eligibility", "anomalies"}
+            assert set(entry) == {"dimension", "eligibility", "anomalies", "params"}
 
     def test_combined_list_is_union_and_sorted(self, in_memory_db):
         """Test: Gesamtliste = alle Anomalien der Dimensionen, sortiert."""

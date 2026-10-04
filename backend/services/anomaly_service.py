@@ -35,7 +35,14 @@ Felder je Anomalie:
   auf drei Monate aufgefüllt wird; der sichtbare Übergang liegt dann später.
 - ``severity``: ``"high"`` ab ``SEVERITY_HIGH`` (0,5 Sterne, Richtwert des
   Annotationsprotokolls), sonst ``"medium"`` ab ``min_delta``
-- ``method`` / ``params``: Verfahren und Parameter der Erkennung
+- ``method`` / ``params``: Verfahren und Parameter der Erkennung, u. a.
+  ``penalty_mode`` ("scaled" oder "fixed"), ``penalty_factor``, ``noise_sigma``
+  und der tatsächlich verwendete ``penalty``
+
+Strafterm (E9, seit 2026-10-04): Standard ist der skalierte Strafterm
+``penalty_factor · sigma² · ln(n)`` je Reihe (``sigma`` = ``noise_sigma`` der
+bewerteten Monatsmittel, ``n`` = Zahl der bewerteten Monate, Faktor 2,0). Ein
+übergebener fester ``penalty`` schaltet auf den festen Modus.
 
 Die Ergebnisse sind Hinweise auf auffällige Veränderungen, keine Aussagen über
 Ursachen. Sortierung: ``fall`` vor ``rise``, innerhalb nach ``|delta|`` absteigend.
@@ -43,12 +50,12 @@ Ursachen. Sortierung: ``fall`` vor ``rise``, innerhalb nach ``|delta|`` absteige
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from models.changepoint_detector import (
     DEFAULT_MIN_SIZE,
     DEFAULT_MODEL,
-    DEFAULT_PENALTY,
+    DEFAULT_PENALTY_FACTOR,
     PeltDetector,
     detect_changepoints,
     level_shifts,
@@ -71,6 +78,32 @@ _DIRECTION_ORDER = {"fall": 0, "rise": 1}
 
 def _severity(delta: float) -> str:
     return "high" if abs(delta) >= SEVERITY_HIGH else "medium"
+
+
+def _detector(penalty: Optional[float], penalty_factor: float,
+              model: str = DEFAULT_MODEL, min_size: int = DEFAULT_MIN_SIZE) -> PeltDetector:
+    """PELT-Detektor: fester Modus, wenn ``penalty`` gesetzt ist, sonst skaliert."""
+    return PeltDetector(model=model, min_size=min_size, penalty=penalty, penalty_factor=penalty_factor)
+
+
+def detection_params(
+    series: List[Dict[str, Any]],
+    penalty: Optional[float] = None,
+    penalty_factor: float = DEFAULT_PENALTY_FACTOR,
+    min_delta: float = DEFAULT_MIN_DELTA,
+) -> Dict[str, Any]:
+    """Parameter der Erkennung für eine Reihe, auch ohne erkannte Veränderung:
+    Modus, Faktor, noise_sigma, verwendeter Strafterm und n (bewertete Monate)."""
+    values = [float(m["mean"]) for m in series if m.get("evaluated") and m.get("mean") is not None]
+    det = _detector(penalty, penalty_factor)
+    resolved = det.for_series(values) if values else det
+    return {
+        "method": "pelt",
+        **{k: v for k, v in resolved.params().items() if k != "jump"},
+        "n_evaluated": len(values),
+        "min_delta": min_delta,
+        "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
+    }
 
 
 def _months_between(a: str, b: str) -> int:
@@ -115,8 +148,9 @@ def detect_anomalies(
     company_id: int,
     source: str,
     dimension: str = OVERALL_DIMENSION,
-    penalty: float = DEFAULT_PENALTY,
+    penalty: Optional[float] = None,
     min_delta: float = DEFAULT_MIN_DELTA,
+    penalty_factor: float = DEFAULT_PENALTY_FACTOR,
     model: str = DEFAULT_MODEL,
     min_size: int = DEFAULT_MIN_SIZE,
 ) -> List[Dict[str, Any]]:
@@ -126,7 +160,7 @@ def detect_anomalies(
     """
     evaluated = [m for m in series if m.get("evaluated") and m.get("mean") is not None]
     values = [float(m["mean"]) for m in evaluated]
-    result = detect_changepoints(values, PeltDetector(model=model, min_size=min_size, penalty=penalty))
+    result = detect_changepoints(values, _detector(penalty, penalty_factor, model, min_size))
     params = {**result.params, "min_delta": min_delta}
 
     anomalies: List[Dict[str, Any]] = []
@@ -170,8 +204,9 @@ def company_anomalies(
     company_id: int,
     source: str = "employee",
     dimension: str = OVERALL_DIMENSION,
-    penalty: float = DEFAULT_PENALTY,
+    penalty: Optional[float] = None,
     min_delta: float = DEFAULT_MIN_DELTA,
+    penalty_factor: float = DEFAULT_PENALTY_FACTOR,
 ) -> Dict[str, Any]:
     """Reihe, Eignung und Anomalien eines Unternehmens aus der Datenbank.
 
@@ -183,7 +218,7 @@ def company_anomalies(
     anomalies = (
         detect_anomalies(
             series, company_id=company_id, source=source, dimension=dimension,
-            penalty=penalty, min_delta=min_delta,
+            penalty=penalty, min_delta=min_delta, penalty_factor=penalty_factor,
         )
         if elig["eligible"] else []
     )
@@ -200,11 +235,7 @@ def company_anomalies(
         ],
         "anomalies": anomalies,
         "params": {
-            "method": "pelt",
-            "model": DEFAULT_MODEL,
-            "min_size": DEFAULT_MIN_SIZE,
-            "penalty": penalty,
-            "min_delta": min_delta,
+            **detection_params(series, penalty, penalty_factor, min_delta),
             "min_reviews_per_month": data["min_reviews"],
         },
         "eligibility": elig,
@@ -214,10 +245,14 @@ def company_anomalies(
 def company_anomalies_all(
     company_id: int,
     source: str = "employee",
-    penalty: float = DEFAULT_PENALTY,
+    penalty: Optional[float] = None,
     min_delta: float = DEFAULT_MIN_DELTA,
+    penalty_factor: float = DEFAULT_PENALTY_FACTOR,
 ) -> Dict[str, Any]:
     """Eignung und Anomalien aller Dimensionen einer Quelle (``dimension=all``).
+
+    Im skalierten Modus hat jede Dimension ihr eigenes ``noise_sigma`` und ``n``;
+    die Parameter stehen deshalb je Dimension unter ``dimensions[i].params``.
 
     Ohne Monatsreihen, um die Antwort klein zu halten; die Reihe einer
     Dimension liefert ``company_anomalies``. ``anomalies`` ist die über alle
@@ -232,11 +267,14 @@ def company_anomalies_all(
         found = (
             detect_anomalies(
                 series, company_id=company_id, source=source, dimension=dimension,
-                penalty=penalty, min_delta=min_delta,
+                penalty=penalty, min_delta=min_delta, penalty_factor=penalty_factor,
             )
             if elig["eligible"] else []
         )
-        dimensions.append({"dimension": dimension, "eligibility": elig, "anomalies": found})
+        dimensions.append({
+            "dimension": dimension, "eligibility": elig, "anomalies": found,
+            "params": detection_params(series, penalty, penalty_factor, min_delta),
+        })
         combined.extend(found)
     return {
         "company_id": company_id,
@@ -248,7 +286,9 @@ def company_anomalies_all(
             "method": "pelt",
             "model": DEFAULT_MODEL,
             "min_size": DEFAULT_MIN_SIZE,
-            "penalty": penalty,
+            "penalty_mode": "fixed" if penalty is not None else "scaled",
+            "penalty_factor": None if penalty is not None else penalty_factor,
+            "penalty": penalty,  # im skalierten Modus je Dimension, siehe dimensions[i].params
             "min_delta": min_delta,
             "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
         },
@@ -257,5 +297,6 @@ def company_anomalies_all(
 
 __all__ = [
     "DEFAULT_MIN_DELTA", "SEVERITY_HIGH",
-    "eligibility", "sort_anomalies", "detect_anomalies", "company_anomalies", "company_anomalies_all",
+    "eligibility", "detection_params", "sort_anomalies", "detect_anomalies", "company_anomalies",
+    "company_anomalies_all",
 ]

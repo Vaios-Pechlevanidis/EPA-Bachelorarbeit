@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from models.changepoint_detector import DEFAULT_PENALTY
+from models.changepoint_detector import DEFAULT_PENALTY_FACTOR
 from services.anomaly_service import DEFAULT_MIN_DELTA, company_anomalies, company_anomalies_all
 from services.rating_series_service import OVERALL_DIMENSION
 
@@ -21,7 +21,8 @@ def get_company_anomalies(
     company_id: int,
     source: str = Query("employee", description="Quelle: employee oder candidates"),
     dimension: str = Query(OVERALL_DIMENSION, description="Dimension aus DIMENSIONS_BY_SOURCE oder 'all'"),
-    penalty: Optional[float] = Query(None, gt=0, description=f"PELT-Strafterm (Standard {DEFAULT_PENALTY})"),
+    penalty: Optional[float] = Query(None, gt=0, description="Fester PELT-Strafterm in quadrierten Sternen; schaltet auf den festen Modus"),
+    penalty_factor: Optional[float] = Query(None, gt=0, description=f"Faktor des skalierten Strafterms Faktor · sigma² · ln(n) (Standard {DEFAULT_PENALTY_FACTOR})"),
     min_delta: Optional[float] = Query(None, ge=0, description=f"Mindestbetrag der Veränderung in Sternen (Standard {DEFAULT_MIN_DELTA})"),
 ):
     """
@@ -38,7 +39,8 @@ def get_company_anomalies(
                          "n_reviews_after", "n_reviews", "severity", "before_from", "after_to",
                          "previous_period", "gap_months", "month_mean",
                          "month_near_previous_level", "method", "params"}, ...],
-          "params": {"method", "model", "min_size", "penalty", "min_delta", "min_reviews_per_month"},
+          "params": {"method", "model", "min_size", "penalty", "penalty_mode", "penalty_factor",
+                     "noise_sigma", "n_evaluated", "min_delta", "min_reviews_per_month"},
           "eligibility": {"eligible", "evaluated_months", "min_evaluated_months", "reason"}
         }
 
@@ -47,10 +49,19 @@ def get_company_anomalies(
         {
           "company_id": 18, "source": "employee", "dimension": "all",
           "dimensions": [{"dimension": "durchschnittsbewertung",
-                          "eligibility": {...}, "anomalies": [...]}, ...],
+                          "eligibility": {...}, "anomalies": [...],
+                          "params": {...}},   # je Dimension eigenes noise_sigma, n, penalty
+                         ...],
           "anomalies": [...],   # alle Dimensionen zusammen, sortiert
           "params": {...}
         }
+
+    **Strafterm:** Standard ist der skalierte Modus ``penalty = penalty_factor ·
+    sigma² · ln(n)`` je Reihe (``sigma`` = robuste Streuung der bewerteten
+    Monatsmittel aus den ersten Differenzen, ``n`` = bewertete Monate, Faktor 2,0).
+    Wird ``penalty`` übergeben, gilt der feste Modus mit diesem Wert (Vorrang vor
+    ``penalty_factor``). ``params`` nennt ``penalty_mode``, ``penalty_factor``,
+    ``noise_sigma`` und den tatsächlich verwendeten ``penalty``.
 
     ``dimensions`` folgt der Reihenfolge von ``DIMENSIONS_BY_SOURCE[source]``.
     ``anomalies`` ist sortiert: fall vor rise, dann nach Betrag von delta.
@@ -58,17 +69,20 @@ def get_company_anomalies(
     leere Anomalieliste mit Begründung in ``eligibility.reason``.
     Ungültige ``source`` oder ``dimension``: 400 ``{"detail": ...}``.
     """
-    penalty = DEFAULT_PENALTY if penalty is None else penalty
+    penalty_factor = DEFAULT_PENALTY_FACTOR if penalty_factor is None else penalty_factor
     min_delta = DEFAULT_MIN_DELTA if min_delta is None else min_delta
     try:
         if dimension == "all":
-            return company_anomalies_all(company_id, source=source, penalty=penalty, min_delta=min_delta)
+            return company_anomalies_all(
+                company_id, source=source, penalty=penalty, min_delta=min_delta, penalty_factor=penalty_factor,
+            )
         return company_anomalies(
             company_id,
             source=source,
             dimension=dimension,
             penalty=penalty,
             min_delta=min_delta,
+            penalty_factor=penalty_factor,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

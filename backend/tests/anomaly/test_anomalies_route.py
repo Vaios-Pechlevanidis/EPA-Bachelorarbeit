@@ -47,7 +47,27 @@ class TestSingleDimension:
         """Test: penalty und min_delta landen in params; großer min_delta filtert alles."""
         body = client.get(URL.format(3), params={"penalty": 1.5, "min_delta": 5}).json()
         assert body["params"]["penalty"] == 1.5 and body["params"]["min_delta"] == 5
+        assert body["params"]["penalty_mode"] == "fixed"
         assert body["anomalies"] == []
+
+    def test_default_params_fields(self, client):
+        """Test: Standardantwort enthält die neuen params-Felder des skalierten Strafterms."""
+        params = client.get(URL.format(3)).json()["params"]
+        for key in ("penalty_mode", "penalty_factor", "noise_sigma", "penalty", "n_evaluated"):
+            assert key in params
+        assert params["penalty_mode"] == "scaled" and params["penalty_factor"] == 2.0
+
+    def test_penalty_factor_is_applied(self, client):
+        """Test: penalty_factor ändert den verwendeten Strafterm proportional."""
+        p2 = client.get(URL.format(3), params={"penalty_factor": 2}).json()["params"]
+        p4 = client.get(URL.format(3), params={"penalty_factor": 4}).json()["params"]
+        assert p4["penalty_factor"] == 4
+        assert p4["penalty"] == pytest.approx(2 * p2["penalty"], rel=1e-4)
+
+    def test_penalty_has_priority_over_factor(self, client):
+        """Test: penalty und penalty_factor zusammen → fester Modus mit penalty."""
+        params = client.get(URL.format(3), params={"penalty": 0.5, "penalty_factor": 4}).json()["params"]
+        assert params["penalty_mode"] == "fixed" and params["penalty"] == 0.5
 
     def test_unknown_company_is_empty_and_ineligible(self, client):
         """Test: Unbekanntes Unternehmen → 200, leere Reihe, nicht geeignet, Grund gesetzt."""
@@ -76,9 +96,12 @@ class TestErrors:
         assert res.status_code == 400
         assert isinstance(res.json()["detail"], str)
 
-    @pytest.mark.parametrize("params", [{"penalty": 0}, {"penalty": -1}, {"min_delta": -0.1}])
+    @pytest.mark.parametrize("params", [
+        {"penalty": 0}, {"penalty": -1}, {"min_delta": -0.1},
+        {"penalty_factor": 0}, {"penalty_factor": -2},
+    ])
     def test_out_of_range_parameters_422(self, client, params):
-        """Test: penalty <= 0 oder min_delta < 0 → 422 (FastAPI-Validierung)."""
+        """Test: penalty <= 0, penalty_factor <= 0 oder min_delta < 0 → 422 (FastAPI-Validierung)."""
         res = client.get(URL.format(3), params=params)
         assert res.status_code == 422
         assert "detail" in res.json()
@@ -99,7 +122,7 @@ class TestAllDimensions:
         assert body["dimension"] == "all"
         assert [d["dimension"] for d in body["dimensions"]] == DIMENSIONS_BY_SOURCE["employee"]
         for entry in body["dimensions"]:
-            assert set(entry) == {"dimension", "eligibility", "anomalies"}
+            assert set(entry) == {"dimension", "eligibility", "anomalies", "params"}
         assert len(body["anomalies"]) == sum(len(d["anomalies"]) for d in body["dimensions"])
 
     def test_candidates_source(self, client):
