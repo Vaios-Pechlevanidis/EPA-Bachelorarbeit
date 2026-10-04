@@ -17,7 +17,7 @@ import NegativTopicModal from "../components/dashboard/modals/NegativTopicModal"
 import ImportModal, { getImportHistory } from "../components/dashboard/modals/ImportModal"
 
 import {
-  Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon,
+  Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon, TrendUp,
 } from "../icons"
 import { useTheme } from "../hooks/useTheme"
 import { API_URL } from "../config"
@@ -382,6 +382,14 @@ export default function Dashboard() {
     })
   }, [effectiveCompanyId, selectedCompanyName, navigate])
 
+  /* ---- Aktien-Dashboard (Inkrement 3, E16) ---- */
+  const openStock = useCallback(() => {
+    if (!effectiveCompanyId) return
+    navigate(`/aktie?company=${effectiveCompanyId}`, {
+      state: { company: { id: effectiveCompanyId, name: selectedCompanyName } },
+    })
+  }, [effectiveCompanyId, selectedCompanyName, navigate])
+
   /* ---- Theme ---- */
   const { isDark, toggle: toggleTheme } = useTheme()
 
@@ -423,6 +431,15 @@ export default function Dashboard() {
             >
               <AnomalyIcon />
               Anomalien
+            </button>
+            <button
+              className="ds-nav-link"
+              onClick={openStock}
+              disabled={!effectiveCompanyId}
+              title={effectiveCompanyId ? "Aktienkurs, Empfehlungen, Umsatz und Nachrichten" : "Erst eine Firma auswählen"}
+            >
+              <TrendUp />
+              Aktie
             </button>
           </div>
 

@@ -84,7 +84,7 @@ function securityText(market, companyName) {
 /* Block unter dem Diagramm: Kennzahlen mit Herkunft und festem Hinweis oder,
    ohne Kurs, nur der Grund. Während des Ladens und bei einem Ladefehler
    bleibt die Ansicht wie ohne Kurs. */
-export function MarketContext({ market, loading, error, companyName }) {
+export function MarketContext({ market, loading, error, companyName, onOpenStock = null }) {
     if (loading || error || !market) return null
     if (!market.available) {
         return <p className="m-0 text-[11px] text-slate-500">{noPriceText(market.reason)}</p>
@@ -99,6 +99,12 @@ export function MarketContext({ market, loading, error, companyName }) {
             <p className="m-0 text-[11px] text-slate-500 leading-4">
                 <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}
             </p>
+            {onOpenStock && (
+                <button type="button" onClick={onOpenStock}
+                    className="text-[11px] underline underline-offset-2 text-slate-700 hover:text-slate-900">
+                    Aktien-Dashboard öffnen (Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn, Nachrichten)
+                </button>
+            )}
         </div>
     )
 }

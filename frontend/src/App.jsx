@@ -4,6 +4,7 @@ import Welcome from "./pages/Welcome"
 import Dashboard from "./pages/Dashboard"
 import ComparePage from "./pages/Compare"
 import AnomaliesPage from "./pages/Anomalies"
+import StockPage from "./pages/Stock"
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/anomalies" element={<AnomaliesPage />} />
+        <Route path="/aktie" element={<StockPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       
       </Routes>

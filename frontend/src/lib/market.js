@@ -50,3 +50,52 @@ export function noPriceText(reason) {
   if (!reason) return "Kein Aktienkurs."
   return reason.startsWith("Kein Aktienkurs") ? reason : `Kein Aktienkurs: ${reason}`
 }
+
+/* Zeitfenster der Kursansicht im Aktien-Dashboard (Monate, null = alles). */
+export const PRICE_RANGES = [
+  { key: "1y", label: "1 J.", months: 12 },
+  { key: "3y", label: "3 J.", months: 36 },
+  { key: "5y", label: "5 J.", months: 60 },
+  { key: "10y", label: "10 J.", months: 120 },
+  { key: "max", label: "Max.", months: null },
+]
+export const DEFAULT_PRICE_RANGE = "5y"
+
+export function isPriceRangeKey(key) {
+  return PRICE_RANGES.some((r) => r.key === key)
+}
+
+/* Die letzten n Monatskurse (n = Monate des Fensters) oder alle. */
+export function pricesInRange(prices, rangeKey) {
+  const range = PRICE_RANGES.find((r) => r.key === rangeKey)
+  const list = prices ?? []
+  return range?.months ? list.slice(-range.months) : list
+}
+
+/* Empfehlungsstufen in der Reihenfolge von yfinance, mit Farbe (index.css). */
+export const RATING_LEVELS = [
+  { key: "strong_buy", label: "Stark kaufen", color: "var(--rating-strong-buy)" },
+  { key: "buy", label: "Kaufen", color: "var(--rating-buy)" },
+  { key: "hold", label: "Halten", color: "var(--rating-hold)" },
+  { key: "sell", label: "Verkaufen", color: "var(--rating-sell)" },
+  { key: "strong_sell", label: "Stark verkaufen", color: "var(--rating-strong-sell)" },
+]
+
+/* Monat "YYYY-MM" als "Okt. 2026". */
+export function fmtMonth(period) {
+  const [y, m] = String(period).split("-").map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString("de-DE", { month: "short", year: "numeric" })
+}
+
+/* Quartal nach seinem Ende: "Q2 2026" (Kalenderquartal des Stichtags). */
+export function quarterLabel(end) {
+  const [y, m] = String(end).split("-").map(Number)
+  return `Q${Math.ceil(m / 3)} ${y}`
+}
+
+/* Prozent mit Vorzeichen: "+12,3 %". */
+export function fmtPercent(v) {
+  if (v == null || !Number.isFinite(v)) return "–"
+  const sign = v > 0 ? "+" : v < 0 ? "−" : ""
+  return `${sign}${Math.abs(v).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`
+}
