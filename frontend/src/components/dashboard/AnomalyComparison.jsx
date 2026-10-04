@@ -90,8 +90,14 @@ export function AnomalyComparison({ data, loading, error }) {
     if (!data) return null
 
     const { windows, comparison } = data
+    const dimensionTopic = data.dimension_topic ?? null
     const topics = comparison.topics ?? []
-    const shown = showAll ? topics : topics.slice(0, TOP_TOPICS)
+    // Das Thema der gewählten Dimension bleibt sichtbar, auch wenn es nicht unter den größten Verschiebungen ist.
+    const top = topics.slice(0, TOP_TOPICS)
+    const pinned = data.dimension_topic && !top.some((t) => t.topic === data.dimension_topic)
+        ? topics.filter((t) => t.topic === data.dimension_topic)
+        : []
+    const shown = showAll ? topics : [...top, ...pinned]
     const rule = comparison.low_basis_rule ?? {}
     const sample = comparison.sentiment_sample ?? {}
     const sampleText = ["before", "after"]
@@ -142,10 +148,16 @@ export function AnomalyComparison({ data, loading, error }) {
                         </thead>
                         <tbody>
                             {shown.map((t) => (
-                                <tr key={t.topic} className={`border-t border-slate-100 ${t.low_basis ? "text-slate-500" : "text-slate-800"}`}>
+                                <tr
+                                    key={t.topic}
+                                    className={`border-t border-slate-100 ${t.low_basis ? "text-slate-500" : "text-slate-800"} ${t.topic === dimensionTopic ? "bg-amber-100" : ""}`}
+                                >
                                     <td className="py-1.5 pr-3">
                                         <span className="inline-flex items-center gap-2">
-                                            {t.topic}
+                                            <span className={t.topic === dimensionTopic ? "font-semibold" : undefined}>{t.topic}</span>
+                                            {t.topic === dimensionTopic && (
+                                                <span className="text-[10px] uppercase tracking-wider text-slate-600">gewählte Dimension</span>
+                                            )}
                                             {t.low_basis && (
                                                 <LowBasisBadge
                                                     title={`Weniger als ${rule.min_mentions_per_topic} Nennungen in beiden Fenstern zusammen oder ein Fenster mit weniger als ${rule.min_reviews_per_window} Bewertungen`}

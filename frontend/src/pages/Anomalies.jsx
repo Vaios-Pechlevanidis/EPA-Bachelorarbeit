@@ -5,7 +5,7 @@ import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
-import { PeriodReviewList, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
+import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, monthSpan, outlierCountText, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
 import { groupLabel, validStatus } from "@/lib/reviewerStatus"
@@ -115,7 +115,24 @@ export default function AnomaliesPage() {
     const selectedOutlier = selectedAnomaly ? null : outliers.find((o) => o.date === selectedMonth) ?? null
     const outlierSpan = selectedOutlier ? monthSpan(selectedOutlier.date) : null
     const reviewSpan = selectedAnomaly ? sideWindow : outlierSpan
-    const reviewPages = useReviewPages(companyId, { source, status, start: reviewSpan?.start, end: reviewSpan?.end })
+    // Nur Bewertungen mit dem Thema der Dimension (?thema=nur); nur bei Einzeldimension.
+    const topicOnly = dimension !== OVERALL_DIMENSION.key && searchParams.get("thema") === "nur"
+    const reviewPages = useReviewPages(companyId, {
+        source, status, start: reviewSpan?.start, end: reviewSpan?.end,
+        dimension: dimension === OVERALL_DIMENSION.key ? null : dimension,
+        topicOnly,
+    })
+    const topicToggle = reviewPages.highlight?.topic && (
+        <TopicOnlyToggle
+            topic={reviewPages.highlight.topic}
+            checked={topicOnly}
+            onChange={(on) => updateParams({ thema: on ? "nur" : null })}
+        />
+    )
+    // " · davon 12 nennen Image" für die Untertitel der Bewertungslisten.
+    const mentionText = reviewPages.highlight?.topic && reviewPages.highlight.mentions != null && !topicOnly
+        ? ` · davon ${reviewPages.highlight.mentions} ${reviewPages.highlight.mentions === 1 ? "nennt" : "nennen"} ${reviewPages.highlight.topic}`
+        : topicOnly && reviewPages.highlight?.topic ? `, die ${reviewPages.highlight.topic} nennen` : ""
     const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
     const selectAnomaly = (id) => updateParams({ anomaly: id, month: null })
     const selectOutlier = (period) => updateParams({ month: period, anomaly: null })
@@ -309,9 +326,10 @@ export default function AnomaliesPage() {
                                 icon={<MessageSquareText />}
                                 eyebrow={`EINZELBEWERTUNGEN · AUFFÄLLIGER EINZELMONAT`}
                                 title={`Bewertungen ${fmtPeriod(selectedOutlier.date)}`}
-                                subtitle={`${group} · ${fmtPeriod(selectedOutlier.date)}${reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}`}`}
+                                actions={topicToggle}
+                                subtitle={`${group} · ${fmtPeriod(selectedOutlier.date)}${reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
                             >
-                                <PeriodReviewList key={`month:${selectedOutlier.date}`} pages={reviewPages} />
+                                <PeriodReviewList key={`month:${selectedOutlier.date}:${topicOnly}`} pages={reviewPages} emptyText={topicOnly ? "Keine Bewertung dieses Monats nennt das Thema." : undefined} />
                                 <p className="m-0 mt-3 text-[11px] text-slate-400">
                                     Alle Bewertungen dieses Kalendermonats. Der Monat weicht um {String(selectedOutlier.deviation).replace(".", ",")} Sterne vom
                                     Niveau seiner Nachbarmonate ab; das ist ein Hinweis auf einen auffälligen Monat, keine Aussage über Ursachen.
@@ -338,12 +356,15 @@ export default function AnomaliesPage() {
                                 eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
                                 title="Bewertungen des Zeitraums"
                                 subtitle={`${group} · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
-                                    reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}`}`}
+                                    reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
                                 actions={
-                                    <WindowSideToggle value={side} onChange={(key) => setSideState({ id: selectedId, side: key })} />
+                                    <>
+                                        {topicToggle}
+                                        <WindowSideToggle value={side} onChange={(key) => setSideState({ id: selectedId, side: key })} />
+                                    </>
                                 }
                             >
-                                <PeriodReviewList key={`${selectedId}:${side}`} pages={reviewPages} />
+                                <PeriodReviewList key={`${selectedId}:${side}:${topicOnly}`} pages={reviewPages} emptyText={topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : undefined} />
                                 <p className="m-0 mt-3 text-[11px] text-slate-400">
                                     Vergleichsfenster: bis zu {windows.windowMonths} Kalendermonate vor dem markierten Monat und ab ihm, begrenzt
                                     durch die benachbarten Veränderungen; alle Bewertungen dieser Monate, auch aus Monaten mit wenigen Bewertungen.

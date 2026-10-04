@@ -44,7 +44,7 @@ import calendar
 import threading
 from typing import Any, Dict, Iterable, List, Optional
 
-from services.keyword_topic_service import topic_definitions_for, topics_in_review
+from services.keyword_topic_service import topic_definitions_for, topic_for_dimension, topics_in_review
 from services.rating_series_service import month_key
 from services.review_service import review_text, sort_newest_first
 
@@ -396,6 +396,7 @@ def explain_anomaly(
         "source": source,
         "dimension": dimension,
         "status": status,
+        "dimension_topic": topic_for_dimension(source, dimension),  # Thema der Dimension, für die Hervorhebung
         "anomaly": anomaly,
         "windows": windows,
         "comparison": comparison,

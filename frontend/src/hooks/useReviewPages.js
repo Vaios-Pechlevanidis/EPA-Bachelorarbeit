@@ -5,25 +5,28 @@ export const REVIEW_PAGE_SIZE = 25
 
 /* Lädt die Bewertungen eines Zeitraums seitenweise
  * (GET /analytics/company/{id}/reviews mit start, end, status, offset und
- * format=full). Die erste Seite kommt beim Wechsel des Zeitraums, weitere mit
+ * format=full; mit dimension zusätzlich die Fundstellen des zugehörigen
+ * Schlüsselwort-Themas). Die erste Seite kommt beim Wechsel des Zeitraums, weitere mit
  * loadMore; so wird nie die ganze Liste auf einmal geladen und gerendert.
  * Ergebnis je Anfrage-Schlüssel, wie in useAnomalies. */
-export function useReviewPages(companyId, { source = "employee", status = null, start, end } = {}) {
-  const requestKey = companyId && start && end ? `${companyId}:${source}:${status ?? ""}:${start}:${end}` : null
-  const [result, setResult] = useState({ key: null, items: [], total: 0, error: "", loadingMore: false })
+export function useReviewPages(companyId, { source = "employee", status = null, start, end, dimension = null, topicOnly = false } = {}) {
+  const requestKey = companyId && start && end ? `${companyId}:${source}:${status ?? ""}:${start}:${end}:${dimension ?? ""}:${topicOnly}` : null
+  const [result, setResult] = useState({ key: null, items: [], total: 0, highlight: null, error: "", loadingMore: false })
   const controllerRef = useRef(null)
 
   const fetchPage = useCallback(
     (offset, signal) => {
       const params = new URLSearchParams({ source, start, end, offset: String(offset), limit: String(REVIEW_PAGE_SIZE), format: "full" })
       if (status) params.set("status", status)
+      if (dimension) params.set("dimension", dimension)
+      if (dimension && topicOnly) params.set("topic_only", "true")
       return fetch(`${API_URL}/analytics/company/${companyId}/reviews?${params}`, { signal }).then(async (res) => {
         const json = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(typeof json.detail === "string" ? json.detail : `HTTP ${res.status}`)
         return json
       })
     },
-    [companyId, source, status, start, end],
+    [companyId, source, status, start, end, dimension, topicOnly],
   )
 
   useEffect(() => {
@@ -31,9 +34,9 @@ export function useReviewPages(companyId, { source = "employee", status = null, 
     const controller = new AbortController()
     controllerRef.current = controller
     fetchPage(0, controller.signal)
-      .then((json) => setResult({ key: requestKey, items: json.reviews ?? [], total: json.total ?? 0, error: "", loadingMore: false }))
+      .then((json) => setResult({ key: requestKey, items: json.reviews ?? [], total: json.total ?? 0, highlight: json.highlight ?? null, error: "", loadingMore: false }))
       .catch((e) => {
-        if (e.name !== "AbortError") setResult({ key: requestKey, items: [], total: 0, error: e.message, loadingMore: false })
+        if (e.name !== "AbortError") setResult({ key: requestKey, items: [], total: 0, highlight: null, error: e.message, loadingMore: false })
       })
     return () => controller.abort()
   }, [requestKey, fetchPage])
@@ -59,6 +62,8 @@ export function useReviewPages(companyId, { source = "employee", status = null, 
     error: current?.error ?? "",
     items: current?.items ?? [],
     total: current?.total ?? 0,
+    // {dimension, topic, mentions}: Thema der Dimension und wie viele Bewertungen des Zeitraums es nennen
+    highlight: current?.highlight ?? null,
     hasMore: Boolean(current) && current.items.length < current.total,
     loadMore,
   }

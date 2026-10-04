@@ -653,7 +653,40 @@ def topics_in_review(row: Dict[str, Any], source: Optional[str]) -> List[str]:
     ]
 
 
+def topic_for_dimension(source: str, dimension: str) -> Optional[str]:
+    """Schlüsselwort-Thema zu einer Dimension der Erkennung (über die Sternespalte
+    in ``rating_fields``), z. B. ``image`` → ``"Image"``; für die Gesamtbewertung
+    oder ohne passendes Thema None. ValueError bei ungültiger Quelle oder Dimension."""
+    from services.rating_series_service import OVERALL_DIMENSION, value_column  # vermeidet Importzyklus
+
+    column = value_column(source, dimension)
+    if dimension == OVERALL_DIMENSION:
+        return None
+    return next(
+        (name for name, config in topic_definitions_for(source).items() if column in config["rating_fields"]),
+        None,
+    )
+
+
+def topic_spans(text: Any, topic: str, source: Optional[str]) -> List[List[int]]:
+    """Fundstellen der Schlüsselwörter eines Themas in ``text`` als
+    ``[[start, ende], ...]`` (Zeichenpositionen, Ende exklusiv), sortiert und
+    zusammengeführt; gleiche Muster wie ``topics_in_review``."""
+    if not text or not isinstance(text, str):
+        return []
+    patterns = next((p for name, p in _compiled_topics(source) if name == topic), [])
+    found = sorted((m.start(), m.end()) for p in patterns for m in p.finditer(text) if m.end() > m.start())
+    merged: List[List[int]] = []
+    for start, end in found:
+        if merged and start <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+    return merged
+
+
 __all__ = [
+    "topic_for_dimension", "topic_spans",
     "TOPIC_TEXT_FIELDS", "EMPLOYEE_TOPIC_DEFINITIONS", "CANDIDATE_TOPIC_DEFINITIONS",
     "TOPIC_DEFINITIONS_BY_SOURCE", "topic_definitions_for", "topics_in_review", "analyze_topic",
 ]

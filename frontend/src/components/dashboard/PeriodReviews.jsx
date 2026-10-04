@@ -2,13 +2,16 @@ import { useState } from "react"
 import { Star } from "lucide-react"
 import ReviewDetailModal from "./modals/ReviewDetailModal"
 import { statusLabel } from "@/lib/reviewerStatus"
+import { HighlightedText } from "./HighlightedText"
 import { REVIEW_PAGE_SIZE } from "@/hooks/useReviewPages"
 
 /* ============================================================================
    PeriodReviews — Bewertungen eines Vergleichsfensters (Inkrement 2).
    Liste der Einzelbewertungen vor bzw. ab dem markierten Monat einer
    auffälligen Veränderung; Daten aus useReviewPages (seitenweise geladen).
-   Ein Klick öffnet die Bewertung im vorhandenen ReviewDetailModal.
+   Ein Klick öffnet die Bewertung im vorhandenen ReviewDetailModal. Ist eine
+   Dimension gewählt, sind die Fundstellen ihres Schlüsselwort-Themas markiert
+   (Textauszug und Detailfenster) und Bewertungen, die es nennen, gekennzeichnet.
    ============================================================================ */
 
 const WINDOW_SIDES = [
@@ -43,9 +46,10 @@ const fmtDay = (value) => {
 
 const fmtStars = (v) => (v == null || !Number.isFinite(Number(v)) ? "–" : Number(v).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
 
-function ReviewRow({ item, onOpen }) {
+function ReviewRow({ item, onOpen, topic }) {
     const review = item.fullReview ?? {}
     const status = statusLabel(review.status)
+    const mentions = topic && item.mentions_topic
     return (
         <li className="border-t border-slate-100 first:border-t-0">
             <button
@@ -66,9 +70,16 @@ function ReviewRow({ item, onOpen }) {
                                 {status}
                             </span>
                         )}
+                        {mentions && (
+                            <span className="flex-none inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-100 text-slate-700 text-[10px] font-medium">
+                                nennt {topic}
+                            </span>
+                        )}
                     </span>
                     <span className="block mt-0.5 text-[12px] text-slate-500 leading-snug line-clamp-2">
-                        {item.preview || "Kein Freitext."}
+                        {item.preview
+                            ? <HighlightedText text={item.preview} spans={item.highlights?.preview} title={topic ? `Thema ${topic}` : undefined} />
+                            : "Kein Freitext."}
                     </span>
                 </span>
             </button>
@@ -76,9 +87,25 @@ function ReviewRow({ item, onOpen }) {
     )
 }
 
+/* Schalter "nur Bewertungen, die <Thema> nennen" (bei gewählter Dimension). */
+export function TopicOnlyToggle({ topic, checked, onChange }) {
+    return (
+        <label className="inline-flex items-center gap-1.5 text-[12px] text-slate-700 cursor-pointer select-none">
+            <input
+                type="checkbox"
+                className="accent-amber-500"
+                checked={checked}
+                onChange={(e) => onChange(e.target.checked)}
+            />
+            nur Bewertungen, die {topic} nennen
+        </label>
+    )
+}
+
 /* Liste mit Nachladen. pages: Rückgabe von useReviewPages. */
 export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in diesem Zeitraum." }) {
     const { items, total, loading, loadingMore, error, hasMore, loadMore } = pages
+    const topic = pages.highlight?.topic ?? null
     const [openIndex, setOpenIndex] = useState(null)
 
     if (loading) {
@@ -103,7 +130,7 @@ export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in dies
         <>
             <ul className="m-0 p-0 list-none">
                 {items.map((item, i) => (
-                    <ReviewRow key={`${item.id}-${i}`} item={item} onOpen={() => setOpenIndex(i)} />
+                    <ReviewRow key={`${item.id}-${i}`} item={item} onOpen={() => setOpenIndex(i)} topic={topic} />
                 ))}
             </ul>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
@@ -127,6 +154,7 @@ export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in dies
                 allReviewDetails={items}
                 currentIndex={openIndex ?? 0}
                 onNavigate={navigate}
+                highlightTopic={topic}
             />
         </>
     )

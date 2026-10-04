@@ -130,6 +130,7 @@ def get_anomaly_explanations(
 
         {
           "company_id", "source", "dimension", "status",
+          "dimension_topic",                      # Schlüsselwort-Thema der Dimension oder None
           "anomaly": {...},                       # wie in /anomalies
           "windows": {"window_months": 6,
                       "before": {"from", "to", "start", "end", "months", "n_reviews"},
