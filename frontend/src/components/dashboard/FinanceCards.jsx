@@ -187,7 +187,8 @@ export function NewsList({ news }) {
             {items.length === 0 ? (
                 <EmptyNote height={100}>{news?.reason ?? "Keine Meldungen."}</EmptyNote>
             ) : (
-                <ul className="m-0 p-0 list-none">
+                // Eigener Scrollbereich, damit die Liste nicht die ganze Seite einnimmt.
+                <ul className="m-0 p-0 pr-2 list-none max-h-[420px] overflow-y-auto overscroll-contain" tabIndex={0} aria-label="Meldungen">
                     {items.map((item) => (
                         <li key={item.url} className="py-2.5 border-t border-slate-100 first:border-t-0">
                             <a href={item.url} target="_blank" rel="noreferrer noopener"
