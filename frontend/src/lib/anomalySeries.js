@@ -139,3 +139,37 @@ export function levelsFromAnomalies(anomalies) {
   }
   return levels
 }
+
+/* Vergleichsfenster einer auffälligen Veränderung (E12, vorläufig): "davor"
+ * sind die windowMonths Kalendermonate vor dem markierten Monat, nicht früher
+ * als before_from; "danach" ist der markierte Monat mit den folgenden Monaten,
+ * zusammen windowMonths, nicht später als after_to. Es zählen alle Bewertungen
+ * dieser Monate, auch aus Monaten mit weniger als 5 Bewertungen. Dieselbe Regel
+ * rechnet das Backend in services/explanation_service.py (comparison_windows).
+ * Rückgabe je Fenster {from, to} als "YYYY-MM" und {start, end} als Tage
+ * "YYYY-MM-DD" (einschließlich) für GET /reviews. */
+export const DEFAULT_WINDOW_MONTHS = 6
+
+function lastDayOfMonth(period) {
+  const [y, m] = String(period).split("-").map(Number)
+  const day = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return `${period}-${String(day).padStart(2, "0")}`
+}
+
+function windowSpan(fromIndex, toIndex) {
+  const from = periodFromIndex(fromIndex)
+  const to = periodFromIndex(toIndex)
+  return { from, to, start: `${from}-01`, end: lastDayOfMonth(to), months: toIndex - fromIndex + 1 }
+}
+
+export function comparisonWindows(anomaly, windowMonths = DEFAULT_WINDOW_MONTHS) {
+  if (!anomaly?.date) return null
+  const date = periodIndex(anomaly.date)
+  const beforeFrom = anomaly.before_from ? periodIndex(anomaly.before_from) : date - windowMonths
+  const afterTo = anomaly.after_to ? periodIndex(anomaly.after_to) : date + windowMonths - 1
+  return {
+    windowMonths,
+    before: windowSpan(Math.max(date - windowMonths, beforeFrom), date - 1),
+    after: windowSpan(date, Math.min(date + windowMonths - 1, afterTo)),
+  }
+}

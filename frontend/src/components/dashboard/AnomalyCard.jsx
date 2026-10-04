@@ -10,13 +10,14 @@ import {
     ResponsiveContainer,
     ReferenceLine,
     ReferenceDot,
+    ReferenceArea,
 } from "recharts"
 import { ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../../icons"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { ChartCardHeader, DropdownPicker } from "./ChartHeader"
 import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
-import { INTERP_KEYS, TIME_RANGES, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, trimToEvaluated } from "@/lib/anomalySeries"
+import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, periodIndex, trimToEvaluated } from "@/lib/anomalySeries"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -64,18 +65,26 @@ export function StepGlyph({ direction, severity = "high", color, size = 12 }) {
 /* Markierung im Diagramm: Stufe am markierten Monat von Ø davor (links) zu
    Ø danach (rechts). Höhe = Ausmaß im Maßstab der Y-Achse, Form = Richtung,
    Strichstärke = Schweregrad. Der Monatswert selbst bleibt auf der Linie. */
-function stepShape(anomaly, halfWidth) {
+function stepShape(anomaly, halfWidth, { selected = false, onSelect = null } = {}) {
     function StepMarker({ x1, y1, y2 }) {
         if (![x1, y1, y2].every(Number.isFinite)) return <g />
+        const d = `M${x1 - halfWidth} ${y1} H${x1} V${y2} H${x1 + halfWidth}`
         return (
-            <path
-                d={`M${x1 - halfWidth} ${y1} H${x1} V${y2} H${x1 + halfWidth}`}
-                fill="none"
-                stroke={DIRECTION[anomaly.direction].color}
-                strokeWidth={STEP_WIDTH[anomaly.severity] ?? 1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
+            <g
+                onClick={onSelect ? () => onSelect(anomaly.id) : undefined}
+                style={onSelect ? { cursor: "pointer" } : undefined}
+            >
+                {/* Breitere, unsichtbare Trefferfläche, damit die Stufe gut anklickbar ist. */}
+                {onSelect && <path d={d} fill="none" stroke="transparent" strokeWidth={12} pointerEvents="stroke" />}
+                <path
+                    d={d}
+                    fill="none"
+                    stroke={DIRECTION[anomaly.direction].color}
+                    strokeWidth={(STEP_WIDTH[anomaly.severity] ?? 1.5) + (selected ? 1.25 : 0)}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </g>
         )
     }
     return StepMarker
@@ -173,7 +182,7 @@ export function IneligibleNotice({ eligibility }) {
     )
 }
 
-export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffälligen Veränderungen erkannt." }) {
+export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffälligen Veränderungen erkannt.", selectedId = null, onSelect = null }) {
     if (eligibility && !eligibility.eligible) return <IneligibleNotice eligibility={eligibility} />
     if (!anomalies.length) {
         return <p className="text-[12px] text-slate-500 m-0">{emptyText}</p>
@@ -182,8 +191,24 @@ export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffäl
         <ul className="m-0 p-0 list-none">
             {anomalies.map((a) => {
                 const dir = DIRECTION[a.direction]
+                const selected = a.id === selectedId
+                const rowClass = [
+                    "flex items-center gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0",
+                    onSelect ? "cursor-pointer px-2 -mx-2 rounded-md hover:bg-slate-50" : "",
+                    selected ? "bg-slate-100 hover:bg-slate-100" : "",
+                ].join(" ")
+                const select = () => onSelect?.(a.id)
                 return (
-                    <li key={a.id} className="flex items-center gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0">
+                    <li
+                        key={a.id}
+                        className={rowClass}
+                        onClick={onSelect ? select : undefined}
+                        onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select() } } : undefined}
+                        role={onSelect ? "button" : undefined}
+                        tabIndex={onSelect ? 0 : undefined}
+                        aria-pressed={onSelect ? selected : undefined}
+                        title={onSelect ? "Auswählen: Bewertungen und Vergleich des Zeitraums zeigen" : undefined}
+                    >
                         <dir.Icon className="w-4 h-4 flex-none" style={{ color: dir.color }} aria-label={dir.label} />
                         <span className="w-[84px] flex-none text-slate-700 tnum">ab {fmtPeriod(a.date)}</span>
                         <span className="w-[92px] flex-none font-semibold tnum" style={{ color: dir.color }}>{fmtDelta(a.delta)} Sterne</span>
@@ -227,7 +252,7 @@ function isolatedDot(chartData, opacity = 1) {
    Stufen, Niveaulinie, ausführliche Legende und ausgeblendete Ränder stehen auf
    der Detailseite.
    Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false }) {
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
     const trimmed = useMemo(() => trimToEvaluated(series), [series])
@@ -278,6 +303,32 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
         for (let v = yDomain[0]; v <= yDomain[1] + 1e-9; v += step) ticks.push(+v.toFixed(2))
         return ticks
     }, [yDomain])
+    // Vergleichsfenster der ausgewählten Veränderung als Flächen, auf den sichtbaren Ausschnitt begrenzt.
+    const windowAreas = useMemo(() => {
+        const selected = anomalies.find((a) => a.id === selectedId)
+        const windows = selected && !compact ? comparisonWindows(selected) : null
+        if (!windows || !chartData.length) return []
+        const first = periodIndex(chartData[0].period)
+        const last = periodIndex(chartData[chartData.length - 1].period)
+        return [
+            { key: "before", win: windows.before, color: "var(--color-fg-subtle)" },
+            { key: "after", win: windows.after, color: DIRECTION[selected.direction].color },
+        ].flatMap(({ key, win, color }) => {
+            const from = Math.max(periodIndex(win.from), first)
+            const to = Math.min(periodIndex(win.to), last)
+            if (from > to) return []
+            const period = (i) => chartData.find((m) => periodIndex(m.period) === i)?.period
+            return [{ key, x1: period(from), x2: period(to), color }]
+        }).filter((a) => a.x1 && a.x2)
+    }, [anomalies, selectedId, chartData, compact])
+    // Klick auf den Monat einer Veränderung wählt sie aus (zusätzlich zur Stufe selbst).
+    const handleChartClick = (state) => {
+        if (!onSelect) return
+        const idx = Number(state?.activeTooltipIndex)
+        const period = state?.activeLabel ?? (Number.isInteger(idx) ? chartData[idx]?.period : null)
+        const hit = period ? anomaliesByPeriod[period] : null
+        if (hit) onSelect(hit.id)
+    }
     const hasInterpolation = chartData.some((m) => m.interpolated)
     const hasVisibleValues = chartData.some((m) => m.value != null)
     const hasLevels = chartData.some((m) => m.level != null)
@@ -297,8 +348,11 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height={height}>
-                    <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8, bottom: 5 }}>
+                    <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8, bottom: 5 }} onClick={onSelect ? handleChartClick : undefined}>
                         <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
+                        {windowAreas.map((a) => (
+                            <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill={a.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
+                        ))}
                         <XAxis
                             dataKey="period"
                             tickFormatter={fmtPeriod}
@@ -381,7 +435,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             <ReferenceLine
                                 key={a.id}
                                 segment={[{ x: a.date, y: a.before_mean }, { x: a.date, y: a.after_mean }]}
-                                shape={stepShape(a, stepHalfWidth)}
+                                shape={stepShape(a, stepHalfWidth, { selected: a.id === selectedId, onSelect })}
                                 ifOverflow="visible"
                             />
                         )))}
@@ -430,6 +484,13 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                         Niveau (Mittel je Abschnitt)
                     </span>
                 )}
+                {windowAreas.length > 0 && (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-3 h-2.5 rounded-[2px] bg-slate-200" />
+                        Vergleichsfenster der ausgewählten Veränderung
+                    </span>
+                )}
+                {onSelect && windowAreas.length === 0 && <span>Stufe anklicken, um die Bewertungen des Zeitraums zu sehen.</span>}
             </p>
         )}
         {!error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (
