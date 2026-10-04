@@ -6,6 +6,16 @@ from fastapi import APIRouter, HTTPException, Query
 from database.supabase_client import get_supabase_client
 from typing import Optional, List, Dict, Any, Literal
 from services.topic_average_rating_service import get_topic_rating_timeseries
+from services.review_service import (
+    build_full_review,
+    clean_html_text,
+    fetch_review_rows_in_range,
+    filter_by_status,
+    full_review_item,
+    parse_day,
+    sort_newest_first,
+    validate_status,
+)
 from services.statistical_validator import StatisticalValidator
 from services.statistical_enrichment import (
     enrich_with_statistical_metadata,
@@ -15,47 +25,10 @@ from services.statistical_enrichment import (
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 import re
-import html
 import random
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 supabase = get_supabase_client()
-
-
-def clean_html_text(text: str) -> str:
-    """
-    Clean HTML entities and tags from text.
-    Removes <br/>, <br>, and other HTML tags, and decodes HTML entities.
-    """
-    if not text or not isinstance(text, str):
-        return text
-    
-    # Decode HTML entities (&lt; &gt; &amp; etc.)
-    text = html.unescape(text)
-    
-    # Replace <br/>- or <br>- patterns (bullet points with br tags)
-    text = re.sub(r'<br\s*/?\s*>\s*-\s*', '\n• ', text, flags=re.IGNORECASE)
-    
-    # Replace remaining <br/>, <br>, <br /> with newlines
-    text = re.sub(r'<br\s*/?\s*>', '\n', text, flags=re.IGNORECASE)
-    
-    # Remove any other HTML tags
-    text = re.sub(r'<[^>]+>', '', text)
-    
-    # Clean up patterns like "- text -" at line boundaries (incomplete bullet points)
-    text = re.sub(r'^-\s*$', '', text, flags=re.MULTILINE)
-    text = re.sub(r'^-\s+', '• ', text, flags=re.MULTILINE)
-    
-    # Clean up multiple newlines (max 2 consecutive newlines)
-    text = re.sub(r'\n\s*\n\s*\n+', '\n\n', text)
-    
-    # Remove trailing dashes and whitespace from lines
-    text = re.sub(r'\s+-\s*$', '', text, flags=re.MULTILINE)
-    
-    # Trim whitespace
-    text = text.strip()
-    
-    return text
 
 
 @router.get("/company/{company_id}/overview")
@@ -364,13 +337,106 @@ async def get_most_critical_category(company_id: int) -> Dict[str, Any]:
         return {"category": "N/A", "score": 0}
 
 
+def _review_list_item(item: Dict[str, Any], source: str) -> Dict[str, Any]:
+    """Listeneintrag im bisherigen Format der Route ``/reviews``."""
+    if source == "candidates":
+        return {
+            "id": item["id"],
+            "type": "candidate",
+            "date": item.get("datum"),
+            "score": float(item.get("durchschnittsbewertung", 0)),
+            "title": item.get("titel", ""),
+            "description": item.get("stellenbeschreibung", ""),
+            "improvements": item.get("verbesserungsvorschlaege", "")
+        }
+    return {
+        "id": item["id"],
+        "type": "employee",
+        "date": item.get("datum"),
+        "score": float(item.get("durchschnittsbewertung", 0)),
+        "title": item.get("titel", ""),
+        "job_description": item.get("jobbeschreibung", ""),
+        "positive": item.get("gut_am_arbeitgeber_finde_ich", ""),
+        "negative": item.get("schlecht_am_arbeitgeber_finde_ich", ""),
+        "improvements": item.get("verbesserungsvorschlaege", "")
+    }
+
+
+def _reviews_in_range(
+    company_id: int,
+    source: Optional[str],
+    start: Optional[str],
+    end: Optional[str],
+    status: Optional[str],
+    offset: int,
+    limit: int,
+    full: bool,
+) -> Dict[str, Any]:
+    """Bewertungen eines Zeitraums (Drill-down, Inkrement 2), vollständig
+    paginiert gelesen, nach Status gefiltert, nach Datum absteigend sortiert;
+    davon ``limit`` ab ``offset``. ValueError bei ungültigen Parametern."""
+    if source is not None and source not in ("employee", "candidates"):
+        raise ValueError(f"source '{source}' ungültig; erlaubt: employee, candidates.")
+    if status is not None and source is None:
+        raise ValueError("status braucht source (employee oder candidates).")
+    start_day, end_day = parse_day(start, "start"), parse_day(end, "end")
+    if start_day and end_day and start_day > end_day:
+        raise ValueError("start liegt nach end.")
+    validate_status(source, status) if source else None
+
+    sources = [source] if source else ["candidates", "employee"]
+    tagged = []
+    for src in sources:
+        rows = fetch_review_rows_in_range(src, company_id, start_day, end_day)
+        tagged.extend({**row, "_source": src} for row in filter_by_status(rows, src, status))
+    ordered = sort_newest_first(tagged)
+    page = ordered[offset: offset + max(limit, 0)]
+
+    def item(row: Dict[str, Any]) -> Dict[str, Any]:
+        src = row.pop("_source")
+        return full_review_item(row, src) if full else _review_list_item(row, src)
+
+    return {
+        "reviews": [item(dict(row)) for row in page],
+        "total": len(ordered),
+        "offset": offset,
+        "limit": limit,
+    }
+
+
 @router.get("/company/{company_id}/reviews")
 async def get_company_reviews(
     company_id: int,
     limit: int = Query(default=50, description="Maximum number of reviews to return"),
-    source: Optional[str] = Query(default=None, description="Filter by source: 'candidates' or 'employee'")
+    source: Optional[str] = Query(default=None, description="Filter by source: 'candidates' or 'employee'"),
+    start: Optional[str] = Query(default=None, description="Erster Tag (YYYY-MM-DD, einschließlich)"),
+    end: Optional[str] = Query(default=None, description="Letzter Tag (YYYY-MM-DD, einschließlich)"),
+    status: Optional[str] = Query(default=None, description="Statusschlüssel der Bewertendengruppe, braucht source"),
+    offset: Optional[int] = Query(default=None, ge=0, description="Anzahl übersprungener Bewertungen"),
+    format_: Optional[Literal["full"]] = Query(default=None, alias="format", description="'full': je Bewertung id, preview, fullReview"),
 ):
-    """Get detailed reviews for a company."""
+    """Get detailed reviews for a company.
+
+    Ohne ``start``, ``end``, ``status``, ``offset`` und ``format`` unverändert:
+    die neuesten ``limit`` Bewertungen (ohne ``source`` je Quelle ``limit // 2``).
+
+    Mit mindestens einem dieser Parameter (Inkrement 2): alle Bewertungen mit
+    ``start <= datum <= end`` (Tage einschließlich) und dem Status ``status``,
+    vollständig paginiert gelesen, nach Datum absteigend; davon ``limit`` ab
+    ``offset``. ``total`` ist die Zahl aller Treffer. Mit ``format=full`` hat
+    jede Bewertung ``id``, ``preview`` (Textauszug) und ``fullReview`` (Format der
+    Themenübersicht für ``ReviewDetailModal``). Ungültige Angaben: 400.
+    """
+    if any(p is not None for p in (start, end, status, offset, format_)):
+        try:
+            return _reviews_in_range(
+                company_id, source, start, end, status, offset or 0, limit, full=format_ == "full",
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching reviews: {str(e)}")
+
     try:
         reviews = []
         
@@ -383,15 +449,7 @@ async def get_company_reviews(
                 .execute()
             
             for item in candidates_response.data or []:
-                reviews.append({
-                    "id": item["id"],
-                    "type": "candidate",
-                    "date": item.get("datum"),
-                    "score": float(item.get("durchschnittsbewertung", 0)),
-                    "title": item.get("titel", ""),
-                    "description": item.get("stellenbeschreibung", ""),
-                    "improvements": item.get("verbesserungsvorschlaege", "")
-                })
+                reviews.append(_review_list_item(item, "candidates"))
         
         if source is None or source == "employee":
             employee_response = supabase.table("employee")\
@@ -402,17 +460,7 @@ async def get_company_reviews(
                 .execute()
             
             for item in employee_response.data or []:
-                reviews.append({
-                    "id": item["id"],
-                    "type": "employee",
-                    "date": item.get("datum"),
-                    "score": float(item.get("durchschnittsbewertung", 0)),
-                    "title": item.get("titel", ""),
-                    "job_description": item.get("jobbeschreibung", ""),
-                    "positive": item.get("gut_am_arbeitgeber_finde_ich", ""),
-                    "negative": item.get("schlecht_am_arbeitgeber_finde_ich", ""),
-                    "improvements": item.get("verbesserungsvorschlaege", "")
-                })
+                reviews.append(_review_list_item(item, "employee"))
         
         # Sort by date
         reviews.sort(key=lambda x: x.get("date") or "", reverse=True)
@@ -930,12 +978,6 @@ def analyze_topic(
         if mentioned:
             mentions.append(review)
             
-            # Determine source type (employee or candidate)
-            source_type = "Mitarbeiter" if 'gut_am_arbeitgeber_finde_ich' in review else "Bewerber"
-            
-            # Get employee status if available
-            employer_status = review.get("status", "Unbekannt")
-            
             # Collect example texts with full review details
             if mention_texts:
                 for text in mention_texts[:3]:
@@ -943,34 +985,7 @@ def analyze_topic(
                     review_details.append({
                         "id": review.get("id"),
                         "preview": clean_html_text(text),
-                        "fullReview": {
-                            "titel": clean_html_text(review.get("titel", "Keine Titel")),
-                            "datum": review.get("datum"),
-                            "durchschnittsbewertung": review.get("durchschnittsbewertung"),
-                            "status": employer_status,
-                            "sourceType": source_type,
-                            "gut_am_arbeitgeber": clean_html_text(review.get("gut_am_arbeitgeber_finde_ich", "")),
-                            "schlecht_am_arbeitgeber": clean_html_text(review.get("schlecht_am_arbeitgeber_finde_ich", "")),
-                            "verbesserungsvorschlaege": clean_html_text(review.get("verbesserungsvorschlaege", "")),
-                            "stellenbeschreibung": clean_html_text(review.get("stellenbeschreibung", "")),
-                            "jobbeschreibung": clean_html_text(review.get("jobbeschreibung", "")),
-                            # Include all star ratings
-                            "ratings": {
-                                "arbeitsatmosphaere": review.get("sternebewertung_arbeitsatmosphaere"),
-                                "image": review.get("sternebewertung_image"),
-                                "work_life_balance": review.get("sternebewertung_work_life_balance"),
-                                "karriere_weiterbildung": review.get("sternebewertung_karriere_weiterbildung"),
-                                "gehalt_sozialleistungen": review.get("sternebewertung_gehalt_sozialleistungen"),
-                                "kollegenzusammenhalt": review.get("sternebewertung_kollegenzusammenhalt"),
-                                "umwelt_sozialbewusstsein": review.get("sternebewertung_umwelt_sozialbewusstsein"),
-                                "vorgesetztenverhalten": review.get("sternebewertung_vorgesetztenverhalten"),
-                                "kommunikation": review.get("sternebewertung_kommunikation"),
-                                "interessante_aufgaben": review.get("sternebewertung_interessante_aufgaben"),
-                                "umgang_mit_aelteren_kollegen": review.get("sternebewertung_umgang_mit_aelteren_kollegen"),
-                                "arbeitsbedingungen": review.get("sternebewertung_arbeitsbedingungen"),
-                                "gleichberechtigung": review.get("sternebewertung_gleichberechtigung")
-                            }
-                        }
+                        "fullReview": build_full_review(review),
                     })
             
             # Collect ratings — topic-specific fields take priority.
