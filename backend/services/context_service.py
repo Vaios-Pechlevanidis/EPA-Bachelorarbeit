@@ -52,8 +52,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from database.supabase_client import get_supabase_client
-
 logger = logging.getLogger(__name__)
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -96,6 +94,8 @@ def load_metadata(path: Path = METADATA_PATH) -> Dict[int, Dict[str, Any]]:
 
 def _company_row(company_id: int) -> Optional[Dict[str, Any]]:
     """Zeile aus ``companies`` (nur lesend); ohne Migration 006 nur id und name."""
+    from database.supabase_client import get_supabase_client  # lazy, damit Tests ohne DB laufen
+
     supabase = get_supabase_client()
     try:
         res = supabase.table("companies").select("id,name,ticker,peer_group").eq("id", company_id).execute()
