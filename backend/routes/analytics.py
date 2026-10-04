@@ -6,8 +6,8 @@ from fastapi import APIRouter, HTTPException, Query
 from database.supabase_client import get_supabase_client
 from typing import Optional, List, Dict, Any, Literal
 from services.topic_average_rating_service import get_topic_rating_timeseries
+from services.keyword_topic_service import analyze_topic, topic_definitions_for
 from services.review_service import (
-    build_full_review,
     clean_html_text,
     fetch_review_rows_in_range,
     filter_by_status,
@@ -536,7 +536,8 @@ async def get_negative_topics(company_id: int):
 async def get_topic_overview(
     company_id: int,
     source: Optional[str] = Query(default=None, description="Filter by source: 'candidates' or 'employee'"),
-    start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)")
+    start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(default=None, description="Letzter Tag (YYYY-MM-DD, einschließlich)"),
 ):
     """
     Get topic overview data formatted for the frontend TopicOverviewCard.
@@ -549,7 +550,18 @@ async def get_topic_overview(
         company_id: Company ID to analyze
         source: Optional filter - 'candidates' for Bewerber or 'employee' for Mitarbeiter
         start_date: Optional date string (YYYY-MM-DD) to filter reviews from that date onward
+        end_date: Optional date string (YYYY-MM-DD), letzter Tag einschließlich
+            (Inkrement 2); ohne den Parameter ist die Antwort unverändert.
+
+    Themen-Definitionen und ``analyze_topic`` stehen in
+    ``services/keyword_topic_service.py``.
     """
+    try:
+        end_day = parse_day(end_date, "end_date")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    # Bis einschließlich end_date: datum ist ein Zeitstempel, daher "< Folgetag".
+    end_exclusive = (end_day + timedelta(days=1)).isoformat() if end_day else None
     try:
         # Get reviews based on source filter
         candidates_data = []
@@ -561,6 +573,8 @@ async def get_topic_overview(
                 .eq("company_id", company_id)
             if start_date:
                 candidates_query = candidates_query.gte("datum", start_date)
+            if end_exclusive:
+                candidates_query = candidates_query.lt("datum", end_exclusive)
             candidates_data = candidates_query.execute().data or []
 
         if source is None or source == "employee":
@@ -569,6 +583,8 @@ async def get_topic_overview(
                 .eq("company_id", company_id)
             if start_date:
                 employee_query = employee_query.gte("datum", start_date)
+            if end_exclusive:
+                employee_query = employee_query.lt("datum", end_exclusive)
             employee_data = employee_query.execute().data or []
         
         all_reviews = candidates_data + employee_data
@@ -580,280 +596,14 @@ async def get_topic_overview(
                 "message": "No reviews found for this company"
             }
         
-        # Define topic keywords to extract - unterschiedlich für Bewerber und Mitarbeiter
-        
-        # Topics für Mitarbeiter (employee)
-        employee_topic_definitions = {
-            "Work-Life Balance": {
-                "keywords": [
-                    r'\bwork[\s-]*life[\s-]*balance\b',
-                    r'\büberstunden\b',
-                    r'\barbeitszeit\b',
-                    r'\burlaub\b',
-                    r'\bfreizeit\b',
-                    r'\bprivatleben\b',
-                    r'\bflexibilität\b',
-                    r'\bhomeoffice\b',
-                    r'\berreichbarkeit\b'
-                ],
-                "rating_fields": ["sternebewertung_work_life_balance"]
-            },
-            "Vorgesetztenverhalten": {
-                "keywords": [
-                    r'\bführung\b',
-                    r'\bmanagement\b',
-                    r'\bvorgesetzte\b',
-                    r'\bchef\b',
-                    r'\bleitung\b',
-                    r'\bführungskräfte\b',
-                    r'\bvorgesetztenverhalten\b',
-                    r'\bkompetenz\b',
-                    r'\bentscheidung\b'
-                ],
-                "rating_fields": ["sternebewertung_vorgesetztenverhalten"]
-            },
-            "Gehalt & Sozialleistungen": {
-                "keywords": [
-                    r'\bgehalt\b',
-                    r'\bbezahlung\b',
-                    r'\blohn\b',
-                    r'\bvergütung\b',
-                    r'\bbenefits\b',
-                    r'\bsozialleistungen\b',
-                    r'\baltersvorsorge\b',
-                    r'\bprämie\b',
-                    r'\bbonus\b'
-                ],
-                "rating_fields": ["sternebewertung_gehalt_sozialleistungen"]
-            },
-            "Kollegenzusammenhalt": {
-                "keywords": [
-                    r'\bteam\b',
-                    r'\bkollegen\b',
-                    r'\bzusammenhalt\b',
-                    r'\bkollegenzusammenhalt\b',
-                    r'\bzusammenarbeit\b',
-                    r'\bgemeinschaft\b'
-                ],
-                "rating_fields": ["sternebewertung_kollegenzusammenhalt"]
-            },
-            "Karriere & Weiterbildung": {
-                "keywords": [
-                    r'\bkarriere\b',
-                    r'\bweiterbildung\b',
-                    r'\bentwicklung\b',
-                    r'\baufstieg\b',
-                    r'\bförderung\b',
-                    r'\bschulungen\b',
-                    r'\bbeförderung\b',
-                    r'\bperspektive\b'
-                ],
-                "rating_fields": ["sternebewertung_karriere_weiterbildung"]
-            },
-            "Kommunikation": {
-                "keywords": [
-                    r'\bkommunikation\b',
-                    r'\binformation\b',
-                    r'\btransparenz\b',
-                    r'\bfeedback\b',
-                    r'\bgespräch\b',
-                    r'\baustausch\b',
-                    r'\brückmeldung\b'
-                ],
-                "rating_fields": ["sternebewertung_kommunikation"]
-            },
-            "Arbeitsbedingungen": {
-                "keywords": [
-                    r'\barbeitsbedingungen\b',
-                    r'\bausstattung\b',
-                    r'\bbüro\b',
-                    r'\barbeitsplatz\b',
-                    r'\btechnik\b',
-                    r'\bumgebung\b',
-                    r'\binfrastruktur\b'
-                ],
-                "rating_fields": ["sternebewertung_arbeitsbedingungen"]
-            },
-            "Arbeitsatmosphäre": {
-                "keywords": [
-                    r'\batmosphäre\b',
-                    r'\barbeitsatmosphäre\b',
-                    r'\barbeitsklima\b',
-                    r'\bstimmung\b',
-                    r'\bklima\b'
-                ],
-                "rating_fields": ["sternebewertung_arbeitsatmosphaere"]
-            },
-            "Image": {
-                "keywords": [
-                    r'\bimage\b',
-                    r'\bruf\b',
-                    r'\breputation\b',
-                    r'\bansehen\b',
-                    r'\bbekanntheitsgrad\b'
-                ],
-                "rating_fields": ["sternebewertung_image"]
-            },
-            "Interessante Aufgaben": {
-                "keywords": [
-                    r'\baufgaben\b',
-                    r'\btätigkeit\b',
-                    r'\binteressant\b',
-                    r'\bherausforderung\b',
-                    r'\babwechslung\b',
-                    r'\bvielfalt\b'
-                ],
-                "rating_fields": ["sternebewertung_interessante_aufgaben"]
-            },
-            "Umwelt- & Sozialbewusstsein": {
-                "keywords": [
-                    r'\bumwelt\b',
-                    r'\bnachhaltigkeit\b',
-                    r'\bsozialbewusstsein\b',
-                    r'\bverantwortung\b',
-                    r'\böko\b',
-                    r'\bklima\b'
-                ],
-                "rating_fields": ["sternebewertung_umwelt_sozialbewusstsein"]
-            },
-            "Umgang mit älteren Kollegen": {
-                "keywords": [
-                    r'\bältere kollegen\b',
-                    r'\balter\b',
-                    r'\bsenior\b',
-                    r'\berfahrung\b',
-                    r'\bumgang\b'
-                ],
-                "rating_fields": ["sternebewertung_umgang_mit_aelteren_kollegen"]
-            },
-            "Gleichberechtigung": {
-                "keywords": [
-                    r'\bgleichberechtigung\b',
-                    r'\bdiversität\b',
-                    r'\bvielfalt\b',
-                    r'\bdiskriminierung\b',
-                    r'\bchancengleichheit\b',
-                    r'\binklusion\b'
-                ],
-                "rating_fields": ["sternebewertung_gleichberechtigung"]
-            }
-        }
-        
-        # Topics für Bewerber (candidates)
-        candidate_topic_definitions = {
-            "Erklärung der weiteren Schritte": {
-                "keywords": [
-                    r'\bschritte\b',
-                    r'\bweitere schritte\b',
-                    r'\bprozess\b',
-                    r'\berklärung\b',
-                    r'\binformation\b',
-                    r'\bablauf\b'
-                ],
-                "rating_fields": ["sternebewertung_erklaerung_der_weiteren_schritte"]
-            },
-            "Zufriedenstellende Reaktion": {
-                "keywords": [
-                    r'\breaktion\b',
-                    r'\brückmeldung\b',
-                    r'\bantwort\b',
-                    r'\bresponse\b',
-                    r'\bzufriedenstellend\b'
-                ],
-                "rating_fields": ["sternebewertung_zufriedenstellende_reaktion"]
-            },
-            "Vollständigkeit der Infos": {
-                "keywords": [
-                    r'\binformation\b',
-                    r'\binfos\b',
-                    r'\bvollständig\b',
-                    r'\bdetail\b',
-                    r'\bausführlich\b'
-                ],
-                "rating_fields": ["sternebewertung_vollstaendigkeit_der_infos"]
-            },
-            "Zufriedenstellende Antworten": {
-                "keywords": [
-                    r'\bantwort\b',
-                    r'\bfrage\b',
-                    r'\bzufriedenstellend\b',
-                    r'\bauskunft\b'
-                ],
-                "rating_fields": ["sternebewertung_zufriedenstellende_antworten"]
-            },
-            "Angenehme Atmosphäre": {
-                "keywords": [
-                    r'\batmosphäre\b',
-                    r'\bangenehm\b',
-                    r'\bstimmung\b',
-                    r'\bklima\b',
-                    r'\bwohlbefinden\b'
-                ],
-                "rating_fields": ["sternebewertung_angenehme_atmosphaere"]
-            },
-            "Professionalität des Gesprächs": {
-                "keywords": [
-                    r'\bprofessionalität\b',
-                    r'\bgespräch\b',
-                    r'\binterview\b',
-                    r'\bprofessionell\b',
-                    r'\bkompetent\b'
-                ],
-                "rating_fields": ["sternebewertung_professionalitaet_des_gespraechs"]
-            },
-            "Wertschätzende Behandlung": {
-                "keywords": [
-                    r'\bwertschätzung\b',
-                    r'\bbehandlung\b',
-                    r'\brespekt\b',
-                    r'\bwertschätzend\b',
-                    r'\bhöflich\b'
-                ],
-                "rating_fields": ["sternebewertung_wertschaetzende_behandlung"]
-            },
-            "Erwartbarkeit des Prozesses": {
-                "keywords": [
-                    r'\berwartbarkeit\b',
-                    r'\bprozess\b',
-                    r'\bvorhersehbar\b',
-                    r'\bstruktur\b',
-                    r'\borganisation\b'
-                ],
-                "rating_fields": ["sternebewertung_erwartbarkeit_des_prozesses"]
-            },
-            "Zeitgerechte Zu- oder Absage": {
-                "keywords": [
-                    r'\bzusage\b',
-                    r'\babsage\b',
-                    r'\bzeitgerecht\b',
-                    r'\bpünktlich\b',
-                    r'\bfrist\b',
-                    r'\btermin\b'
-                ],
-                "rating_fields": ["sternebewertung_zeitgerechte_zu_oder_absage"]
-            },
-            "Schnelle Antwort": {
-                "keywords": [
-                    r'\bschnell\b',
-                    r'\bantwort\b',
-                    r'\breaktionszeit\b',
-                    r'\bzügig\b',
-                    r'\bprompt\b'
-                ],
-                "rating_fields": ["sternebewertung_schnelle_antwort"]
-            }
-        }
-        
         # Wähle die richtigen Topic-Definitionen basierend auf der Quelle
+        topic_definitions = topic_definitions_for(source)
         if source == "employee":
-            topic_definitions = employee_topic_definitions
             reviews_to_analyze = employee_data
         elif source == "candidates":
-            topic_definitions = candidate_topic_definitions
             reviews_to_analyze = candidates_data
         else:
             # Wenn keine Quelle angegeben oder "alle", kombiniere beide
-            topic_definitions = {**employee_topic_definitions, **candidate_topic_definitions}
             reviews_to_analyze = all_reviews
         
         # Analyze each topic
@@ -923,320 +673,6 @@ async def topic_ratings_timeseries(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error building topic ratings timeseries: {str(e)}")
-
-
-def analyze_topic(
-    topic_name: str,
-    keywords: List[str],
-    rating_fields: List[str],
-    all_reviews: List[Dict[str, Any]]
-) -> Dict[str, Any]:
-    """
-    Analyze a specific topic across all reviews.
-    
-    Returns a dictionary matching the format expected by TopicOverviewCard.jsx
-    """
-    # Text fields to search
-    text_fields = [
-        'stellenbeschreibung', 'verbesserungsvorschlaege',  # candidates
-        'jobbeschreibung', 'gut_am_arbeitgeber_finde_ich',  # employee
-        'schlecht_am_arbeitgeber_finde_ich', 'titel'
-    ]
-    
-    # Find mentions and collect data
-    mentions = []
-    ratings = []
-    monthly_ratings = defaultdict(list)
-    example_texts = []
-    typical_statements = []
-    review_details = []
-    
-    for review in all_reviews:
-        # Check if topic is mentioned in text fields
-        mentioned = False
-        mention_texts = []
-        full_review_text = []
-        
-        for field in text_fields:
-            text = review.get(field, "")
-            if text and isinstance(text, str):
-                text_lower = text.lower()
-                for keyword_pattern in keywords:
-                    if re.search(keyword_pattern, text_lower, re.IGNORECASE):
-                        mentioned = True
-                        # Extract sentence containing keyword
-                        sentences = re.split(r'[.!?]+', text)
-                        for sentence in sentences:
-                            if re.search(keyword_pattern, sentence, re.IGNORECASE) and len(sentence.strip()) > 20:
-                                mention_texts.append(sentence.strip())
-                                break
-                        
-                        # Collect full text from all relevant fields
-                        full_review_text.append(f"{field}: {text}")
-                        break
-        
-        if mentioned:
-            mentions.append(review)
-            
-            # Collect example texts with full review details
-            if mention_texts:
-                for text in mention_texts[:3]:
-                    example_texts.append(clean_html_text(text))
-                    review_details.append({
-                        "id": review.get("id"),
-                        "preview": clean_html_text(text),
-                        "fullReview": build_full_review(review),
-                    })
-            
-            # Collect ratings — topic-specific fields take priority.
-            # Using both durchschnittsbewertung AND the specific field would
-            # double-count and bias the topic average toward the overall mean.
-            topic_specific = []
-            for field in rating_fields:
-                field_rating = review.get(field)
-                if field_rating is not None:
-                    try:
-                        topic_specific.append(float(field_rating))
-                    except (TypeError, ValueError):
-                        pass
-
-            if topic_specific:
-                ratings.extend(topic_specific)
-            else:
-                # No topic-specific rating available — use overall avg as fallback
-                avg_rating_val = review.get("durchschnittsbewertung")
-                if avg_rating_val is not None:
-                    try:
-                        ratings.append(float(avg_rating_val))
-                    except (TypeError, ValueError):
-                        pass
-            
-            # Group by month for timeline
-            date_str = review.get("datum")
-            if date_str:
-                try:
-                    date = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                    month_key = date.strftime("%b")
-                    if avg_rating:
-                        monthly_ratings[month_key].append(float(avg_rating))
-                except:
-                    pass
-    
-    # Calculate average rating
-    avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
-    
-    # Determine sentiment based on rating
-    if avg_rating >= 3.5:
-        sentiment = "Positiv"
-        color = "green"
-    elif avg_rating >= 2.5:
-        sentiment = "Neutral"
-        color = "orange"
-    else:
-        sentiment = "Negativ"
-        color = "red"
-    
-    # Create timeline data (all available months, sorted chronologically)
-    timeline_data = []
-    months_order = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
-    
-    # Collect all dates from reviews to determine the full time range
-    all_dates = []
-    for review in mentions:
-        date_str = review.get("datum")
-        if date_str:
-            try:
-                date = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                all_dates.append(date)
-            except:
-                pass
-    
-    if all_dates:
-        # Find the earliest and latest dates
-        min_date = min(all_dates)
-        max_date = max(all_dates)
-        
-        # Generate all months between min and max date
-        current_date = min_date.replace(day=1)
-        end_date = max_date.replace(day=1)
-        
-        # Create a dictionary to store month-year combinations with their ratings
-        monthly_data = defaultdict(list)
-        for review in mentions:
-            date_str = review.get("datum")
-            avg_rating_review = review.get("durchschnittsbewertung")
-            if date_str and avg_rating_review:
-                try:
-                    date = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                    month_year_key = f"{months_order[date.month - 1]} {date.year}"
-                    monthly_data[month_year_key].append(float(avg_rating_review))
-                except:
-                    pass
-        
-        # Generate timeline for all months in range
-        while current_date <= end_date:
-            month_name = months_order[current_date.month - 1]
-            month_year_key = f"{month_name} {current_date.year}"
-            
-            if month_year_key in monthly_data and monthly_data[month_year_key]:
-                month_avg = sum(monthly_data[month_year_key]) / len(monthly_data[month_year_key])
-                timeline_data.append({
-                    "month": month_year_key,
-                    "rating": round(month_avg, 1),
-                    "year": current_date.year,
-                    "monthNum": current_date.month
-                })
-            
-            # Move to next month
-            if current_date.month == 12:
-                current_date = current_date.replace(year=current_date.year + 1, month=1)
-            else:
-                current_date = current_date.replace(month=current_date.month + 1)
-    
-    # Select typical statements (up to 13 most relevant - 3 for "Typische Aussagen" + 10 for "Beispiel-Review")
-    # Score each statement by relevance instead of random selection
-    def _richness_score(detail):
-        """Score a review by how complete its text content is across all fields."""
-        fr = detail.get("fullReview") or {}
-        fields = [
-            fr.get("gut_am_arbeitgeber", "") or "",
-            fr.get("schlecht_am_arbeitgeber", "") or "",
-            fr.get("verbesserungsvorschlaege", "") or "",
-            fr.get("stellenbeschreibung", "") or "",
-            fr.get("jobbeschreibung", "") or "",
-        ]
-        filled = sum(1 for f in fields if len(f.strip()) > 20)
-        total_chars = sum(len(f) for f in fields)
-        gut = fr.get("gut_am_arbeitgeber", "") or ""
-        schlecht = fr.get("schlecht_am_arbeitgeber", "") or ""
-        both_bonus = 15 if (len(gut.strip()) > 20 and len(schlecht.strip()) > 20) else 0
-        return filled * 10 + both_bonus + min(total_chars / 100, 20)
-
-    if review_details:
-        # Score each review_detail by how "typical"/representative it is
-        def score_statement(detail):
-            text = detail.get("preview", "")
-            text_lower = text.lower()
-            score = 0.0
-
-            # 1. Keyword density: more keyword matches = more relevant
-            keyword_hits = 0
-            for kw in keywords:
-                keyword_hits += len(re.findall(kw, text_lower, re.IGNORECASE))
-            score += keyword_hits * 10
-
-            # 2. Ideal sentence length (40-200 chars is most readable/informative)
-            length = len(text)
-            if 40 <= length <= 200:
-                score += 8
-            elif 25 <= length <= 300:
-                score += 4
-            elif length > 300:
-                score += 1  # too long, less "typical"
-            # very short (<25) gets 0 bonus
-
-            # 3. Penalize generic/uninformative text
-            generic_patterns = [
-                r'^(ja|nein|ok|gut|schlecht|nichts|keine ahnung|kein kommentar)',
-                r'^(s\.?\s*o\.?|siehe oben|wie gesagt)',
-                r'^[-–—•\s]*$',
-            ]
-            for pattern in generic_patterns:
-                if re.search(pattern, text_lower.strip()):
-                    score -= 15
-
-            # 4. Bonus for substantive content (contains verbs/descriptive words)
-            substantive_indicators = [
-                r'\b(ist|sind|war|wurde|haben|kann|sollte|muss|finde|denke|fühle)\b',
-                r'\b(sehr|besonders|leider|leicht|schwer|gut|toll|super|schlecht|mangelhaft)\b',
-            ]
-            for pattern in substantive_indicators:
-                if re.search(pattern, text_lower):
-                    score += 2
-
-            # 5. Review richness: prioritize reviews with more filled text fields
-            score += _richness_score(detail) * 0.4  # weighted: relevant but secondary to keyword match
-
-            return score
-        
-        # Score and sort by relevance
-        scored = [(score_statement(d), i, d) for i, d in enumerate(review_details)]
-        scored.sort(key=lambda x: -x[0])  # highest score first
-        
-        # Deduplicate: skip statements that are too similar to already-selected ones
-        selected_reviews = []
-        selected_texts = []
-        
-        def is_too_similar(new_text, existing_texts, threshold=0.6):
-            """Check if new_text is too similar to any existing text using word overlap."""
-            new_words = set(new_text.lower().split())
-            if len(new_words) < 3:
-                return any(new_text.lower().strip() == e.lower().strip() for e in existing_texts)
-            for existing in existing_texts:
-                existing_words = set(existing.lower().split())
-                if not existing_words or not new_words:
-                    continue
-                overlap = len(new_words & existing_words)
-                max_len = max(len(new_words), len(existing_words))
-                if max_len > 0 and overlap / max_len > threshold:
-                    return True
-            return False
-        
-        for _score, _idx, detail in scored:
-            if len(selected_reviews) >= 13:
-                break
-            preview = detail.get("preview", "")
-            # Nur Statements aufnehmen, die mindestens ein Keyword enthalten (Topic-Relevanz)
-            preview_lower = preview.lower()
-            has_keyword = any(re.search(kw, preview_lower, re.IGNORECASE) for kw in keywords)
-            if has_keyword and not is_too_similar(preview, selected_texts):
-                selected_reviews.append(detail)
-                selected_texts.append(preview)
-        
-        # Falls nach Keyword-Filter + Dedup weniger als 13: restliche auffüllen (mit Keyword-Check)
-        if len(selected_reviews) < 13:
-            for _score, _idx, detail in scored:
-                if len(selected_reviews) >= 13:
-                    break
-                if detail not in selected_reviews:
-                    preview = detail.get("preview", "")
-                    preview_lower = preview.lower()
-                    has_keyword = any(re.search(kw, preview_lower, re.IGNORECASE) for kw in keywords)
-                    if has_keyword:
-                        selected_reviews.append(detail)
-        
-        # First 3 = relevanz-sortierte "Typische Aussagen" (bleiben stabil)
-        # Ab Index 3 = "Beispiel-Review" → nach Kommentar-Reichhaltigkeit sortiert
-        top_statements = selected_reviews[:3]
-        example_pool = selected_reviews[3:]
-        example_pool.sort(key=_richness_score, reverse=True)
-        selected_reviews = top_statements + example_pool
-        
-        typical_statements = [detail["preview"] for detail in selected_reviews]
-    else:
-        typical_statements = [f"Keine spezifischen Aussagen zu {topic_name} gefunden"]
-        selected_reviews = [{
-            "id": None,
-            "preview": typical_statements[0],
-            "fullReview": None
-        }]
-    
-    # Select one example
-    example = typical_statements[0] if typical_statements else f"Thema: {topic_name}"
-    if len(example) > 80:
-        example = example[:77] + "..."
-    
-    return {
-        "topic": topic_name,
-        "frequency": len(mentions),
-        "avgRating": avg_rating,
-        "sentiment": sentiment,
-        "example": example,
-        "color": color,
-        "timelineData": timeline_data,
-        "typicalStatements": typical_statements,
-        "reviewDetails": selected_reviews  # Relevanz-sortierte Reviews
-    }
 
 
 def extract_short_kritikpunkt(text: str, max_words: int = 4) -> str:
