@@ -3,11 +3,12 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Building2, GitCompareArrows, ListOrdered, MessageSquareText } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, DimensionPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { PeriodReviewList, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
-import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
+import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
+import { groupLabel, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison } from "@/hooks/useAnomalyComparison"
 import { useReviewPages } from "@/hooks/useReviewPages"
@@ -19,15 +20,13 @@ import { API_URL } from "../config"
    Geöffnet per Klick auf die AnomalyCard im Dashboard, analog zum Vergleich.
    Die Firma steht in der URL (?company=ID), damit Neuladen und Teilen
    funktionieren; der Name kommt aus dem Navigationszustand oder /companies.
-   Dimension und Zeitraum stehen ebenfalls in der URL (?dimension=key&range=1y).
+   Dimension und Zeitraum stehen ebenfalls in der URL (?dimension=key&range=1y),
+   seit Inkrement 2 auch Quelle und Status (?source=candidates&status=eingestellt).
    Der Zeitraum wählt nur den Ausschnitt; erkannt wird auf der ganzen Reihe.
    Inkrement 2: Ein Klick auf eine Stufe oder Listenzeile wählt die Veränderung
    aus (?anomaly=id); darunter stehen der Vorher-Nachher-Vergleich und die
    Bewertungen der Vergleichsfenster.
    ============================================================================ */
-
-// Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
-const SOURCE = "employee"
 
 function Section({ icon, eyebrow, title, subtitle, actions, children }) {
     return (
@@ -60,8 +59,12 @@ export default function AnomaliesPage() {
     )
     const [query, setQuery] = useState(location.state?.company?.name ?? "")
     const companyName = companyId ? names[companyId] ?? "" : ""
+    const sourceParam = searchParams.get("source")
+    const source = isSource(sourceParam) ? sourceParam : DEFAULT_SOURCE
+    const status = validStatus(source, searchParams.get("status"))
+    const group = groupLabel(source, status)
     const dimensionParam = searchParams.get("dimension")
-    const dimension = EMPLOYEE_DIMENSIONS.some((d) => d.key === dimensionParam) ? dimensionParam : OVERALL_DIMENSION.key
+    const dimension = isDimensionOf(source, dimensionParam) ? dimensionParam : OVERALL_DIMENSION.key
     const rangeParam = searchParams.get("range")
     const rangeKey = isTimeRangeKey(rangeParam) ? rangeParam : DEFAULT_TIME_RANGE
 
@@ -98,7 +101,7 @@ export default function AnomaliesPage() {
         return () => controller.abort()
     }, [companyId, names])
 
-    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
+    const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
     const selectedId = searchParams.get("anomaly")
     const selectedAnomaly = useMemo(() => anomalies.find((a) => a.id === selectedId) ?? null, [anomalies, selectedId])
     const windows = useMemo(() => comparisonWindows(selectedAnomaly), [selectedAnomaly])
@@ -106,8 +109,8 @@ export default function AnomaliesPage() {
     const [sideState, setSideState] = useState({ id: null, side: "before" })
     const side = sideState.id === selectedId ? sideState.side : "before"
     const sideWindow = windows?.[side] ?? null
-    const reviewPages = useReviewPages(companyId, { source: SOURCE, start: sideWindow?.start, end: sideWindow?.end })
-    const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source: SOURCE, dimension })
+    const reviewPages = useReviewPages(companyId, { source, status, start: sideWindow?.start, end: sideWindow?.end })
+    const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
     const selectAnomaly = (id) => updateParams({ anomaly: id })
     const eligibility = data?.eligibility
     const count = anomalies.length
@@ -117,12 +120,12 @@ export default function AnomaliesPage() {
     const hiddenCount = count - visibleAnomalies.length
     const countText = `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
     const chartSubtitle = eligibility && !eligibility.eligible
-        ? "Mitarbeiter · keine automatische Erkennung"
+        ? `${group} · keine automatische Erkennung`
         : range
-            ? `Mitarbeiter · ${fmtPeriod(range.from)} – ${fmtPeriod(range.to)} · ${count
+            ? `${group} · ${fmtPeriod(range.from)} – ${fmtPeriod(range.to)} · ${count
                 ? `${visibleAnomalies.length} von ${count} ${count === 1 ? "auffälligen Veränderung" : "auffälligen Veränderungen"} im Zeitraum`
                 : "keine auffälligen Veränderungen"}`
-            : `Mitarbeiter · ${countText}`
+            : `${group} · ${countText}`
 
     // Zurück mit der gewählten Firma, damit das Dashboard sie wieder anzeigt.
     const backToDashboard = () =>
@@ -162,7 +165,26 @@ export default function AnomaliesPage() {
                     </div>
                 </div>
                 {companyId && (
+                    <AnomalySourceToggle
+                        value={source}
+                        onChange={(key) => updateParams({
+                            source: key === DEFAULT_SOURCE ? null : key,
+                            status: null,
+                            dimension: isDimensionOf(key, dimension) && dimension !== OVERALL_DIMENSION.key ? dimension : null,
+                            anomaly: null,
+                        })}
+                    />
+                )}
+                {companyId && (
+                    <StatusPicker
+                        source={source}
+                        value={status}
+                        onChange={(key) => updateParams({ status: key, anomaly: null })}
+                    />
+                )}
+                {companyId && (
                     <DimensionPicker
+                        source={source}
                         value={dimension}
                         onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key, anomaly: null })}
                     />
@@ -259,8 +281,8 @@ export default function AnomaliesPage() {
                                 eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
                                 title="Vorher-Nachher-Vergleich"
                                 subtitle={comparison.data
-                                    ? `Mitarbeiter · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
-                                    : "Mitarbeiter · Verschiebungen in den Bewertungen zwischen den Vergleichsfenstern"}
+                                    ? `${group} · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
+                                    : `${group} · Verschiebungen in den Bewertungen zwischen den Vergleichsfenstern`}
                             >
                                 <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} />
                             </Section>
@@ -271,7 +293,7 @@ export default function AnomaliesPage() {
                                 icon={<MessageSquareText />}
                                 eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
                                 title="Bewertungen des Zeitraums"
-                                subtitle={`Mitarbeiter · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
+                                subtitle={`${group} · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
                                     reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}`}`}
                                 actions={
                                     <WindowSideToggle value={side} onChange={(key) => setSideState({ id: selectedId, side: key })} />

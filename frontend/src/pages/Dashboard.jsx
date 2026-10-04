@@ -369,10 +369,14 @@ export default function Dashboard() {
   const handleTopicOverviewLoadingChange = useCallback((v) => setDashboardLoadingStates((p) => ({ ...p, topicOverview: v })), [])
 
   /* ---- Anomalien-Detailseite (analog zum Vergleich) ---- */
-  const openAnomalies = useCallback((dimension) => {
+  // selection: {source, dimension, status} von der AnomalyCard; beim Klick auf den Topbar-Knopf ein Event.
+  const openAnomalies = useCallback((selection) => {
     if (!effectiveCompanyId) return
     const params = new URLSearchParams({ company: String(effectiveCompanyId) })
+    const { source, dimension, status } = selection && typeof selection === "object" && "dimension" in selection ? selection : {}
+    if (source && source !== "employee") params.set("source", source)
     if (typeof dimension === "string" && dimension !== "durchschnittsbewertung") params.set("dimension", dimension)
+    if (status) params.set("status", status)
     navigate(`/anomalies?${params}`, {
       state: { company: { id: effectiveCompanyId, name: selectedCompanyName } },
     })

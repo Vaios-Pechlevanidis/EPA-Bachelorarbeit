@@ -350,19 +350,22 @@ def explain_anomaly(
     dimension: Optional[str] = None,
     window_months: int = DEFAULT_WINDOW_MONTHS,
     *,
+    status: Optional[str] = None,
     analyzer=None,
 ) -> Optional[Dict[str, Any]]:
     """Vergleich für eine Veränderung eines Unternehmens, nur lesend.
 
     Die Veränderungen werden mit den Standardparametern der Erkennung neu
-    berechnet (``company_anomalies``); ``source``/``dimension`` fehlen, gelten die
-    Angaben aus ``anomaly_id``. Rückgabe None, wenn ``anomaly_id`` nicht unter
-    den erkannten Veränderungen ist. ValueError bei ungültiger Quelle,
-    Dimension oder ``window_months``.
+    berechnet (``company_anomalies``). Fehlen ``source`` oder ``dimension``,
+    gelten die Angaben aus ``anomaly_id``. ``status`` wählt die
+    Bewertendengruppe (E13): Erkennung und Fenster nur mit ihren Bewertungen.
+    Rückgabe None, wenn ``anomaly_id`` nicht unter den erkannten Veränderungen
+    ist. ValueError bei ungültiger Quelle, Dimension, ungültigem Status oder
+    ``window_months``.
     """
     from services.anomaly_service import company_anomalies
     from services.rating_series_service import value_column
-    from services.review_service import fetch_review_rows_in_range, parse_day
+    from services.review_service import fetch_review_rows_in_range, filter_by_status, parse_day
 
     parsed = parse_anomaly_id(anomaly_id)
     if parsed is None:
@@ -373,7 +376,7 @@ def explain_anomaly(
     if window_months < 1:
         raise ValueError("window_months muss mindestens 1 sein.")
 
-    detected = company_anomalies(company_id, source=source, dimension=dimension)
+    detected = company_anomalies(company_id, source=source, dimension=dimension, status=status)
     anomaly = next((a for a in detected["anomalies"] if a["id"] == anomaly_id), None)
     if anomaly is None:
         return None
@@ -382,7 +385,7 @@ def explain_anomaly(
     rows = fetch_review_rows_in_range(
         source, company_id, parse_day(windows["before"]["start"], "start"), parse_day(windows["after"]["end"], "end"),
     )
-    by_window = split_rows_by_window(rows, windows)
+    by_window = split_rows_by_window(filter_by_status(rows, source, status), windows)
     for side in ("before", "after"):
         windows[side]["n_reviews"] = len(by_window[side])
     comparison = compare_windows(
@@ -392,6 +395,7 @@ def explain_anomaly(
         "company_id": company_id,
         "source": source,
         "dimension": dimension,
+        "status": status,
         "anomaly": anomaly,
         "windows": windows,
         "comparison": comparison,

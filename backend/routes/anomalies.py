@@ -26,6 +26,7 @@ def get_company_anomalies(
     penalty: Optional[float] = Query(None, gt=0, description="Fester PELT-Strafterm in quadrierten Sternen; schaltet auf den festen Modus"),
     penalty_factor: Optional[float] = Query(None, gt=0, description=f"Faktor des skalierten Strafterms Faktor · sigma² · ln(n) (Standard {DEFAULT_PENALTY_FACTOR})"),
     min_delta: Optional[float] = Query(None, ge=0, description=f"Mindestbetrag der Veränderung in Sternen (Standard {DEFAULT_MIN_DELTA})"),
+    status: Optional[str] = Query(None, description="Statusschlüssel der Bewertendengruppe (E13); ohne = alle"),
 ):
     """
     Monatsverlauf und auffällige Veränderungen (Niveauwechsel).
@@ -69,7 +70,13 @@ def get_company_anomalies(
     ``anomalies`` ist sortiert: fall vor rise, dann nach Betrag von delta.
     Nicht geeignete Reihen (weniger als 12 bewertete Monate) liefern eine
     leere Anomalieliste mit Begründung in ``eligibility.reason``.
-    Ungültige ``source`` oder ``dimension``: 400 ``{"detail": ...}``.
+
+    **Bewertendengruppe** (Inkrement 2, E13): ``status`` (z. B. ``angestellt``,
+    ``ex-angestellt``, ``eingestellt``; Liste in
+    ``services/review_service.STATUS_LABELS``) beschränkt Reihe, Eignung,
+    Strafterm und Erkennung auf diese Gruppe; die Antwort enthält dann ``status``.
+
+    Ungültige ``source``, ``dimension`` oder ``status``: 400 ``{"detail": ...}``.
     """
     penalty_factor = DEFAULT_PENALTY_FACTOR if penalty_factor is None else penalty_factor
     min_delta = DEFAULT_MIN_DELTA if min_delta is None else min_delta
@@ -77,6 +84,7 @@ def get_company_anomalies(
         if dimension == "all":
             return company_anomalies_all(
                 company_id, source=source, penalty=penalty, min_delta=min_delta, penalty_factor=penalty_factor,
+                status=status,
             )
         return company_anomalies(
             company_id,
@@ -85,6 +93,7 @@ def get_company_anomalies(
             penalty=penalty,
             min_delta=min_delta,
             penalty_factor=penalty_factor,
+            status=status,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -98,16 +107,19 @@ def get_anomaly_explanations(
     anomaly_id: str,
     source: Optional[str] = Query(None, description="Quelle; Standard aus anomaly_id"),
     dimension: Optional[str] = Query(None, description="Dimension; Standard aus anomaly_id"),
+    status: Optional[str] = Query(None, description="Statusschlüssel der Bewertendengruppe (E13); ohne = alle"),
     window_months: int = Query(DEFAULT_WINDOW_MONTHS, ge=1, le=36, description=f"Monate je Vergleichsfenster (Standard {DEFAULT_WINDOW_MONTHS}, E12)"),
 ):
     """
     Vorher-Nachher-Vergleich einer auffälligen Veränderung (Inkrement 2).
 
-    Die Veränderungen werden mit den Standardparametern neu berechnet und
-    ``anomaly_id`` (``"{source}:{dimension}:{YYYY-MM}"``) darunter gesucht::
+    Die Veränderungen werden mit den Standardparametern für die
+    Bewertendengruppe (``source``, ``status``) neu berechnet und ``anomaly_id``
+    (``"{source}:{dimension}:{YYYY-MM}"``) darunter gesucht; die Fenster
+    enthalten nur Bewertungen dieser Gruppe::
 
         {
-          "company_id", "source", "dimension",
+          "company_id", "source", "dimension", "status",
           "anomaly": {...},                       # wie in /anomalies
           "windows": {"window_months": 6,
                       "before": {"from", "to", "start", "end", "months", "n_reviews"},
@@ -122,10 +134,12 @@ def get_anomaly_explanations(
         }
 
     Der Vergleich beschreibt Veränderungen in den Bewertungen, keine Ursachen.
-    Unbekannte ``anomaly_id``: 404; ungültige Quelle oder Dimension: 400.
+    Unbekannte ``anomaly_id``: 404; ungültige Quelle, Dimension oder Status: 400.
     """
     try:
-        result = explain_anomaly(company_id, anomaly_id, source=source, dimension=dimension, window_months=window_months)
+        result = explain_anomaly(
+            company_id, anomaly_id, source=source, dimension=dimension, status=status, window_months=window_months,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

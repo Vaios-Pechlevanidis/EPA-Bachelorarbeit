@@ -12,11 +12,12 @@ import {
     ReferenceDot,
     ReferenceArea,
 } from "recharts"
-import { ArrowDownRight, ArrowUpRight, Layers, Maximize2 } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight, Layers, Maximize2, Users } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../../icons"
 import { useAnomalies } from "@/hooks/useAnomalies"
-import { ChartCardHeader, DropdownPicker } from "./ChartHeader"
-import { EMPLOYEE_DIMENSIONS, OVERALL_DIMENSION, dimensionLabel } from "@/lib/ratingCategories"
+import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
+import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
+import { groupLabel, statusOptions } from "@/lib/reviewerStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, periodIndex, trimToEvaluated } from "@/lib/anomalySeries"
 
 /* ============================================================================
@@ -25,12 +26,9 @@ import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, inter
    Die Karte zeigt Verlauf und Zähler; die Liste der Veränderungen steht nur auf
    der Detailseite /anomalies, die ein Klick auf die Karte öffnet (onOpen).
    Wortwahl: "auffällige Veränderung", keine Aussage über Ursachen.
+   Inkrement 2: Quelle (Mitarbeiter, Bewerber) und Status wählen die
+   Bewertendengruppe; die Erkennung läuft je Gruppe neu (E13).
    ============================================================================ */
-
-// Quelle fest auf Mitarbeitende; die Quellenauswahl folgt in Inkrement 2.
-const SOURCE = "employee"
-
-const SOURCE_LABEL = { employee: "Mitarbeiter", candidates: "Bewerber" }
 
 // Farbe je Richtung als Theme-Token (index.css: hell 700er-, dunkel 400er-Töne).
 // "glyph" ist der mittlere 500er-Ton für den Tooltip, dessen Hintergrund mit dem
@@ -525,14 +523,14 @@ export function TimeRangeFilter({ value, onChange }) {
     )
 }
 
-/* Auswahl der Dimension (Mitarbeiterquelle), Standard Gesamtbewertung. */
-export function DimensionPicker({ value, onChange, compact = false }) {
+/* Auswahl der Dimension der Quelle, Standard Gesamtbewertung. */
+export function DimensionPicker({ value, onChange, source = DEFAULT_SOURCE, compact = false }) {
     return (
         <DropdownPicker
             label="Dimension"
             icon={<Layers />}
             value={dimensionLabel(value)}
-            options={EMPLOYEE_DIMENSIONS.map((d) => ({ value: d.key, label: d.label }))}
+            options={dimensionsFor(source).map((d) => ({ value: d.key, label: d.label }))}
             onChange={onChange}
             align="start"
             compact={compact}
@@ -540,14 +538,42 @@ export function DimensionPicker({ value, onChange, compact = false }) {
     )
 }
 
+/* Quelle der Bewertungen (Mitarbeiter, Bewerber). */
+export function AnomalySourceToggle({ value, onChange, compact = false }) {
+    return <SourceToggle value={value} onChange={onChange} options={SOURCES} compact={compact} />
+}
+
+/* Auswahl des Status innerhalb der Quelle; null = alle (E13). */
+export function StatusPicker({ source, value, onChange, compact = false }) {
+    const options = statusOptions(source)
+    return (
+        <DropdownPicker
+            label="Status"
+            icon={<Users />}
+            value={options.find((o) => o.key === value)?.label ?? "Alle"}
+            options={options.map((o) => ({ value: o.key ?? "", label: o.label }))}
+            onChange={(key) => onChange(key || null)}
+            align="start"
+            compact={compact}
+        />
+    )
+}
+
 export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
-    const [dimension, setDimension] = useState(OVERALL_DIMENSION.key)
-    const { data, anomalies, loading, error } = useAnomalies(companyId, { source: SOURCE, dimension })
+    const [selection, setSelection] = useState({ source: DEFAULT_SOURCE, dimension: OVERALL_DIMENSION.key, status: null })
+    const { source, dimension, status } = selection
+    const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
 
     if (!companyId) return null
 
-    const subtitle = `${SOURCE_LABEL[SOURCE]} · ${dimensionLabel(dimension)} · ${countLabel(anomalies, data?.eligibility)}`
-    const open = () => onOpen?.(dimension)
+    const subtitle = `${groupLabel(source, status)} · ${dimensionLabel(dimension)} · ${countLabel(anomalies, data?.eligibility)}`
+    const open = () => onOpen?.(selection)
+    // Quellenwechsel: Status zurücksetzen, Dimension nur behalten, wenn es sie in der neuen Quelle gibt.
+    const changeSource = (next) => setSelection((s) => ({
+        source: next,
+        status: null,
+        dimension: isDimensionOf(next, s.dimension) ? s.dimension : OVERALL_DIMENSION.key,
+    }))
 
     return (
         <div
@@ -564,7 +590,13 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 title="Anomalien im Verlauf"
                 subtitle={subtitle}
                 expandable
-                actions={<DimensionPicker value={dimension} onChange={setDimension} compact />}
+                actions={
+                    <>
+                        <AnomalySourceToggle value={source} onChange={changeSource} compact />
+                        <DimensionPicker source={source} value={dimension} onChange={(key) => setSelection((s) => ({ ...s, dimension: key }))} compact />
+                        <StatusPicker source={source} value={status} onChange={(key) => setSelection((s) => ({ ...s, status: key }))} compact />
+                    </>
+                }
             />
             <div className="px-4 pt-4 pb-4">
                 <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />
