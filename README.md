@@ -90,6 +90,22 @@ Select a change on the detail page to see the reviews of the periods before and 
 
 ---
 
+## 📈 Cycle 2 – Increment 3 "Aktienkurs und Kennzahlen"
+
+On the detail page the share price runs along the rating chart on a second y-axis, with a few company figures below it. Price and figures place the ratings in their market context; they are not an explanation. The dashboard neither claims nor computes any relation between price and ratings. Feature doc: [docs/feature-doku/04-kurs-und-kennzahlen.md](docs/feature-doku/04-kurs-und-kennzahlen.md); decision E15 in `docs/entscheidungen.md` (preliminary).
+
+| Part | Where | Notes |
+|---|---|---|
+| Service | `backend/services/context_service.py` | Ticker from `companies.ticker`, fallback to `backend/data/company_metadata.json` when the column or value is missing (only if the name matches); monthly closes via yfinance (`period="max"`, `interval="1mo"`, adjusted for splits and dividends, running month dropped); market cap, employees, revenue per fiscal year; the network call sits behind `fetch_raw` and can be swapped |
+| Cache | `backend/data/market/<ticker>.json` (in `.gitignore`, not committed) | Fields `ticker`, `ticker_name`, `currency`, `fetched_at`, `source`, `adjustment`, `prices`, `metrics`. Not refreshed automatically; rerun the script to update |
+| Fill the cache | `backend/scripts/fetch_market_data.py` | `cd backend && uv run python scripts/fetch_market_data.py` (all tickers), `--ticker SAP.DE` or `--company 19` (one). Reads the database, writes only files |
+| Runtime | `MARKET_LIVE_FETCH` (environment) | Cache first. Without a cache file the backend fetches once live and stores the result, unless `MARKET_LIVE_FETCH=0`. A failed fetch returns `available: false` with a reason (no 500) and is not retried for 15 minutes |
+| API | `backend/routes/market.py` | `GET /api/analytics/company/{company_id}/market?start=YYYY-MM&end=YYYY-MM` → `company_id`, `ticker`, `ticker_scope` (`eigene Aktie` / `Konzernmutter`), `ticker_name`, `currency`, `available`, `reason`, `prices`, `metrics`, `fetched_at`, `source`. Without a ticker: `available: false` with the reason from `peer_group`; unknown company 404; invalid period 400 |
+| Frontend | `frontend/src/pages/Anomalies.jsx` (`?kurs=aus`), `components/dashboard/MarketContext.jsx`, `AnomalyChart` (prop `market`), `hooks/useMarket.js`, `lib/market.js` | Thin violet line on the right axis (currency in the axis label, legend, tooltip), only for the displayed months; toggle "Aktienkurs" (on by default when a price exists); figures row with "aktuell, Stand …"; fixed note "Einordnung, keine Erklärung …"; parent company named explicitly (NTT DATA SE → NTT, Inc.). The dashboard card and the PDF export are unchanged |
+| Tests | `backend/tests/market/` (mocked fetcher, temporary cache directory, no network) | `cd backend && uv run python -m pytest tests/market -q` |
+
+---
+
 ## ⚡ Quick Start
 
 ```bash

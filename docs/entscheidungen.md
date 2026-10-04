@@ -1,6 +1,6 @@
-# Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“ und Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“
+# Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E14 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E15 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -408,3 +408,63 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Status:** vorläufig (Faktor 3, 0,5 Sterne und 3 Nachbarmonate sind Setzungen; Prüfung
   gegen Referenzzeiträume wie E9 ausstehend).
 
+## E15 – Kurs und Kennzahlen
+
+- **Kontext:** Inkrement 3 stellt auf der Detailseite den Aktienkurs neben den
+  Bewertungsverlauf, dazu wenige Unternehmenskennzahlen. 17 der 26 realen Unternehmen haben
+  einen Ticker (E6), 9 nicht. Für die Arbeit soll erkennbar sein, in welchem Marktumfeld
+  eine auffällige Veränderung liegt, ohne daraus eine Ursache abzuleiten.
+- **Entscheidung (2026-10-04):**
+  - **Rolle:** Kurs und Kennzahlen sind eine Einordnung, keine Erklärung. Das Dashboard
+    berechnet keine Korrelation und keinen Vergleichswert und behauptet keinen Zusammenhang
+    mit den Bewertungen. Fester Hinweis in der Ansicht: „Einordnung, keine Erklärung. Der
+    Kurs zeigt das Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht behauptet.“
+  - **Quelle:** Yahoo Finance über `yfinance` (Version im Feld `source`), keine neue
+    Abhängigkeit (E8).
+  - **Kursreihe:** Monatsschlusskurse über den ganzen verfügbaren Zeitraum
+    (`period="max"`, `interval="1mo"`, `auto_adjust=True`), also um Splits und Dividenden
+    bereinigt; je Monat `period` und `close`, dazu die Währung. Der Monat des Abrufs fehlt,
+    weil er nicht abgeschlossen ist. Gezeichnet wird nur der angezeigte Zeitraum.
+  - **Zwischenspeicher außerhalb des Repositorys:** je Ticker eine Datei
+    `backend/data/market/<ticker>.json` (in `.gitignore`), gefüllt mit
+    `backend/scripts/fetch_market_data.py`. Zur Laufzeit zuerst der Zwischenspeicher; fehlt
+    er, ein Live-Abruf mit Speichern, außer bei `MARKET_LIVE_FETCH=0`. Ein Fehlschlag
+    ergibt `available: false` mit Begründung, keinen Serverfehler. Die Datenbank wird nur
+    gelesen.
+  - **Kennzahlen:** aktuelle Marktkapitalisierung (Kurswährung, Stand = Tag des letzten
+    Kurses), aktuelle Zahl der Mitarbeitenden (Stand = Abrufdatum) und Umsatz („Total
+    Revenue“) je Geschäftsjahr in Berichtswährung, so viele Jahre, wie yfinance liefert.
+    Aktuelle Werte tragen in der Ansicht „aktuell, Stand …“. Fehlende Werte bleiben leer.
+  - **Ticker:** aus `companies.ticker`; fehlt die Spalte oder der Wert, aus
+    `company_metadata.json` über `company_id`, aber nur bei gleichem Namen. Neues Feld
+    `ticker_scope` in der Metadatei: „eigene Aktie“ oder „Konzernmutter“, ohne Ticker leer.
+- **Sonderfälle:**
+  - **Konzernmutter:** Für NTT DATA SE wird der Kurs der NTT, Inc. (9432.T, Tokio, JPY)
+    gezeigt (E6), `ticker_scope` „Konzernmutter“. Die Ansicht nennt das in Legende und
+    Hinweis ausdrücklich; auch die Kennzahlen sind die der Konzernmutter.
+  - **Nicht mehr notierte Unternehmen:** Compugroup Medical war im Untersuchungszeitraum
+    bis 2025 notiert, yfinance liefert nach dem Delisting aber keine Kurse mehr (E6). Ohne
+    Ticker zeigt die Ansicht „Kein Aktienkurs: nicht börsennotiert“, obwohl für frühere Jahre
+    ein Kurs existierte. Dasselbe gilt für die frühere NTT DATA Group (9613.T).
+  - **Offene Zuordnung:** Carl Zeiss ist dem Ticker der Carl Zeiss Meditec AG (AFX.DE)
+    zugeordnet; ob sich das Kununu-Profil auf die Meditec oder die nicht notierte Carl Zeiss
+    AG bezieht, ist offen (E6). `ticker_scope` bleibt daher leer; die Ansicht nennt das
+    Wertpapier („Carl Zeiss Meditec AG (AFX.DE)“).
+- **Begründung:** Der Monatsschluss passt zur Auflösung der Bewertungsreihe (Monatsmittel,
+  E3). Bereinigte Kurse vermeiden Sprünge durch Splits, die wie Kursbewegungen aussähen. Der
+  Zwischenspeicher macht die Ansicht unabhängig von der Erreichbarkeit von Yahoo Finance,
+  hält Kursdaten Dritter aus dem Repository und macht den Stand über `fetched_at`
+  nachvollziehbar. Eine Korrelation wurde bewusst nicht berechnet: Die Bewertungsreihen sind
+  lückenhaft, der Kurs hängt von vielen gleichzeitigen Einflüssen ab, und ein Zusammenhangsmaß
+  würde in der Ansicht leicht als Erklärung gelesen.
+- **Grenzen der Kennzahlen:** Marktkapitalisierung und Mitarbeitende sind nur als aktueller
+  Wert verfügbar, nicht für frühere Zeiträume; sie dürfen nicht auf den Zeitpunkt einer
+  Veränderung bezogen werden. yfinance nennt für die Mitarbeitenden kein Stichtagsdatum. Der
+  Umsatz reicht nur etwa vier Geschäftsjahre zurück (Stand 2026-10-04: 2022 bis 2025, bei
+  NTT bis 03/2026), der Bewertungszeitraum meist weiter. Bereinigte Kurse ändern sich
+  rückwirkend mit jeder Dividende; ein neuer Abruf kann ältere Werte leicht verschieben.
+  Ein Konzernkurs bildet ein Tochterunternehmen nur mittelbar ab.
+- **Offen:** Nutzungsbedingungen von Yahoo Finance für die Verwendung in der Arbeit (Abbildungen,
+  Weitergabe der Daten); Zuordnung Carl Zeiss; ob für Compugroup historische Kurse aus einer
+  anderen Quelle nachgetragen werden.
+- **Status:** vorläufig.
