@@ -23,6 +23,17 @@ Kursreihe: Monatsschlusskurse über den ganzen verfügbaren Zeitraum
 bereinigt), je Monat ``{"period": "YYYY-MM", "close": float}``. Der Monat des
 Abrufs fehlt, weil er noch nicht abgeschlossen ist.
 
+Kennzahlen (``metrics``) aus yfinance, ohne Schätzung fehlender Werte:
+
+- ``market_cap``: aktuelle Marktkapitalisierung in Kurswährung, Stand = Datum
+  des letzten Kurses (``regularMarketTime``), sonst Abrufdatum,
+- ``employees``: aktuelle Zahl der Mitarbeitenden (``fullTimeEmployees``);
+  yfinance nennt kein Stichtagsdatum, Stand ist daher das Abrufdatum,
+- ``revenue``: Umsatz (``Total Revenue``) je Geschäftsjahr in Berichtswährung,
+  so viele Jahre, wie yfinance liefert (meist vier), Stand = Ende des Geschäftsjahrs.
+
+Fehlt ein Wert, bleibt die Kennzahl ``None`` bzw. das Jahr fehlt in ``revenue``.
+
 Der Netzabruf liegt hinter ``fetch_raw`` (austauschbar über den Parameter
 ``fetcher``); ``build_record`` formt die Rohdaten ohne Netzwerk um. So laufen
 die Tests mit nachgebildeten Rohdaten.
@@ -141,7 +152,9 @@ def fetch_raw(ticker: str) -> Dict[str, Any]:
     """Rohdaten über yfinance (Netzwerk). Einzige Stelle mit Netzabruf.
 
     Rückgabe: ``{"currency", "name", "history": [{"date": "YYYY-MM-DD",
-    "close": float}, ...], "info": {...}, "revenue": [...]}``.
+    "close": float}, ...], "info": {...}, "revenue": [{"period_end":
+    "YYYY-MM-DD", "value": float}, ...], "yfinance_version"}``. Fehlen Info oder
+    Erfolgsrechnung, bleiben ``info`` bzw. ``revenue`` leer; die Kurse zählen.
     """
     import yfinance as yf  # erst hier: Tests und Start ohne Netz brauchen es nicht
 
@@ -152,10 +165,29 @@ def fetch_raw(ticker: str) -> Dict[str, Any]:
         for idx, close in zip(hist.index, hist["Close"])
     ] if hist is not None and len(hist) else []
     meta = getattr(tk, "history_metadata", None) or {}
+    info_keys = ("marketCap", "currency", "regularMarketTime", "fullTimeEmployees", "financialCurrency")
+    try:
+        full_info = tk.info or {}
+        info = {k: full_info.get(k) for k in info_keys}
+    except Exception as exc:  # noqa: BLE001 – Kennzahlen sind optional
+        logger.info("yfinance info für %s nicht verfügbar: %s", ticker, exc)
+        info = {}
+    revenue = []
+    try:
+        stmt = tk.income_stmt
+        if stmt is not None and "Total Revenue" in stmt.index:
+            revenue = [
+                {"period_end": col.strftime("%Y-%m-%d"), "value": val}
+                for col, val in stmt.loc["Total Revenue"].items()
+            ]
+    except Exception as exc:  # noqa: BLE001
+        logger.info("yfinance income_stmt für %s nicht verfügbar: %s", ticker, exc)
     return {
         "currency": meta.get("currency"),
         "name": meta.get("longName") or meta.get("shortName"),
         "history": history,
+        "info": info,
+        "revenue": revenue,
         "yfinance_version": getattr(yf, "__version__", None),
     }
 
@@ -186,6 +218,35 @@ def monthly_closes(history: List[Dict[str, Any]], fetched_at: datetime) -> List[
     return [{"period": p, "close": c} for p, c in sorted(by_period.items())]
 
 
+def build_metrics(raw: Dict[str, Any], fetched_at: datetime) -> Dict[str, Any]:
+    """Kennzahlen aus Rohdaten; fehlende Werte bleiben leer, nichts wird geschätzt."""
+    info = raw.get("info") or {}
+    fetched_day = fetched_at.strftime("%Y-%m-%d")
+    market_cap = _finite(info.get("marketCap"))
+    price_time = _finite(info.get("regularMarketTime"))
+    market_cap_day = (datetime.fromtimestamp(price_time, tz=timezone.utc).strftime("%Y-%m-%d")
+                      if price_time else fetched_day)
+    employees = _finite(info.get("fullTimeEmployees"))
+    revenue_currency = info.get("financialCurrency") or raw.get("currency")
+    revenue = sorted(
+        (
+            {"value": value, "unit": revenue_currency, "fiscal_year_end": str(r.get("period_end"))[:10],
+             "basis": "geschaeftsjahr"}
+            for r in raw.get("revenue") or []
+            if (value := _finite(r.get("value"))) is not None
+        ),
+        key=lambda r: r["fiscal_year_end"],
+    )
+    return {
+        "market_cap": ({"value": market_cap, "unit": info.get("currency") or raw.get("currency"),
+                        "as_of": market_cap_day, "basis": "aktuell"}
+                       if market_cap and market_cap > 0 else None),
+        "employees": ({"value": int(employees), "unit": "Personen", "as_of": fetched_day, "basis": "aktuell"}
+                      if employees and employees > 0 else None),
+        "revenue": revenue if revenue_currency else [],
+    }
+
+
 def build_record(ticker: str, raw: Dict[str, Any], fetched_at: Optional[datetime] = None) -> Dict[str, Any]:
     """Speicherbarer Datensatz aus Rohdaten (ohne Netzwerk)."""
     fetched_at = fetched_at or datetime.now(timezone.utc)
@@ -198,7 +259,7 @@ def build_record(ticker: str, raw: Dict[str, Any], fetched_at: Optional[datetime
         "source": f"{SOURCE} {version}".strip() if version else SOURCE,
         "adjustment": ADJUSTMENT,
         "prices": monthly_closes(raw.get("history") or [], fetched_at),
-        "metrics": {},
+        "metrics": build_metrics(raw, fetched_at),
     }
 
 

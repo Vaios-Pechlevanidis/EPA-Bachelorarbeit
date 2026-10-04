@@ -16,3 +16,25 @@ export function fmtPriceTick(v) {
 /* Umschalter in der URL: ?kurs=aus blendet den Kurs aus, Standard an. */
 export const PRICE_PARAM = "kurs"
 export const PRICE_OFF = "aus"
+
+/* Großer Betrag kompakt: "212,3 Mrd. EUR", "4,6 Mio. EUR". */
+export function fmtAmount(v, unit) {
+  if (v == null) return "–"
+  const abs = Math.abs(v)
+  const [div, suffix] = abs >= 1e12 ? [1e12, " Bio."] : abs >= 1e9 ? [1e9, " Mrd."] : abs >= 1e6 ? [1e6, " Mio."] : [1, ""]
+  const num = (v / div).toLocaleString("de-DE", { maximumFractionDigits: div === 1 ? 0 : 1 })
+  return `${num}${suffix}${unit ? ` ${unit}` : ""}`
+}
+
+/* Tag "YYYY-MM-DD" als "02.10.2026". */
+export function fmtDay(day) {
+  if (!day) return "–"
+  const [y, m, d] = String(day).split("-")
+  return `${d}.${m}.${y}`
+}
+
+/* Geschäftsjahr nach seinem Ende: Kalenderjahr "GJ 2025", sonst "GJ bis 03/2026". */
+export function fiscalYearLabel(end) {
+  const [y, m] = String(end).split("-")
+  return m === "12" ? `GJ ${y}` : `GJ bis ${m}/${y}`
+}
