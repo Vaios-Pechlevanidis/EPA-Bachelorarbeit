@@ -173,3 +173,13 @@ export function comparisonWindows(anomaly, windowMonths = DEFAULT_WINDOW_MONTHS)
     after: windowSpan(date, Math.min(date + windowMonths - 1, afterTo)),
   }
 }
+
+/* Zusatz für Untertitel: " · 2 auffällige Einzelmonate" (E14) oder leer. */
+export function outlierCountText(n) {
+  return n ? ` · ${n} ${n === 1 ? "auffälliger Einzelmonat" : "auffällige Einzelmonate"}` : ""
+}
+
+/* Ein Kalendermonat "YYYY-MM" als Zeitraum {from, to, start, end} für GET /reviews. */
+export function monthSpan(period) {
+  return windowSpan(periodIndex(period), periodIndex(period))
+}

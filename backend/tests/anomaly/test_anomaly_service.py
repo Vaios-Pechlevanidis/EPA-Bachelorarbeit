@@ -214,7 +214,7 @@ class TestAllDimensions:
         assert result["dimension"] == "all"
         assert [d["dimension"] for d in result["dimensions"]] == rs.DIMENSIONS_BY_SOURCE["employee"]
         for entry in result["dimensions"]:
-            assert set(entry) == {"dimension", "eligibility", "anomalies", "params"}
+            assert set(entry) == {"dimension", "eligibility", "anomalies", "outlier_months", "params"}
 
     def test_combined_list_is_union_and_sorted(self, in_memory_db):
         """Test: Gesamtliste = alle Anomalien der Dimensionen, sortiert."""

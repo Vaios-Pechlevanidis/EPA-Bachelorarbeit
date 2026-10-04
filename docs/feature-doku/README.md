@@ -29,3 +29,4 @@ Abgrenzung zu den anderen Dokumenten:
 |---|---|---|---|---|
 | 01 | [Anomalien im Verlauf](01-anomalien-im-verlauf.md) | 1 | FA-01 bis FA-04, Zähler aus FA-26 | abgeschlossen; Parameter vorläufig (E9) |
 | 02 | [Drill-down und Vorher-Nachher-Vergleich](02-drilldown-und-vergleich.md) | 2 | Drill-down, Vergleich, Quelle und Status | umgesetzt; Fenster und Schwellen vorläufig (E10–E13) |
+| 03 | [Auffällige Einzelmonate](03-auffaellige-einzelmonate.md) | 2 (Nachtrag) | Markierung einzelner auffälliger Monate | umgesetzt; Schwellen vorläufig (E14) |

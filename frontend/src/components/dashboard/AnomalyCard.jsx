@@ -18,7 +18,7 @@ import { useAnomalies } from "@/hooks/useAnomalies"
 import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
 import { groupLabel, statusOptions } from "@/lib/reviewerStatus"
-import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, periodIndex, trimToEvaluated } from "@/lib/anomalySeries"
+import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, trimToEvaluated } from "@/lib/anomalySeries"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -70,6 +70,37 @@ function RingGlyph({ direction, size = 10 }) {
     )
 }
 
+/* Raute für auffällige Einzelmonate (E14): Monat, der stark von seinen
+   Nachbarmonaten abweicht, ohne ein neues Niveau zu bilden. Hohl, damit sie
+   sich von den Ringen der Karte und den Stufen der Detailseite unterscheidet. */
+export function DiamondGlyph({ direction, size = 10 }) {
+    const color = DIRECTION[direction].color
+    return (
+        <svg width={size} height={size} viewBox="0 0 10 10" aria-hidden="true" className="flex-none">
+            <path d="M5 0.75 L9.25 5 L5 9.25 L0.75 5 Z" fill="var(--color-bg-card)" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+        </svg>
+    )
+}
+
+function diamondShape(outlier, { selected = false, onSelect = null, size = 5 } = {}) {
+    function OutlierMarker({ cx, cy }) {
+        if (![cx, cy].every(Number.isFinite)) return <g />
+        const r = selected ? size + 1.5 : size
+        return (
+            <path
+                d={`M${cx} ${cy - r} L${cx + r} ${cy} L${cx} ${cy + r} L${cx - r} ${cy} Z`}
+                fill="var(--color-bg-card)"
+                stroke={DIRECTION[outlier.direction].color}
+                strokeWidth={selected ? 2.25 : 1.5}
+                strokeLinejoin="round"
+                onClick={onSelect ? () => onSelect(outlier.date) : undefined}
+                style={onSelect ? { cursor: "pointer" } : undefined}
+            />
+        )
+    }
+    return OutlierMarker
+}
+
 /* Markierung im Diagramm: Stufe am markierten Monat von Ø davor (links) zu
    Ø danach (rechts). Höhe = Ausmaß im Maßstab der Y-Achse, Form = Richtung,
    Strichstärke = Schweregrad. Der Monatswert selbst bleibt auf der Linie. */
@@ -107,10 +138,11 @@ const fmtDelta = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(v))
 
 const fmtSpan = (from, to) => (from && to && from !== to ? `${fmtPeriod(from)} – ${fmtPeriod(to)}` : fmtPeriod(from ?? to))
 
-function AnomalyTooltip({ active, payload, anomaliesByPeriod }) {
+function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod = {} }) {
     if (!active || !payload?.length) return null
     const point = payload[0].payload
     const anomaly = anomaliesByPeriod[point.period]
+    const outlier = outliersByPeriod[point.period]
     return (
         <div className="bg-slate-900 border border-slate-700 rounded-md shadow-lg px-3 py-2 text-[12px] min-w-[170px]">
             <p className="font-mono text-[10px] tracking-[0.05em] uppercase text-slate-400 mb-1.5">{fmtPeriod(point.period)}</p>
@@ -169,15 +201,70 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod }) {
                     )}
                 </div>
             )}
+            {outlier && (
+                <div className="mt-1.5 pt-1.5 border-t border-slate-700 max-w-[280px]">
+                    <p className="mb-1 inline-flex items-center gap-1.5 text-white font-medium">
+                        <DiamondGlyph direction={outlier.direction} />
+                        Auffälliger Einzelmonat ({outlier.direction === "fall" ? "unter" : "über"} den Nachbarmonaten)
+                    </p>
+                    <p className="flex items-center justify-between gap-3">
+                        <span className="text-slate-400">Abweichung</span>
+                        <span className="font-semibold tnum text-white">{fmtDelta(outlier.deviation)} Sterne</span>
+                    </p>
+                    <p className="flex items-center justify-between gap-3">
+                        <span className="text-slate-400">Niveau der Nachbarmonate</span>
+                        <span className="tnum text-slate-300">{fmt(outlier.level)} ({fmtSpan(outlier.neighbours_from, outlier.neighbours_to)})</span>
+                    </p>
+                    <p className="m-0 mt-1 text-[11px] text-slate-400">
+                        Einzelner Monat, kein neues Niveau; beruht auf {outlier.n_values} Bewertungen mit Wert.
+                    </p>
+                </div>
+            )}
         </div>
     )
 }
 
 /* Zähler für Untertitel (FA-26); bei nicht geeigneter Reihe kein "0". */
-function countLabel(anomalies, eligibility) {
+function countLabel(anomalies, eligibility, outliers = []) {
     if (eligibility && !eligibility.eligible) return "keine automatische Erkennung"
     const n = anomalies.length
-    return `${n} ${n === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
+    return `${n} ${n === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}${outlierCountText(outliers.length)}`
+}
+
+/* Liste der auffälligen Einzelmonate (Detailseite); Klick wählt den Monat aus. */
+export function OutlierList({ outliers, selectedPeriod = null, onSelect = null, emptyText = "Keine auffälligen Einzelmonate." }) {
+    if (!outliers.length) return <p className="text-[12px] text-slate-500 m-0">{emptyText}</p>
+    return (
+        <ul className="m-0 p-0 list-none">
+            {outliers.map((o) => {
+                const selected = o.date === selectedPeriod
+                const select = () => onSelect?.(o.date)
+                return (
+                    <li
+                        key={o.id}
+                        className={[
+                            "flex items-center gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0",
+                            onSelect ? "cursor-pointer px-2 -mx-2 rounded-md hover:bg-slate-50" : "",
+                            selected ? "bg-slate-100 hover:bg-slate-100" : "",
+                        ].join(" ")}
+                        onClick={onSelect ? select : undefined}
+                        onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select() } } : undefined}
+                        role={onSelect ? "button" : undefined}
+                        tabIndex={onSelect ? 0 : undefined}
+                        aria-pressed={onSelect ? selected : undefined}
+                        title={onSelect ? "Auswählen: Bewertungen dieses Monats zeigen" : undefined}
+                    >
+                        <DiamondGlyph direction={o.direction} size={12} />
+                        <span className="w-[84px] flex-none text-slate-700 tnum">{fmtPeriod(o.date)}</span>
+                        <span className="w-[92px] flex-none font-semibold tnum" style={{ color: DIRECTION[o.direction].color }}>{fmtDelta(o.deviation)} Sterne</span>
+                        <span className="flex-1 min-w-0 truncate text-slate-500 tnum">
+                            Ø {fmt(o.month_mean)} gegen Niveau {fmt(o.level)} der Nachbarmonate ({fmtSpan(o.neighbours_from, o.neighbours_to)}) · {o.n_values} Bewertungen mit Wert
+                        </span>
+                    </li>
+                )
+            })}
+        </ul>
+    )
 }
 
 /* Hinweis, wenn die Reihe für die automatische Erkennung zu dünn ist (E4). */
@@ -260,7 +347,7 @@ function isolatedDot(chartData, opacity = 1) {
    Stufen, Niveaulinie, ausführliche Legende und ausgeblendete Ränder stehen auf
    der Detailseite.
    Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null }) {
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
     const trimmed = useMemo(() => trimToEvaluated(series), [series])
@@ -292,6 +379,15 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
     const anomaliesByPeriod = useMemo(
         () => Object.fromEntries(visibleAnomalies.map((a) => [a.date, a])),
         [visibleAnomalies],
+    )
+    // Auffällige Einzelmonate (E14) im sichtbaren Ausschnitt.
+    const visibleOutliers = useMemo(
+        () => (data?.outlier_months ?? []).filter((o) => inWindow(o.date, range)),
+        [data, range],
+    )
+    const outliersByPeriod = useMemo(
+        () => Object.fromEntries(visibleOutliers.map((o) => [o.date, o])),
+        [visibleOutliers],
     )
     // Achse aus den sichtbaren Werten (bewertet, interpoliert, Niveaus und Stufen);
     // dünne Monatsmittel gehen nicht ein, weil sie die Achse verzerren würden.
@@ -330,12 +426,13 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
         }).filter((a) => a.x1 && a.x2)
     }, [anomalies, selectedId, chartData, compact])
     // Klick auf den Monat einer Veränderung wählt sie aus (zusätzlich zur Stufe selbst).
+    // Ohne Veränderung in diesem Monat wählt der Klick einen auffälligen Einzelmonat aus.
     const handleChartClick = (state) => {
-        if (!onSelect) return
         const idx = Number(state?.activeTooltipIndex)
         const period = state?.activeLabel ?? (Number.isInteger(idx) ? chartData[idx]?.period : null)
-        const hit = period ? anomaliesByPeriod[period] : null
-        if (hit) onSelect(hit.id)
+        if (!period) return
+        if (onSelect && anomaliesByPeriod[period]) onSelect(anomaliesByPeriod[period].id)
+        else if (onSelectOutlier && outliersByPeriod[period]) onSelectOutlier(period)
     }
     const hasInterpolation = chartData.some((m) => m.interpolated)
     const hasVisibleValues = chartData.some((m) => m.value != null)
@@ -356,7 +453,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height={height}>
-                    <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8, bottom: 5 }} onClick={onSelect ? handleChartClick : undefined}>
+                    <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8, bottom: 5 }} onClick={onSelect || onSelectOutlier ? handleChartClick : undefined}>
                         <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
                         {windowAreas.map((a) => (
                             <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill={a.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
@@ -381,7 +478,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             tickFormatter={(v) => (Number.isInteger(v * 2) ? v.toFixed(1) : v.toFixed(2))}
                         />
                         <Tooltip
-                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} />}
+                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} outliersByPeriod={outliersByPeriod} />}
                             cursor={{ stroke: "var(--color-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
                             filterNull={false}
                         />
@@ -447,6 +544,15 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                                 ifOverflow="visible"
                             />
                         )))}
+                        {visibleOutliers.map((o) => (
+                            <ReferenceDot
+                                key={o.id}
+                                x={o.date}
+                                y={o.month_mean}
+                                ifOverflow="visible"
+                                shape={diamondShape(o, { selected: o.date === selectedOutlier, onSelect: onSelectOutlier, size: compact ? 4 : 5 })}
+                            />
+                        ))}
                     </LineChart>
                 </ResponsiveContainer>
             )}
@@ -482,6 +588,14 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 <span>Ring = auffällige Veränderung ab diesem Monat:</span>
                 <span className="inline-flex items-center gap-1"><RingGlyph direction="fall" /> Abfall</span>
                 <span className="inline-flex items-center gap-1"><RingGlyph direction="rise" /> Anstieg</span>
+            </p>
+        )}
+        {!error && visibleOutliers.length > 0 && (
+            <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span className="inline-flex items-center gap-1">
+                    <DiamondGlyph direction="fall" /><DiamondGlyph direction="rise" />
+                    auffälliger Einzelmonat (unter bzw. über den Nachbarmonaten, mindestens 3 σ und 0,5 Sterne; kein neues Niveau)
+                </span>
             </p>
         )}
         {!error && visibleAnomalies.length > 0 && !compact && (
@@ -583,7 +697,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
 
     if (!companyId) return null
 
-    const subtitle = `${groupLabel(source, status)} · ${dimensionLabel(dimension)} · ${countLabel(anomalies, data?.eligibility)}`
+    const subtitle = `${groupLabel(source, status)} · ${dimensionLabel(dimension)} · ${countLabel(anomalies, data?.eligibility, data?.outlier_months ?? [])}`
     const open = () => onOpen?.(selection)
     // Quellenwechsel: Status zurücksetzen, Dimension nur behalten, wenn es sie in der neuen Quelle gibt.
     const changeSource = (next) => setSelection((s) => ({

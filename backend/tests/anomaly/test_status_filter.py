@@ -116,7 +116,7 @@ class TestDetectionPerStatus:
     def test_without_status_unchanged_shape(self, client):
         """Test: Ohne status kein Feld status (Antwort wie in Inkrement 1)."""
         body = client.get(URL.format(DEMO_3)).json()
-        assert set(body) == {"company_id", "source", "dimension", "series", "anomalies", "params", "eligibility"}
+        assert set(body) == {"company_id", "source", "dimension", "series", "anomalies", "outlier_months", "params", "eligibility"}
 
     @pytest.mark.parametrize("params", [
         {"status": "eingestellt"},

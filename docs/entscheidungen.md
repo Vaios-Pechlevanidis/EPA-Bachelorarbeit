@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“ und Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“
 
-Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E13 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E14 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -369,3 +369,42 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   zu dünn; die Detailseite zeigt dann den Hinweis zur Eignung. Die Bedeutung von
   `deferred` ist aus den Daten nicht eindeutig („zurückgestellt“ ist eine Übersetzung).
 - **Status:** vorläufig (Zuordnung der Rohwerte vom Autor zu bestätigen).
+
+## E14 – Auffällige Einzelmonate
+
+- **Kontext:** Bei Telekom fällt das Monatsmittel im Dezember 2022 auf 2,60 Sterne (11
+  Bewertungen), davor und danach liegt es um 4,0. Die Erkennung nach E9 sucht anhaltende
+  Niveauwechsel (mindestens 3 Monate je Abschnitt) und markiert einen solchen einzelnen
+  Monat absichtlich nicht; der Autor hielt ihn trotzdem für zeigenswert (2026-10-04).
+- **Entscheidung (Autor, 2026-10-04):** Eine zweite, getrennte Markierung „auffälliger
+  Einzelmonat“ neben den Niveauwechseln, als Raute dargestellt. Ein bewerteter Monat wird
+  gemeldet, wenn er
+  - vom Median der bis zu 3 bewerteten Monate davor **und** vom Median der bis zu 3
+    bewerteten Monate danach um mindestens `T = max(3 · noise_sigma, 0,5 Sterne)` abweicht,
+    beide Male in dieselbe Richtung (je Seite mindestens 2 Monate), und
+  - seine direkten bewerteten Nachbarn selbst nicht um `T` oder mehr in dieselbe Richtung
+    vom Niveau abweichen.
+  `noise_sigma` ist dieselbe robuste Streuung wie im Strafterm (E9). Niveau ist der Median
+  der Nachbarmonate beider Seiten. Umsetzung: `detect_outlier_months` in
+  `backend/services/anomaly_service.py`, Feld `outlier_months` in
+  `GET /api/analytics/company/{id}/anomalies` (auch je Dimension und Statusgruppe).
+- **Begründung:** Der Vergleich mit beiden Seiten unterscheidet einen einzelnen Ausreißer
+  von einem Niveauwechsel: Am Wechsel liegt eine Seite auf dem Niveau des Monats, dort
+  wird nichts gemeldet. Ein erster Entwurf mit dem Niveau des PELT-Abschnitts wurde
+  verworfen, weil PELT um einen großen Ausreißer bei ruhiger Reihe einen eigenen
+  3-Monats-Abschnitt bildet und dann auch die Nachbarmonate gemeldet wurden. Die Schwelle
+  in Vielfachen von σ passt sich der Streuung der Reihe an; 0,5 Sterne entsprechen dem
+  Richtwert „deutlich“ (E5, E9).
+- **Ergebnis (2026-10-04, Mitarbeitende, Gesamtbewertung, 15 geeignete Unternehmen):**
+  Faktor 2,5: 18, **Faktor 3: 9**, Faktor 3,5: 3 Einzelmonate. Mit Faktor 3: Telekom 2022-12
+  (−1,41), 2015-05 (−1,12), 2017-05 (−0,96), SAP SE 2024-03 (+1,23, 174 Bewertungen), Carl
+  Zeiss 2024-12 (−1,24) und 2016-11 (+1,23), Cancom 2016-05 (−1,70) und 2017-08 (−1,57), RWE
+  2024-07 (−1,07). Über alle Dimensionen 121 in 208 geeigneten Reihen.
+- **Grenzen:** Viele gemeldete Monate beruhen auf nur 5 bis 11 Bewertungen; ein
+  Einzelmonat kann Zufall sein. Er ist ein Hinweis auf einen auffälligen Monat, keine
+  Aussage über Ursachen. Am Anfang und Ende einer Reihe (weniger als 2 Nachbarmonate auf
+  einer Seite) wird nichts gemeldet. Zwei aufeinanderfolgende auffällige Monate werden
+  nicht gemeldet (kein einzelner Monat, aber auch zu kurz für einen Niveauwechsel).
+- **Status:** vorläufig (Faktor 3, 0,5 Sterne und 3 Nachbarmonate sind Setzungen; Prüfung
+  gegen Referenzzeiträume wie E9 ausstehend).
+

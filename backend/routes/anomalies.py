@@ -42,8 +42,12 @@ def get_company_anomalies(
                          "n_reviews_after", "n_reviews", "severity", "before_from", "after_to",
                          "previous_period", "gap_months", "month_mean",
                          "month_near_previous_level", "method", "params"}, ...],
+          "outlier_months": [{"id", "company_id", "source", "dimension", "date",
+                              "direction", "month_mean", "level", "deviation", "n_values",
+                              "neighbours_from", "neighbours_to", "noise_sigma", "threshold"}, ...],
           "params": {"method", "model", "min_size", "penalty", "penalty_mode", "penalty_factor",
-                     "noise_sigma", "n_evaluated", "min_delta", "min_reviews_per_month"},
+                     "noise_sigma", "n_evaluated", "min_delta", "min_reviews_per_month",
+                     "outlier_sigma_factor", "outlier_min_delta", "outlier_neighbours"},
           "eligibility": {"eligible", "evaluated_months", "min_evaluated_months", "reason"}
         }
 
@@ -70,6 +74,12 @@ def get_company_anomalies(
     ``anomalies`` ist sortiert: fall vor rise, dann nach Betrag von delta.
     Nicht geeignete Reihen (weniger als 12 bewertete Monate) liefern eine
     leere Anomalieliste mit Begründung in ``eligibility.reason``.
+
+    **Auffällige Einzelmonate** (E14, seit 2026-10-04): ``outlier_months`` nennt
+    bewertete Monate, die von den bis zu 3 bewerteten Monaten davor und danach
+    (je Median) um mindestens ``max(3 · noise_sigma, 0,5)`` Sterne in dieselbe
+    Richtung abweichen, ohne ein neues Niveau zu bilden; bei ``dimension=all`` je
+    Dimension und zusammengeführt.
 
     **Bewertendengruppe** (Inkrement 2, E13): ``status`` (z. B. ``angestellt``,
     ``ex-angestellt``, ``eingestellt``; Liste in
