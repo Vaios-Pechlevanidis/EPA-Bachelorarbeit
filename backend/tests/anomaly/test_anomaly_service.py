@@ -68,7 +68,9 @@ class TestDemoCompanies:
         assert a["company_id"] == DEMO_3
         assert a["severity"] in ("high", "medium")
         assert a["method"] == "pelt"
-        assert a["params"]["penalty"] == 0.5 and a["params"]["min_delta"] == 0.3
+        assert a["params"]["penalty_mode"] == "scaled" and a["params"]["penalty_factor"] == 2.0
+        assert a["params"]["penalty"] > 0 and a["params"]["noise_sigma"] >= 0.05
+        assert a["params"]["min_delta"] == 0.3
         assert round(a["after_mean"] - a["before_mean"], 2) == round(a["delta"], 2)
 
     def test_n_reviews_is_sum_of_before_and_after(self, in_memory_db):
@@ -161,7 +163,7 @@ class TestAllDimensions:
         assert result["dimension"] == "all"
         assert [d["dimension"] for d in result["dimensions"]] == rs.DIMENSIONS_BY_SOURCE["employee"]
         for entry in result["dimensions"]:
-            assert set(entry) == {"dimension", "eligibility", "anomalies"}
+            assert set(entry) == {"dimension", "eligibility", "anomalies", "params"}
 
     def test_combined_list_is_union_and_sorted(self, in_memory_db):
         """Test: Gesamtliste = alle Anomalien der Dimensionen, sortiert."""

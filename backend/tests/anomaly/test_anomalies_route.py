@@ -99,7 +99,7 @@ class TestAllDimensions:
         assert body["dimension"] == "all"
         assert [d["dimension"] for d in body["dimensions"]] == DIMENSIONS_BY_SOURCE["employee"]
         for entry in body["dimensions"]:
-            assert set(entry) == {"dimension", "eligibility", "anomalies"}
+            assert set(entry) == {"dimension", "eligibility", "anomalies", "params"}
         assert len(body["anomalies"]) == sum(len(d["anomalies"]) for d in body["dimensions"])
 
     def test_candidates_source(self, client):
