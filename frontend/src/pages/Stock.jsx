@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, BarChart3, Building2, LineChart, Newspaper, Users } from "lucide-react"
-import { TrendUp } from "../icons"
+import { Anomaly as AnomalyIcon, TrendUp } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { PageSection } from "@/components/dashboard/PageSection"
-import { MarketContext } from "@/components/dashboard/MarketContext"
+import { MarketContext, PriceToggle } from "@/components/dashboard/MarketContext"
+import { AnomalyChart, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnalystChart, EarningsChart, EmptyNote, NewsList, StockPriceChart } from "@/components/dashboard/FinanceCards"
+import { useAnomalies } from "@/hooks/useAnomalies"
 import { useCompanyResource } from "@/hooks/useCompanyResource"
 import { useTheme } from "@/hooks/useTheme"
+import { DEFAULT_TIME_RANGE, fmtPeriod, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import {
-    DEFAULT_PRICE_RANGE, PARENT_SCOPE, PRICE_RANGES, fmtMonth, fmtPercent, fmtPrice, isPriceRangeKey, noPriceText, pricesInRange,
+    DEFAULT_PRICE_RANGE, MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE, PRICE_OFF, PRICE_PARAM, PRICE_RANGES, fmtMonth, fmtPercent, fmtPrice, isPriceRangeKey, noPriceText, pricesInRange,
 } from "@/lib/market"
 import { API_URL } from "../config"
 
@@ -18,7 +21,11 @@ import { API_URL } from "../config"
    Kursverlauf, Analystenempfehlungen, Umsatz und Nettoergebnis sowie aktuelle
    Nachrichten eines Unternehmens auf einer eigenen Seite. Firma, Zeitfenster
    und Jahres- oder Quartalsansicht stehen in der URL
-   (?company=19&range=3y&periode=quartal). Alles ist Einordnung des
+   (?company=19&range=3y&periode=quartal). Der Bereich "Kurs und
+   Bewertungsverlauf" legt den Kurs auf einer zweiten Achse über den
+   Monatsverlauf der Sternebewertung (Mitarbeitende, Gesamtbewertung) mit den
+   auffälligen Veränderungen; Zeitraum ?verlauf=5y|3y|1y, Kurs aus mit ?kurs=aus.
+   Ein Klick auf eine Markierung öffnet sie auf der Anomalien-Seite. Alles ist Einordnung des
    Marktumfelds; ein Zusammenhang mit den Bewertungen wird nicht behauptet.
    ============================================================================ */
 
@@ -108,6 +115,17 @@ export default function StockPage() {
     const security = data?.ticker ? `${data.ticker_name ?? data.ticker} · ${data.ticker}` : ""
     const isParent = data?.ticker_scope === PARENT_SCOPE
 
+    // Kurs und Bewertungsverlauf: Gesamtbewertung der Mitarbeitenden wie auf der Anomalien-Seite.
+    const ratings = useAnomalies(available ? companyId : null)
+    const historyParam = searchParams.get("verlauf")
+    const historyKey = isTimeRangeKey(historyParam) ? historyParam : DEFAULT_TIME_RANGE
+    const historyRange = useMemo(() => timeWindow(trimToEvaluated(ratings.data?.series).series, historyKey), [ratings.data, historyKey])
+    const showPrice = searchParams.get(PRICE_PARAM) !== PRICE_OFF
+    const openAnomalies = (patch) => {
+        const params = new URLSearchParams({ company: companyId, ...patch })
+        navigate(`/anomalies?${params}`, { state: { company: { id: companyId, name: companyName } } })
+    }
+
     const selectCompany = (company) => {
         if (!company) return
         const id = String(company.id)
@@ -184,6 +202,40 @@ export default function StockPage() {
                                 </div>
                             )}
                         </PageSection>
+
+                        {available && (
+                            <PageSection
+                                icon={<AnomalyIcon />}
+                                eyebrow="KURS UND BEWERTUNGSVERLAUF"
+                                title="Aktienkurs und Sternebewertung"
+                                subtitle={`Mitarbeitende · Gesamtbewertung, Monatsmittel${showPrice ? ` · Kurs ${data.ticker} rechts in ${data.currency ?? "?"}` : ""}${
+                                    historyRange ? ` · ${fmtPeriod(historyRange.from)} – ${fmtPeriod(historyRange.to)}` : ""}`}
+                                actions={
+                                    <>
+                                        <PriceToggle checked={showPrice} onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })} />
+                                        <TimeRangeFilter value={historyKey}
+                                            onChange={(key) => updateParams({ verlauf: key === DEFAULT_TIME_RANGE ? null : key })} />
+                                    </>
+                                }
+                            >
+                                <AnomalyChart
+                                    data={ratings.data}
+                                    anomalies={ratings.anomalies}
+                                    loading={ratings.loading}
+                                    error={ratings.error}
+                                    height={340}
+                                    range={historyRange}
+                                    onSelect={(id) => openAnomalies({ anomaly: id })}
+                                    onSelectOutlier={(period) => openAnomalies({ month: period })}
+                                    market={showPrice ? data : null}
+                                />
+                                <p className="m-0 mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500 leading-4">
+                                    <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}{" "}
+                                    Beide Linien stehen nur nebeneinander; es wird nichts verrechnet. Eine Markierung anklicken öffnet die
+                                    Veränderung mit Vergleich und Bewertungen auf der Anomalien-Seite.
+                                </p>
+                            </PageSection>
+                        )}
 
                         {available && (
                             <div className="grid gap-4 lg:grid-cols-2">

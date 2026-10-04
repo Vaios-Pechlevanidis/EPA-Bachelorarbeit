@@ -11,18 +11,25 @@
 ## 1. Vorstellung
 
 Die Seite **„Aktie“** (`/aktie?company=ID`) öffnet sich über „Aktie“ in der Seitenleiste
-des Dashboards oder über den Link „Aktien-Dashboard öffnen“ unter dem Diagramm der
-Anomalien-Detailseite. Oben rechts lässt sich die Firma wechseln. Die Seite hat vier
+des Dashboards oder über den Link „Aktien-Dashboard“ unter dem Diagramm der
+Anomalien-Detailseite. Oben rechts lässt sich die Firma wechseln. Die Seite hat fünf
 Bereiche:
 
 1. **Aktienkurs:** Kursverlauf als Fläche mit Zeitfenster 1, 3, 5, 10 Jahre oder alles.
    Der Untertitel nennt den letzten Monatsschlusskurs und die Veränderung im Fenster.
    Darunter stehen Marktkapitalisierung, Mitarbeitende und Umsatz je Geschäftsjahr (wie in
    Feature 04), die Quelle und der Hinweis „Einordnung, keine Erklärung“.
-2. **Analystenempfehlungen:** gestapelte Balken je Monat (letzte vier Monate) mit der Zahl
+2. **Kurs und Bewertungsverlauf:** der Monatsverlauf der Sternebewertung (Mitarbeitende,
+   Gesamtbewertung) mit den auffälligen Veränderungen und Einzelmonaten, darüber der Kurs als
+   dünne Linie auf der rechten Achse (Darstellung aus Feature 04). Kästchen „Aktienkurs“ und
+   Zeitfilter wie auf der Anomalien-Seite (`?kurs=aus`, `?verlauf=5y|3y|1y`). Ein Klick auf
+   eine Stufe oder Raute öffnet sie mit Vergleich und Bewertungen auf der Anomalien-Seite.
+   Dieses Diagramm stand bis zum 2026-10-04 auf der Anomalien-Seite und wurde auf Wunsch des
+   Autors hierher verschoben.
+3. **Analystenempfehlungen:** gestapelte Balken je Monat (letzte vier Monate) mit der Zahl
    der Empfehlungen „stark kaufen“ bis „stark verkaufen“; der Tooltip nennt alle Stufen.
-3. **Umsatz und Nettoergebnis:** Balken je Geschäftsjahr oder, umschaltbar, je Quartal.
-4. **Aktuelle Meldungen:** die neuesten Meldungen der letzten 90 Tage mit Quelle, Datum
+4. **Umsatz und Nettoergebnis:** Balken je Geschäftsjahr oder, umschaltbar, je Quartal.
+5. **Aktuelle Meldungen:** die neuesten Meldungen der letzten 90 Tage mit Quelle, Datum
    und Link; darunter Suchbegriff, Quelle und Abrufdatum.
 
 Für Unternehmen ohne Ticker zeigt die Seite „Kein Aktienkurs: …“ und nur die Meldungen.

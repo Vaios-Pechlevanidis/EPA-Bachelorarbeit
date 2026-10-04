@@ -10,7 +10,12 @@
 
 ## 1. Vorstellung
 
-Auf der Detailseite „Anomalien im Verlauf“ läuft im Diagramm der **Aktienkurs** als dünne,
+> **Stand 2026-10-04 (Nachtrag):** Auf Wunsch des Autors steht der Kurs nicht mehr auf der
+> Anomalien-Detailseite, sondern im Aktien-Dashboard (Feature 05, Bereich „Kurs und
+> Bewertungsverlauf“). Die Anomalien-Seite zeigt unter dem Diagramm nur einen Link dorthin.
+> Darstellung, Umschalter und Kennzahlen sind unverändert; die Beschreibung unten gilt dort.
+
+Im Monatsverlauf der Sternebewertung läuft der **Aktienkurs** als dünne,
 violette Linie mit. Er hat eine eigene **rechte Y-Achse**, beschriftet mit der Währung
 („Kurs in EUR“). Die Legende nennt Ticker, Währung und Bereinigung, der Tooltip eines Monats
 zeigt neben Monatsmittel und Zahl der Bewertungen den **Monatsschlusskurs**. Der Kurs wird
@@ -63,8 +68,8 @@ das bei der Einordnung im Kopf behalten, ohne dass das Dashboard daraus eine Urs
    Fehlende Werte bleiben leer.
 5. **Endpunkt.** `GET /api/analytics/company/{id}/market?start=YYYY-MM&end=YYYY-MM` liefert
    Ticker, `ticker_scope`, Wertpapiername, Währung, `available`, `reason`, Kurse, Kennzahlen,
-   Abrufzeit und Quelle. Die Detailseite lädt die ganze Reihe und legt sie über die
-   angezeigten Monate.
+   Abrufzeit und Quelle. Das Aktien-Dashboard lädt die ganze Reihe (über `/finance`) und
+   legt sie über die angezeigten Monate.
 
 Stand der Daten (Abruf 2026-10-04): Alle 17 Ticker liefern Kurse bis 2026-09 und alle drei
 Kennzahlen; der Umsatz reicht vier Geschäftsjahre zurück (2022 bis 2025, NTT 03/2023 bis

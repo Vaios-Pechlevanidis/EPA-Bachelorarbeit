@@ -410,7 +410,7 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
 ## E15 – Kurs und Kennzahlen
 
-- **Kontext:** Inkrement 3 stellt auf der Detailseite den Aktienkurs neben den
+- **Kontext:** Inkrement 3 stellt den Aktienkurs neben den
   Bewertungsverlauf, dazu wenige Unternehmenskennzahlen. 17 der 26 realen Unternehmen haben
   einen Ticker (E6), 9 nicht. Für die Arbeit soll erkennbar sein, in welchem Marktumfeld
   eine auffällige Veränderung liegt, ohne daraus eine Ursache abzuleiten.
@@ -478,8 +478,14 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   wurde daher nicht übernommen, sondern auf dem Kursdienst aus E15 neu gebaut.
 - **Entscheidung (2026-10-04):**
   - Eigene Seite `/aktie?company=ID` (Link „Aktie“ in der Seitenleiste des Dashboards und
-    auf der Anomalien-Detailseite). Firma, Zeitfenster (`range`) und Jahres- oder
-    Quartalsansicht (`periode=quartal`) stehen in der URL.
+    auf der Anomalien-Detailseite). Firma, Zeitfenster (`range`, `verlauf`), Kurs an oder
+    aus (`kurs=aus`) und Jahres- oder Quartalsansicht (`periode=quartal`) stehen in der URL.
+  - **Kurs und Bewertungsverlauf (Nachtrag 2026-10-04, Wunsch des Autors):** Das Diagramm
+    aus E15 (Monatsverlauf der Gesamtbewertung der Mitarbeitenden mit auffälligen
+    Veränderungen, Kurs auf der rechten Achse) steht nur noch hier, nicht mehr auf der
+    Anomalien-Detailseite. Diese zeigt unter ihrem Diagramm einen Link zum Aktien-Dashboard
+    und bleibt sonst wie vor Inkrement 3. Ein Klick auf eine Markierung öffnet die
+    Veränderung auf der Anomalien-Seite.
   - **Kursverlauf:** die bereinigten Monatsschlusskurse aus E15, Fenster 1, 3, 5 (Standard),
     10 Jahre oder alles; dazu die Kennzahlenzeile, Quelle und der Hinweis aus E15.
   - **Analystenempfehlungen:** `yfinance.Ticker.recommendations`, Zahl der Empfehlungen je
