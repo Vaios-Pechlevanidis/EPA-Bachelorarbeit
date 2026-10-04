@@ -199,6 +199,8 @@ def filter_by_status(rows: List[Dict[str, Any]], source: str, status: Optional[s
 
 # ── Zeitraum ────────────────────────────────────────────────────────────────
 
+PAGE_SIZE = 1000  # Zeilen je Abfrage; PostgREST liefert höchstens 1000
+
 
 def parse_day(value: Optional[str], name: str) -> Optional[date]:
     """``YYYY-MM-DD`` als Datum; ValueError mit Parameternamen bei falschem Format."""
@@ -231,7 +233,7 @@ def fetch_review_rows_in_range(
         query = query.gte("datum", start.isoformat())
     if end is not None:
         query = query.lt("datum", (end + timedelta(days=1)).isoformat())
-    return _fetch_all_rows(query.order("id"), page_size=1000)  # id: stabile Reihenfolge für range()
+    return _fetch_all_rows(query.order("id"), page_size=PAGE_SIZE)  # id: stabile Reihenfolge für range()
 
 
 def sort_newest_first(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
