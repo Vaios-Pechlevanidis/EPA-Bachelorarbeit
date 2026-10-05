@@ -122,7 +122,7 @@ export function AnalystChart({ analysts, height = 240, compact = false }) {
                     ))}
                 </BarChart>
             </ResponsiveContainer>
-            <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+            <p className={`m-0 flex flex-wrap items-center justify-center text-slate-500 ${compact ? "mt-1 gap-x-2 gap-y-0.5 text-[10px]" : "mt-2 gap-x-3 gap-y-1 text-[11px]"}`}>
                 {RATING_LEVELS.map((l) => <Swatch key={l.key} color={l.color} label={l.label} />)}
             </p>
             {!compact && <p className="m-0 mt-2 text-[11px] text-slate-500 text-center">
@@ -168,7 +168,7 @@ export function EarningsChart({ earnings, period = "annual", height = 240, compa
                     <Bar dataKey="net_income" fill="var(--finance-earnings)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
                 </BarChart>
             </ResponsiveContainer>
-            <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+            <p className={`m-0 flex flex-wrap items-center justify-center text-slate-500 ${compact ? "mt-1 gap-x-2 gap-y-0.5 text-[10px]" : "mt-2 gap-x-3 gap-y-1 text-[11px]"}`}>
                 <Swatch color="var(--finance-revenue)" label={`Umsatz (${currency})`} />
                 <Swatch color="var(--finance-earnings)" label={`Nettoergebnis (${currency})`} />
                 {!compact && <span>Berichtswährung, wie von Yahoo Finance geliefert; fehlende Werte bleiben leer</span>}
@@ -180,7 +180,7 @@ export function EarningsChart({ earnings, period = "annual", height = 240, compa
 /* ---------------------------------------------------------------------------
    Nachrichten: aktuelle Meldungen, neueste zuerst, Link zur Quelle.
    --------------------------------------------------------------------------- */
-export function NewsList({ news, listClassName = "", showFootnote = true }) {
+export function NewsList({ news, listClassName = "", showFootnote = true, dense = false }) {
     const items = news?.items ?? []
     return (
         <div>
@@ -189,13 +189,13 @@ export function NewsList({ news, listClassName = "", showFootnote = true }) {
             ) : (
                 <ul className={`m-0 p-0 pr-2 list-none ${listClassName}`} aria-label="Meldungen">
                     {items.map((item) => (
-                        <li key={item.url} className="py-2.5 border-t border-slate-100 first:border-t-0">
+                        <li key={item.url} className={`border-t border-slate-100 first:border-t-0 ${dense ? "py-1.5" : "py-2.5"}`}>
                             <a href={item.url} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()}
-                                className="group inline-flex items-start gap-1.5 text-[13px] leading-5 font-medium text-slate-900 hover:text-blue-700">
+                                className={`group inline-flex items-start gap-1.5 font-medium text-slate-900 hover:text-blue-700 ${dense ? "text-[12px] leading-4" : "text-[13px] leading-5"}`}>
                                 <span>{item.title}</span>
-                                <ExternalLink className="w-3 h-3 mt-1 flex-none text-slate-400 group-hover:text-blue-700" />
+                                <ExternalLink className={`w-3 h-3 flex-none text-slate-400 group-hover:text-blue-700 ${dense ? "mt-0.5" : "mt-1"}`} />
                             </a>
-                            <p className="m-0 text-[11px] text-slate-500">
+                            <p className={`m-0 text-slate-500 ${dense ? "mt-0.5 text-[10.5px]" : "text-[11px]"}`}>
                                 {item.source ?? "Quelle unbekannt"} · {item.published_at ? fmtDay(item.published_at.slice(0, 10)) : "ohne Datum"}
                             </p>
                         </li>

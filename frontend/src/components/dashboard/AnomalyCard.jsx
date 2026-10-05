@@ -359,8 +359,10 @@ function isolatedDot(chartData, opacity = 1) {
 /* market (Aktien-Dashboard, Inkrement 3, E15/E16): {prices: [{period, close}], currency,
    ticker} oder null. Der Kurs läuft als dünne Linie auf einer rechten Y-Achse mit,
    nur für die angezeigten Monate. Er ist eine Einordnung des Marktumfelds; es wird
-   kein Zusammenhang mit den Bewertungen berechnet. */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null }) {
+   kein Zusammenhang mit den Bewertungen berechnet.
+   showLegend=false blendet die Zeilen unter dem Diagramm aus (kleine Karte im
+   Aktien-Dashboard; die vergrößerte Ansicht zeigt sie). */
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null, showLegend = true }) {
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
     const trimmed = useMemo(() => trimToEvaluated(series), [series])
@@ -621,7 +623,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             )}
         </div>
-        {!error && minReviews != null && (
+        {showLegend && !error && minReviews != null && (
             <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 {hasInterpolation && (
                     <span className="inline-flex items-center gap-1.5">
@@ -638,14 +640,14 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 )}
             </p>
         )}
-        {!error && compact && visibleAnomalies.length > 0 && (
+        {showLegend && !error && compact && visibleAnomalies.length > 0 && (
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span>Ring = auffällige Veränderung ab diesem Monat:</span>
                 <span className="inline-flex items-center gap-1"><RingGlyph direction="fall" /> Abfall</span>
                 <span className="inline-flex items-center gap-1"><RingGlyph direction="rise" /> Anstieg</span>
             </p>
         )}
-        {!error && visibleOutliers.length > 0 && (
+        {showLegend && !error && visibleOutliers.length > 0 && (
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span className="inline-flex items-center gap-1">
                     <DiamondGlyph direction="fall" /><DiamondGlyph direction="rise" />
@@ -653,7 +655,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </span>
             </p>
         )}
-        {!error && visibleAnomalies.length > 0 && !compact && (
+        {showLegend && !error && visibleAnomalies.length > 0 && !compact && (
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span>Auffällige Veränderung des Niveaus ab dem markierten Monat, Stufe von Ø davor zu Ø danach:</span>
                 <span className="inline-flex items-center gap-1"><StepGlyph direction="fall" /> Abfall</span>
@@ -677,7 +679,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 {onSelect && windowAreas.length === 0 && <span>Stufe anklicken, um die Bewertungen des Zeitraums zu sehen.</span>}
             </p>
         )}
-        {!error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (
+        {showLegend && !error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (
             <p className="m-0 mt-1 text-center text-[11px] text-slate-400">
                 Ausgeblendet (kein Monat mit mindestens {minReviews} Bewertungen mit Wert):{" "}
                 {hiddenEdges
@@ -691,9 +693,9 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
 
 /* Zeitfilter (Segmentschalter im Stil des Dashboard-Filters). Bezugspunkt ist
    der letzte bewertete Monat; der Filter wählt nur den Ausschnitt. */
-export function TimeRangeFilter({ value, onChange }) {
+export function TimeRangeFilter({ value, onChange, small = false }) {
     return (
-        <div className="ds-time-filter" role="group" aria-label="Zeitraum">
+        <div className={`ds-time-filter${small ? " ds-time-filter-sm" : ""}`} role="group" aria-label="Zeitraum">
             {TIME_RANGES.map(({ key, label }) => (
                 <button
                     key={key}

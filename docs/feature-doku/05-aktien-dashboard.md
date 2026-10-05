@@ -20,8 +20,11 @@ ein Raster aus Karten: links oben die Kurskarte (zwei Spalten breit), rechts die
 Nachrichten (über zwei Reihen, scrollbar), links unten Analystenempfehlungen und Umsatz und
 Nettoergebnis. Ganz unten steht eine Zeile mit Wertpapier, Quelle, Abrufdatum und dem
 Hinweis „Einordnung, keine Erklärung“. Wie im Haupt-Dashboard **vergrößert ein Klick** eine
-Karte auf 90 % × 85 % des Fensters, mit denselben Schaltern; Zusatzzeilen (Zusammenfassung
-der Empfehlungen, Währungshinweis, Quellenzeile der Nachrichten) stehen nur dort.
+Karte auf 90 % × 85 % des Fensters, mit denselben Schaltern; Zusatzzeilen (Legende des
+Bewertungsverlaufs, Zusammenfassung der Empfehlungen, Währungshinweis, Quellenzeile der
+Nachrichten) stehen nur dort. Die Karten sind bewusst kompakt (Wunsch des Autors,
+2026-10-05): Schalter stehen in der Kopfzeile neben dem Titel, ein Symbol oben rechts zeigt
+die Vergrößerung an; bei 1440 × 900 Pixeln endet der Inhalt nach etwa 650 Pixeln.
 
 1. **Kennzahlen:** letzter Monatsschlusskurs mit Veränderung im gewählten Fenster,
    Marktkapitalisierung und Mitarbeitende („aktuell, Stand …“), Umsatz und Nettoergebnis des

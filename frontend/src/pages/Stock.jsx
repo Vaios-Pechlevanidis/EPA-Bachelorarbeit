@@ -44,9 +44,9 @@ const EARNINGS_PERIODS = [
     { key: "quarterly", label: "Quartalsweise" },
 ]
 
-function Segmented({ options, value, onChange, label }) {
+function Segmented({ options, value, onChange, label, small = false }) {
     return (
-        <div className="ds-time-filter" role="group" aria-label={label}>
+        <div className={`ds-time-filter${small ? " ds-time-filter-sm" : ""}`} role="group" aria-label={label}>
             {options.map((o) => (
                 <button key={o.key} type="button" aria-pressed={value === o.key}
                     className={`ds-time-btn${value === o.key ? " active" : ""}`} onClick={() => onChange(o.key)}>
@@ -148,18 +148,18 @@ export default function StockPage() {
         navigate("/dashboard", companyId ? { state: { companyId, companyName } } : undefined)
 
     // Kopfaktionen der Kurskarte: Ansicht, dann Zeitraum (und Kurs an/aus) der Ansicht.
-    const priceActions = () => (
+    const priceActions = ({ modal }) => (
         <>
-            <Segmented options={PRICE_VIEWS} value={priceView} label="Ansicht"
+            <Segmented options={PRICE_VIEWS} value={priceView} label="Ansicht" small={!modal}
                 onChange={(key) => updateParams({ ansicht: key === "bewertung" ? "bewertung" : null })} />
             {priceView === "kurs" ? (
-                <Segmented options={PRICE_RANGES} value={rangeKey} label="Zeitraum"
+                <Segmented options={PRICE_RANGES} value={rangeKey} label="Zeitraum" small={!modal}
                     onChange={(key) => updateParams({ range: key === DEFAULT_PRICE_RANGE ? null : key })} />
             ) : (
                 <>
-                    <TimeRangeFilter value={historyKey}
+                    <TimeRangeFilter value={historyKey} small={!modal}
                         onChange={(key) => updateParams({ verlauf: key === DEFAULT_TIME_RANGE ? null : key })} />
-                    <PriceToggle checked={showPrice} onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })} />
+                    <PriceToggle checked={showPrice} small={!modal} onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })} />
                 </>
             )}
         </>
@@ -182,6 +182,7 @@ export default function StockPage() {
             onSelect={modal ? (id) => openAnomalies({ anomaly: id }) : null}
             onSelectOutlier={modal ? (period) => openAnomalies({ month: period }) : null}
             market={showPrice ? data : null}
+            showLegend={modal}
         />
     ))
 
@@ -201,7 +202,7 @@ export default function StockPage() {
                 : (
                     <div className="relative flex-1 min-h-[260px]">
                         <div className="absolute inset-0 overflow-y-auto overscroll-contain">
-                            <NewsList news={news.data} showFootnote={false} />
+                            <NewsList news={news.data} showFootnote={false} dense />
                         </div>
                     </div>
                 ))}
@@ -257,10 +258,10 @@ export default function StockPage() {
                         <EmptyNote height={80}>Kursdaten konnten nicht geladen werden: {finance.error}</EmptyNote>
                     </PageSection>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                         {available && <FinanceKpis market={data} first={first} last={last} change={change} />}
 
-                        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
                             {available ? (
                                 <>
                                     <ExpandableCard
@@ -269,7 +270,7 @@ export default function StockPage() {
                                         title={priceView === "kurs" ? "Aktienkurs" : "Aktienkurs und Sternebewertung"}
                                         subtitle={priceSubtitle}
                                         actions={priceActions}
-                                        cardHeight={180}
+                                        cardHeight={160}
                                         modalReserve={priceView === "kurs" ? 150 : 170}
                                         className="lg:col-span-2"
                                     >
@@ -282,7 +283,7 @@ export default function StockPage() {
                                         title="Analystenempfehlungen"
                                         subtitle="Empfehlungen je Stufe, letzte vier Monate"
                                         accent="bg-emerald-500"
-                                        cardHeight={140}
+                                        cardHeight={120}
                                         modalReserve={230}
                                     >
                                         {({ modal, height }) => <AnalystChart analysts={data.analysts} height={height} compact={!modal} />}
@@ -293,10 +294,10 @@ export default function StockPage() {
                                         title="Umsatz und Nettoergebnis"
                                         subtitle={earningsPeriod === "annual" ? "Je Geschäftsjahr" : "Je Quartal"}
                                         accent="bg-indigo-500"
-                                        cardHeight={140}
+                                        cardHeight={120}
                                         modalReserve={200}
-                                        actions={() => (
-                                            <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode"
+                                        actions={({ modal }) => (
+                                            <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode" small={!modal}
                                                 onChange={(key) => updateParams({ periode: key === "quarterly" ? "quartal" : null })} />
                                         )}
                                     >
