@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Check, ChevronsUpDown, Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { API_URL } from "../config"
+import { cachedCompanies, loadCompanies } from "@/lib/companies"
 
 export function CompanySearchSelect({
     value,
@@ -27,43 +27,35 @@ export function CompanySearchSelect({
     placeholder        // optional override for placeholder text
 }) {
     const [open, setOpen] = useState(false)
-    const [companies, setCompanies] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [inputValue, setInputValue] = useState("")
-    const companiesCache = useRef(null) // Cache für Firmen-Liste
+    // Gemeinsame Firmenliste (lib/companies.js): schon geladen, wenn eine
+    // andere Seite sie geholt hat; sonst beim Anzeigen vorgeladen, damit sie
+    // beim Öffnen sofort da ist.
+    const [companies, setCompanies] = useState(() => cachedCompanies() ?? [])
+    const [loaded, setLoaded] = useState(() => cachedCompanies() != null)
+    const loading = !loaded
+    const [inputValue, setInputValue] = useState(value || "")
+    const [syncedValue, setSyncedValue] = useState(value)
 
     const isDark = variant === "dark"
 
-    // Fetch all companies only once (cached)
+    // Beim Anzeigen vorladen, beim Öffnen auffrischen (aus dem Speicher, solange gültig).
     useEffect(() => {
-        if (open && !companiesCache.current) {
-            fetchAllCompanies()
-        } else if (open && companiesCache.current) {
-            // Benutze Cache
-            setCompanies(companiesCache.current)
-        }
+        let active = true
+        loadCompanies()
+            .then((list) => {
+                if (active) { setCompanies(list); setLoaded(true) }
+            })
+            .catch((error) => {
+                console.error("Error fetching companies:", error)
+                if (active) { setCompanies([]); setLoaded(true) }
+            })
+        return () => { active = false }
     }, [open])
 
-    // Sync input value with external value
-    useEffect(() => {
+    // Eingabefeld an den Wert von außen angleichen (während des Renderns, ohne Effekt).
+    if (value !== syncedValue) {
+        setSyncedValue(value)
         setInputValue(value || "")
-    }, [value])
-
-    const fetchAllCompanies = async () => {
-        setLoading(true)
-        try {
-            const res = await fetch(`${API_URL}/companies`)
-            if (!res.ok) throw new Error('Failed to fetch companies')
-            const data = await res.json()
-            const companiesList = Array.isArray(data) ? data : []
-            setCompanies(companiesList)
-            companiesCache.current = companiesList // Cache speichern
-        } catch (error) {
-            console.error('Error fetching companies:', error)
-            setCompanies([])
-        } finally {
-            setLoading(false)
-        }
     }
 
     const handleSelect = (company) => {

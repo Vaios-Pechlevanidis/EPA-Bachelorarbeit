@@ -11,11 +11,11 @@ import { AnalystChart, EarningsChart, EmptyNote, NewsList, StockPriceChart } fro
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useCompanyResource } from "@/hooks/useCompanyResource"
 import { useTheme } from "@/hooks/useTheme"
+import { loadCompanyName } from "@/lib/companies"
 import { DEFAULT_TIME_RANGE, fmtPeriod, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import {
     DEFAULT_PRICE_RANGE, PARENT_SCOPE, PRICE_OFF, PRICE_PARAM, PRICE_RANGES, isPriceRangeKey, noPriceText, pricesInRange,
 } from "@/lib/market"
-import { API_URL } from "../config"
 
 /* ============================================================================
    Stock — Aktien-Dashboard (/aktie, Inkrement 3, E16).
@@ -108,21 +108,20 @@ export default function StockPage() {
         }
     }, [companyId, searchParams, setSearchParams])
 
-    // Namen nachladen, wenn die Seite direkt über die URL geöffnet wurde.
+    // Namen nachladen, wenn die Seite direkt über die URL geöffnet wurde
+    // (gemeinsame Firmenliste, lib/companies.js).
     useEffect(() => {
         if (!companyId || names[companyId]) return undefined
-        const controller = new AbortController()
-        fetch(`${API_URL}/companies`, { signal: controller.signal })
-            .then((res) => (res.ok ? res.json() : []))
-            .then((list) => {
-                const co = Array.isArray(list) ? list.find((c) => String(c.id) === companyId) : null
-                if (co) {
-                    setNames((n) => ({ ...n, [companyId]: co.name?.trim() ?? "" }))
-                    setQuery(co.name?.trim() ?? "")
+        let active = true
+        loadCompanyName(companyId)
+            .then((name) => {
+                if (active && name) {
+                    setNames((n) => ({ ...n, [companyId]: name }))
+                    setQuery(name)
                 }
             })
             .catch(() => {})
-        return () => controller.abort()
+        return () => { active = false }
     }, [companyId, names])
 
     const finance = useCompanyResource(companyId, "finance")

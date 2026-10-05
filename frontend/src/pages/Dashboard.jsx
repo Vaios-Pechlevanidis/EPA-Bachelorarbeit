@@ -19,6 +19,7 @@ import ImportModal, { getImportHistory } from "../components/dashboard/modals/Im
 import {
   Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon, TrendUp,
 } from "../icons"
+import { loadCompanies } from "@/lib/companies"
 import { useTheme } from "../hooks/useTheme"
 import { API_URL } from "../config"
 import { exportKPIsAsPDF } from "../utils/pdfExport"
@@ -80,12 +81,10 @@ export default function Dashboard() {
   const effectiveCompanyId = selectedCompany || selectedCompanyId || companyFromWelcome || null
 
   /* ---- Company helpers ---- */
+  // Gemeinsame Firmenliste (lib/companies.js), dieselbe wie im Suchfeld.
   async function getCompanies() {
     try {
-      const res = await fetch(`${API_URL}/companies`)
-      if (!res.ok) return
-      const d = await res.json()
-      setCompanies(Array.isArray(d) ? d : [])
+      setCompanies(await loadCompanies())
     } catch {}
   }
 

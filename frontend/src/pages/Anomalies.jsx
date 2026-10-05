@@ -14,7 +14,7 @@ import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison } from "@/hooks/useAnomalyComparison"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
-import { API_URL } from "../config"
+import { loadCompanyName } from "@/lib/companies"
 
 /* ============================================================================
    Anomalies — Detailseite "Anomalien im Verlauf" (Inkrement 1).
@@ -69,21 +69,20 @@ export default function AnomaliesPage() {
         }
     }, [companyId, searchParams, setSearchParams])
 
-    // Namen nachladen, wenn die Seite direkt über die URL geöffnet wurde.
+    // Namen nachladen, wenn die Seite direkt über die URL geöffnet wurde
+    // (gemeinsame Firmenliste, lib/companies.js).
     useEffect(() => {
         if (!companyId || names[companyId]) return undefined
-        const controller = new AbortController()
-        fetch(`${API_URL}/companies`, { signal: controller.signal })
-            .then((res) => (res.ok ? res.json() : []))
-            .then((list) => {
-                const co = Array.isArray(list) ? list.find((c) => String(c.id) === companyId) : null
-                if (co) {
-                    setNames((n) => ({ ...n, [companyId]: co.name?.trim() ?? "" }))
-                    setQuery(co.name?.trim() ?? "")
+        let active = true
+        loadCompanyName(companyId)
+            .then((name) => {
+                if (active && name) {
+                    setNames((n) => ({ ...n, [companyId]: name }))
+                    setQuery(name)
                 }
             })
             .catch(() => {})
-        return () => controller.abort()
+        return () => { active = false }
     }, [companyId, names])
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
