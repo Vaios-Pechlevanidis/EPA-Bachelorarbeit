@@ -6,7 +6,7 @@
 | Anforderungen | FA-01 bis FA-04, Zähler aus FA-26 |
 | Entscheidungen | E3 (Erkennungsreihe), E4 (Mindestdichte), E5 (Referenzzeiträume, aktualisiert), E9 (Verfahren und Parameter) |
 | Status | Inkrement 1 abgeschlossen: Karte und Detailseite mit Dimensionsauswahl (Quelle Mitarbeitende), gestrichelt überbrückten Lücken, Eignungshinweis und Zeitfilter auf der Detailseite. Parameter **vorläufig** (E9) |
-| Stand | 2026-10-03 |
+| Stand | 2026-10-05 |
 
 ## 1. Vorstellung
 
@@ -14,9 +14,17 @@
 
 1. **Raster:** links der Monatsverlauf (zwei Drittel der Breite), rechts die Karte
    **„Markierungen“** mit Umschalter „Veränderungen“ / „Einzelmonate“ (`?liste=einzelmonate`)
-   als kompakte, zweizeilige Liste mit eigenem Scrollbereich in Höhe des Verlaufs.
+   als kompakte, zweizeilige Liste mit eigenem Scrollbereich in Höhe des Verlaufs. Hat das
+   Unternehmen einen Ticker, steht im Kopf des Monatsverlaufs neben dem Zeitfilter das
+   Kästchen **„Aktienkurs“** (Standard aus, `?kurs=an`): Es blendet den Kurs auf einer
+   zweiten Achse ein, mit festem Hinweis und Quelle unter dem Diagramm (Doku 04, E15).
+   Darunter steht in jedem Fall der Link zum Aktien-Dashboard. Bei Platzmangel rücken
+   Kästchen und Zeitfilter unter den Titel.
 2. **Drill-down-Leiste** in einer Zeile: aktuelle Auswahl, „von / bis“, Schnellwahl,
-   „Auswahl aufheben“ (Doku 06).
+   „Auswahl aufheben“ (Doku 06). Ist eine erkannte Veränderung ausgewählt, zeigen „von“ und
+   „bis“ ihr Fenster ab dem markierten Monat (E12), also dieselben Monate wie der Vergleich
+   und die Fläche im Diagramm; bis 2026-10-05 stand dort der letzte Monat der Reihe.
+   „Anzeigen“ macht aus geänderten Feldern eine freie Auswahl.
 3. **Auswahl:** Vergleich (links, drei Fünftel) und Bewertungen (rechts, zwei Fünftel, eigener
    Scrollbereich) nebeneinander, für eine erkannte Veränderung wie für eine freie Auswahl.
 
@@ -261,7 +269,7 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
 | Icon | `Anomaly` in `frontend/src/icons.jsx` | kleines Liniendiagramm mit Niveausprung, der Ring markiert den ersten Monat auf dem neuen Niveau; im Stil der übrigen App-Icons (nur Konturen, Strichstärke 1,8), genutzt in Kartenkopf, Detailseite und Seitenleiste. Ersetzt das Lucide-Icon `Activity`, das mit fester Größe von 24 px aus dem 14-px-Feld des Kartenkopfs ragte |
-| Detailseite | `frontend/src/pages/Anomalies.jsx`, Route `/anomalies` in `frontend/src/App.jsx` | großes Diagramm, Liste, Firmenwechsel, Zurück zum Dashboard mit derselben Firma |
+| Detailseite | `frontend/src/pages/Anomalies.jsx`, Route `/anomalies` in `frontend/src/App.jsx` | großes Diagramm, Liste, Firmenwechsel, Zurück zum Dashboard mit derselben Firma; seit 2026-10-05 einblendbarer Aktienkurs (`?kurs=an`, Doku 04) |
 | Navigation | Eintrag „Anomalien“ in der linken Leiste von `Dashboard.jsx` | zweiter Weg zur Detailseite; deaktiviert, solange keine Firma gewählt ist |
 
 Die Farben kommen aus den Theme-Variablen der App (`--rose-500`, `--emerald-500`,
@@ -439,6 +447,7 @@ dringendere Anlass zum Handeln.
 | Parameterübersicht skaliert | `backend/data/calibration/anomaly_params_scaled_employee_durchschnittsbewertung.csv`, Stand 2026-10-04, 15 geeignete Unternehmen. Gesamt (davon deutlich) bei `min_delta` 0,3: Faktor 1 → 44 (33), **Faktor 2 → 19 (15) (Standard)**, Faktor 3 → 13 (9), Faktor 4 → 10 (9); fest 0,5 → 66 (55). Synthetische Prüfung in `backend/tests/anomaly/test_changepoint_detector.py` (120 Monate, σ 0,5: ohne Sprung keine Veränderung, mit Sprung 1,0 genau dieser; höchstens 5 Fehlalarme in 50 Rauschreihen) |
 | Commits Inkrement 1 | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte), `8c3af1e` (Detailseite) |
 | Commits Abschluss | `1faca39` (Lücken, Eignung, Datenbasis), `6c63607` (Bewertungen davor/danach), `ed9bc3c` (Dimensionsauswahl, `dimension=all`), `67e1377` (Service-/Routentests), `f7fedbb` (Parameterübersicht) |
+| Kurs und Drill-down-Leiste (2026-10-05) | Branch `feature/korrektur-kurs-integration`, im Browser geprüft: Kästchen „Aktienkurs“ nur mit Ticker, `/market` erst nach dem Einschalten; Stufen, Rauten, Vergleichsfenster, Klick und Ziehen mit Kurs; „von / bis“ bei Telekom ab Nov. 2018 = Nov. 2018 – Jan. 2019, ab Feb. 2019 = Feb. 2019 – Juli 2019, SAP SE ab Juli 2024 = Juli 2024 – Dez. 2024 (wie die Vergleichsfenster); Kopf bei 375 px Breite ohne Überlappung. Details in Doku 04 |
 
 ## 6. Offene Punkte
 
