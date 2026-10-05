@@ -396,9 +396,10 @@ export default function AnomaliesPage() {
                             </div>
                         )}
 
-                        {/* Ausgewählte Veränderung: Vergleich (links) und Bewertungen (rechts) */}
+                        {/* Ausgewählte Veränderung: Vergleich (links) und Bewertungen (rechts); ab xl
+                            sind beide gleich hoch, die Bewertungsliste scrollt in dieser Höhe. */}
                         {selectedAnomaly && windows && (
-                            <div className="grid gap-3 xl:grid-cols-5 items-start">
+                            <div className="grid gap-3 xl:grid-cols-5">
                                 <PageSection
                                     className="xl:col-span-3"
                                     icon={<GitCompareArrows />}
@@ -411,7 +412,8 @@ export default function AnomaliesPage() {
                                     <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} />
                                 </PageSection>
                                 <PageSection
-                                    className="xl:col-span-2"
+                                    className="xl:col-span-2 flex flex-col"
+                                    bodyClassName="px-4 py-4 flex-1 min-h-0 flex flex-col"
                                     icon={<MessageSquareText />}
                                     eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
                                     title="Bewertungen des Zeitraums"
@@ -420,9 +422,9 @@ export default function AnomaliesPage() {
                                     actions={<WindowSideToggle value={side} onChange={(key) => setSideState({ id: selectedId, side: key })} />}
                                 >
                                     {topicToggle && <div className="mb-2">{topicToggle}</div>}
-                                    <div className="max-h-[720px] overflow-y-auto overscroll-contain pr-1">
+                                    <div className="relative flex-1 min-h-[320px]"><div className="max-h-[720px] xl:max-h-none xl:absolute xl:inset-0 overflow-y-auto overscroll-contain pr-1">
                                         <PeriodReviewList key={`${selectedId}:${side}:${topicOnly}`} pages={reviewPages} emptyText={topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : undefined} />
-                                    </div>
+                                    </div></div>
                                     <p className="m-0 mt-3 text-[11px] text-slate-400">
                                         Vergleichsfenster: bis zu {windows.windowMonths} Kalendermonate vor dem markierten Monat und ab ihm, begrenzt
                                         durch die benachbarten Veränderungen; alle Bewertungen dieser Monate.
@@ -433,7 +435,7 @@ export default function AnomaliesPage() {
 
                         {/* Freie Auswahl (E17): Vergleich mit dem Zeitraum davor und Bewertungen */}
                         {selection && selectionWindows && (
-                            <div className="grid gap-3 xl:grid-cols-5 items-start">
+                            <div className="grid gap-3 xl:grid-cols-5">
                                 <PageSection
                                     className="xl:col-span-3"
                                     icon={<GitCompareArrows />}
@@ -458,7 +460,8 @@ export default function AnomaliesPage() {
                                 </PageSection>
                                 {reviewSpan && (
                                     <PageSection
-                                        className="xl:col-span-2"
+                                        className="xl:col-span-2 flex flex-col"
+                                        bodyClassName="px-4 py-4 flex-1 min-h-0 flex flex-col"
                                         icon={<MessageSquareText />}
                                         eyebrow={`EINZELBEWERTUNGEN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
                                         title="Bewertungen der Auswahl"
@@ -473,13 +476,13 @@ export default function AnomaliesPage() {
                                         }
                                     >
                                         {topicToggle && <div className="mb-2">{topicToggle}</div>}
-                                        <div className="max-h-[720px] overflow-y-auto overscroll-contain pr-1">
+                                        <div className="relative flex-1 min-h-[320px]"><div className="max-h-[720px] xl:max-h-none xl:absolute xl:inset-0 overflow-y-auto overscroll-contain pr-1">
                                             <PeriodReviewList
                                                 key={`${selectionKey}:${periodSide}:${topicOnly}`}
                                                 pages={reviewPages}
                                                 emptyText={topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : "Keine Bewertungen in diesem Zeitraum."}
                                             />
-                                        </div>
+                                        </div></div>
                                         <p className="m-0 mt-3 text-[11px] text-slate-400">
                                             Alle Bewertungen der gewählten Kalendermonate. Vergleichszeitraum: die gleich vielen Monate direkt davor,
                                             mindestens 6 (E17, vorläufig).
