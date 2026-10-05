@@ -22,9 +22,12 @@ Nettoergebnis. Ganz unten steht eine Zeile mit Wertpapier, Quelle, Abrufdatum un
 Hinweis „Einordnung, keine Erklärung“. Wie im Haupt-Dashboard **vergrößert ein Klick** eine
 Karte auf 90 % × 85 % des Fensters, mit denselben Schaltern; Zusatzzeilen (Legende des
 Bewertungsverlaufs, Zusammenfassung der Empfehlungen, Währungshinweis, Quellenzeile der
-Nachrichten) stehen nur dort. Die Karten sind bewusst kompakt (Wunsch des Autors,
-2026-10-05): Schalter stehen in der Kopfzeile neben dem Titel, ein Symbol oben rechts zeigt
-die Vergrößerung an; bei 1440 × 900 Pixeln endet der Inhalt nach etwa 650 Pixeln.
+Nachrichten) stehen nur dort. Schalter stehen in der Kopfzeile neben dem Titel. **Ab 1280 px
+Breite füllt das Raster die Fensterhöhe** (mindestens 620 px) und die Diagramme wachsen mit
+dem Fenster: bei 1280 × 800 Pixeln etwa 210 px für den Kurs, bei 1440 × 900 etwa 265 px, bei
+1920 × 1080 etwa 375 px. Schmalere Fenster zeigen die Karten mit festen Höhen untereinander.
+Die Größen wurden am 2026-10-05 mit dem Autor abgestimmt (erst kleiner, dann wieder etwas
+größer; das Füllen der Fensterhöhe ist der Kompromiss).
 
 1. **Kennzahlen:** letzter Monatsschlusskurs mit Veränderung im gewählten Fenster,
    Marktkapitalisierung und Mitarbeitende („aktuell, Stand …“), Umsatz und Nettoergebnis des

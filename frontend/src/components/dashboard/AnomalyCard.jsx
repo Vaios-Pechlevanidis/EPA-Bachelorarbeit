@@ -693,9 +693,9 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
 
 /* Zeitfilter (Segmentschalter im Stil des Dashboard-Filters). Bezugspunkt ist
    der letzte bewertete Monat; der Filter wählt nur den Ausschnitt. */
-export function TimeRangeFilter({ value, onChange, small = false }) {
+export function TimeRangeFilter({ value, onChange }) {
     return (
-        <div className={`ds-time-filter${small ? " ds-time-filter-sm" : ""}`} role="group" aria-label="Zeitraum">
+        <div className="ds-time-filter" role="group" aria-label="Zeitraum">
             {TIME_RANGES.map(({ key, label }) => (
                 <button
                     key={key}

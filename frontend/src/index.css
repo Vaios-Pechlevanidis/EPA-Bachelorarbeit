@@ -548,8 +548,6 @@ a:hover { color: var(--color-primary-hover); }
 .dark .ds-time-btn { color: var(--color-fg-muted); }
 .dark .ds-time-btn:hover { background: var(--slate-200); color: var(--color-fg); }
 .dark .ds-time-btn.active { background: var(--slate-200); color: var(--color-fg); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
-/* Kleine Variante für die kompakten Karten des Aktien-Dashboards */
-.ds-time-filter-sm .ds-time-btn { height: 20px; padding: 0 7px; font-size: 10.5px; }
 
 /* ---- Buttons ---- */
 .ds-btn {

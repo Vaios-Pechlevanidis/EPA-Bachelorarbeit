@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, BarChart3, Building2, LineChart, Newspaper, Users } from "lucide-react"
 import { TrendUp } from "../icons"
@@ -22,7 +22,9 @@ import { API_URL } from "../config"
    Übersicht auf einer Bildschirmseite: oben eine Kennzahlenleiste, darunter
    Karten für Kursverlauf, Analystenempfehlungen, Umsatz und Nettoergebnis
    sowie Nachrichten. Jede Karte vergrößert sich per Klick (ExpandableCard,
-   wie im Haupt-Dashboard).
+   wie im Haupt-Dashboard). Ab 1280 px Breite füllt das Raster die Höhe des
+   Fensters (mindestens 620 px), die Diagramme wachsen mit; darunter stehen
+   die Karten mit festen Höhen untereinander.
 
    Die Kurskarte hat zwei Ansichten (?ansicht=bewertung): nur der Kurs
    (Zeitraum ?range=1y|3y|5y|10y|max) oder der Kurs auf einer zweiten Achse
@@ -40,13 +42,22 @@ const PRICE_VIEWS = [
 ]
 
 const EARNINGS_PERIODS = [
-    { key: "annual", label: "Jährlich" },
-    { key: "quarterly", label: "Quartalsweise" },
+    { key: "annual", label: "Jahr" },
+    { key: "quarterly", label: "Quartal" },
 ]
 
-function Segmented({ options, value, onChange, label, small = false }) {
+/* Breites Layout (Raster füllt die Fensterhöhe) ab der Tailwind-Stufe xl. */
+const WIDE_QUERY = "(min-width: 1280px)"
+const subscribeWide = (onChange) => {
+    const mql = window.matchMedia(WIDE_QUERY)
+    mql.addEventListener("change", onChange)
+    return () => mql.removeEventListener("change", onChange)
+}
+const isWide = () => window.matchMedia(WIDE_QUERY).matches
+
+function Segmented({ options, value, onChange, label }) {
     return (
-        <div className={`ds-time-filter${small ? " ds-time-filter-sm" : ""}`} role="group" aria-label={label}>
+        <div className="ds-time-filter" role="group" aria-label={label}>
             {options.map((o) => (
                 <button key={o.key} type="button" aria-pressed={value === o.key}
                     className={`ds-time-btn${value === o.key ? " active" : ""}`} onClick={() => onChange(o.key)}>
@@ -132,6 +143,8 @@ export default function StockPage() {
     const historyKey = isTimeRangeKey(historyParam) ? historyParam : DEFAULT_TIME_RANGE
     const historyRange = useMemo(() => timeWindow(trimToEvaluated(ratings.data?.series).series, historyKey), [ratings.data, historyKey])
     const showPrice = searchParams.get(PRICE_PARAM) !== PRICE_OFF
+    const wide = useSyncExternalStore(subscribeWide, isWide, () => false)
+    const fill = wide && available
     const openAnomalies = (patch) => {
         const params = new URLSearchParams({ company: companyId, ...patch })
         navigate(`/anomalies?${params}`, { state: { company: { id: companyId, name: companyName } } })
@@ -148,18 +161,18 @@ export default function StockPage() {
         navigate("/dashboard", companyId ? { state: { companyId, companyName } } : undefined)
 
     // Kopfaktionen der Kurskarte: Ansicht, dann Zeitraum (und Kurs an/aus) der Ansicht.
-    const priceActions = ({ modal }) => (
+    const priceActions = () => (
         <>
-            <Segmented options={PRICE_VIEWS} value={priceView} label="Ansicht" small={!modal}
+            <Segmented options={PRICE_VIEWS} value={priceView} label="Ansicht"
                 onChange={(key) => updateParams({ ansicht: key === "bewertung" ? "bewertung" : null })} />
             {priceView === "kurs" ? (
-                <Segmented options={PRICE_RANGES} value={rangeKey} label="Zeitraum" small={!modal}
+                <Segmented options={PRICE_RANGES} value={rangeKey} label="Zeitraum"
                     onChange={(key) => updateParams({ range: key === DEFAULT_PRICE_RANGE ? null : key })} />
             ) : (
                 <>
-                    <TimeRangeFilter value={historyKey} small={!modal}
+                    <TimeRangeFilter value={historyKey}
                         onChange={(key) => updateParams({ verlauf: key === DEFAULT_TIME_RANGE ? null : key })} />
-                    <PriceToggle checked={showPrice} small={!modal} onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })} />
+                    <PriceToggle checked={showPrice} onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })} />
                 </>
             )}
         </>
@@ -176,7 +189,7 @@ export default function StockPage() {
             anomalies={ratings.anomalies}
             loading={ratings.loading}
             error={ratings.error}
-            height={modal ? height - 70 : height}
+            height={modal ? height - 110 : height}
             range={historyRange}
             compact={!modal}
             onSelect={modal ? (id) => openAnomalies({ anomaly: id }) : null}
@@ -194,13 +207,15 @@ export default function StockPage() {
             subtitle={news.data?.items?.length ? `${news.data.items.length} Meldungen der letzten ${news.data.window_days} Tage` : undefined}
             accent="bg-sky-500"
             className={available ? "xl:row-span-2" : "lg:col-span-2 xl:col-span-2"}
-            modalReserve={160}
+            cardHeight={available ? 380 : 300}
+            fill={fill}
         >
-            {({ modal }) => (news.loading ? <Loading height={160} />
+            {({ modal, height }) => (news.loading ? <Loading height={160} />
                 : news.error ? <EmptyNote height={160}>Nachrichten konnten nicht geladen werden: {news.error}</EmptyNote>
                 : modal ? <NewsList news={news.data} />
                 : (
-                    <div className="relative flex-1 min-h-[260px]">
+                    // Eigener Scrollbereich in Kartenhöhe.
+                    <div className="relative" style={{ height }}>
                         <div className="absolute inset-0 overflow-y-auto overscroll-contain">
                             <NewsList news={news.data} showFootnote={false} dense />
                         </div>
@@ -246,7 +261,7 @@ export default function StockPage() {
                 </div>
             </div>
 
-            <div className="flex-1 px-5 py-3 max-w-[1600px] w-full mx-auto">
+            <div className={`px-5 py-3 max-w-[1600px] w-full mx-auto ${fill ? "flex-none h-[calc(100vh-48px)] min-h-[620px] flex flex-col" : "flex-1"}`}>
                 {!companyId ? (
                     <PageSection icon={<Building2 />} eyebrow="AUSWAHL" title="Firma wählen">
                         <p className="m-0 text-[13px] text-slate-500">Oben rechts eine Firma suchen, um Kurs, Empfehlungen und Nachrichten zu sehen.</p>
@@ -258,10 +273,10 @@ export default function StockPage() {
                         <EmptyNote height={80}>Kursdaten konnten nicht geladen werden: {finance.error}</EmptyNote>
                     </PageSection>
                 ) : (
-                    <div className="space-y-2.5">
+                    <div className={fill ? "flex-1 min-h-0 flex flex-col gap-3" : "space-y-3"}>
                         {available && <FinanceKpis market={data} first={first} last={last} change={change} />}
 
-                        <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
+                        <div className={`grid gap-3 lg:grid-cols-2 xl:grid-cols-3 ${fill ? "flex-1 min-h-0 grid-rows-[minmax(0,1.25fr)_minmax(0,1fr)]" : ""}`}>
                             {available ? (
                                 <>
                                     <ExpandableCard
@@ -270,8 +285,8 @@ export default function StockPage() {
                                         title={priceView === "kurs" ? "Aktienkurs" : "Aktienkurs und Sternebewertung"}
                                         subtitle={priceSubtitle}
                                         actions={priceActions}
-                                        cardHeight={160}
-                                        modalReserve={priceView === "kurs" ? 150 : 170}
+                                        cardHeight={240}
+                                        fill={fill}
                                         className="lg:col-span-2"
                                     >
                                         {priceBody}
@@ -283,8 +298,8 @@ export default function StockPage() {
                                         title="Analystenempfehlungen"
                                         subtitle="Empfehlungen je Stufe, letzte vier Monate"
                                         accent="bg-emerald-500"
-                                        cardHeight={120}
-                                        modalReserve={230}
+                                        cardHeight={210}
+                                        fill={fill}
                                     >
                                         {({ modal, height }) => <AnalystChart analysts={data.analysts} height={height} compact={!modal} />}
                                     </ExpandableCard>
@@ -294,10 +309,10 @@ export default function StockPage() {
                                         title="Umsatz und Nettoergebnis"
                                         subtitle={earningsPeriod === "annual" ? "Je Geschäftsjahr" : "Je Quartal"}
                                         accent="bg-indigo-500"
-                                        cardHeight={120}
-                                        modalReserve={200}
-                                        actions={({ modal }) => (
-                                            <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode" small={!modal}
+                                        cardHeight={210}
+                                        fill={fill}
+                                        actions={() => (
+                                            <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode"
                                                 onChange={(key) => updateParams({ periode: key === "quarterly" ? "quartal" : null })} />
                                         )}
                                     >

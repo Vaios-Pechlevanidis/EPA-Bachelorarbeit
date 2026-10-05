@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { ExternalLink } from "lucide-react"
+import { FillBox } from "./ExpandableCard"
 import {
     RATING_LEVELS, fiscalYearLabel, fmtAmount, fmtDay, fmtMonth, fmtPrice, fmtPriceTick, quarterLabel,
 } from "@/lib/market"
@@ -10,6 +11,9 @@ import {
    Kursverlauf, Analystenempfehlungen, Umsatz und Nettoergebnis, Nachrichten.
    Alle Angaben stammen aus Yahoo Finance (yfinance) bzw. Google-News-RSS und
    sind eine Einordnung des Marktumfelds, keine Erklärung der Bewertungen.
+   height ist jeweils die Gesamthöhe des Bausteins (Diagramm samt Legende);
+   das Diagramm nimmt, was die Legende übrig lässt. compact (kleine Karte)
+   lässt Zusatzzeilen weg, die in der vergrößerten Ansicht stehen.
    ============================================================================ */
 
 const AXIS_TICK = { fontSize: 10, fill: "var(--color-axis)" }
@@ -96,36 +100,38 @@ export function AnalystChart({ analysts, height = 240, compact = false }) {
     if (!months.length) return <EmptyNote height={height}>Yahoo Finance liefert für dieses Wertpapier keine Analystenempfehlungen.</EmptyNote>
     const latest = months[months.length - 1]
     return (
-        <div>
-            <ResponsiveContainer width="100%" height={height}>
-                <BarChart data={months} margin={{ left: 0, right: 8, top: 8, bottom: 5 }} barCategoryGap="28%">
-                    <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
-                    <XAxis dataKey="month" tickFormatter={fmtMonth} tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: "var(--color-border)" }} tickMargin={8} />
-                    <YAxis allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={false} width={28} />
-                    <Tooltip
-                        cursor={{ fill: "var(--color-grid)", fillOpacity: 0.5 }}
-                        content={({ active, payload }) => active && payload?.length ? (
-                            <TooltipBox title={fmtMonth(payload[0].payload.month)}>
-                                {RATING_LEVELS.map((l) => (
-                                    <TooltipRow key={l.key} label={l.label} value={payload[0].payload[l.key]} color={l.color} />
-                                ))}
-                                <p className="m-0 mt-1 pt-1 border-t border-slate-700 flex justify-between gap-3">
-                                    <span className="text-slate-400">Analysten insgesamt</span>
-                                    <span className="tnum text-white font-medium">{payload[0].payload.total}</span>
-                                </p>
-                            </TooltipBox>
-                        ) : null}
-                    />
-                    {RATING_LEVELS.map((l, i) => (
-                        <Bar key={l.key} dataKey={l.key} stackId="rating" fill={l.color} isAnimationActive={false}
-                            radius={i === RATING_LEVELS.length - 1 ? [3, 3, 0, 0] : 0} />
-                    ))}
-                </BarChart>
-            </ResponsiveContainer>
-            <p className={`m-0 flex flex-wrap items-center justify-center text-slate-500 ${compact ? "mt-1 gap-x-2 gap-y-0.5 text-[10px]" : "mt-2 gap-x-3 gap-y-1 text-[11px]"}`}>
+        <div className="flex flex-col" style={{ height }}>
+            <FillBox>{(chartHeight) => (
+                <ResponsiveContainer width="100%" height={chartHeight}>
+                    <BarChart data={months} margin={{ left: 0, right: 8, top: 8, bottom: 5 }} barCategoryGap="28%">
+                        <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
+                        <XAxis dataKey="month" tickFormatter={fmtMonth} tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: "var(--color-border)" }} tickMargin={8} />
+                        <YAxis allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={false} width={28} />
+                        <Tooltip
+                            cursor={{ fill: "var(--color-grid)", fillOpacity: 0.5 }}
+                            content={({ active, payload }) => active && payload?.length ? (
+                                <TooltipBox title={fmtMonth(payload[0].payload.month)}>
+                                    {RATING_LEVELS.map((l) => (
+                                        <TooltipRow key={l.key} label={l.label} value={payload[0].payload[l.key]} color={l.color} />
+                                    ))}
+                                    <p className="m-0 mt-1 pt-1 border-t border-slate-700 flex justify-between gap-3">
+                                        <span className="text-slate-400">Analysten insgesamt</span>
+                                        <span className="tnum text-white font-medium">{payload[0].payload.total}</span>
+                                    </p>
+                                </TooltipBox>
+                            ) : null}
+                        />
+                        {RATING_LEVELS.map((l, i) => (
+                            <Bar key={l.key} dataKey={l.key} stackId="rating" fill={l.color} isAnimationActive={false}
+                                radius={i === RATING_LEVELS.length - 1 ? [3, 3, 0, 0] : 0} />
+                        ))}
+                    </BarChart>
+                </ResponsiveContainer>
+            )}</FillBox>
+            <p className={`m-0 flex flex-wrap items-center justify-center text-[11px] text-slate-500 flex-none ${compact ? "mt-1.5 gap-x-2.5 gap-y-0.5" : "mt-2 gap-x-3 gap-y-1"}`}>
                 {RATING_LEVELS.map((l) => <Swatch key={l.key} color={l.color} label={l.label} />)}
             </p>
-            {!compact && <p className="m-0 mt-2 text-[11px] text-slate-500 text-center">
+            {!compact && <p className="m-0 mt-2 text-[11px] text-slate-500 text-center flex-none">
                 {fmtMonth(latest.month)}: {latest.total} Empfehlungen, davon {latest.strong_buy + latest.buy} kaufen,{" "}
                 {latest.hold} halten, {latest.sell + latest.strong_sell} verkaufen · Stand {fmtDay(analysts.as_of)}
             </p>}
@@ -147,28 +153,30 @@ export function EarningsChart({ earnings, period = "annual", height = 240, compa
     }
     const hasLoss = rows.some((r) => (r.net_income ?? 0) < 0)
     return (
-        <div>
-            <ResponsiveContainer width="100%" height={height}>
-                <BarChart data={rows} margin={{ left: 0, right: 8, top: 8, bottom: 5 }} barCategoryGap="24%" barGap={2}>
-                    <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
-                    <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: "var(--color-border)" }} tickMargin={8} />
-                    <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width={72} tickFormatter={(v) => fmtAmount(v)} />
-                    {hasLoss && <ReferenceLine y={0} stroke="var(--color-border-strong)" />}
-                    <Tooltip
-                        cursor={{ fill: "var(--color-grid)", fillOpacity: 0.5 }}
-                        content={({ active, payload }) => active && payload?.length ? (
-                            <TooltipBox title={payload[0].payload.label}>
-                                <TooltipRow label="Umsatz" value={fmtAmount(payload[0].payload.revenue, currency)} color="var(--finance-revenue)" />
-                                <TooltipRow label="Nettoergebnis" value={fmtAmount(payload[0].payload.net_income, currency)} color="var(--finance-earnings)" />
-                                <p className="m-0 mt-1 text-[10px] text-slate-400">Stichtag {fmtDay(payload[0].payload.period_end)}</p>
-                            </TooltipBox>
-                        ) : null}
-                    />
-                    <Bar dataKey="revenue" fill="var(--finance-revenue)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
-                    <Bar dataKey="net_income" fill="var(--finance-earnings)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
-                </BarChart>
-            </ResponsiveContainer>
-            <p className={`m-0 flex flex-wrap items-center justify-center text-slate-500 ${compact ? "mt-1 gap-x-2 gap-y-0.5 text-[10px]" : "mt-2 gap-x-3 gap-y-1 text-[11px]"}`}>
+        <div className="flex flex-col" style={{ height }}>
+            <FillBox>{(chartHeight) => (
+                <ResponsiveContainer width="100%" height={chartHeight}>
+                    <BarChart data={rows} margin={{ left: 0, right: 8, top: 8, bottom: 5 }} barCategoryGap="24%" barGap={2}>
+                        <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
+                        <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: "var(--color-border)" }} tickMargin={8} />
+                        <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width={72} tickFormatter={(v) => fmtAmount(v)} />
+                        {hasLoss && <ReferenceLine y={0} stroke="var(--color-border-strong)" />}
+                        <Tooltip
+                            cursor={{ fill: "var(--color-grid)", fillOpacity: 0.5 }}
+                            content={({ active, payload }) => active && payload?.length ? (
+                                <TooltipBox title={payload[0].payload.label}>
+                                    <TooltipRow label="Umsatz" value={fmtAmount(payload[0].payload.revenue, currency)} color="var(--finance-revenue)" />
+                                    <TooltipRow label="Nettoergebnis" value={fmtAmount(payload[0].payload.net_income, currency)} color="var(--finance-earnings)" />
+                                    <p className="m-0 mt-1 text-[10px] text-slate-400">Stichtag {fmtDay(payload[0].payload.period_end)}</p>
+                                </TooltipBox>
+                            ) : null}
+                        />
+                        <Bar dataKey="revenue" fill="var(--finance-revenue)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+                        <Bar dataKey="net_income" fill="var(--finance-earnings)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+                    </BarChart>
+                </ResponsiveContainer>
+            )}</FillBox>
+            <p className={`m-0 flex flex-wrap items-center justify-center text-[11px] text-slate-500 flex-none ${compact ? "mt-1.5 gap-x-2.5 gap-y-0.5" : "mt-2 gap-x-3 gap-y-1"}`}>
                 <Swatch color="var(--finance-revenue)" label={`Umsatz (${currency})`} />
                 <Swatch color="var(--finance-earnings)" label={`Nettoergebnis (${currency})`} />
                 {!compact && <span>Berichtswährung, wie von Yahoo Finance geliefert; fehlende Werte bleiben leer</span>}
@@ -189,13 +197,13 @@ export function NewsList({ news, listClassName = "", showFootnote = true, dense 
             ) : (
                 <ul className={`m-0 p-0 pr-2 list-none ${listClassName}`} aria-label="Meldungen">
                     {items.map((item) => (
-                        <li key={item.url} className={`border-t border-slate-100 first:border-t-0 ${dense ? "py-1.5" : "py-2.5"}`}>
+                        <li key={item.url} className={`border-t border-slate-100 first:border-t-0 ${dense ? "py-2" : "py-2.5"}`}>
                             <a href={item.url} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()}
-                                className={`group inline-flex items-start gap-1.5 font-medium text-slate-900 hover:text-blue-700 ${dense ? "text-[12px] leading-4" : "text-[13px] leading-5"}`}>
+                                className={`group inline-flex items-start gap-1.5 font-medium text-slate-900 hover:text-blue-700 ${dense ? "text-[12.5px] leading-[18px]" : "text-[13px] leading-5"}`}>
                                 <span>{item.title}</span>
                                 <ExternalLink className={`w-3 h-3 flex-none text-slate-400 group-hover:text-blue-700 ${dense ? "mt-0.5" : "mt-1"}`} />
                             </a>
-                            <p className={`m-0 text-slate-500 ${dense ? "mt-0.5 text-[10.5px]" : "text-[11px]"}`}>
+                            <p className={`m-0 text-slate-500 ${dense ? "mt-0.5 text-[11px]" : "text-[11px]"}`}>
                                 {item.source ?? "Quelle unbekannt"} · {item.published_at ? fmtDay(item.published_at.slice(0, 10)) : "ohne Datum"}
                             </p>
                         </li>

@@ -10,9 +10,9 @@ import {
 } from "@/lib/market"
 
 /* Umschalter "Aktienkurs" (Kurs im Bewertungsverlauf ein/aus). */
-export function PriceToggle({ checked, onChange, small = false }) {
+export function PriceToggle({ checked, onChange }) {
     return (
-        <label className={`inline-flex items-center gap-1.5 text-slate-700 cursor-pointer select-none ${small ? "text-[11px]" : "text-[12px]"}`}
+        <label className="inline-flex items-center gap-1.5 text-[12px] text-slate-700 cursor-pointer select-none"
             onClick={(e) => e.stopPropagation()}>
             <input
                 type="checkbox"
@@ -27,10 +27,10 @@ export function PriceToggle({ checked, onChange, small = false }) {
 
 function Tile({ label, value, note, tone }) {
     return (
-        <div className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 min-w-0 shadow-xs">
-            <p className="m-0 font-mono text-[9px] tracking-[0.06em] uppercase text-slate-500 leading-none truncate">{label}</p>
-            <p className="m-0 mt-1 text-[14px] leading-5 font-semibold text-slate-900 tnum truncate" style={tone ? { color: tone } : undefined}>{value}</p>
-            <p className="m-0 text-[10.5px] text-slate-500 leading-[14px] truncate" title={note}>{note}</p>
+        <div className="bg-white border border-slate-200 rounded-lg px-3.5 py-2 min-w-0 shadow-xs">
+            <p className="m-0 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none truncate">{label}</p>
+            <p className="m-0 mt-1 text-[16px] leading-6 font-semibold text-slate-900 tnum truncate" style={tone ? { color: tone } : undefined}>{value}</p>
+            <p className="m-0 text-[11px] text-slate-500 leading-4 truncate" title={note}>{note}</p>
         </div>
     )
 }
@@ -46,11 +46,11 @@ export function FinanceKpis({ market, last, first, change }) {
     const latestAnalysts = analysts[analysts.length - 1]
     const currency = market?.earnings?.currency ?? latestRevenue?.unit ?? ""
     return (
-        <div className="grid gap-2.5 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             <Tile
-                label="Letzter Monatsschluss"
+                label={last ? `Kurs · ${fmtMonth(last.period)}` : "Kurs"}
                 value={last ? `${fmtPrice(last.close)} ${market.currency ?? ""}` : "–"}
-                note={last ? `${fmtMonth(last.period)} · ${fmtPercent(change)} seit ${fmtMonth(first.period)}` : "–"}
+                note={last ? `${fmtPercent(change)} seit ${fmtMonth(first.period)}` : "–"}
             />
             <Tile
                 label="Marktkapitalisierung"
@@ -60,7 +60,7 @@ export function FinanceKpis({ market, last, first, change }) {
             <Tile
                 label="Mitarbeitende"
                 value={metrics.employees ? metrics.employees.value.toLocaleString("de-DE") : "–"}
-                note={metrics.employees ? `aktuell, Stand ${fmtDay(metrics.employees.as_of)} (Abruf)` : "keine Angabe"}
+                note={metrics.employees ? `aktuell, Abruf ${fmtDay(metrics.employees.as_of)}` : "keine Angabe"}
             />
             <Tile
                 label="Umsatz"
@@ -73,9 +73,9 @@ export function FinanceKpis({ market, last, first, change }) {
                 note={lastYear ? fiscalYearLabel(lastYear.period_end) : "keine Angabe"}
             />
             <Tile
-                label="Analystenempfehlungen"
+                label={latestAnalysts ? `Analysten · ${fmtMonth(latestAnalysts.month)}` : "Analysten"}
                 value={latestAnalysts ? `${latestAnalysts.strong_buy + latestAnalysts.buy} / ${latestAnalysts.hold} / ${latestAnalysts.sell + latestAnalysts.strong_sell}` : "–"}
-                note={latestAnalysts ? `kaufen / halten / verkaufen · ${fmtMonth(latestAnalysts.month)}` : "keine Angabe"}
+                note={latestAnalysts ? "kaufen / halten / verkaufen" : "keine Angabe"}
             />
         </div>
     )
@@ -94,7 +94,7 @@ function securityText(market, companyName) {
 export function MarketSourceNote({ market, companyName }) {
     if (!market?.available) return null
     return (
-        <p className="m-0 text-[10.5px] text-slate-500 leading-[14px]">
+        <p className="m-0 text-[11px] text-slate-500 leading-4">
             <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}{" "}
             {securityText(market, companyName)} Quelle: {market.source}, Monatsschlusskurse um Splits und Dividenden
             bereinigt; abgerufen am {fmtDay(market.fetched_at?.slice(0, 10))}.
