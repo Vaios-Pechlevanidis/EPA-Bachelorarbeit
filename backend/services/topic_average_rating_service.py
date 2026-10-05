@@ -1,5 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Optional, Dict, Any, List, Literal
+from typing import Optional, Dict, Any, List, Literal, Callable
 from collections import defaultdict
 
 from database.supabase_client import get_supabase_client
@@ -68,6 +69,53 @@ def _fetch_all_rows(query, page_size: int = 1000) -> List[Dict[str, Any]]:
         start += page_size
 
     return all_rows
+
+
+# Seiten nach der ersten parallel laden (fetch_all_rows_parallel). Jeder Thread
+# baut seine Abfrage selbst und nutzt damit seinen eigenen Supabase-Client
+# (database/supabase_client.py); ein Query-Builder wird beim range() verändert
+# und darf deshalb nicht zwischen Threads geteilt werden.
+_PAGE_WORKERS = 6
+_page_pool = ThreadPoolExecutor(max_workers=_PAGE_WORKERS, thread_name_prefix="review-pages")
+
+
+def fetch_all_rows_parallel(
+    make_query: Callable[[Optional[str]], Any],
+    page_size: int = 1000,
+) -> List[Dict[str, Any]]:
+    """
+    Wie ``_fetch_all_rows``, aber schneller bei vielen Seiten: Die erste Seite
+    liefert mit ``count="exact"`` die Gesamtzahl, die übrigen Seiten werden
+    parallel geholt und in Seitenreihenfolge zusammengesetzt.
+
+    ``make_query(count)`` baut die Abfrage jedes Mal neu (``count`` ist None
+    oder ``"exact"``); sie muss stabil sortiert sein (z. B. nach ``id``).
+    Liefert die Datenbank keine Gesamtzahl oder ist die letzte Seite voll
+    (Zeilen kamen zwischen den Abfragen dazu), wird wie bisher seitenweise
+    weitergelesen.
+    """
+    first = make_query("exact").range(0, page_size - 1).execute()
+    rows: List[Dict[str, Any]] = list(first.data or [])
+    if len(rows) < page_size:
+        return rows
+    total = first.count
+    starts = list(range(page_size, total, page_size)) if isinstance(total, int) else []
+
+    def load_page(start: int) -> List[Dict[str, Any]]:
+        return make_query(None).range(start, start + page_size - 1).execute().data or []
+
+    pages = list(_page_pool.map(load_page, starts))
+    for page in pages:
+        rows.extend(page)
+    # Ohne Gesamtzahl oder bei voller letzter Seite: seitenweise weiter.
+    last_full = len(pages[-1]) == page_size if pages else True
+    start = page_size * (len(pages) + 1)
+    while last_full:
+        page = load_page(start)
+        rows.extend(page)
+        last_full = len(page) == page_size
+        start += page_size
+    return rows
 
 
 def get_topic_rating_timeseries(

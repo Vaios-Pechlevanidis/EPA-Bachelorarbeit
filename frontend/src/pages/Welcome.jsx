@@ -5,6 +5,8 @@ import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { WorkPulseLogo } from "@/components/WorkPulseLogo"
 import { Button } from "@/components/ui/button"
 import { API_URL } from "../config"
+import { invalidateCompanies, loadCompanies } from "@/lib/companies"
+import { invalidateSharedFetches } from "@/lib/sharedFetch"
 
 
 export default function Welcome() {
@@ -206,13 +208,12 @@ export default function Welcome() {
         setError("")
 
         try {
-            const response = await fetch(`${API_URL}/companies`)
-            if (!response.ok) throw new Error("Fehler beim Laden der Firmen")
-            
-            const allCompanies = await response.json()
-            const match = allCompanies.find(
-                (c) => c.name.toLowerCase() === company.companyQuery.trim().toLowerCase()
-            )
+            // Gemeinsame Firmenliste (lib/companies.js); ohne Treffer einmal frisch
+            // laden, falls die Firma inzwischen angelegt wurde.
+            const wanted = company.companyQuery.trim().toLowerCase()
+            const findMatch = (list) => list.find((c) => c.name.toLowerCase() === wanted)
+            let match = findMatch(await loadCompanies())
+            if (!match) match = findMatch(await loadCompanies({ force: true }))
 
             if (match) {
                 // Company exists in database
@@ -274,6 +275,8 @@ export default function Welcome() {
         } catch (err) {
             setError(err.message || "Fehler beim Löschen der Firmendaten")
         } finally {
+            invalidateCompanies()
+            invalidateSharedFetches()
             setDeletingData(null)
         }
     }
@@ -328,6 +331,8 @@ export default function Welcome() {
         } catch (err) {
             setError(err.message || "Fehler beim Löschen der Firma")
         } finally {
+            invalidateCompanies()
+            invalidateSharedFetches()
             setDeletingCompany(null)
         }
     }
@@ -429,6 +434,8 @@ export default function Welcome() {
             
             setError(err.message || "Fehler beim Hochladen der Dateien")
         } finally {
+            invalidateCompanies()
+            invalidateSharedFetches()
             setUploading(false)
         }
     }

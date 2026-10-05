@@ -30,6 +30,16 @@
   /* Auffällige Veränderungen (Anomalie-Markierung): hell 700er-Töne für Kontrast ≥ 4,5:1 */
   --anomaly-fall: #be123c;
   --anomaly-rise: #047857;
+  /* Aktienkurs als Einordnung (Inkrement 3): eigene, zurückhaltende Farbe, weder Bewertung noch Richtung */
+  --market-price: #7c3aed;
+  /* Aktien-Dashboard (E16): Empfehlungsstufen von stark kaufen bis stark verkaufen, Umsatz und Gewinn */
+  --rating-strong-buy:   #15803d;
+  --rating-buy:          #4ade80;
+  --rating-hold:         #eab308;
+  --rating-sell:         #f97316;
+  --rating-strong-sell:  #dc2626;
+  --finance-revenue:     #6366f1;
+  --finance-earnings:    #0ea5e9;
   --amber-50:    #fffbeb;
   --amber-500:   #f59e0b;
   --amber-700:   #b45309;
@@ -136,6 +146,14 @@
   --color-axis:          #475569;
   --anomaly-fall:        #fb7185;   /* rose-400 */
   --anomaly-rise:        #34d399;   /* emerald-400 */
+  --market-price:        #a78bfa;   /* violet-400 */
+  --rating-strong-buy:   #22c55e;
+  --rating-buy:          #86efac;
+  --rating-hold:         #fde047;
+  --rating-sell:         #fdba74;
+  --rating-strong-sell:  #f87171;
+  --finance-revenue:     #818cf8;
+  --finance-earnings:    #38bdf8;
 
   /* WorkPulse logo colours — dark mode */
   --wp-bubble: #ffffff;

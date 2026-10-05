@@ -5,6 +5,7 @@ import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
+import { PageSection } from "@/components/dashboard/PageSection"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isTimeRangeKey, monthSpan, outlierCountText, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
@@ -13,7 +14,7 @@ import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison } from "@/hooks/useAnomalyComparison"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
-import { API_URL } from "../config"
+import { loadCompanyName } from "@/lib/companies"
 
 /* ============================================================================
    Anomalies — Detailseite "Anomalien im Verlauf" (Inkrement 1).
@@ -27,26 +28,9 @@ import { API_URL } from "../config"
    aus (?anomaly=id); darunter stehen der Vorher-Nachher-Vergleich und die
    Bewertungen der Vergleichsfenster. Auffällige Einzelmonate (E14) stehen in
    einer eigenen Liste; Auswahl per ?month=YYYY-MM zeigt die Bewertungen des Monats.
+   Der Aktienkurs (Inkrement 3, E15) steht nicht hier, sondern im
+   Aktien-Dashboard (/aktie, E16); unter dem Diagramm führt ein Link dorthin.
    ============================================================================ */
-
-function Section({ icon, eyebrow, title, subtitle, actions, children }) {
-    return (
-        <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
-            <div className="px-4 pt-3 pb-3 border-b border-slate-200 flex items-start gap-2.5">
-                <span className="w-7 h-7 rounded-md grid place-items-center flex-none bg-slate-100 text-slate-600 mt-0.5 [&_svg]:w-[14px] [&_svg]:h-[14px]">
-                    {icon}
-                </span>
-                <div className="min-w-0 flex-1">
-                    <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">{eyebrow}</p>
-                    <h2 className="m-0 text-[14px] leading-5 font-semibold tracking-tight text-slate-900">{title}</h2>
-                    {subtitle && <p className="m-0 mt-0.5 text-[11px] text-slate-500 leading-4">{subtitle}</p>}
-                </div>
-                {actions && <div className="flex-none flex items-center gap-2">{actions}</div>}
-            </div>
-            <div className="px-4 py-4">{children}</div>
-        </section>
-    )
-}
 
 export default function AnomaliesPage() {
     const location = useLocation()
@@ -85,21 +69,20 @@ export default function AnomaliesPage() {
         }
     }, [companyId, searchParams, setSearchParams])
 
-    // Namen nachladen, wenn die Seite direkt über die URL geöffnet wurde.
+    // Namen nachladen, wenn die Seite direkt über die URL geöffnet wurde
+    // (gemeinsame Firmenliste, lib/companies.js).
     useEffect(() => {
         if (!companyId || names[companyId]) return undefined
-        const controller = new AbortController()
-        fetch(`${API_URL}/companies`, { signal: controller.signal })
-            .then((res) => (res.ok ? res.json() : []))
-            .then((list) => {
-                const co = Array.isArray(list) ? list.find((c) => String(c.id) === companyId) : null
-                if (co) {
-                    setNames((n) => ({ ...n, [companyId]: co.name?.trim() ?? "" }))
-                    setQuery(co.name?.trim() ?? "")
+        let active = true
+        loadCompanyName(companyId)
+            .then((name) => {
+                if (active && name) {
+                    setNames((n) => ({ ...n, [companyId]: name }))
+                    setQuery(name)
                 }
             })
             .catch(() => {})
-        return () => controller.abort()
+        return () => { active = false }
     }, [companyId, names])
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
@@ -232,12 +215,12 @@ export default function AnomaliesPage() {
 
             <div className="flex-1 px-5 py-5 max-w-[1400px] w-full mx-auto space-y-4">
                 {!companyId ? (
-                    <Section icon={<Building2 />} eyebrow="AUSWAHL" title="Firma wählen">
+                    <PageSection icon={<Building2 />} eyebrow="AUSWAHL" title="Firma wählen">
                         <p className="m-0 text-[13px] text-slate-500">Oben rechts eine Firma suchen, um ihren Verlauf zu sehen.</p>
-                    </Section>
+                    </PageSection>
                 ) : (
                     <>
-                        <Section
+                        <PageSection
                             icon={<AnomalyIcon />}
                             eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
                             title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
@@ -262,9 +245,20 @@ export default function AnomaliesPage() {
                                 selectedOutlier={selectedOutlier?.date ?? null}
                                 onSelectOutlier={selectOutlier}
                             />
-                        </Section>
+                            <p className="m-0 mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                                Aktienkurs, Kennzahlen und Nachrichten stehen im{" "}
+                                <button
+                                    type="button"
+                                    className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                    onClick={() => navigate(`/aktie?company=${companyId}`, { state: { company: { id: companyId, name: companyName } } })}
+                                >
+                                    Aktien-Dashboard
+                                </button>
+                                , dort auch zusammen mit diesem Bewertungsverlauf.
+                            </p>
+                        </PageSection>
 
-                        <Section
+                        <PageSection
                             icon={<ListOrdered />}
                             eyebrow="LISTE"
                             title="Auffällige Veränderungen"
@@ -303,10 +297,10 @@ export default function AnomaliesPage() {
                                     </button>
                                 </p>
                             )}
-                        </Section>
+                        </PageSection>
 
                         {!loading && !error && eligibility?.eligible && (
-                            <Section
+                            <PageSection
                                 icon={<Diamond />}
                                 eyebrow="LISTE · E14"
                                 title="Auffällige Einzelmonate"
@@ -318,11 +312,11 @@ export default function AnomaliesPage() {
                                     onSelect={selectOutlier}
                                     emptyText={range ? "Im gewählten Zeitraum keine auffälligen Einzelmonate." : undefined}
                                 />
-                            </Section>
+                            </PageSection>
                         )}
 
                         {selectedOutlier && outlierSpan && (
-                            <Section
+                            <PageSection
                                 icon={<MessageSquareText />}
                                 eyebrow={`EINZELBEWERTUNGEN · AUFFÄLLIGER EINZELMONAT`}
                                 title={`Bewertungen ${fmtPeriod(selectedOutlier.date)}`}
@@ -334,11 +328,11 @@ export default function AnomaliesPage() {
                                     Alle Bewertungen dieses Kalendermonats. Der Monat weicht um {String(selectedOutlier.deviation).replace(".", ",")} Sterne vom
                                     Niveau seiner Nachbarmonate ab; das ist ein Hinweis auf einen auffälligen Monat, keine Aussage über Ursachen.
                                 </p>
-                            </Section>
+                            </PageSection>
                         )}
 
                         {selectedAnomaly && windows && (
-                            <Section
+                            <PageSection
                                 icon={<GitCompareArrows />}
                                 eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
                                 title="Vorher-Nachher-Vergleich"
@@ -347,11 +341,11 @@ export default function AnomaliesPage() {
                                     : `${group} · Verschiebungen in den Bewertungen zwischen den Vergleichsfenstern`}
                             >
                                 <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} />
-                            </Section>
+                            </PageSection>
                         )}
 
                         {selectedAnomaly && windows && (
-                            <Section
+                            <PageSection
                                 icon={<MessageSquareText />}
                                 eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
                                 title="Bewertungen des Zeitraums"
@@ -369,7 +363,7 @@ export default function AnomaliesPage() {
                                     Vergleichsfenster: bis zu {windows.windowMonths} Kalendermonate vor dem markierten Monat und ab ihm, begrenzt
                                     durch die benachbarten Veränderungen; alle Bewertungen dieser Monate, auch aus Monaten mit wenigen Bewertungen.
                                 </p>
-                            </Section>
+                            </PageSection>
                         )}
                     </>
                 )}

@@ -90,6 +90,24 @@ Select a change on the detail page to see the reviews of the periods before and 
 
 ---
 
+## 📈 Cycle 2 – Increment 3 "Aktienkurs und Kennzahlen"
+
+On the detail page the share price runs along the rating chart on a second y-axis, with a few company figures below it. Price and figures place the ratings in their market context; they are not an explanation. The dashboard neither claims nor computes any relation between price and ratings. Feature doc: [docs/feature-doku/04-kurs-und-kennzahlen.md](docs/feature-doku/04-kurs-und-kennzahlen.md); decision E15 in `docs/entscheidungen.md` (preliminary).
+
+| Part | Where | Notes |
+|---|---|---|
+| Service | `backend/services/context_service.py` | Ticker from `companies.ticker`, fallback to `backend/data/company_metadata.json` when the column or value is missing (only if the name matches); monthly closes via yfinance (`period="max"`, `interval="1mo"`, adjusted for splits and dividends, running month dropped); market cap, employees, revenue per fiscal year; the network call sits behind `fetch_raw` and can be swapped |
+| Cache | `backend/data/market/<ticker>.json` (in `.gitignore`, not committed) | Fields `ticker`, `ticker_name`, `currency`, `fetched_at`, `source`, `adjustment`, `prices`, `metrics`. Not refreshed automatically; rerun the script to update |
+| Fill the cache | `backend/scripts/fetch_market_data.py` | `cd backend && uv run python scripts/fetch_market_data.py` (all tickers), `--ticker SAP.DE` or `--company 19` (one). Reads the database, writes only files |
+| Runtime | `MARKET_LIVE_FETCH` (environment) | Cache first. Without a cache file the backend fetches once live and stores the result, unless `MARKET_LIVE_FETCH=0`. A failed fetch returns `available: false` with a reason (no 500) and is not retried for 15 minutes |
+| API | `backend/routes/market.py` | `GET /api/analytics/company/{company_id}/market?start=YYYY-MM&end=YYYY-MM` → `company_id`, `ticker`, `ticker_scope` (`eigene Aktie` / `Konzernmutter`), `ticker_name`, `currency`, `available`, `reason`, `prices`, `metrics`, `fetched_at`, `source`. Without a ticker: `available: false` with the reason from `peer_group`; unknown company 404; invalid period 400 |
+| Frontend | `frontend/src/pages/Stock.jsx` (`?kurs=aus&verlauf=`), `components/dashboard/MarketContext.jsx`, `AnomalyChart` (prop `market`), `lib/market.js` | Shown in the stock dashboard (section "Kurs und Bewertungsverlauf"), no longer on the anomaly page, which only links there. Thin violet line on the right axis (currency in the axis label, legend, tooltip), only for the displayed months; toggle "Aktienkurs"; figures row with "aktuell, Stand …"; fixed note "Einordnung, keine Erklärung …"; parent company named explicitly (NTT DATA SE → NTT, Inc.). The dashboard card and the PDF export are unchanged |
+| Stock dashboard (E16) | `frontend/src/pages/Stock.jsx`, route `/aktie?company=ID&range=1y\|3y\|5y\|10y\|max&verlauf=5y\|3y\|1y&kurs=aus&periode=quartal`, `components/dashboard/FinanceCards.jsx` | Separate page ("Aktie" in the dashboard sidebar, link on the anomaly page): price chart, price over the monthly rating with detected changes (moved here from the anomaly page; clicking a marker opens it there), analyst recommendations (last four months), revenue vs. net income (annual or quarterly), recent news. Feature doc: [docs/feature-doku/05-aktien-dashboard.md](docs/feature-doku/05-aktien-dashboard.md) |
+| Finance API | `GET /api/analytics/company/{id}/finance`, `GET /api/analytics/company/{id}/news` | `/finance` = `/market` plus `analysts` and `earnings` (from the same cache; run the script again for caches from before E16). `/news` reads Google News RSS by company name (`backend/services/news_service.py`), cached 12 h under `backend/data/market/news/`; `fetch_market_data.py --news` fills it |
+| Tests | `backend/tests/market/` (mocked fetcher, temporary cache directory, no network) | `cd backend && uv run python -m pytest tests/market -q` |
+
+---
+
 ## ⚡ Quick Start
 
 ```bash

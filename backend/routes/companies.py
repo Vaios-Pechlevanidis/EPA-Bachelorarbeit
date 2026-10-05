@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, field_validator
 from database.supabase_client import get_supabase_client
@@ -24,6 +25,14 @@ COMPANY_SELECT_FULL = "id,name," + ",".join(COMPANY_META_COLUMNS)
 COMPANY_SELECT_BASIC = "id,name"
 
 _meta_columns_warning_logged = False
+
+# Zählabfragen für GET /companies laufen parallel: je Firma und Tabelle eine
+# Anfrage mit count="exact", weil Supabase gruppierte Zählungen nicht erlaubt
+# (PostgREST PGRST123). Nacheinander dauerten 29 Firmen × 2 Tabellen rund
+# 2,3 s. Jeder Thread nutzt seinen eigenen Client (database/supabase_client.py).
+REVIEW_TABLES: tuple[str, ...] = ("employee", "candidates")
+_COUNT_WORKERS = 16
+_count_pool = ThreadPoolExecutor(max_workers=_COUNT_WORKERS, thread_name_prefix="review-count")
 
 
 def _is_missing_column_error(exc: Exception) -> bool:
@@ -145,6 +154,25 @@ def _select_companies_with_fallback() -> list[dict]:
             row.setdefault(col, None)
     return data
 
+def _count_reviews(table: str, company_id: Any) -> int:
+    """Anzahl der Bewertungen eines Unternehmens in einer Tabelle (nur lesend)."""
+    supabase = get_supabase_client()
+    res = supabase.table(table).select("id", count="exact").eq("company_id", company_id).limit(1).execute()
+    return res.count or 0
+
+
+def _review_counts(company_ids: list[Any]) -> dict[Any, int]:
+    """Bewertungen (employee + candidates) je Unternehmen, parallel gezählt."""
+    jobs = [
+        (cid, _count_pool.submit(_count_reviews, table, cid))
+        for cid in company_ids for table in REVIEW_TABLES
+    ]
+    counts: dict[Any, int] = {cid: 0 for cid in company_ids}
+    for cid, job in jobs:
+        counts[cid] += job.result()
+    return counts
+
+
 @router.get("/companies/search")
 def search_companies(q: str = Query(..., min_length=1)):
     # Vorschläge aus DB, case-insensitive, enthält-suche
@@ -161,22 +189,15 @@ def search_companies(q: str = Query(..., min_length=1)):
 @router.get("/companies")
 def get_companies():
     """Liefert alle Unternehmen mit Metadaten (ticker, isin, sector, peer_group)
-    und der Gesamtzahl der Bewertungen (employee + candidates)."""
-    supabase = get_supabase_client()
+    und der Gesamtzahl der Bewertungen (employee + candidates); die Zählungen
+    laufen parallel (siehe _review_counts)."""
     data = _select_companies_with_fallback()
+    counts = _review_counts([row["id"] for row in data if row.get("id") is not None])
 
     for row in data:
         if "id" in row and row["id"] is not None:
             cid = row["id"]
-            emp_count = (
-                supabase.table("employee").select("id", count="exact")
-                .eq("company_id", cid).limit(1).execute().count or 0
-            )
-            cand_count = (
-                supabase.table("candidates").select("id", count="exact")
-                .eq("company_id", cid).limit(1).execute().count or 0
-            )
-            row["review_count"] = emp_count + cand_count
+            row["review_count"] = counts[cid]
             row["id"] = str(cid)
     return data
 

@@ -144,6 +144,9 @@ out/
 
 backend/uv.lock/
 
+# Kursdaten (Zwischenspeicher, E15): nicht einchecken
+backend/data/market/
+
 # Claude Code
 .claude/
 

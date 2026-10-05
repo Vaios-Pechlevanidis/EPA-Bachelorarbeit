@@ -23,6 +23,7 @@ import { useEffect, useMemo, useState, memo } from "react"
 import { API_URL } from "@/config"
 import { ChartCardHeader, SourceToggle, DropdownPicker } from "./ChartHeader"
 import { Star } from "../../icons"
+import { fetchJsonShared } from "@/lib/sharedFetch"
 
 const SOURCE_LABEL = {
   employee: "Mitarbeiter",
@@ -139,9 +140,8 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
           `${API_URL}/analytics/company/${companyId}/topic-ratings-timeseries` +
           `?source=${source}&granularity=year`
 
-        const res = await fetch(url)
-        if (!res.ok) throw new Error(`API Error (years): ${res.status}`)
-        const json = await res.json()
+        // Gemeinsamer Abruf: im Gesamtmodus lädt die Datenabfrage dieselbe Adresse.
+        const json = await fetchJsonShared(url)
 
         const ys = (json.data || [])
           .map((d) => parseYear(d.period))
@@ -210,9 +210,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
         }
 
 
-        const res = await fetch(url)
-        if (!res.ok) throw new Error(`API Error: ${res.status}`)
-        const json = await res.json()
+        const json = await fetchJsonShared(url)
 
         setTopics(json.topics || [])
         setRawData(json.data || [])

@@ -17,8 +17,10 @@ import NegativTopicModal from "../components/dashboard/modals/NegativTopicModal"
 import ImportModal, { getImportHistory } from "../components/dashboard/modals/ImportModal"
 
 import {
-  Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon,
+  Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon, TrendUp,
 } from "../icons"
+import { loadCompanies } from "@/lib/companies"
+import { fetchJsonShared } from "@/lib/sharedFetch"
 import { useTheme } from "../hooks/useTheme"
 import { API_URL } from "../config"
 import { exportKPIsAsPDF } from "../utils/pdfExport"
@@ -80,12 +82,10 @@ export default function Dashboard() {
   const effectiveCompanyId = selectedCompany || selectedCompanyId || companyFromWelcome || null
 
   /* ---- Company helpers ---- */
+  // Gemeinsame Firmenliste (lib/companies.js), dieselbe wie im Suchfeld.
   async function getCompanies() {
     try {
-      const res = await fetch(`${API_URL}/companies`)
-      if (!res.ok) return
-      const d = await res.json()
-      setCompanies(Array.isArray(d) ? d : [])
+      setCompanies(await loadCompanies())
     } catch {}
   }
 
@@ -259,9 +259,8 @@ export default function Dashboard() {
       const fallbackUrl = startDate
         ? `${API_URL}/analytics/company/${companyId}/topic-overview?start_date=${startDate}`
         : `${API_URL}/analytics/company/${companyId}/topic-overview`
-      const fallbackRes = await fetch(fallbackUrl)
-      if (!fallbackRes.ok) { setNegativeTopicItem(null); return }
-      const fallbackJson = await fallbackRes.json()
+      // Gemeinsamer Abruf mit der Themenkarte (dieselbe Adresse, lib/sharedFetch.js).
+      const fallbackJson = await fetchJsonShared(fallbackUrl)
       const topics = Array.isArray(fallbackJson?.topics) ? fallbackJson.topics : []
       setNegativeTopicItem(pickFromTopics(topics))
     } catch { setNegativeTopicItem(null) }
@@ -382,6 +381,14 @@ export default function Dashboard() {
     })
   }, [effectiveCompanyId, selectedCompanyName, navigate])
 
+  /* ---- Aktien-Dashboard (Inkrement 3, E16) ---- */
+  const openStock = useCallback(() => {
+    if (!effectiveCompanyId) return
+    navigate(`/aktie?company=${effectiveCompanyId}`, {
+      state: { company: { id: effectiveCompanyId, name: selectedCompanyName } },
+    })
+  }, [effectiveCompanyId, selectedCompanyName, navigate])
+
   /* ---- Theme ---- */
   const { isDark, toggle: toggleTheme } = useTheme()
 
@@ -423,6 +430,15 @@ export default function Dashboard() {
             >
               <AnomalyIcon />
               Anomalien
+            </button>
+            <button
+              className="ds-nav-link"
+              onClick={openStock}
+              disabled={!effectiveCompanyId}
+              title={effectiveCompanyId ? "Aktienkurs, Empfehlungen, Umsatz und Nachrichten" : "Erst eine Firma auswählen"}
+            >
+              <TrendUp />
+              Aktie
             </button>
           </div>
 
