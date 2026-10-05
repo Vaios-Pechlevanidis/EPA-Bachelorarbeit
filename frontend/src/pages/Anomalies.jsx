@@ -425,10 +425,11 @@ export default function AnomaliesPage() {
                                         </p>
                                     </div>
                                 </div>
+                                {/* Bei ausgewählter Veränderung zeigen "von / bis" ihr Fenster ab dem markierten Monat (E12). */}
                                 <DrilldownPicker
-                                    key={selectionKey ?? "none"}
+                                    key={selectedAnomaly ? `anomaly:${selectedAnomaly.id}` : selectionKey ?? "none"}
                                     months={seriesMonths}
-                                    selection={selection}
+                                    selection={selectedAnomaly ? windows?.after ?? null : selection}
                                     onSelect={selectPeriod}
                                     onClear={selection || selectedAnomaly ? clearSelection : null}
                                 />

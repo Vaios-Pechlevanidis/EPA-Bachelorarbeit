@@ -13,7 +13,9 @@ const selectClass =
 const buttonClass =
     "h-7 px-2.5 rounded-md border border-slate-300 bg-white text-[12px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
 
-/* months: Monate "YYYY-MM" der Reihe, aufsteigend. selection: {from, to} oder null. */
+/* months: Monate "YYYY-MM" der Reihe, aufsteigend. selection: angezeigter Zeitraum
+   {from, to} oder null – die freie Auswahl oder bei einer ausgewählten Veränderung
+   ihr Fenster ab dem markierten Monat; ohne Auswahl steht der letzte Monat da. */
 export function DrilldownPicker({ months, selection, onSelect, onClear }) {
     const [draft, setDraft] = useState(null) // eigene Eingabe, bis "Anzeigen" geklickt wird
     if (!months.length) {
