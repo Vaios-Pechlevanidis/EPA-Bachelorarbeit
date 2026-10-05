@@ -3,12 +3,20 @@
 | | |
 |---|---|
 | Inkrement | 3 (Nachtrag, Zyklus 2) |
-| Anforderungen | Wunsch des Autors vom 2026-10-04: eigenes Dashboard zum Aktienkurs mit Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn sowie Nachrichten |
-| Entscheidungen | E16 in `docs/entscheidungen.md`; E7 (Nachrichtenquelle) und E15 (Kurs, Kennzahlen, Zwischenspeicher) |
-| Status | umgesetzt; **vorläufig** (Nutzungsbedingungen offen) |
+| Anforderungen | Wunsch des Autors vom 2026-10-04: eigenes Dashboard zum Aktienkurs mit Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn sowie Nachrichten. Davon deckt nur der Teil Kurs und Kennzahlen eine Anforderung (FA-15) |
+| Entscheidungen | E16 in `docs/entscheidungen.md` (mit „Rolle in der Arbeit“); E7 (Nachrichtenquelle) und E15 (Kurs, Kennzahlen, Zwischenspeicher) |
+| Status | umgesetzt; **vorläufig** (Nutzungsbedingungen offen). Zusatzkarten außerhalb des evaluierten Artefakts, ausblendbar mit `VITE_SHOW_FINANCE_EXTRAS=false` |
 | Stand | 2026-10-05 |
 
 ## 1. Vorstellung
+
+> **Rolle in der Arbeit (2026-10-05, E16):** Kurs und Kennzahlen decken FA-15, die
+> Anforderung an Kurs und zwei bis drei Kennzahlen. Die Karten **Analystenempfehlungen**,
+> **Umsatz und Nettoergebnis** und **Aktuelle Meldungen** samt den Kacheln Nettoergebnis und
+> Analysten sind ein **Zusatz** ohne Anforderung aus den Interviews und gehören nicht zum
+> evaluierten Artefakt. Der Schalter `VITE_SHOW_FINANCE_EXTRAS` blendet sie aus (Standard an,
+> also wie unten beschrieben). Die Beschreibung unten gilt für den Standard; ohne Zusatzkarten
+> siehe „Ansicht ohne Zusatzkarten“.
 
 Die Seite **„Aktie“** (`/aktie?company=ID`) öffnet sich über „Aktie“ in der Seitenleiste
 des Dashboards oder über den Link „Aktien-Dashboard“ unter dem Diagramm der
@@ -41,14 +49,27 @@ größer; das Füllen der Fensterhöhe ist der Kompromiss).
      `?verlauf=5y|3y|1y`). In der vergrößerten Ansicht öffnet ein Klick auf eine Stufe oder
      Raute die Veränderung mit Vergleich und Bewertungen auf der Anomalien-Seite. Dieses
      Diagramm stand bis zum 2026-10-04 auf der Anomalien-Seite und wurde auf Wunsch des
-     Autors hierher verschoben.
-3. **Analystenempfehlungen:** gestapelte Balken je Monat (letzte vier Monate) mit der Zahl
-   der Empfehlungen „stark kaufen“ bis „stark verkaufen“; der Tooltip nennt alle Stufen.
-4. **Umsatz und Nettoergebnis:** Balken je Geschäftsjahr oder, umschaltbar, je Quartal.
-5. **Aktuelle Meldungen:** die neuesten Meldungen der letzten 90 Tage mit Quelle, Datum
-   und Link, in der Karte scrollbar.
+     Autors hierher verschoben. Seit 2026-10-05 lässt sich der Kurs dort wieder einblenden,
+     Standard aus (Feature 04, E15).
+3. **Analystenempfehlungen** (Zusatz): gestapelte Balken je Monat (letzte vier Monate) mit
+   der Zahl der Empfehlungen „stark kaufen“ bis „stark verkaufen“; der Tooltip nennt alle
+   Stufen.
+4. **Umsatz und Nettoergebnis** (Zusatz): Balken je Geschäftsjahr oder, umschaltbar, je
+   Quartal.
+5. **Aktuelle Meldungen** (Zusatz): die neuesten Meldungen der letzten 90 Tage mit Quelle,
+   Datum und Link, in der Karte scrollbar.
 
-Für Unternehmen ohne Ticker zeigt die Seite neben den Meldungen nur „Kein Aktienkurs: …“.
+Für Unternehmen ohne Ticker zeigt die Seite neben den Meldungen nur „Kein Aktienkurs: …“;
+unter 1280 px Breite steht dieser Hinweis über der Meldungskarte in voller Breite (vorher
+blieb daneben eine Spalte leer).
+
+**Ansicht ohne Zusatzkarten** (`VITE_SHOW_FINANCE_EXTRAS=false`): Die Kennzahlenleiste hat vier
+Kacheln (Kurs, Marktkapitalisierung, Mitarbeitende, Umsatz des letzten Geschäftsjahrs; unter
+768 px zwei mal zwei). Darunter nimmt die Kurskarte mit beiden Ansichten („Kurs“, „Mit
+Bewertung“) das ganze Raster ein, ab 1280 px die ganze Höhe bis zur Hinweiszeile, schmaler mit
+fester Höhe. Ganz unten steht die Zeile mit Wertpapier, Quelle und festem Hinweis. Ohne
+Ticker steht nur „Kein Aktienkurs: …“ in voller Breite. Der Link auf der Anomalien-Seite nennt
+dann „Aktienkurs und Kennzahlen“ statt „Aktienkurs, Kennzahlen und Nachrichten“.
 
 Nutzen: Wer die Bewertungen eines börsennotierten Unternehmens betrachtet, findet die
 wichtigsten Marktinformationen auf einer Seite, ohne die Anomalien-Ansicht zu überladen.
@@ -71,6 +92,13 @@ wichtigsten Marktinformationen auf einer Seite, ohne die Anomalien-Ansicht zu ü
   zwischengespeichert (`backend/data/market/news/`).
 - **Abruf:** `uv run python scripts/fetch_market_data.py --news` füllt beide Speicher. Zur
   Laufzeit gilt `MARKET_LIVE_FETCH` wie in Feature 04.
+- **Schalter `VITE_SHOW_FINANCE_EXTRAS`** (Frontend, `frontend/src/config.js`): Vite liest ihn
+  beim Bauen bzw. beim Start des Entwicklungsservers, etwa
+  `VITE_SHOW_FINANCE_EXTRAS=false npm run build` oder im Docker-Bau als Build-Argument
+  (`frontend/Dockerfile`). Ohne Angabe oder mit einem anderen Wert als `false`/`0` ist er an.
+  Aus heißt: Die Seite ruft `GET /api/analytics/company/{id}/market` (Kurs und Kennzahlen
+  aus E15) statt `/finance` ab und `/news` gar nicht; Karten und Kacheln der Zusätze werden
+  nicht gezeichnet. Backend und Endpunkte bleiben unverändert.
 
 ## 3. Begründung
 
@@ -82,6 +110,13 @@ wichtigsten Marktinformationen auf einer Seite, ohne die Anomalien-Ansicht zu ü
   nicht notierte Unternehmen.
 - Kein Bezug zu den Bewertungen: Die Seite zeigt Marktinformationen nebeneinander, ordnet
   sie keiner auffälligen Veränderung zu und bewertet sie nicht.
+- **Rolle in der Arbeit (2026-10-05, E16):** FA-15 verlangt nur den Kurs und zwei bis drei
+  Kennzahlen; Empfehlungen, Erfolgszahlen und Meldungen gehen auf den Wunsch des Autors
+  zurück, nicht auf die Interviews. Damit die Evaluation (DZ3) nur das Artefakt zeigt, das
+  sich aus den Anforderungen ergibt, lassen sich die Zusätze ausblenden. Ein Schalter statt
+  Entfernen, weil die Seite außerhalb der Evaluation wie gewünscht bestehen bleibt; Standard an,
+  damit sich ohne Zutun nichts ändert. Ohne Zusatzkarten werden ihre Endpunkte auch nicht
+  abgerufen, damit die Evaluationsinstanz keine Daten lädt, die sie nicht zeigt.
 
 ## 4. Grenzen
 
@@ -99,9 +134,25 @@ wichtigsten Marktinformationen auf einer Seite, ohne die Anomalien-Ansicht zu ü
   Umsatz und Gewinn, `/finance`, RSS-Auswertung, Zwischenspeicher der Meldungen, Abruf
   schlägt fehl, `MARKET_LIVE_FETCH=0`, `/news`).
 - Manuelle Prüfung im Browser (SAP SE, NTT DATA SE, Open Grid Europe; hell und dunkel).
+- Manuelle Prüfung 2026-10-05 (Branch `feature/korrektur-kurs-integration`), beide Zustände
+  des Schalters nebeneinander (Entwicklungsserver mit und ohne `VITE_SHOW_FINANCE_EXTRAS=false`):
+  - an: SAP SE bei 1440 × 900 wie vorher (sechs Kacheln, vier Karten), Abrufe `/finance` und
+    `/news`; Open Grid Europe bei 1100 px ohne leere Spalte, bei 1440 px wie vorher,
+  - aus: SAP SE, Telekom, RWE und NTT DATA SE mit vier Kacheln und Kurskarte über die ganze
+    Fläche, nur `/market` abgerufen, kein `/finance`, kein `/news`; Ansicht „Mit Bewertung“
+    und vergrößerte Karte funktionieren; NTT DATA SE mit Vermerk der Konzernmutter; Open Grid
+    Europe nur mit „Kein Aktienkurs“ in voller Breite; 1440, 1100 und 375 Pixel Breite ohne
+    Lücken und ohne seitliches Scrollen; hell und dunkel.
+- Bau mit und ohne Schalter (`npm run build`, `VITE_SHOW_FINANCE_EXTRAS=false vite build`)
+  fehlerfrei. Der Docker-Bau mit Build-Argument wurde nicht ausgeführt.
 
 ## 6. Offene Punkte
 
 - Nutzungsbedingungen von Yahoo Finance und Google News (E7, E15, E16).
-- Soll die Seite in der Evaluation (DZ3) gezeigt werden?
+- Soll die Seite in der Evaluation (DZ3) gezeigt werden? Nachtrag 2026-10-05: Kurs und
+  Kennzahlen gehören zum evaluierten Artefakt, die Zusatzkarten nicht (E16); offen bleibt, ob
+  die Evaluationsinstanz mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut wird.
+- Der Hinweistext des Eintrags „Aktie“ in der Seitenleiste des Dashboards nennt weiter
+  „Aktienkurs, Empfehlungen, Umsatz und Nachrichten“, auch ohne Zusatzkarten
+  (`frontend/src/pages/Dashboard.jsx` hat ältere Lint-Fehler und wurde nicht angefasst).
 - Bessere Suchbegriffe für mehrdeutige Namen (z. B. Carl Zeiss), vom Autor festzulegen.

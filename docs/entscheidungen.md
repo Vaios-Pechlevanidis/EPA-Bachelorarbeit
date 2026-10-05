@@ -467,6 +467,20 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance für die Verwendung in der Arbeit (Abbildungen,
   Weitergabe der Daten); Zuordnung Carl Zeiss; ob für Compugroup historische Kurse aus einer
   anderen Quelle nachgetragen werden.
+- **Nachtrag 2026-10-05 (Kurs auf der Anomalien-Seite):** Der Kurs ist auf der
+  Anomalien-Detailseite wieder einblendbar, **Standard aus**. Hat das Unternehmen einen Ticker
+  (Firmenliste), steht im Kopf des Abschnitts „Monatsverlauf“ das Kästchen „Aktienkurs“; der
+  Zustand steht in der Adresse (`?kurs=an`). Erst dann wird `/market` geladen. Der Kurs folgt
+  dem gewählten Zeitraum und bleibt beim Wechsel von Quelle, Status und Dimension erhalten;
+  Markierungen, Vergleichsfenster, Klick und Ziehen funktionieren wie ohne Kurs. Unter dem
+  Diagramm stehen dann der feste Hinweis, bei der Konzernmutter der ausdrückliche Vermerk und
+  die Quelle; der Link zum Aktien-Dashboard bleibt. Ohne Ticker gibt es kein Kästchen, nur den
+  Link. Die Dashboard-Karte bleibt ohne Kurs. Es gibt weiterhin keine Korrelation und keine
+  Aussage über einen Zusammenhang.
+  **Begründung:** Das Exposé beschreibt eine integrierte Darstellung aus Bewertungsverlauf mit
+  Anomalien, Erklärungsansätzen, Aktienkursverlauf und Kennzahlen (TF4); seit dem Nachtrag in
+  E16 vom 2026-10-04 stand der Kurs nur auf `/aktie`. Standard aus, damit die Seite ohne Zutun
+  übersichtlich bleibt.
 - **Status:** vorläufig.
 
 ## E16 – Aktien-Dashboard
@@ -485,7 +499,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     Veränderungen, Kurs auf der rechten Achse) steht nur noch hier, nicht mehr auf der
     Anomalien-Detailseite. Diese zeigt unter ihrem Diagramm einen Link zum Aktien-Dashboard
     und bleibt sonst wie vor Inkrement 3. Ein Klick auf eine Markierung öffnet die
-    Veränderung auf der Anomalien-Seite.
+    Veränderung auf der Anomalien-Seite. (Seit 2026-10-05 lässt sich der Kurs auf der
+    Anomalien-Seite wieder einblenden, Standard aus; siehe Nachtrag in E15.)
   - **Kursverlauf:** die bereinigten Monatsschlusskurse aus E15, Fenster 1, 3, 5 (Standard),
     10 Jahre oder alles; dazu die Kennzahlenzeile, Quelle und der Hinweis aus E15.
   - **Analystenempfehlungen:** `yfinance.Ticker.recommendations`, Zahl der Empfehlungen je
@@ -503,6 +518,16 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   - Endpunkte `GET /api/analytics/company/{id}/finance` (Kurs, Kennzahlen, Empfehlungen,
     Umsatz und Gewinn) und `GET /api/analytics/company/{id}/news`; `/market` bleibt
     unverändert. Datenbank nur lesend, keine neuen Abhängigkeiten.
+- **Rolle in der Arbeit (Nachtrag 2026-10-05):** Kurs und Kennzahlen decken FA-15 (Kurs und
+  zwei bis drei Kennzahlen: Marktkapitalisierung, Mitarbeitende, Umsatz aus E15). Die übrigen
+  Karten – Analystenempfehlungen, Umsatz und Nettoergebnis, Aktuelle Meldungen – und ihre
+  Kacheln (Nettoergebnis, Analysten) sind ein Zusatz ohne Anforderung aus den Interviews und
+  gehören nicht zum evaluierten Artefakt. Für die Evaluationsinstanz lassen sie sich
+  ausblenden, indem das Frontend mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut wird (Standard
+  an, also wie bisher). Die Seite zeigt dann Kurs, Kurs mit Bewertungsverlauf, die Kennzahlen aus FA-15
+  und den Hinweis aus E15; sie ruft `/market` statt `/finance` und `/news` nicht ab, und die
+  Kurskarte nimmt die ganze Fläche ein. Die Einträge oben beschreiben die Seite, wie sie am
+  2026-10-04 entstand, und bleiben als Verlauf stehen.
 - **Begründung:** Die Seite sammelt die Marktinformationen an einer Stelle, ohne die
   Anomalien-Ansicht zu überladen. Sie bleibt eine Einordnung: Es gibt keine Verknüpfung von
   Empfehlungen, Gewinn oder Meldungen mit den Bewertungen, keine Bewertung der Meldungen und
@@ -516,7 +541,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   sehr kleinen Unternehmen keine (PLEdoc). Für NTT DATA SE stammen Kurs, Empfehlungen und
   Zahlen von der Konzernmutter, die Nachrichten von der Suche nach „NTT DATA“.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance und Google News für die Arbeit (wie E7,
-  E15); ob die Seite in der Evaluation (DZ3) gezeigt wird.
+  E15); ob die Seite in der Evaluation (DZ3) gezeigt wird. Nachtrag 2026-10-05: Kurs und
+  Kennzahlen gehören zum evaluierten Artefakt, die Zusatzkarten nicht (Rolle in der Arbeit);
+  offen bleibt, ob die Evaluationsinstanz mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut wird.
 - **Status:** vorläufig.
 
 ## E17 – Freier Drill-down und Vergleich mit dem Zeitraum davor

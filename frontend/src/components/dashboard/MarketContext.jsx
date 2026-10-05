@@ -1,8 +1,10 @@
 /* ============================================================================
    MarketContext — Kennzahlen, Herkunft und Hinweis im Aktien-Dashboard
-   (Inkrement 3, E15, E16). Daten: GET /analytics/company/{id}/finance. Der
-   Kurs zeigt das Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht
-   behauptet und nicht berechnet.
+   (Inkrement 3, E15, E16; Daten: GET /analytics/company/{id}/finance, ohne
+   Zusatzkarten /market) sowie Umschalter und Hinweis für den einblendbaren
+   Kurs auf der Anomalien-Seite (Daten: /market). Der Kurs zeigt das
+   Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht behauptet und
+   nicht berechnet.
    ============================================================================ */
 import {
     MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE,
@@ -28,17 +30,20 @@ export function PriceToggle({ checked, onChange }) {
 
 
 /* Kennzahlenleiste oben im Aktien-Dashboard. Aktuelle Werte tragen
-   "aktuell, Stand …", Jahreswerte ihr Geschäftsjahr; fehlende Werte zeigen "–". */
-export function FinanceKpis({ market, last, first, change }) {
+   "aktuell, Stand …", Jahreswerte ihr Geschäftsjahr; fehlende Werte zeigen "–".
+   extras=false (VITE_SHOW_FINANCE_EXTRAS=false): nur Kurs und die Kennzahlen
+   aus FA-15 (Marktkapitalisierung, Mitarbeitende, Umsatz), ohne die Kacheln
+   Nettoergebnis und Analysten der Zusatzkarten. */
+export function FinanceKpis({ market, last, first, change, extras = true }) {
     const metrics = market?.metrics ?? {}
-    const annual = market?.earnings?.annual ?? []
+    const annual = (extras && market?.earnings?.annual) || []
     const lastYear = annual[annual.length - 1]
     const latestRevenue = metrics.revenue?.[metrics.revenue.length - 1]
     const analysts = market?.analysts?.months ?? []
     const latestAnalysts = analysts[analysts.length - 1]
     const currency = market?.earnings?.currency ?? latestRevenue?.unit ?? ""
     return (
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+        <div className={`grid gap-3 grid-cols-2 ${extras ? "md:grid-cols-3 xl:grid-cols-6" : "md:grid-cols-4"}`}>
             <Tile
                 label={last ? `Kurs · ${fmtMonth(last.period)}` : "Kurs"}
                 value={last ? `${fmtPrice(last.close)} ${market.currency ?? ""}` : "–"}
@@ -59,36 +64,41 @@ export function FinanceKpis({ market, last, first, change }) {
                 value={lastYear?.revenue != null ? fmtAmount(lastYear.revenue, currency) : latestRevenue ? fmtAmount(latestRevenue.value, latestRevenue.unit) : "–"}
                 note={lastYear ? fiscalYearLabel(lastYear.period_end) : latestRevenue ? fiscalYearLabel(latestRevenue.fiscal_year_end) : "keine Angabe"}
             />
-            <Tile
-                label="Nettoergebnis"
-                value={lastYear?.net_income != null ? fmtAmount(lastYear.net_income, currency) : "–"}
-                note={lastYear ? fiscalYearLabel(lastYear.period_end) : "keine Angabe"}
-            />
-            <Tile
-                label={latestAnalysts ? `Analysten · ${fmtMonth(latestAnalysts.month)}` : "Analysten"}
-                value={latestAnalysts ? `${latestAnalysts.strong_buy + latestAnalysts.buy} / ${latestAnalysts.hold} / ${latestAnalysts.sell + latestAnalysts.strong_sell}` : "–"}
-                note={latestAnalysts ? "kaufen / halten / verkaufen" : "keine Angabe"}
-            />
+            {extras && (
+                <>
+                    <Tile
+                        label="Nettoergebnis"
+                        value={lastYear?.net_income != null ? fmtAmount(lastYear.net_income, currency) : "–"}
+                        note={lastYear ? fiscalYearLabel(lastYear.period_end) : "keine Angabe"}
+                    />
+                    <Tile
+                        label={latestAnalysts ? `Analysten · ${fmtMonth(latestAnalysts.month)}` : "Analysten"}
+                        value={latestAnalysts ? `${latestAnalysts.strong_buy + latestAnalysts.buy} / ${latestAnalysts.hold} / ${latestAnalysts.sell + latestAnalysts.strong_sell}` : "–"}
+                        note={latestAnalysts ? "kaufen / halten / verkaufen" : "keine Angabe"}
+                    />
+                </>
+            )}
         </div>
     )
 }
 
 /* Wessen Kurs gezeigt wird: Wertpapier und Ticker; bei der Konzernmutter ausdrücklich. */
-function securityText(market, companyName) {
+function securityText(market, companyName, subject) {
     const security = market.ticker_name ? `${market.ticker_name} (${market.ticker})` : market.ticker
     if (market.ticker_scope === PARENT_SCOPE) {
-        return `Kurs und Kennzahlen der Konzernmutter ${security}, nicht${companyName ? ` von ${companyName}` : " des Unternehmens"} selbst.`
+        return `${subject} der Konzernmutter ${security}, nicht${companyName ? ` von ${companyName}` : " des Unternehmens"} selbst.`
     }
-    return `Kurs und Kennzahlen: ${security}.`
+    return `${subject}: ${security}.`
 }
 
-/* Eine Zeile mit Wertpapier, Quelle, Abrufdatum und festem Hinweis (E15). */
-export function MarketSourceNote({ market, companyName }) {
+/* Eine Zeile mit Wertpapier, Quelle, Abrufdatum und festem Hinweis (E15).
+   subject nennt, was gezeigt wird ("Kurs" auf der Anomalien-Seite). */
+export function MarketSourceNote({ market, companyName, subject = "Kurs und Kennzahlen" }) {
     if (!market?.available) return null
     return (
         <p className="m-0 text-[11px] text-slate-500 leading-4">
             <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}{" "}
-            {securityText(market, companyName)} Quelle: {market.source}, Monatsschlusskurse um Splits und Dividenden
+            {securityText(market, companyName, subject)} Quelle: {market.source}, Monatsschlusskurse um Splits und Dividenden
             bereinigt; abgerufen am {fmtDay(market.fetched_at?.slice(0, 10))}.
         </p>
     )

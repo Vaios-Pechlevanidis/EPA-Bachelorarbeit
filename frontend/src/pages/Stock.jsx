@@ -11,6 +11,7 @@ import { AnalystChart, EarningsChart, EmptyNote, NewsList, StockPriceChart } fro
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useCompanyResource } from "@/hooks/useCompanyResource"
 import { useTheme } from "@/hooks/useTheme"
+import { SHOW_FINANCE_EXTRAS } from "@/config"
 import { loadCompanyName } from "@/lib/companies"
 import { DEFAULT_TIME_RANGE, fmtPeriod, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import {
@@ -34,6 +35,13 @@ import {
    öffnet ein Klick auf eine Markierung sie auf der Anomalien-Seite.
    Jahres- oder Quartalszahlen: ?periode=quartal. Alles ist Einordnung des
    Marktumfelds; ein Zusammenhang mit den Bewertungen wird nicht behauptet.
+
+   Rolle in der Arbeit (E16): Kurs und Kennzahlen decken FA-15. Die Karten
+   Analystenempfehlungen, Umsatz und Nettoergebnis sowie Aktuelle Meldungen
+   und ihre Kacheln (Nettoergebnis, Analysten) sind ein Zusatz außerhalb des
+   evaluierten Artefakts. VITE_SHOW_FINANCE_EXTRAS=false blendet sie aus
+   (config.js); die Seite lädt dann /market statt /finance und keine
+   Nachrichten, die Kurskarte nimmt die ganze Breite ein.
    ============================================================================ */
 
 const PRICE_VIEWS = [
@@ -124,8 +132,10 @@ export default function StockPage() {
         return () => { active = false }
     }, [companyId, names])
 
-    const finance = useCompanyResource(companyId, "finance")
-    const news = useCompanyResource(companyId, "news")
+    // Ohne Zusatzkarten weder /finance (Empfehlungen, Umsatz und Gewinn) noch /news:
+    // Kurs und Kennzahlen kommen dann aus /market.
+    const finance = useCompanyResource(companyId, SHOW_FINANCE_EXTRAS ? "finance" : "market")
+    const news = useCompanyResource(SHOW_FINANCE_EXTRAS ? companyId : null, "news")
     const data = finance.data
     const available = Boolean(data?.available)
     const visiblePrices = useMemo(() => pricesInRange(data?.prices, rangeKey), [data, rangeKey])
@@ -263,7 +273,9 @@ export default function StockPage() {
             <div className={`px-5 py-3 max-w-[1600px] w-full mx-auto ${fill ? "flex-none h-[calc(100vh-48px)] min-h-[620px] flex flex-col" : "flex-1"}`}>
                 {!companyId ? (
                     <PageSection icon={<Building2 />} eyebrow="AUSWAHL" title="Firma wählen">
-                        <p className="m-0 text-[13px] text-slate-500">Oben rechts eine Firma suchen, um Kurs, Empfehlungen und Nachrichten zu sehen.</p>
+                        <p className="m-0 text-[13px] text-slate-500">
+                            Oben rechts eine Firma suchen, um {SHOW_FINANCE_EXTRAS ? "Kurs, Empfehlungen und Nachrichten" : "Kurs und Kennzahlen"} zu sehen.
+                        </p>
                     </PageSection>
                 ) : finance.loading ? (
                     <Loading height={300} />
@@ -273,9 +285,12 @@ export default function StockPage() {
                     </PageSection>
                 ) : (
                     <div className={fill ? "flex-1 min-h-0 flex flex-col gap-3" : "space-y-3"}>
-                        {available && <FinanceKpis market={data} first={first} last={last} change={change} />}
+                        {available && <FinanceKpis market={data} first={first} last={last} change={change} extras={SHOW_FINANCE_EXTRAS} />}
 
-                        <div className={`grid gap-3 lg:grid-cols-2 xl:grid-cols-3 ${fill ? "flex-1 min-h-0 grid-rows-[minmax(0,1.25fr)_minmax(0,1fr)]" : ""}`}>
+                        {/* Mit Zusatzkarten: Kurs (zwei Spalten), Meldungen (zwei Reihen), darunter
+                            Empfehlungen und Umsatz/Nettoergebnis; ohne: die Kurskarte über die ganze Fläche. */}
+                        <div className={`grid gap-3 lg:grid-cols-2 xl:grid-cols-3 ${!fill ? "" : SHOW_FINANCE_EXTRAS
+                            ? "flex-1 min-h-0 grid-rows-[minmax(0,1.25fr)_minmax(0,1fr)]" : "flex-1 min-h-0 grid-rows-[minmax(0,1fr)]"}`}>
                             {available ? (
                                 <>
                                     <ExpandableCard
@@ -284,46 +299,52 @@ export default function StockPage() {
                                         title={priceView === "kurs" ? "Aktienkurs" : "Aktienkurs und Sternebewertung"}
                                         subtitle={priceSubtitle}
                                         actions={priceActions}
-                                        cardHeight={240}
+                                        cardHeight={SHOW_FINANCE_EXTRAS ? 240 : 320}
                                         fill={fill}
-                                        className="lg:col-span-2"
+                                        className={SHOW_FINANCE_EXTRAS ? "lg:col-span-2" : "lg:col-span-2 xl:col-span-3"}
                                     >
                                         {priceBody}
                                     </ExpandableCard>
-                                    {newsCard}
-                                    <ExpandableCard
-                                        icon={<Users />}
-                                        eyebrow="ANALYSTEN · YAHOO FINANCE"
-                                        title="Analystenempfehlungen"
-                                        subtitle="Empfehlungen je Stufe, letzte vier Monate"
-                                        accent="bg-emerald-500"
-                                        cardHeight={210}
-                                        fill={fill}
-                                    >
-                                        {({ modal, height }) => <AnalystChart analysts={data.analysts} height={height} compact={!modal} />}
-                                    </ExpandableCard>
-                                    <ExpandableCard
-                                        icon={<BarChart3 />}
-                                        eyebrow="ERFOLGSRECHNUNG · YAHOO FINANCE"
-                                        title="Umsatz und Nettoergebnis"
-                                        subtitle={earningsPeriod === "annual" ? "Je Geschäftsjahr" : "Je Quartal"}
-                                        accent="bg-indigo-500"
-                                        cardHeight={210}
-                                        fill={fill}
-                                        actions={() => (
-                                            <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode"
-                                                onChange={(key) => updateParams({ periode: key === "quarterly" ? "quartal" : null })} />
-                                        )}
-                                    >
-                                        {({ modal, height }) => <EarningsChart earnings={data.earnings} period={earningsPeriod} height={height} compact={!modal} />}
-                                    </ExpandableCard>
+                                    {SHOW_FINANCE_EXTRAS && (
+                                        <>
+                                            {newsCard}
+                                            <ExpandableCard
+                                                icon={<Users />}
+                                                eyebrow="ANALYSTEN · YAHOO FINANCE"
+                                                title="Analystenempfehlungen"
+                                                subtitle="Empfehlungen je Stufe, letzte vier Monate"
+                                                accent="bg-emerald-500"
+                                                cardHeight={210}
+                                                fill={fill}
+                                            >
+                                                {({ modal, height }) => <AnalystChart analysts={data.analysts} height={height} compact={!modal} />}
+                                            </ExpandableCard>
+                                            <ExpandableCard
+                                                icon={<BarChart3 />}
+                                                eyebrow="ERFOLGSRECHNUNG · YAHOO FINANCE"
+                                                title="Umsatz und Nettoergebnis"
+                                                subtitle={earningsPeriod === "annual" ? "Je Geschäftsjahr" : "Je Quartal"}
+                                                accent="bg-indigo-500"
+                                                cardHeight={210}
+                                                fill={fill}
+                                                actions={() => (
+                                                    <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode"
+                                                        onChange={(key) => updateParams({ periode: key === "quarterly" ? "quartal" : null })} />
+                                                )}
+                                            >
+                                                {({ modal, height }) => <EarningsChart earnings={data.earnings} period={earningsPeriod} height={height} compact={!modal} />}
+                                            </ExpandableCard>
+                                        </>
+                                    )}
                                 </>
                             ) : (
                                 <>
-                                    <PageSection icon={<LineChart />} eyebrow="AKTIE" title="Aktienkurs">
+                                    {/* Ohne Kurs: Hinweis über die ganze Zeile, ab xl neben den Meldungen. */}
+                                    <PageSection icon={<LineChart />} eyebrow="AKTIE" title="Aktienkurs"
+                                        className={SHOW_FINANCE_EXTRAS ? "lg:col-span-2 xl:col-span-1" : "lg:col-span-2 xl:col-span-3"}>
                                         <EmptyNote height={80}>{noPriceText(data?.reason)}</EmptyNote>
                                     </PageSection>
-                                    {newsCard}
+                                    {SHOW_FINANCE_EXTRAS && newsCard}
                                 </>
                             )}
                         </div>
