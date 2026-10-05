@@ -1,15 +1,19 @@
 /* ============================================================================
-   MarketContext — Aktienkurs als Einordnung im Aktien-Dashboard (Inkrement 3, E15, E16).
-   Daten: GET /analytics/company/{id}/finance. Der Kurs zeigt das
-   Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht behauptet und
-   nicht berechnet.
+   MarketContext — Kennzahlen, Herkunft und Hinweis im Aktien-Dashboard
+   (Inkrement 3, E15, E16). Daten: GET /analytics/company/{id}/finance. Der
+   Kurs zeigt das Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht
+   behauptet und nicht berechnet.
    ============================================================================ */
-import { MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE, fiscalYearLabel, fmtAmount, fmtDay, noPriceText } from "@/lib/market"
+import {
+    MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE,
+    fiscalYearLabel, fmtAmount, fmtDay, fmtMonth, fmtPercent, fmtPrice,
+} from "@/lib/market"
 
-/* Umschalter "Aktienkurs" im Kopf des Diagrammabschnitts. */
+/* Umschalter "Aktienkurs" (Kurs im Bewertungsverlauf ein/aus). */
 export function PriceToggle({ checked, onChange }) {
     return (
-        <label className="inline-flex items-center gap-1.5 text-[12px] text-slate-700 cursor-pointer select-none">
+        <label className="inline-flex items-center gap-1.5 text-[12px] text-slate-700 cursor-pointer select-none"
+            onClick={(e) => e.stopPropagation()}>
             <input
                 type="checkbox"
                 className="accent-violet-600"
@@ -21,53 +25,58 @@ export function PriceToggle({ checked, onChange }) {
     )
 }
 
-function Metric({ label, value, note }) {
+function Tile({ label, value, note, tone }) {
     return (
-        <div className="min-w-0">
-            <p className="m-0 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">{label}</p>
-            <p className="m-0 mt-1 text-[13px] font-semibold text-slate-900 tnum">{value}</p>
-            <p className="m-0 text-[11px] text-slate-500 leading-4">{note}</p>
+        <div className="bg-white border border-slate-200 rounded-lg px-3.5 py-2 min-w-0 shadow-xs">
+            <p className="m-0 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none truncate">{label}</p>
+            <p className="m-0 mt-1 text-[16px] leading-6 font-semibold text-slate-900 tnum truncate" style={tone ? { color: tone } : undefined}>{value}</p>
+            <p className="m-0 text-[11px] text-slate-500 leading-4 truncate" title={note}>{note}</p>
         </div>
     )
 }
 
-/* Kennzahlenzeile unter dem Diagramm. Aktuelle Werte tragen "aktuell, Stand …",
-   damit niemand sie auf einen früheren Zeitraum bezieht; der Umsatz steht je
-   Geschäftsjahr. Fehlende Werte erscheinen nicht und werden nicht geschätzt. */
-export function MarketMetrics({ metrics }) {
-    const marketCap = metrics?.market_cap
-    const employees = metrics?.employees
-    const revenue = metrics?.revenue ?? []
-    if (!marketCap && !employees && !revenue.length) return null
+/* Kennzahlenleiste oben im Aktien-Dashboard. Aktuelle Werte tragen
+   "aktuell, Stand …", Jahreswerte ihr Geschäftsjahr; fehlende Werte zeigen "–". */
+export function FinanceKpis({ market, last, first, change }) {
+    const metrics = market?.metrics ?? {}
+    const annual = market?.earnings?.annual ?? []
+    const lastYear = annual[annual.length - 1]
+    const latestRevenue = metrics.revenue?.[metrics.revenue.length - 1]
+    const analysts = market?.analysts?.months ?? []
+    const latestAnalysts = analysts[analysts.length - 1]
+    const currency = market?.earnings?.currency ?? latestRevenue?.unit ?? ""
     return (
-        <div className="grid gap-x-6 gap-y-3 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
-            {marketCap && (
-                <Metric
-                    label="Marktkapitalisierung"
-                    value={fmtAmount(marketCap.value, marketCap.unit)}
-                    note={`aktuell, Stand ${fmtDay(marketCap.as_of)}`}
-                />
-            )}
-            {employees && (
-                <Metric
-                    label="Mitarbeitende"
-                    value={employees.value.toLocaleString("de-DE")}
-                    note={`aktuell, Stand ${fmtDay(employees.as_of)} (Abruf)`}
-                />
-            )}
-            {revenue.length > 0 && (
-                <div className="min-w-0 col-span-full sm:col-span-2">
-                    <p className="m-0 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">Umsatz je Geschäftsjahr</p>
-                    <p className="m-0 mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[12px] text-slate-700 tnum">
-                        {revenue.map((r) => (
-                            <span key={r.fiscal_year_end}>
-                                <span className="text-slate-500">{fiscalYearLabel(r.fiscal_year_end)}</span>{" "}
-                                <span className="font-semibold text-slate-900">{fmtAmount(r.value, r.unit)}</span>
-                            </span>
-                        ))}
-                    </p>
-                </div>
-            )}
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+            <Tile
+                label="Letzter Monatsschluss"
+                value={last ? `${fmtPrice(last.close)} ${market.currency ?? ""}` : "–"}
+                note={last ? `${fmtMonth(last.period)} · ${fmtPercent(change)} seit ${fmtMonth(first.period)}` : "–"}
+            />
+            <Tile
+                label="Marktkapitalisierung"
+                value={metrics.market_cap ? fmtAmount(metrics.market_cap.value, metrics.market_cap.unit) : "–"}
+                note={metrics.market_cap ? `aktuell, Stand ${fmtDay(metrics.market_cap.as_of)}` : "keine Angabe"}
+            />
+            <Tile
+                label="Mitarbeitende"
+                value={metrics.employees ? metrics.employees.value.toLocaleString("de-DE") : "–"}
+                note={metrics.employees ? `aktuell, Stand ${fmtDay(metrics.employees.as_of)} (Abruf)` : "keine Angabe"}
+            />
+            <Tile
+                label="Umsatz"
+                value={lastYear?.revenue != null ? fmtAmount(lastYear.revenue, currency) : latestRevenue ? fmtAmount(latestRevenue.value, latestRevenue.unit) : "–"}
+                note={lastYear ? fiscalYearLabel(lastYear.period_end) : latestRevenue ? fiscalYearLabel(latestRevenue.fiscal_year_end) : "keine Angabe"}
+            />
+            <Tile
+                label="Nettoergebnis"
+                value={lastYear?.net_income != null ? fmtAmount(lastYear.net_income, currency) : "–"}
+                note={lastYear ? fiscalYearLabel(lastYear.period_end) : "keine Angabe"}
+            />
+            <Tile
+                label="Analystenempfehlungen"
+                value={latestAnalysts ? `${latestAnalysts.strong_buy + latestAnalysts.buy} / ${latestAnalysts.hold} / ${latestAnalysts.sell + latestAnalysts.strong_sell}` : "–"}
+                note={latestAnalysts ? `kaufen / halten / verkaufen · ${fmtMonth(latestAnalysts.month)}` : "keine Angabe"}
+            />
         </div>
     )
 }
@@ -81,24 +90,14 @@ function securityText(market, companyName) {
     return `Kurs und Kennzahlen: ${security}.`
 }
 
-/* Block unter dem Diagramm: Kennzahlen mit Herkunft und festem Hinweis oder,
-   ohne Kurs, nur der Grund. Während des Ladens und bei einem Ladefehler
-   bleibt die Ansicht wie ohne Kurs. */
-export function MarketContext({ market, loading, error, companyName }) {
-    if (loading || error || !market) return null
-    if (!market.available) {
-        return <p className="m-0 text-[11px] text-slate-500">{noPriceText(market.reason)}</p>
-    }
+/* Eine Zeile mit Wertpapier, Quelle, Abrufdatum und festem Hinweis (E15). */
+export function MarketSourceNote({ market, companyName }) {
+    if (!market?.available) return null
     return (
-        <div className="space-y-3">
-            <MarketMetrics metrics={market.metrics} />
-            <p className="m-0 text-[11px] text-slate-500 leading-4">
-                {securityText(market, companyName)} Quelle: {market.source}, Kurse als Monatsschluss, um Splits und Dividenden
-                bereinigt; abgerufen am {fmtDay(market.fetched_at?.slice(0, 10))}.
-            </p>
-            <p className="m-0 text-[11px] text-slate-500 leading-4">
-                <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}
-            </p>
-        </div>
+        <p className="m-0 text-[11px] text-slate-500 leading-4">
+            <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}{" "}
+            {securityText(market, companyName)} Quelle: {market.source}, Monatsschlusskurse um Splits und Dividenden
+            bereinigt; abgerufen am {fmtDay(market.fetched_at?.slice(0, 10))}.
+        </p>
     )
 }

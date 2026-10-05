@@ -29,8 +29,8 @@ import { PARENT_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
    Wortwahl: "auffällige Veränderung", keine Aussage über Ursachen.
    Inkrement 2: Quelle (Mitarbeiter, Bewerber) und Status wählen die
    Bewertendengruppe; die Erkennung läuft je Gruppe neu (E13).
-   Inkrement 3: Auf der Detailseite läuft der Aktienkurs als Einordnung auf einer
-   zweiten Y-Achse mit (prop "market"); die Karte zeigt ihn nicht.
+   Inkrement 3: Im Aktien-Dashboard läuft der Aktienkurs als Einordnung auf einer
+   zweiten Y-Achse mit (prop "market"); die Dashboard-Karte übergibt keinen Kurs.
    ============================================================================ */
 
 // Farbe je Richtung als Theme-Token (index.css: hell 700er-, dunkel 400er-Töne).
@@ -356,7 +356,7 @@ function isolatedDot(chartData, opacity = 1) {
    Stufen, Niveaulinie, ausführliche Legende und ausgeblendete Ränder stehen auf
    der Detailseite.
    Ausführliche Legende und ausgeblendete Ränder stehen auf der Detailseite. */
-/* market (nur Detailseite, Inkrement 3, E15): {prices: [{period, close}], currency,
+/* market (Aktien-Dashboard, Inkrement 3, E15/E16): {prices: [{period, close}], currency,
    ticker} oder null. Der Kurs läuft als dünne Linie auf einer rechten Y-Achse mit,
    nur für die angezeigten Monate. Er ist eine Einordnung des Marktumfelds; es wird
    kein Zusammenhang mit den Bewertungen berechnet. */
@@ -368,8 +368,8 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
     const levels = useMemo(() => (showLevels ? levelsFromAnomalies(anomalies) : {}), [anomalies, showLevels])
     // Monatsschlusskurs je Monat; Monate ohne Kurs bleiben leer.
     const priceByPeriod = useMemo(
-        () => (!compact && market?.prices?.length ? Object.fromEntries(market.prices.map((p) => [p.period, p.close])) : null),
-        [market, compact],
+        () => (market?.prices?.length ? Object.fromEntries(market.prices.map((p) => [p.period, p.close])) : null),
+        [market],
     )
     const fullData = useMemo(() => {
         const interp = interpolateGaps(series)

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, BarChart3, Building2, LineChart, Newspaper, Users } from "lucide-react"
-import { Anomaly as AnomalyIcon, TrendUp } from "../icons"
+import { TrendUp } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { PageSection } from "@/components/dashboard/PageSection"
-import { MarketContext, PriceToggle } from "@/components/dashboard/MarketContext"
+import { ExpandableCard } from "@/components/dashboard/ExpandableCard"
+import { FinanceKpis, MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
 import { AnomalyChart, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnalystChart, EarningsChart, EmptyNote, NewsList, StockPriceChart } from "@/components/dashboard/FinanceCards"
 import { useAnomalies } from "@/hooks/useAnomalies"
@@ -12,22 +13,31 @@ import { useCompanyResource } from "@/hooks/useCompanyResource"
 import { useTheme } from "@/hooks/useTheme"
 import { DEFAULT_TIME_RANGE, fmtPeriod, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import {
-    DEFAULT_PRICE_RANGE, MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE, PRICE_OFF, PRICE_PARAM, PRICE_RANGES, fmtMonth, fmtPercent, fmtPrice, isPriceRangeKey, noPriceText, pricesInRange,
+    DEFAULT_PRICE_RANGE, PARENT_SCOPE, PRICE_OFF, PRICE_PARAM, PRICE_RANGES, isPriceRangeKey, noPriceText, pricesInRange,
 } from "@/lib/market"
 import { API_URL } from "../config"
 
 /* ============================================================================
    Stock — Aktien-Dashboard (/aktie, Inkrement 3, E16).
-   Kursverlauf, Analystenempfehlungen, Umsatz und Nettoergebnis sowie aktuelle
-   Nachrichten eines Unternehmens auf einer eigenen Seite. Firma, Zeitfenster
-   und Jahres- oder Quartalsansicht stehen in der URL
-   (?company=19&range=3y&periode=quartal). Der Bereich "Kurs und
-   Bewertungsverlauf" legt den Kurs auf einer zweiten Achse über den
-   Monatsverlauf der Sternebewertung (Mitarbeitende, Gesamtbewertung) mit den
-   auffälligen Veränderungen; Zeitraum ?verlauf=5y|3y|1y, Kurs aus mit ?kurs=aus.
-   Ein Klick auf eine Markierung öffnet sie auf der Anomalien-Seite. Alles ist Einordnung des
+   Übersicht auf einer Bildschirmseite: oben eine Kennzahlenleiste, darunter
+   Karten für Kursverlauf, Analystenempfehlungen, Umsatz und Nettoergebnis
+   sowie Nachrichten. Jede Karte vergrößert sich per Klick (ExpandableCard,
+   wie im Haupt-Dashboard).
+
+   Die Kurskarte hat zwei Ansichten (?ansicht=bewertung): nur der Kurs
+   (Zeitraum ?range=1y|3y|5y|10y|max) oder der Kurs auf einer zweiten Achse
+   über dem Monatsverlauf der Sternebewertung (Mitarbeitende,
+   Gesamtbewertung) mit den auffälligen Veränderungen (Zeitraum
+   ?verlauf=5y|3y|1y, Kurs aus mit ?kurs=aus). In der vergrößerten Ansicht
+   öffnet ein Klick auf eine Markierung sie auf der Anomalien-Seite.
+   Jahres- oder Quartalszahlen: ?periode=quartal. Alles ist Einordnung des
    Marktumfelds; ein Zusammenhang mit den Bewertungen wird nicht behauptet.
    ============================================================================ */
+
+const PRICE_VIEWS = [
+    { key: "kurs", label: "Kurs" },
+    { key: "bewertung", label: "Mit Bewertung" },
+]
 
 const EARNINGS_PERIODS = [
     { key: "annual", label: "Jährlich" },
@@ -114,9 +124,10 @@ export default function StockPage() {
     const change = first && last && first.close ? ((last.close - first.close) / first.close) * 100 : null
     const security = data?.ticker ? `${data.ticker_name ?? data.ticker} · ${data.ticker}` : ""
     const isParent = data?.ticker_scope === PARENT_SCOPE
+    const priceView = searchParams.get("ansicht") === "bewertung" ? "bewertung" : "kurs"
 
     // Kurs und Bewertungsverlauf: Gesamtbewertung der Mitarbeitenden wie auf der Anomalien-Seite.
-    const ratings = useAnomalies(available ? companyId : null)
+    const ratings = useAnomalies(available && priceView === "bewertung" ? companyId : null)
     const historyParam = searchParams.get("verlauf")
     const historyKey = isTimeRangeKey(historyParam) ? historyParam : DEFAULT_TIME_RANGE
     const historyRange = useMemo(() => timeWindow(trimToEvaluated(ratings.data?.series).series, historyKey), [ratings.data, historyKey])
@@ -136,6 +147,67 @@ export default function StockPage() {
     const backToDashboard = () =>
         navigate("/dashboard", companyId ? { state: { companyId, companyName } } : undefined)
 
+    // Kopfaktionen der Kurskarte: Ansicht, dann Zeitraum (und Kurs an/aus) der Ansicht.
+    const priceActions = () => (
+        <>
+            <Segmented options={PRICE_VIEWS} value={priceView} label="Ansicht"
+                onChange={(key) => updateParams({ ansicht: key === "bewertung" ? "bewertung" : null })} />
+            {priceView === "kurs" ? (
+                <Segmented options={PRICE_RANGES} value={rangeKey} label="Zeitraum"
+                    onChange={(key) => updateParams({ range: key === DEFAULT_PRICE_RANGE ? null : key })} />
+            ) : (
+                <>
+                    <TimeRangeFilter value={historyKey}
+                        onChange={(key) => updateParams({ verlauf: key === DEFAULT_TIME_RANGE ? null : key })} />
+                    <PriceToggle checked={showPrice} onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })} />
+                </>
+            )}
+        </>
+    )
+    const priceSubtitle = priceView === "kurs"
+        ? `${security} · Monatsschluss in ${data?.currency ?? "?"}${isParent ? " · Kurs der Konzernmutter" : ""}`
+        : `Mitarbeitende · Gesamtbewertung, Monatsmittel${showPrice ? ` · Kurs ${data?.ticker} rechts in ${data?.currency ?? "?"}` : ""}${
+            historyRange ? ` · ${fmtPeriod(historyRange.from)} – ${fmtPeriod(historyRange.to)}` : ""}${isParent ? " · Kurs der Konzernmutter" : ""}`
+    const priceBody = ({ modal, height }) => (priceView === "kurs" ? (
+        <StockPriceChart prices={visiblePrices} currency={data.currency} height={height} />
+    ) : (
+        <AnomalyChart
+            data={ratings.data}
+            anomalies={ratings.anomalies}
+            loading={ratings.loading}
+            error={ratings.error}
+            height={modal ? height - 70 : height}
+            range={historyRange}
+            compact={!modal}
+            onSelect={modal ? (id) => openAnomalies({ anomaly: id }) : null}
+            onSelectOutlier={modal ? (period) => openAnomalies({ month: period }) : null}
+            market={showPrice ? data : null}
+        />
+    ))
+
+    const newsCard = (
+        <ExpandableCard
+            icon={<Newspaper />}
+            eyebrow="NACHRICHTEN · GOOGLE NEWS"
+            title="Aktuelle Meldungen"
+            subtitle={news.data?.items?.length ? `${news.data.items.length} Meldungen der letzten ${news.data.window_days} Tage` : undefined}
+            accent="bg-sky-500"
+            className={available ? "xl:row-span-2" : "lg:col-span-2 xl:col-span-2"}
+            modalReserve={160}
+        >
+            {({ modal }) => (news.loading ? <Loading height={160} />
+                : news.error ? <EmptyNote height={160}>Nachrichten konnten nicht geladen werden: {news.error}</EmptyNote>
+                : modal ? <NewsList news={news.data} />
+                : (
+                    <div className="relative flex-1 min-h-[260px]">
+                        <div className="absolute inset-0 overflow-y-auto overscroll-contain">
+                            <NewsList news={news.data} showFootnote={false} />
+                        </div>
+                    </div>
+                ))}
+        </ExpandableCard>
+    )
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             <div className="h-12 min-h-[48px] border-b border-slate-200 bg-white flex items-center px-5 gap-3 sticky top-0 z-30 flex-shrink-0">
@@ -153,7 +225,7 @@ export default function StockPage() {
                     </span>
                     <div className="min-w-0">
                         <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">
-                            ANALYSE · AKTIE
+                            ANALYSE · AKTIE{security ? ` · ${security}` : ""}
                         </p>
                         <p className="m-0 text-[14px] leading-5 font-semibold tracking-tight text-slate-900 truncate">
                             {companyName ? `Aktie · ${companyName}` : "Aktie"}
@@ -173,108 +245,76 @@ export default function StockPage() {
                 </div>
             </div>
 
-            <div className="flex-1 px-5 py-5 max-w-[1400px] w-full mx-auto space-y-4">
+            <div className="flex-1 px-5 py-3 max-w-[1600px] w-full mx-auto">
                 {!companyId ? (
                     <PageSection icon={<Building2 />} eyebrow="AUSWAHL" title="Firma wählen">
                         <p className="m-0 text-[13px] text-slate-500">Oben rechts eine Firma suchen, um Kurs, Empfehlungen und Nachrichten zu sehen.</p>
                     </PageSection>
+                ) : finance.loading ? (
+                    <Loading height={300} />
+                ) : finance.error ? (
+                    <PageSection icon={<LineChart />} eyebrow="AKTIE" title="Aktienkurs">
+                        <EmptyNote height={80}>Kursdaten konnten nicht geladen werden: {finance.error}</EmptyNote>
+                    </PageSection>
                 ) : (
-                    <>
-                        <PageSection
-                            icon={<LineChart />}
-                            eyebrow="KURSVERLAUF · MONATSSCHLUSS"
-                            title={available ? `Aktienkurs · ${security}` : "Aktienkurs"}
-                            subtitle={available && last
-                                ? `${fmtPrice(last.close)} ${data.currency ?? ""} Ende ${fmtMonth(last.period)} · ${fmtPercent(change)} seit ${fmtMonth(first.period)}${isParent ? " · Kurs der Konzernmutter" : ""}`
-                                : undefined}
-                            actions={available && (
-                                <Segmented options={PRICE_RANGES} value={rangeKey} label="Zeitraum"
-                                    onChange={(key) => updateParams({ range: key === DEFAULT_PRICE_RANGE ? null : key })} />
+                    <div className="space-y-3">
+                        {available && <FinanceKpis market={data} first={first} last={last} change={change} />}
+
+                        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+                            {available ? (
+                                <>
+                                    <ExpandableCard
+                                        icon={<LineChart />}
+                                        eyebrow={priceView === "kurs" ? "KURSVERLAUF · MONATSSCHLUSS" : "KURS UND BEWERTUNGSVERLAUF"}
+                                        title={priceView === "kurs" ? "Aktienkurs" : "Aktienkurs und Sternebewertung"}
+                                        subtitle={priceSubtitle}
+                                        actions={priceActions}
+                                        cardHeight={180}
+                                        modalReserve={priceView === "kurs" ? 150 : 170}
+                                        className="lg:col-span-2"
+                                    >
+                                        {priceBody}
+                                    </ExpandableCard>
+                                    {newsCard}
+                                    <ExpandableCard
+                                        icon={<Users />}
+                                        eyebrow="ANALYSTEN · YAHOO FINANCE"
+                                        title="Analystenempfehlungen"
+                                        subtitle="Empfehlungen je Stufe, letzte vier Monate"
+                                        accent="bg-emerald-500"
+                                        cardHeight={140}
+                                        modalReserve={230}
+                                    >
+                                        {({ modal, height }) => <AnalystChart analysts={data.analysts} height={height} compact={!modal} />}
+                                    </ExpandableCard>
+                                    <ExpandableCard
+                                        icon={<BarChart3 />}
+                                        eyebrow="ERFOLGSRECHNUNG · YAHOO FINANCE"
+                                        title="Umsatz und Nettoergebnis"
+                                        subtitle={earningsPeriod === "annual" ? "Je Geschäftsjahr" : "Je Quartal"}
+                                        accent="bg-indigo-500"
+                                        cardHeight={140}
+                                        modalReserve={200}
+                                        actions={() => (
+                                            <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode"
+                                                onChange={(key) => updateParams({ periode: key === "quarterly" ? "quartal" : null })} />
+                                        )}
+                                    >
+                                        {({ modal, height }) => <EarningsChart earnings={data.earnings} period={earningsPeriod} height={height} compact={!modal} />}
+                                    </ExpandableCard>
+                                </>
+                            ) : (
+                                <>
+                                    <PageSection icon={<LineChart />} eyebrow="AKTIE" title="Aktienkurs">
+                                        <EmptyNote height={80}>{noPriceText(data?.reason)}</EmptyNote>
+                                    </PageSection>
+                                    {newsCard}
+                                </>
                             )}
-                        >
-                            {finance.loading ? <Loading height={300} />
-                                : finance.error ? <EmptyNote height={120}>Kursdaten konnten nicht geladen werden: {finance.error}</EmptyNote>
-                                : !available ? <EmptyNote height={80}>{noPriceText(data?.reason)}</EmptyNote>
-                                : <StockPriceChart prices={visiblePrices} currency={data.currency} />}
-                            {available && (
-                                <div className="mt-4 pt-3 border-t border-slate-100">
-                                    <MarketContext market={data} companyName={companyName} />
-                                </div>
-                            )}
-                        </PageSection>
+                        </div>
 
-                        {available && (
-                            <PageSection
-                                icon={<AnomalyIcon />}
-                                eyebrow="KURS UND BEWERTUNGSVERLAUF"
-                                title="Aktienkurs und Sternebewertung"
-                                subtitle={`Mitarbeitende · Gesamtbewertung, Monatsmittel${showPrice ? ` · Kurs ${data.ticker} rechts in ${data.currency ?? "?"}` : ""}${
-                                    historyRange ? ` · ${fmtPeriod(historyRange.from)} – ${fmtPeriod(historyRange.to)}` : ""}`}
-                                actions={
-                                    <>
-                                        <PriceToggle checked={showPrice} onChange={(on) => updateParams({ [PRICE_PARAM]: on ? null : PRICE_OFF })} />
-                                        <TimeRangeFilter value={historyKey}
-                                            onChange={(key) => updateParams({ verlauf: key === DEFAULT_TIME_RANGE ? null : key })} />
-                                    </>
-                                }
-                            >
-                                <AnomalyChart
-                                    data={ratings.data}
-                                    anomalies={ratings.anomalies}
-                                    loading={ratings.loading}
-                                    error={ratings.error}
-                                    height={340}
-                                    range={historyRange}
-                                    onSelect={(id) => openAnomalies({ anomaly: id })}
-                                    onSelectOutlier={(period) => openAnomalies({ month: period })}
-                                    market={showPrice ? data : null}
-                                />
-                                <p className="m-0 mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500 leading-4">
-                                    <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}{" "}
-                                    Beide Linien stehen nur nebeneinander; es wird nichts verrechnet. Eine Markierung anklicken öffnet die
-                                    Veränderung mit Vergleich und Bewertungen auf der Anomalien-Seite.
-                                </p>
-                            </PageSection>
-                        )}
-
-                        {available && (
-                            <div className="grid gap-4 lg:grid-cols-2">
-                                <PageSection
-                                    icon={<Users />}
-                                    eyebrow="ANALYSTEN · YAHOO FINANCE"
-                                    title="Analystenempfehlungen"
-                                    subtitle="Zahl der Empfehlungen je Stufe, letzte vier Monate"
-                                >
-                                    <AnalystChart analysts={data.analysts} />
-                                </PageSection>
-                                <PageSection
-                                    icon={<BarChart3 />}
-                                    eyebrow="ERFOLGSRECHNUNG · YAHOO FINANCE"
-                                    title="Umsatz und Nettoergebnis"
-                                    subtitle={earningsPeriod === "annual" ? "Je Geschäftsjahr" : "Je Quartal"}
-                                    actions={
-                                        <Segmented options={EARNINGS_PERIODS} value={earningsPeriod} label="Periode"
-                                            onChange={(key) => updateParams({ periode: key === "quarterly" ? "quartal" : null })} />
-                                    }
-                                >
-                                    <EarningsChart earnings={data.earnings} period={earningsPeriod} />
-                                </PageSection>
-                            </div>
-                        )}
-
-                        <PageSection
-                            icon={<Newspaper />}
-                            eyebrow="NACHRICHTEN · GOOGLE NEWS"
-                            title="Aktuelle Meldungen"
-                            subtitle={news.data?.items?.length
-                                ? `${news.data.items.length} Meldungen der letzten ${news.data.window_days} Tage, neueste zuerst`
-                                : undefined}
-                        >
-                            {news.loading ? <Loading height={100} />
-                                : news.error ? <EmptyNote height={100}>Nachrichten konnten nicht geladen werden: {news.error}</EmptyNote>
-                                : <NewsList news={news.data} />}
-                        </PageSection>
-                    </>
+                        <MarketSourceNote market={data} companyName={companyName} />
+                    </div>
                 )}
             </div>
         </div>

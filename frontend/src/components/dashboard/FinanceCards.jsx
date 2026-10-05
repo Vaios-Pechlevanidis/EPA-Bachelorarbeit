@@ -91,7 +91,7 @@ export function StockPriceChart({ prices, currency, height = 300 }) {
 /* ---------------------------------------------------------------------------
    Analystenempfehlungen: Zahl der Empfehlungen je Stufe und Monat, gestapelt.
    --------------------------------------------------------------------------- */
-export function AnalystChart({ analysts, height = 240 }) {
+export function AnalystChart({ analysts, height = 240, compact = false }) {
     const months = analysts?.months ?? []
     if (!months.length) return <EmptyNote height={height}>Yahoo Finance liefert für dieses Wertpapier keine Analystenempfehlungen.</EmptyNote>
     const latest = months[months.length - 1]
@@ -125,10 +125,10 @@ export function AnalystChart({ analysts, height = 240 }) {
             <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 {RATING_LEVELS.map((l) => <Swatch key={l.key} color={l.color} label={l.label} />)}
             </p>
-            <p className="m-0 mt-2 text-[11px] text-slate-500 text-center">
+            {!compact && <p className="m-0 mt-2 text-[11px] text-slate-500 text-center">
                 {fmtMonth(latest.month)}: {latest.total} Empfehlungen, davon {latest.strong_buy + latest.buy} kaufen,{" "}
                 {latest.hold} halten, {latest.sell + latest.strong_sell} verkaufen · Stand {fmtDay(analysts.as_of)}
-            </p>
+            </p>}
         </div>
     )
 }
@@ -136,7 +136,7 @@ export function AnalystChart({ analysts, height = 240 }) {
 /* ---------------------------------------------------------------------------
    Umsatz und Nettoergebnis je Geschäftsjahr oder Quartal, nebeneinander.
    --------------------------------------------------------------------------- */
-export function EarningsChart({ earnings, period = "annual", height = 240 }) {
+export function EarningsChart({ earnings, period = "annual", height = 240, compact = false }) {
     const rows = useMemo(() => (earnings?.[period] ?? []).map((r) => ({
         ...r,
         label: period === "annual" ? fiscalYearLabel(r.period_end) : quarterLabel(r.period_end),
@@ -171,7 +171,7 @@ export function EarningsChart({ earnings, period = "annual", height = 240 }) {
             <p className="m-0 mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <Swatch color="var(--finance-revenue)" label={`Umsatz (${currency})`} />
                 <Swatch color="var(--finance-earnings)" label={`Nettoergebnis (${currency})`} />
-                <span>Berichtswährung, wie von Yahoo Finance geliefert; fehlende Werte bleiben leer</span>
+                {!compact && <span>Berichtswährung, wie von Yahoo Finance geliefert; fehlende Werte bleiben leer</span>}
             </p>
         </div>
     )
@@ -180,18 +180,17 @@ export function EarningsChart({ earnings, period = "annual", height = 240 }) {
 /* ---------------------------------------------------------------------------
    Nachrichten: aktuelle Meldungen, neueste zuerst, Link zur Quelle.
    --------------------------------------------------------------------------- */
-export function NewsList({ news }) {
+export function NewsList({ news, listClassName = "", showFootnote = true }) {
     const items = news?.items ?? []
     return (
         <div>
             {items.length === 0 ? (
                 <EmptyNote height={100}>{news?.reason ?? "Keine Meldungen."}</EmptyNote>
             ) : (
-                // Eigener Scrollbereich, damit die Liste nicht die ganze Seite einnimmt.
-                <ul className="m-0 p-0 pr-2 list-none max-h-[420px] overflow-y-auto overscroll-contain" tabIndex={0} aria-label="Meldungen">
+                <ul className={`m-0 p-0 pr-2 list-none ${listClassName}`} aria-label="Meldungen">
                     {items.map((item) => (
                         <li key={item.url} className="py-2.5 border-t border-slate-100 first:border-t-0">
-                            <a href={item.url} target="_blank" rel="noreferrer noopener"
+                            <a href={item.url} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()}
                                 className="group inline-flex items-start gap-1.5 text-[13px] leading-5 font-medium text-slate-900 hover:text-blue-700">
                                 <span>{item.title}</span>
                                 <ExternalLink className="w-3 h-3 mt-1 flex-none text-slate-400 group-hover:text-blue-700" />
@@ -203,7 +202,7 @@ export function NewsList({ news }) {
                     ))}
                 </ul>
             )}
-            {news && (
+            {news && showFootnote && (
                 <p className="m-0 mt-3 text-[11px] text-slate-400 leading-4">
                     Quelle: {news.source}; Suchbegriff {news.query}, letzte {news.window_days} Tage.
                     {news.fetched_at && ` Abgerufen am ${fmtDay(news.fetched_at.slice(0, 10))}.`}

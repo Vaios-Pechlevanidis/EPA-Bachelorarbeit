@@ -6,33 +6,43 @@
 | Anforderungen | Wunsch des Autors vom 2026-10-04: eigenes Dashboard zum Aktienkurs mit Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn sowie Nachrichten |
 | Entscheidungen | E16 in `docs/entscheidungen.md`; E7 (Nachrichtenquelle) und E15 (Kurs, Kennzahlen, Zwischenspeicher) |
 | Status | umgesetzt; **vorläufig** (Nutzungsbedingungen offen) |
-| Stand | 2026-10-04 |
+| Stand | 2026-10-05 |
 
 ## 1. Vorstellung
 
 Die Seite **„Aktie“** (`/aktie?company=ID`) öffnet sich über „Aktie“ in der Seitenleiste
 des Dashboards oder über den Link „Aktien-Dashboard“ unter dem Diagramm der
-Anomalien-Detailseite. Oben rechts lässt sich die Firma wechseln. Die Seite hat fünf
-Bereiche:
+Anomalien-Detailseite. Oben rechts lässt sich die Firma wechseln.
 
-1. **Aktienkurs:** Kursverlauf als Fläche mit Zeitfenster 1, 3, 5, 10 Jahre oder alles.
-   Der Untertitel nennt den letzten Monatsschlusskurs und die Veränderung im Fenster.
-   Darunter stehen Marktkapitalisierung, Mitarbeitende und Umsatz je Geschäftsjahr (wie in
-   Feature 04), die Quelle und der Hinweis „Einordnung, keine Erklärung“.
-2. **Kurs und Bewertungsverlauf:** der Monatsverlauf der Sternebewertung (Mitarbeitende,
-   Gesamtbewertung) mit den auffälligen Veränderungen und Einzelmonaten, darüber der Kurs als
-   dünne Linie auf der rechten Achse (Darstellung aus Feature 04). Kästchen „Aktienkurs“ und
-   Zeitfilter wie auf der Anomalien-Seite (`?kurs=aus`, `?verlauf=5y|3y|1y`). Ein Klick auf
-   eine Stufe oder Raute öffnet sie mit Vergleich und Bewertungen auf der Anomalien-Seite.
-   Dieses Diagramm stand bis zum 2026-10-04 auf der Anomalien-Seite und wurde auf Wunsch des
-   Autors hierher verschoben.
+**Aufbau (seit 2026-10-05, Wunsch des Autors):** Alles steht auf einer Bildschirmseite
+(geprüft bei 1440 × 900 Pixeln). Oben eine **Kennzahlenleiste** mit sechs Kacheln, darunter
+ein Raster aus Karten: links oben die Kurskarte (zwei Spalten breit), rechts die
+Nachrichten (über zwei Reihen, scrollbar), links unten Analystenempfehlungen und Umsatz und
+Nettoergebnis. Ganz unten steht eine Zeile mit Wertpapier, Quelle, Abrufdatum und dem
+Hinweis „Einordnung, keine Erklärung“. Wie im Haupt-Dashboard **vergrößert ein Klick** eine
+Karte auf 90 % × 85 % des Fensters, mit denselben Schaltern; Zusatzzeilen (Zusammenfassung
+der Empfehlungen, Währungshinweis, Quellenzeile der Nachrichten) stehen nur dort.
+
+1. **Kennzahlen:** letzter Monatsschlusskurs mit Veränderung im gewählten Fenster,
+   Marktkapitalisierung und Mitarbeitende („aktuell, Stand …“), Umsatz und Nettoergebnis des
+   letzten Geschäftsjahrs, Analystenempfehlungen als „kaufen / halten / verkaufen“.
+2. **Kurskarte** mit zwei Ansichten (`?ansicht=bewertung`):
+   - **Kurs:** Kursverlauf als Fläche, Zeitfenster 1, 3, 5, 10 Jahre oder alles (`?range=`).
+   - **Mit Bewertung:** der Monatsverlauf der Sternebewertung (Mitarbeitende,
+     Gesamtbewertung) mit den auffälligen Veränderungen und Einzelmonaten, darüber der Kurs
+     als dünne Linie auf der rechten Achse (Darstellung aus Feature 04). Kästchen
+     „Aktienkurs“ und Zeitfilter wie auf der Anomalien-Seite (`?kurs=aus`,
+     `?verlauf=5y|3y|1y`). In der vergrößerten Ansicht öffnet ein Klick auf eine Stufe oder
+     Raute die Veränderung mit Vergleich und Bewertungen auf der Anomalien-Seite. Dieses
+     Diagramm stand bis zum 2026-10-04 auf der Anomalien-Seite und wurde auf Wunsch des
+     Autors hierher verschoben.
 3. **Analystenempfehlungen:** gestapelte Balken je Monat (letzte vier Monate) mit der Zahl
    der Empfehlungen „stark kaufen“ bis „stark verkaufen“; der Tooltip nennt alle Stufen.
 4. **Umsatz und Nettoergebnis:** Balken je Geschäftsjahr oder, umschaltbar, je Quartal.
 5. **Aktuelle Meldungen:** die neuesten Meldungen der letzten 90 Tage mit Quelle, Datum
-   und Link; darunter Suchbegriff, Quelle und Abrufdatum.
+   und Link, in der Karte scrollbar.
 
-Für Unternehmen ohne Ticker zeigt die Seite „Kein Aktienkurs: …“ und nur die Meldungen.
+Für Unternehmen ohne Ticker zeigt die Seite neben den Meldungen nur „Kein Aktienkurs: …“.
 
 Nutzen: Wer die Bewertungen eines börsennotierten Unternehmens betrachtet, findet die
 wichtigsten Marktinformationen auf einer Seite, ohne die Anomalien-Ansicht zu überladen.
