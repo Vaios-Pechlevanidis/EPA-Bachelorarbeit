@@ -5,7 +5,6 @@ import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
-import { AnomalyKpis } from "@/components/dashboard/AnomalyKpis"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
@@ -245,9 +244,6 @@ export default function AnomaliesPage() {
                     </PageSection>
                 ) : (
                     <>
-                        {/* Kennzahlenleiste wie im Aktien-Dashboard */}
-                        {!error && <AnomalyKpis data={data} anomalies={anomalies} outliers={outliers} loading={loading} />}
-
                         {/* Verlauf (zwei Drittel) und Markierungen (ein Drittel) */}
                         <div className="grid gap-3 xl:grid-cols-3">
                             <PageSection
