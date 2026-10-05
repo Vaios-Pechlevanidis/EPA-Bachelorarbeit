@@ -10,6 +10,19 @@
 
 ## 1. Vorstellung
 
+**Aufbau der Detailseite seit 2026-10-05** (angelehnt an das Aktien-Dashboard, Doku 05; eine Kennzahlenleiste wurde am selben Tag auf Wunsch des Autors wieder entfernt):
+
+1. **Raster:** links der Monatsverlauf (zwei Drittel der Breite), rechts die Karte
+   **„Markierungen“** mit Umschalter „Veränderungen“ / „Einzelmonate“ (`?liste=einzelmonate`)
+   als kompakte, zweizeilige Liste mit eigenem Scrollbereich in Höhe des Verlaufs.
+2. **Drill-down-Leiste** in einer Zeile: aktuelle Auswahl, „von / bis“, Schnellwahl,
+   „Auswahl aufheben“ (Doku 06).
+3. **Auswahl:** Vergleich (links, drei Fünftel) und Bewertungen (rechts, zwei Fünftel, eigener
+   Scrollbereich) nebeneinander, für eine erkannte Veränderung wie für eine freie Auswahl.
+
+Unter 1280 px Breite stehen die Bereiche untereinander; die Kopfzeile bricht bei schmalen
+Fenstern um, statt seitlich zu überlaufen.
+
 Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Karte
 **„Anomalien im Verlauf“**. Sie zeigt:
 

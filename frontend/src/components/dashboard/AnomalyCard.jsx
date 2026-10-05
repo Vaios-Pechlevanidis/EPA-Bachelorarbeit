@@ -241,7 +241,7 @@ function countLabel(anomalies, eligibility, outliers = []) {
 }
 
 /* Liste der auffälligen Einzelmonate (Detailseite); Klick wählt den Monat aus. */
-export function OutlierList({ outliers, selectedPeriod = null, onSelect = null, emptyText = "Keine auffälligen Einzelmonate." }) {
+export function OutlierList({ outliers, selectedPeriod = null, onSelect = null, emptyText = "Keine auffälligen Einzelmonate.", compact = false }) {
     if (!outliers.length) return <p className="text-[12px] text-slate-500 m-0">{emptyText}</p>
     return (
         <ul className="m-0 p-0 list-none">
@@ -252,7 +252,7 @@ export function OutlierList({ outliers, selectedPeriod = null, onSelect = null, 
                     <li
                         key={o.id}
                         className={[
-                            "flex items-center gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0",
+                            `flex ${compact ? "items-start" : "items-center"} gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0`,
                             onSelect ? "cursor-pointer px-2 -mx-2 rounded-md hover:bg-slate-50" : "",
                             selected ? "bg-slate-100 hover:bg-slate-100" : "",
                         ].join(" ")}
@@ -263,12 +263,26 @@ export function OutlierList({ outliers, selectedPeriod = null, onSelect = null, 
                         aria-pressed={onSelect ? selected : undefined}
                         title={onSelect ? "Auswählen: Bewertungen dieses Monats zeigen" : undefined}
                     >
-                        <DiamondGlyph direction={o.direction} size={12} />
-                        <span className="w-[84px] flex-none text-slate-700 tnum">{fmtPeriod(o.date)}</span>
-                        <span className="w-[92px] flex-none font-semibold tnum" style={{ color: DIRECTION[o.direction].color }}>{fmtDelta(o.deviation)} Sterne</span>
-                        <span className="flex-1 min-w-0 truncate text-slate-500 tnum">
-                            Ø {fmt(o.month_mean)} gegen Niveau {fmt(o.level)} der Nachbarmonate ({fmtSpan(o.neighbours_from, o.neighbours_to)}) · {o.n_values} Bewertungen mit Wert
-                        </span>
+                        <span className={compact ? "mt-0.5" : undefined}><DiamondGlyph direction={o.direction} size={12} /></span>
+                        {compact ? (
+                            <span className="flex-1 min-w-0">
+                                <span className="flex items-center gap-3">
+                                    <span className="text-slate-700 tnum">{fmtPeriod(o.date)}</span>
+                                    <span className="font-semibold tnum" style={{ color: DIRECTION[o.direction].color }}>{fmtDelta(o.deviation)} Sterne</span>
+                                </span>
+                                <span className="block text-[11px] text-slate-500 tnum">
+                                    Ø {fmt(o.month_mean)} gegen {fmt(o.level)} der Nachbarmonate · {o.n_values} Bewertungen
+                                </span>
+                            </span>
+                        ) : (
+                            <>
+                                <span className="w-[84px] flex-none text-slate-700 tnum">{fmtPeriod(o.date)}</span>
+                                <span className="w-[92px] flex-none font-semibold tnum" style={{ color: DIRECTION[o.direction].color }}>{fmtDelta(o.deviation)} Sterne</span>
+                                <span className="flex-1 min-w-0 truncate text-slate-500 tnum">
+                                    Ø {fmt(o.month_mean)} gegen Niveau {fmt(o.level)} der Nachbarmonate ({fmtSpan(o.neighbours_from, o.neighbours_to)}) · {o.n_values} Bewertungen mit Wert
+                                </span>
+                            </>
+                        )}
                     </li>
                 )
             })}
@@ -286,7 +300,8 @@ export function IneligibleNotice({ eligibility }) {
     )
 }
 
-export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffälligen Veränderungen erkannt.", selectedId = null, onSelect = null }) {
+/* compact: zweizeilige Zeilen für schmale Spalten (Karte "Markierungen" der Detailseite). */
+export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffälligen Veränderungen erkannt.", selectedId = null, onSelect = null, compact = false }) {
     if (eligibility && !eligibility.eligible) return <IneligibleNotice eligibility={eligibility} />
     if (!anomalies.length) {
         return <p className="text-[12px] text-slate-500 m-0">{emptyText}</p>
@@ -297,7 +312,7 @@ export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffäl
                 const dir = DIRECTION[a.direction]
                 const selected = a.id === selectedId
                 const rowClass = [
-                    "flex items-center gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0",
+                    `flex ${compact ? "items-start" : "items-center"} gap-3 py-2 text-[12px] border-t border-slate-100 first:border-t-0`,
                     onSelect ? "cursor-pointer px-2 -mx-2 rounded-md hover:bg-slate-50" : "",
                     selected ? "bg-slate-100 hover:bg-slate-100" : "",
                 ].join(" ")
@@ -313,14 +328,30 @@ export function AnomalyList({ anomalies, eligibility, emptyText = "Keine auffäl
                         aria-pressed={onSelect ? selected : undefined}
                         title={onSelect ? "Auswählen: Bewertungen und Vergleich des Zeitraums zeigen" : undefined}
                     >
-                        <dir.Icon className="w-4 h-4 flex-none" style={{ color: dir.color }} aria-label={dir.label} />
-                        <span className="w-[84px] flex-none text-slate-700 tnum">ab {fmtPeriod(a.date)}</span>
-                        <span className="w-[92px] flex-none font-semibold tnum" style={{ color: dir.color }}>{fmtDelta(a.delta)} Sterne</span>
-                        <span className="flex-1 min-w-0 truncate text-slate-500 tnum">
-                            Ø {fmt(a.before_mean)} → {fmt(a.after_mean)} · Bewertungen davor / danach {a.n_reviews_before} / {a.n_reviews_after}
-                            {a.gap_months > 0 && ` · nach ${a.gap_months} nicht ${a.gap_months === 1 ? "bewertetem Monat" : "bewerteten Monaten"}`}
-                        </span>
-                        <span className="flex-none text-[11px] text-slate-500">{SEVERITY_LABEL[a.severity] ?? a.severity}</span>
+                        <dir.Icon className={`w-4 h-4 flex-none${compact ? " mt-0.5" : ""}`} style={{ color: dir.color }} aria-label={dir.label} />
+                        {compact ? (
+                            <span className="flex-1 min-w-0">
+                                <span className="flex items-center gap-3">
+                                    <span className="text-slate-700 tnum">ab {fmtPeriod(a.date)}</span>
+                                    <span className="font-semibold tnum" style={{ color: dir.color }}>{fmtDelta(a.delta)} Sterne</span>
+                                    <span className="ml-auto text-[11px] text-slate-500">{SEVERITY_LABEL[a.severity] ?? a.severity}</span>
+                                </span>
+                                <span className="block text-[11px] text-slate-500 tnum">
+                                    Ø {fmt(a.before_mean)} → {fmt(a.after_mean)} · {a.n_reviews_before} / {a.n_reviews_after} Bewertungen
+                                    {a.gap_months > 0 && ` · nach ${a.gap_months} nicht bewerteten Monat${a.gap_months === 1 ? "" : "en"}`}
+                                </span>
+                            </span>
+                        ) : (
+                            <>
+                                <span className="w-[84px] flex-none text-slate-700 tnum">ab {fmtPeriod(a.date)}</span>
+                                <span className="w-[92px] flex-none font-semibold tnum" style={{ color: dir.color }}>{fmtDelta(a.delta)} Sterne</span>
+                                <span className="flex-1 min-w-0 truncate text-slate-500 tnum">
+                                    Ø {fmt(a.before_mean)} → {fmt(a.after_mean)} · Bewertungen davor / danach {a.n_reviews_before} / {a.n_reviews_after}
+                                    {a.gap_months > 0 && ` · nach ${a.gap_months} nicht ${a.gap_months === 1 ? "bewertetem Monat" : "bewerteten Monaten"}`}
+                                </span>
+                                <span className="flex-none text-[11px] text-slate-500">{SEVERITY_LABEL[a.severity] ?? a.severity}</span>
+                            </>
+                        )}
                     </li>
                 )
             })}
@@ -737,12 +768,9 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 {onSelect && !onSelectPeriod && windowAreas.length === 0 && <span>Stufe anklicken, um die Bewertungen des Zeitraums zu sehen.</span>}
             </p>
         )}
-        {showLegend && !error && onSelectPeriod && !compact && series.length > 0 && (
+        {showLegend && !error && onSelectPeriod && !compact && selectionAreas.length > 0 && !drag && (
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                <span>
-                    Drill-down: Stufe, Raute oder beliebigen Monat anklicken oder mit gedrückter Maustaste einen Zeitraum ziehen.
-                </span>
-                {selectionAreas.length > 0 && !drag && (
+                {(
                     <span className="inline-flex items-center gap-1.5">
                         <span className="inline-block w-3 h-2.5 rounded-[2px] bg-amber-100" /> Auswahl
                         <span className="inline-block w-3 h-2.5 rounded-[2px] bg-slate-200 ml-1.5" /> Vergleichszeitraum davor
