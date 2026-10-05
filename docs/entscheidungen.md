@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -518,3 +518,36 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance und Google News für die Arbeit (wie E7,
   E15); ob die Seite in der Evaluation (DZ3) gezeigt wird.
 - **Status:** vorläufig.
+
+## E17 – Freier Drill-down und Vergleich mit dem Zeitraum davor
+
+- **Kontext:** Der Drill-down aus Inkrement 2 setzt eine erkannte Veränderung oder einen
+  auffälligen Einzelmonat voraus. Viele Reihen haben keine (Mitarbeitende, Gesamtbewertung:
+  Cancom, Thyssenkrupp, Carl Zeiss, KIT, TU München, Open Grid Europe), und nicht geeignete
+  Reihen (E4) werden gar nicht erkannt. Der Autor möchte die Bewertungen trotzdem bei
+  Bedarf ansehen (2026-10-05).
+- **Entscheidung (Autor, 2026-10-05):** Auf der Detailseite lässt sich jeder Zeitraum frei
+  wählen: Klick auf einen Monat, Ziehen über mehrere Monate im Diagramm oder Auswahlfeld
+  „von / bis“ mit Schnellwahl (letzter Monat, letzte 6 bzw. 12 Monate). Die Auswahl steht
+  in der Adresse (`?from=YYYY-MM&to=YYYY-MM`) und bleibt beim Wechsel von Quelle, Status
+  und Dimension erhalten. Darunter stehen
+  - der **Vergleich mit dem Zeitraum davor**: Auswahl gegen die gleich vielen
+    Kalendermonate direkt davor, mindestens 6 (`period_windows` in
+    `backend/services/explanation_service.py`, `GET
+    /api/analytics/company/{id}/compare?from=&to=&source=&dimension=&status=`). Kennzahlen,
+    Themen, Stimmung, kleine Basis und Stichprobe wie beim Vorher-Nachher-Vergleich
+    (E10–E12),
+  - die **Bewertungen der Auswahl** (umschaltbar auf den Zeitraum davor), mit Markierung
+    des Themas der Dimension.
+  Ein Klick auf eine Stufe wählt weiter die erkannte Veränderung mit ihren Fenstern (E12),
+  ein Klick auf eine Raute den Einzelmonat als Auswahl.
+- **Begründung:** Der Drill-down ist ein Werkzeug zum Nachsehen, nicht an die Erkennung
+  gebunden. Ein gleich langer Zeitraum davor ist die naheliegende Bezugsgröße; mindestens 6
+  Monate, damit ein einzelner Monat gegen eine stabile Basis verglichen wird (wie die
+  Fensterlänge in E12).
+- **Grenzen:** Der Vergleich einer frei gewählten Auswahl ist keine erkannte Veränderung.
+  Wer eine Auswahl wegen eines sichtbaren Einbruchs wählt, vergleicht gezielt; Unterschiede
+  sind dann erwartbar und kein Beleg. Die Hinweise zu kleiner Basis und Ursachen gelten
+  unverändert.
+- **Status:** vorläufig (Mindestlänge 6 Monate ist eine Setzung).
+

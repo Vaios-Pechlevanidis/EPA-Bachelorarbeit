@@ -32,3 +32,4 @@ Abgrenzung zu den anderen Dokumenten:
 | 03 | [Auffällige Einzelmonate](03-auffaellige-einzelmonate.md) | 2 (Nachtrag) | Markierung einzelner auffälliger Monate | umgesetzt; Schwellen vorläufig (E14) |
 | 04 | [Aktienkurs und Kennzahlen](04-kurs-und-kennzahlen.md) | 3 | Kurs und Kennzahlen als Einordnung | umgesetzt; vorläufig (E15, Nutzungsbedingungen offen) |
 | 05 | [Aktien-Dashboard](05-aktien-dashboard.md) | 3 (Nachtrag) | Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn, Nachrichten | umgesetzt; vorläufig (E16) |
+| 06 | [Freier Drill-down](06-freier-drilldown.md) | 2 (Nachtrag) | Bewertungen und Vergleich für jeden Zeitraum, auch ohne Anomalie | umgesetzt; vorläufig (E17) |

@@ -18,7 +18,7 @@ import { useAnomalies } from "@/hooks/useAnomalies"
 import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
 import { groupLabel, statusOptions } from "@/lib/reviewerStatus"
-import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, trimToEvaluated } from "@/lib/anomalySeries"
+import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, periodWindows, trimToEvaluated } from "@/lib/anomalySeries"
 import { PARENT_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
 
 /* ============================================================================
@@ -362,7 +362,9 @@ function isolatedDot(chartData, opacity = 1) {
    kein Zusammenhang mit den Bewertungen berechnet.
    showLegend=false blendet die Zeilen unter dem Diagramm aus (kleine Karte im
    Aktien-Dashboard; die vergrößerte Ansicht zeigt sie). */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null, showLegend = true }) {
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null, showLegend = true, selection = null, onSelectPeriod = null }) {
+    // Freie Auswahl (E17): Ziehen mit gedrückter Maustaste, {start, end} als "YYYY-MM".
+    const [drag, setDrag] = useState(null)
     const minReviews = data?.params?.min_reviews_per_month
     const series = useMemo(() => data?.series ?? [], [data])
     const trimmed = useMemo(() => trimToEvaluated(series), [series])
@@ -446,15 +448,68 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
             return [{ key, x1: period(from), x2: period(to), color }]
         }).filter((a) => a.x1 && a.x2)
     }, [anomalies, selectedId, chartData, compact])
-    // Klick auf den Monat einer Veränderung wählt sie aus (zusätzlich zur Stufe selbst).
-    // Ohne Veränderung in diesem Monat wählt der Klick einen auffälligen Einzelmonat aus.
-    const handleChartClick = (state) => {
+    // Flächen der freien Auswahl (E17): Vergleichszeitraum davor und Auswahl, sonst
+    // während des Ziehens die vorläufige Auswahl; auf den sichtbaren Ausschnitt begrenzt.
+    const selectionAreas = useMemo(() => {
+        if (compact || !chartData.length) return []
+        const first = periodIndex(chartData[0].period)
+        const last = periodIndex(chartData[chartData.length - 1].period)
+        const clamp = (key, from, to, color, opacity) => {
+            const a = Math.max(periodIndex(from), first)
+            const b = Math.min(periodIndex(to), last)
+            if (a > b) return []
+            const period = (i) => chartData.find((m) => periodIndex(m.period) === i)?.period
+            return [{ key, x1: period(a), x2: period(b), color, opacity }].filter((x) => x.x1 && x.x2)
+        }
+        if (drag?.start) {
+            const [a, b] = [drag.start, drag.end].sort((x, y) => periodIndex(x) - periodIndex(y))
+            return clamp("drag", a, b, "var(--selection-fill, #f59e0b)", 0.18)
+        }
+        const win = selection ? periodWindows(selection.from, selection.to) : null
+        if (!win) return []
+        return [
+            ...clamp("sel-before", win.before.from, win.before.to, "var(--color-fg-subtle)", 0.08),
+            ...clamp("sel-after", win.after.from, win.after.to, "var(--selection-fill, #f59e0b)", 0.14),
+        ]
+    }, [compact, chartData, drag, selection])
+    const periodAt = (state) => {
         const idx = Number(state?.activeTooltipIndex)
-        const period = state?.activeLabel ?? (Number.isInteger(idx) ? chartData[idx]?.period : null)
+        return state?.activeLabel ?? (Number.isInteger(idx) ? chartData[idx]?.period : null)
+    }
+    // Klick auf einen Monat: Veränderung (wie die Stufe selbst), sonst auffälliger
+    // Einzelmonat, sonst – mit onSelectPeriod – der Monat als freie Auswahl.
+    const selectMonth = (period) => {
         if (!period) return
         if (onSelect && anomaliesByPeriod[period]) onSelect(anomaliesByPeriod[period].id)
         else if (onSelectOutlier && outliersByPeriod[period]) onSelectOutlier(period)
+        else if (onSelectPeriod) onSelectPeriod(period, period)
     }
+    const handleChartClick = (state) => selectMonth(periodAt(state))
+    const dragHandlers = onSelectPeriod ? {
+        // Nur activeLabel zählt: ohne vorherige Mausbewegung kennt Recharts den Monat
+        // unter dem Zeiger noch nicht; dann beginnt die Auswahl beim ersten Monat,
+        // über den die Maus fährt.
+        onMouseDown: (state) => {
+            const p = state?.activeLabel ?? null
+            setDrag({ start: p, end: p })
+        },
+        onMouseMove: (state) => {
+            const p = state?.activeLabel
+            if (!drag || !p) return
+            if (!drag.start) setDrag({ start: p, end: p })
+            else if (p !== drag.end) setDrag({ ...drag, end: p })
+        },
+        onMouseUp: (state) => {
+            if (!drag) return
+            const end = state?.activeLabel ?? drag.end
+            setDrag(null)
+            if (!drag.start || !end) return
+            const [a, b] = [drag.start, end].sort((x, y) => periodIndex(x) - periodIndex(y))
+            if (a === b) selectMonth(a)
+            else onSelectPeriod(a, b)
+        },
+        onMouseLeave: () => setDrag(null),
+    } : { onClick: onSelect || onSelectOutlier ? handleChartClick : undefined }
     const hasInterpolation = chartData.some((m) => m.interpolated)
     const hasVisibleValues = chartData.some((m) => m.value != null)
     const hasLevels = chartData.some((m) => m.level != null)
@@ -464,7 +519,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
 
     return (
         <div className="w-full">
-        <div className="relative w-full" style={{ height }}>
+        <div className={`relative w-full${onSelectPeriod ? " select-none" : ""}`} style={{ height }}>
             {error ? (
                 <div className="h-full flex items-center justify-center">
                     <p className="text-[13px] text-slate-500">Anomalien konnten nicht geladen werden: {error}</p>
@@ -475,8 +530,11 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height={height}>
-                    <LineChart data={chartData} margin={{ left: 0, right: showPrice ? 4 : 16, top: 8, bottom: 5 }} onClick={onSelect || onSelectOutlier ? handleChartClick : undefined}>
+                    <LineChart data={chartData} margin={{ left: 0, right: showPrice ? 4 : 16, top: 8, bottom: 5 }} {...dragHandlers}>
                         <CartesianGrid strokeDasharray="2 4" stroke="var(--color-grid)" vertical={false} />
+                        {selectionAreas.map((a) => (
+                            <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill={a.color} fillOpacity={a.opacity} stroke="none" ifOverflow="hidden" />
+                        ))}
                         {windowAreas.map((a) => (
                             <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill={a.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
                         ))}
@@ -676,7 +734,20 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                         Vergleichsfenster der ausgewählten Veränderung
                     </span>
                 )}
-                {onSelect && windowAreas.length === 0 && <span>Stufe anklicken, um die Bewertungen des Zeitraums zu sehen.</span>}
+                {onSelect && !onSelectPeriod && windowAreas.length === 0 && <span>Stufe anklicken, um die Bewertungen des Zeitraums zu sehen.</span>}
+            </p>
+        )}
+        {showLegend && !error && onSelectPeriod && !compact && series.length > 0 && (
+            <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span>
+                    Drill-down: Stufe, Raute oder beliebigen Monat anklicken oder mit gedrückter Maustaste einen Zeitraum ziehen.
+                </span>
+                {selectionAreas.length > 0 && !drag && (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-3 h-2.5 rounded-[2px] bg-amber-100" /> Auswahl
+                        <span className="inline-block w-3 h-2.5 rounded-[2px] bg-slate-200 ml-1.5" /> Vergleichszeitraum davor
+                    </span>
+                )}
             </p>
         )}
         {showLegend && !error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (

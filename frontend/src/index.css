@@ -834,3 +834,11 @@ button:focus, button:focus-visible {
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground; }
 }
+
+/* Recharts macht das Diagramm fokussierbar (Tastatur). Nach einem Mausklick
+   (Drill-down im Anomalie-Diagramm) keinen Fokusrahmen zeigen; bei
+   Tastaturbedienung (:focus-visible) bleibt er sichtbar. */
+.recharts-wrapper:focus:not(:focus-visible),
+.recharts-surface:focus:not(:focus-visible) {
+  outline: none;
+}
