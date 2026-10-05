@@ -5,6 +5,7 @@ import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
+import { AnomalyKpis } from "@/components/dashboard/AnomalyKpis"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
@@ -134,6 +135,9 @@ export default function AnomaliesPage() {
         : topicOnly && reviewPages.highlight?.topic ? `, die ${reviewPages.highlight.topic} nennen` : ""
     const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
     const periodComparison = usePeriodComparison(companyId, selection, { source, dimension, status })
+    // Karte "Markierungen": Veränderungen oder Einzelmonate (?liste=einzelmonate).
+    const markerTab = searchParams.get("liste") === "einzelmonate" ? "outliers" : "changes"
+    const setMarkerTab = (key) => updateParams({ liste: key === "outliers" ? "einzelmonate" : null })
     const selectAnomaly = (id) => updateParams({ anomaly: id, month: null, from: null, to: null })
     const selectPeriod = (from, to) => updateParams({ from, to, month: null, anomaly: null })
     const selectOutlier = (period) => selectPeriod(period, period)
@@ -174,7 +178,7 @@ export default function AnomaliesPage() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             {/* Topbar — wie im Vergleich */}
-            <div className="h-12 min-h-[48px] border-b border-slate-200 bg-white flex items-center px-5 gap-3 sticky top-0 z-30 flex-shrink-0">
+            <div className="min-h-[48px] py-1.5 border-b border-slate-200 bg-white flex flex-wrap items-center px-5 gap-x-3 gap-y-1.5 sticky top-0 z-30 flex-shrink-0">
                 <button
                     onClick={backToDashboard}
                     title="Zurück zum Dashboard"
@@ -183,7 +187,7 @@ export default function AnomaliesPage() {
                     <ArrowLeft />
                 </button>
                 <div className="h-5 w-px bg-slate-200" />
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="flex items-center gap-2.5 min-w-[180px] flex-1">
                     <span className="w-7 h-7 rounded-md grid place-items-center flex-none bg-slate-100 text-slate-600 [&_svg]:w-[14px] [&_svg]:h-[14px]">
                         <AnomalyIcon />
                     </span>
@@ -221,7 +225,7 @@ export default function AnomaliesPage() {
                         onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key, anomaly: null })}
                     />
                 )}
-                <div className="w-[260px] flex-none">
+                <div className="w-[260px] max-w-full flex-none">
                     <CompanySearchSelect
                         value={query}
                         onValueChange={setQuery}
@@ -234,64 +238,149 @@ export default function AnomaliesPage() {
                 </div>
             </div>
 
-            <div className="flex-1 px-5 py-5 max-w-[1400px] w-full mx-auto space-y-4">
+            <div className="flex-1 px-5 py-3 max-w-[1600px] w-full mx-auto space-y-3">
                 {!companyId ? (
                     <PageSection icon={<Building2 />} eyebrow="AUSWAHL" title="Firma wählen">
                         <p className="m-0 text-[13px] text-slate-500">Oben rechts eine Firma suchen, um ihren Verlauf zu sehen.</p>
                     </PageSection>
                 ) : (
                     <>
-                        <PageSection
-                            icon={<AnomalyIcon />}
-                            eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
-                            title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
-                            subtitle={chartSubtitle}
-                            actions={
-                                <TimeRangeFilter
-                                    value={rangeKey}
-                                    onChange={(key) => updateParams({ range: key === DEFAULT_TIME_RANGE ? null : key })}
-                                />
-                            }
-                        >
-                            <AnomalyChart
-                                data={data}
-                                anomalies={anomalies}
-                                loading={loading}
-                                error={error}
-                                height={380}
-                                range={range}
-                                showLevels
-                                selectedId={selectedId}
-                                onSelect={selectAnomaly}
-                                selectedOutlier={selectedOutlier?.date ?? null}
-                                onSelectOutlier={selectOutlier}
-                                selection={selection}
-                                onSelectPeriod={selectPeriod}
-                            />
-                            <p className="m-0 mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
-                                Aktienkurs, Kennzahlen und Nachrichten stehen im{" "}
-                                <button
-                                    type="button"
-                                    className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
-                                    onClick={() => navigate(`/aktie?company=${companyId}`, { state: { company: { id: companyId, name: companyName } } })}
-                                >
-                                    Aktien-Dashboard
-                                </button>
-                                , dort auch zusammen mit diesem Bewertungsverlauf.
-                            </p>
-                        </PageSection>
+                        {/* Kennzahlenleiste wie im Aktien-Dashboard */}
+                        {!error && <AnomalyKpis data={data} anomalies={anomalies} outliers={outliers} loading={loading} />}
 
-                        {!error && data && (
+                        {/* Verlauf (zwei Drittel) und Markierungen (ein Drittel) */}
+                        <div className="grid gap-3 xl:grid-cols-3">
                             <PageSection
-                                icon={<MousePointerClick />}
-                                eyebrow="DRILL-DOWN"
-                                title="Bewertungen eines Zeitraums ansehen"
-                                subtitle={selection
-                                    ? `Auswahl ${selectionLabel(selection)}; Vergleich und Bewertungen stehen weiter unten`
-                                    : selectedAnomaly
-                                        ? `Ausgewählt ist die Veränderung ab ${fmtPeriod(selectedAnomaly.date)}; eine eigene Auswahl ersetzt sie`
-                                        : "Monat im Diagramm anklicken, einen Zeitraum ziehen oder hier wählen; geht auch ohne erkannte Veränderung"}
+                                className="xl:col-span-2"
+                                icon={<AnomalyIcon />}
+                                eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
+                                title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
+                                subtitle={chartSubtitle}
+                                actions={
+                                    <TimeRangeFilter
+                                        value={rangeKey}
+                                        onChange={(key) => updateParams({ range: key === DEFAULT_TIME_RANGE ? null : key })}
+                                    />
+                                }
+                                bodyClassName="px-4 pt-3 pb-3"
                             >
+                                <AnomalyChart
+                                    data={data}
+                                    anomalies={anomalies}
+                                    loading={loading}
+                                    error={error}
+                                    height={340}
+                                    range={range}
+                                    showLevels
+                                    selectedId={selectedId}
+                                    onSelect={selectAnomaly}
+                                    selectedOutlier={selectedOutlier?.date ?? null}
+                                    onSelectOutlier={selectOutlier}
+                                    selection={selection}
+                                    onSelectPeriod={selectPeriod}
+                                />
+                                <p className="m-0 mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                                    Aktienkurs, Kennzahlen und Nachrichten stehen im{" "}
+                                    <button
+                                        type="button"
+                                        className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                        onClick={() => navigate(`/aktie?company=${companyId}`, { state: { company: { id: companyId, name: companyName } } })}
+                                    >
+                                        Aktien-Dashboard
+                                    </button>
+                                    , dort auch zusammen mit diesem Bewertungsverlauf.
+                                </p>
+                            </PageSection>
+
+                            <PageSection
+                                className="flex flex-col"
+                                icon={markerTab === "outliers" ? <Diamond /> : <ListOrdered />}
+                                eyebrow={range ? `MARKIERUNGEN · ${fmtPeriod(range.from).toUpperCase()} – ${fmtPeriod(range.to).toUpperCase()}` : "MARKIERUNGEN"}
+                                title={markerTab === "outliers" ? "Auffällige Einzelmonate" : "Auffällige Veränderungen"}
+                                subtitle={markerTab === "outliers"
+                                    ? "Starke Abweichung von den Nachbarmonaten, kein neues Niveau (E14); größte zuerst"
+                                    : "Niveauwechsel (E9); Abfälle zuerst, innerhalb nach Größe"}
+                                bodyClassName="px-4 pt-2 pb-3 flex-1 min-h-0 flex flex-col"
+                            >
+                                {eligibility?.eligible && (
+                                    <div className="ds-time-filter self-start mb-2" role="group" aria-label="Markierungen">
+                                        {[
+                                            { key: "changes", label: `Veränderungen (${visibleAnomalies.length})` },
+                                            { key: "outliers", label: `Einzelmonate (${visibleOutliers.length})` },
+                                        ].map((t) => (
+                                            <button key={t.key} type="button" aria-pressed={markerTab === t.key}
+                                                className={`ds-time-btn${markerTab === t.key ? " active" : ""}`} onClick={() => setMarkerTab(t.key)}>
+                                                {t.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {/* Eigener Scrollbereich: ab xl so hoch wie der Verlauf daneben */}
+                                <div className="relative flex-1 min-h-0">
+                                    <div className="max-h-[360px] xl:max-h-none xl:absolute xl:inset-0 overflow-y-auto overscroll-contain pr-1">
+                                        {loading ? (
+                                            <p className="m-0 text-[12px] text-slate-500">Lade Markierungen…</p>
+                                        ) : error ? (
+                                            <p className="m-0 text-[12px] text-slate-500">Keine Markierungen: {error}</p>
+                                        ) : markerTab === "outliers" && eligibility?.eligible ? (
+                                            <OutlierList
+                                                compact
+                                                outliers={visibleOutliers}
+                                                selectedPeriod={selectedOutlier?.date ?? null}
+                                                onSelect={selectOutlier}
+                                                emptyText={range ? "Im gewählten Zeitraum keine auffälligen Einzelmonate." : undefined}
+                                            />
+                                        ) : (
+                                            <AnomalyList
+                                                compact
+                                                anomalies={visibleAnomalies}
+                                                eligibility={eligibility}
+                                                emptyText={range ? "Im gewählten Zeitraum keine auffälligen Veränderungen." : "Keine auffälligen Veränderungen erkannt. Für einen Zeitraum ohne Markierung: Monat anklicken, ziehen oder unten wählen."}
+                                                selectedId={selectedId}
+                                                onSelect={selectAnomaly}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                                {!loading && !error && range && markerTab !== "outliers" && hiddenCount > 0 && (
+                                    <p className="m-0 mt-2 text-[11px] text-slate-500">
+                                        {hiddenCount} weitere außerhalb des Zeitraums.{" "}
+                                        <button type="button" className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                            onClick={() => updateParams({ range: null })}>
+                                            Gesamten Zeitraum zeigen
+                                        </button>
+                                    </p>
+                                )}
+                                {!loading && !error && selectedId && !selectedAnomaly && (
+                                    <p className="m-0 mt-2 text-[11px] text-slate-500">
+                                        Die ausgewählte Veränderung gibt es mit den aktuellen Einstellungen nicht.{" "}
+                                        <button type="button" className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                            onClick={clearSelection}>
+                                            Auswahl aufheben
+                                        </button>
+                                    </p>
+                                )}
+                            </PageSection>
+                        </div>
+
+                        {/* Drill-down-Leiste: freie Auswahl eines Zeitraums (E17) */}
+                        {!error && data && (
+                            <div className="bg-white border border-slate-200 rounded-lg shadow-xs px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="w-7 h-7 rounded-md grid place-items-center flex-none bg-slate-100 text-slate-600 [&_svg]:w-[14px] [&_svg]:h-[14px]">
+                                        <MousePointerClick />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">DRILL-DOWN</p>
+                                        <p className="m-0 text-[13px] font-semibold text-slate-900 leading-5 truncate">
+                                            {selectedAnomaly
+                                                ? `Veränderung ab ${fmtPeriod(selectedAnomaly.date)}`
+                                                : selection
+                                                    ? `Auswahl ${selectionLabel(selection)}`
+                                                    : "Zeitraum wählen"}
+                                        </p>
+                                    </div>
+                                </div>
                                 <DrilldownPicker
                                     key={selectionKey ?? "none"}
                                     months={seriesMonths}
@@ -299,153 +388,105 @@ export default function AnomaliesPage() {
                                     onSelect={selectPeriod}
                                     onClear={selection || selectedAnomaly ? clearSelection : null}
                                 />
-                            </PageSection>
-                        )}
-
-                        <PageSection
-                            icon={<ListOrdered />}
-                            eyebrow="LISTE"
-                            title="Auffällige Veränderungen"
-                            subtitle={range
-                                ? `Im gewählten Zeitraum (${fmtPeriod(range.from)} – ${fmtPeriod(range.to)}); Abfälle zuerst, innerhalb nach Größe`
-                                : "Abfälle zuerst, innerhalb nach Größe der Veränderung"}
-                        >
-                            {!loading && !error && <AnomalyList
-                                    anomalies={visibleAnomalies}
-                                    eligibility={eligibility}
-                                    emptyText={range ? "Im gewählten Zeitraum keine auffälligen Veränderungen." : undefined}
-                                    selectedId={selectedId}
-                                    onSelect={selectAnomaly}
-                                />}
-                            {!loading && !error && range && hiddenCount > 0 && (
-                                <p className="m-0 mt-2 text-[11px] text-slate-500">
-                                    {hiddenCount}{visibleAnomalies.length ? " weitere" : ""} {hiddenCount === 1 ? "auffällige Veränderung liegt" : "auffällige Veränderungen liegen"} außerhalb des gewählten Zeitraums.{" "}
-                                    <button
-                                        type="button"
-                                        className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
-                                        onClick={() => updateParams({ range: null })}
-                                    >
-                                        Gesamten Zeitraum zeigen
-                                    </button>
-                                </p>
-                            )}
-                            {!loading && !error && selectedId && !selectedAnomaly && (
-                                <p className="m-0 mt-2 text-[11px] text-slate-500">
-                                    Die ausgewählte Veränderung gibt es mit den aktuellen Einstellungen nicht.{" "}
-                                    <button
-                                        type="button"
-                                        className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
-                                        onClick={() => updateParams({ anomaly: null, month: null, from: null, to: null })}
-                                    >
-                                        Auswahl aufheben
-                                    </button>
-                                </p>
-                            )}
-                        </PageSection>
-
-                        {!loading && !error && eligibility?.eligible && (
-                            <PageSection
-                                icon={<Diamond />}
-                                eyebrow="LISTE · E14"
-                                title="Auffällige Einzelmonate"
-                                subtitle="Monate, die stark von ihren Nachbarmonaten abweichen, ohne ein neues Niveau zu bilden (mindestens 3 σ und 0,5 Sterne); größte Abweichung zuerst"
-                            >
-                                <OutlierList
-                                    outliers={visibleOutliers}
-                                    selectedPeriod={selectedOutlier?.date ?? null}
-                                    onSelect={selectOutlier}
-                                    emptyText={range ? "Im gewählten Zeitraum keine auffälligen Einzelmonate." : undefined}
-                                />
-                            </PageSection>
-                        )}
-
-                        {selection && selectionWindows && (
-                            <PageSection
-                                icon={<GitCompareArrows />}
-                                eyebrow={`DRILL-DOWN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
-                                title="Vergleich mit dem Zeitraum davor"
-                                subtitle={periodComparison.data
-                                    ? `${group} · Zeitraum davor ${selectionLabel(periodComparison.data.windows.before)}: ${periodComparison.data.windows.before.n_reviews} · Auswahl ${selectionLabel(periodComparison.data.windows.after)}: ${periodComparison.data.windows.after.n_reviews} Bewertungen`
-                                    : `${group} · Auswahl gegen den gleich langen Zeitraum davor (mindestens ${selectionWindows.windowMonths} Monate)`}
-                            >
-                                {selectedOutlier && (
-                                    <p className="m-0 mb-3 text-[12px] text-slate-600">
-                                        Auffälliger Einzelmonat: {fmtPeriod(selectedOutlier.date)} weicht um {String(selectedOutlier.deviation).replace(".", ",")} Sterne
-                                        vom Niveau seiner Nachbarmonate ab. Das ist ein Hinweis auf einen auffälligen Monat, keine Aussage über Ursachen.
+                                {!selection && !selectedAnomaly && (
+                                    <p className="m-0 text-[11px] text-slate-500 basis-full xl:basis-auto xl:ml-auto">
+                                        oder im Verlauf: Stufe, Raute oder Monat anklicken, Zeitraum ziehen
                                     </p>
                                 )}
-                                <AnomalyComparison
-                                    data={periodComparison.data}
-                                    loading={periodComparison.loading}
-                                    error={periodComparison.error}
-                                    labels={{ before: "Zeitraum davor", after: "Auswahl" }}
-                                />
-                            </PageSection>
+                            </div>
                         )}
 
-                        {selection && selectionWindows && reviewSpan && (
-                            <PageSection
-                                icon={<MessageSquareText />}
-                                eyebrow={`EINZELBEWERTUNGEN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
-                                title="Bewertungen der Auswahl"
-                                subtitle={`${group} · ${periodSide === "before" ? "Zeitraum davor" : "Auswahl"} · ${selectionLabel(reviewSpan)}${
-                                    reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
-                                actions={
-                                    <>
-                                        {topicToggle}
-                                        <WindowSideToggle
-                                            value={periodSide}
-                                            onChange={(key) => setPeriodSideState({ key: selectionKey, side: key })}
-                                            labels={{ before: "Zeitraum davor", after: "Auswahl" }}
-                                        />
-                                    </>
-                                }
-                            >
-                                <PeriodReviewList
-                                    key={`${selectionKey}:${periodSide}:${topicOnly}`}
-                                    pages={reviewPages}
-                                    emptyText={topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : "Keine Bewertungen in diesem Zeitraum."}
-                                />
-                                <p className="m-0 mt-3 text-[11px] text-slate-400">
-                                    Alle Bewertungen der gewählten Kalendermonate, auch aus Monaten mit wenigen Bewertungen. Vergleichszeitraum: die gleich
-                                    vielen Monate direkt davor, mindestens 6 (E17, vorläufig).
-                                </p>
-                            </PageSection>
-                        )}
-
+                        {/* Ausgewählte Veränderung: Vergleich (links) und Bewertungen (rechts) */}
                         {selectedAnomaly && windows && (
-                            <PageSection
-                                icon={<GitCompareArrows />}
-                                eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
-                                title="Vorher-Nachher-Vergleich"
-                                subtitle={comparison.data
-                                    ? `${group} · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
-                                    : `${group} · Verschiebungen in den Bewertungen zwischen den Vergleichsfenstern`}
-                            >
-                                <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} />
-                            </PageSection>
+                            <div className="grid gap-3 xl:grid-cols-5 items-start">
+                                <PageSection
+                                    className="xl:col-span-3"
+                                    icon={<GitCompareArrows />}
+                                    eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    title="Vorher-Nachher-Vergleich"
+                                    subtitle={comparison.data
+                                        ? `${group} · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
+                                        : `${group} · Verschiebungen in den Bewertungen zwischen den Vergleichsfenstern`}
+                                >
+                                    <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} />
+                                </PageSection>
+                                <PageSection
+                                    className="xl:col-span-2"
+                                    icon={<MessageSquareText />}
+                                    eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    title="Bewertungen des Zeitraums"
+                                    subtitle={`${group} · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
+                                        reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
+                                    actions={<WindowSideToggle value={side} onChange={(key) => setSideState({ id: selectedId, side: key })} />}
+                                >
+                                    {topicToggle && <div className="mb-2">{topicToggle}</div>}
+                                    <div className="max-h-[720px] overflow-y-auto overscroll-contain pr-1">
+                                        <PeriodReviewList key={`${selectedId}:${side}:${topicOnly}`} pages={reviewPages} emptyText={topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : undefined} />
+                                    </div>
+                                    <p className="m-0 mt-3 text-[11px] text-slate-400">
+                                        Vergleichsfenster: bis zu {windows.windowMonths} Kalendermonate vor dem markierten Monat und ab ihm, begrenzt
+                                        durch die benachbarten Veränderungen; alle Bewertungen dieser Monate.
+                                    </p>
+                                </PageSection>
+                            </div>
                         )}
 
-                        {selectedAnomaly && windows && (
-                            <PageSection
-                                icon={<MessageSquareText />}
-                                eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
-                                title="Bewertungen des Zeitraums"
-                                subtitle={`${group} · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
-                                    reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
-                                actions={
-                                    <>
-                                        {topicToggle}
-                                        <WindowSideToggle value={side} onChange={(key) => setSideState({ id: selectedId, side: key })} />
-                                    </>
-                                }
-                            >
-                                <PeriodReviewList key={`${selectedId}:${side}:${topicOnly}`} pages={reviewPages} emptyText={topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : undefined} />
-                                <p className="m-0 mt-3 text-[11px] text-slate-400">
-                                    Vergleichsfenster: bis zu {windows.windowMonths} Kalendermonate vor dem markierten Monat und ab ihm, begrenzt
-                                    durch die benachbarten Veränderungen; alle Bewertungen dieser Monate, auch aus Monaten mit wenigen Bewertungen.
-                                </p>
-                            </PageSection>
+                        {/* Freie Auswahl (E17): Vergleich mit dem Zeitraum davor und Bewertungen */}
+                        {selection && selectionWindows && (
+                            <div className="grid gap-3 xl:grid-cols-5 items-start">
+                                <PageSection
+                                    className="xl:col-span-3"
+                                    icon={<GitCompareArrows />}
+                                    eyebrow={`DRILL-DOWN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
+                                    title="Vergleich mit dem Zeitraum davor"
+                                    subtitle={periodComparison.data
+                                        ? `${group} · Zeitraum davor ${selectionLabel(periodComparison.data.windows.before)}: ${periodComparison.data.windows.before.n_reviews} · Auswahl ${selectionLabel(periodComparison.data.windows.after)}: ${periodComparison.data.windows.after.n_reviews} Bewertungen`
+                                        : `${group} · Auswahl gegen den gleich langen Zeitraum davor (mindestens ${selectionWindows.windowMonths} Monate)`}
+                                >
+                                    {selectedOutlier && (
+                                        <p className="m-0 mb-3 text-[12px] text-slate-600">
+                                            Auffälliger Einzelmonat: {fmtPeriod(selectedOutlier.date)} weicht um {String(selectedOutlier.deviation).replace(".", ",")} Sterne
+                                            vom Niveau seiner Nachbarmonate ab. Das ist ein Hinweis auf einen auffälligen Monat, keine Aussage über Ursachen.
+                                        </p>
+                                    )}
+                                    <AnomalyComparison
+                                        data={periodComparison.data}
+                                        loading={periodComparison.loading}
+                                        error={periodComparison.error}
+                                        labels={{ before: "Zeitraum davor", after: "Auswahl" }}
+                                    />
+                                </PageSection>
+                                {reviewSpan && (
+                                    <PageSection
+                                        className="xl:col-span-2"
+                                        icon={<MessageSquareText />}
+                                        eyebrow={`EINZELBEWERTUNGEN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
+                                        title="Bewertungen der Auswahl"
+                                        subtitle={`${group} · ${periodSide === "before" ? "Zeitraum davor" : "Auswahl"} · ${selectionLabel(reviewSpan)}${
+                                            reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
+                                        actions={
+                                            <WindowSideToggle
+                                                value={periodSide}
+                                                onChange={(key) => setPeriodSideState({ key: selectionKey, side: key })}
+                                                labels={{ before: "Zeitraum davor", after: "Auswahl" }}
+                                            />
+                                        }
+                                    >
+                                        {topicToggle && <div className="mb-2">{topicToggle}</div>}
+                                        <div className="max-h-[720px] overflow-y-auto overscroll-contain pr-1">
+                                            <PeriodReviewList
+                                                key={`${selectionKey}:${periodSide}:${topicOnly}`}
+                                                pages={reviewPages}
+                                                emptyText={topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : "Keine Bewertungen in diesem Zeitraum."}
+                                            />
+                                        </div>
+                                        <p className="m-0 mt-3 text-[11px] text-slate-400">
+                                            Alle Bewertungen der gewählten Kalendermonate. Vergleichszeitraum: die gleich vielen Monate direkt davor,
+                                            mindestens 6 (E17, vorläufig).
+                                        </p>
+                                    </PageSection>
+                                )}
+                            </div>
                         )}
                     </>
                 )}

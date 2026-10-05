@@ -10,6 +10,25 @@
 
 ## 1. Vorstellung
 
+**Aufbau der Detailseite seit 2026-10-05** (angelehnt an das Aktien-Dashboard, Doku 05):
+
+1. **Kennzahlenleiste** mit sechs Kacheln für die gewählte Gruppe und Dimension: letzter
+   bewerteter Monat, Ø der letzten 12 Monate je Bewertung mit Vorjahr und Differenz,
+   Zahl der Bewertungen und bewerteten Monate, Zahl der auffälligen Veränderungen (Abfälle,
+   Anstiege), letzte Veränderung, Zahl der auffälligen Einzelmonate (E14). Differenzen ab
+   0,1 Sternen sind rot bzw. grün gefärbt. Die Kacheln gelten für die ganze Reihe,
+   unabhängig vom Zeitfilter (`frontend/src/components/dashboard/AnomalyKpis.jsx`).
+2. **Raster:** links der Monatsverlauf (zwei Drittel der Breite), rechts die Karte
+   **„Markierungen“** mit Umschalter „Veränderungen“ / „Einzelmonate“ (`?liste=einzelmonate`)
+   als kompakte, zweizeilige Liste mit eigenem Scrollbereich in Höhe des Verlaufs.
+3. **Drill-down-Leiste** in einer Zeile: aktuelle Auswahl, „von / bis“, Schnellwahl,
+   „Auswahl aufheben“ (Doku 06).
+4. **Auswahl:** Vergleich (links, drei Fünftel) und Bewertungen (rechts, zwei Fünftel, eigener
+   Scrollbereich) nebeneinander, für eine erkannte Veränderung wie für eine freie Auswahl.
+
+Unter 1280 px Breite stehen die Bereiche untereinander; die Kopfzeile bricht bei schmalen
+Fenstern um, statt seitlich zu überlaufen.
+
 Im Dashboard steht unter der Diagrammzeile (Timeline, Topics im Detail) die Karte
 **„Anomalien im Verlauf“**. Sie zeigt:
 

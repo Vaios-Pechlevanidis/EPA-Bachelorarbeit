@@ -1,8 +1,9 @@
 /* Abschnitt einer Detailseite (Anomalien, Aktie): Kopf mit Symbol, Kennung,
-   Titel, Untertitel und Aktionen, darunter der Inhalt. */
-export function PageSection({ icon, eyebrow, title, subtitle, actions, children }) {
+   Titel, Untertitel und Aktionen, darunter der Inhalt. className z. B. für
+   Rasterspalten, bodyClassName für den Inhaltsbereich (Standard px-4 py-4). */
+export function PageSection({ icon, eyebrow, title, subtitle, actions, children, className = "", bodyClassName = "px-4 py-4" }) {
     return (
-        <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
+        <section className={`bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs min-w-0 ${className}`}>
             <div className="px-4 pt-3 pb-3 border-b border-slate-200 flex items-start gap-2.5">
                 <span className="w-7 h-7 rounded-md grid place-items-center flex-none bg-slate-100 text-slate-600 mt-0.5 [&_svg]:w-[14px] [&_svg]:h-[14px]">
                     {icon}
@@ -14,7 +15,7 @@ export function PageSection({ icon, eyebrow, title, subtitle, actions, children 
                 </div>
                 {actions && <div className="flex-none flex items-center gap-2">{actions}</div>}
             </div>
-            <div className="px-4 py-4">{children}</div>
+            <div className={bodyClassName}>{children}</div>
         </section>
     )
 }

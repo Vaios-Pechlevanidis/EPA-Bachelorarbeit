@@ -208,3 +208,35 @@ export function selectionLabel(selection) {
   if (!selection) return ""
   return selection.from === selection.to ? fmtPeriod(selection.from) : `${fmtPeriod(selection.from)} – ${fmtPeriod(selection.to)}`
 }
+
+/* Kennzahlen einer Monatsreihe für die Kennzahlenleiste der Detailseite.
+ * "Ø 12 Monate" ist das Mittel je Bewertung (Monatsmittel gewichtet mit der
+ * Zahl der Werte) der 12 Kalendermonate bis zum letzten bewerteten Monat,
+ * "Vorjahr" dasselbe für die 12 Monate davor. Rückgabe null ohne bewerteten Monat. */
+export function seriesKpis(series) {
+  const list = series ?? []
+  const evaluated = list.filter((m) => m.evaluated && m.mean != null)
+  if (!evaluated.length) return null
+  const last = evaluated[evaluated.length - 1]
+  const lastIdx = periodIndex(last.period)
+  const weighted = (from, to) => {
+    let sum = 0
+    let n = 0
+    for (const m of list) {
+      const i = periodIndex(m.period)
+      if (i < from || i > to || m.mean == null || !m.n_values) continue
+      sum += m.mean * m.n_values
+      n += m.n_values
+    }
+    return n ? { mean: sum / n, n } : null
+  }
+  return {
+    last,
+    recent: weighted(lastIdx - 11, lastIdx),
+    previous: weighted(lastIdx - 23, lastIdx - 12),
+    total: list.reduce((acc, m) => acc + (m.count ?? 0), 0),
+    evaluatedMonths: evaluated.length,
+    months: list.length,
+    first: list[0]?.period ?? null,
+  }
+}
