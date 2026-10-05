@@ -5,7 +5,7 @@ API routes for analytics and company data.
 from fastapi import APIRouter, HTTPException, Query
 from database.supabase_client import get_supabase_client
 from typing import Optional, List, Dict, Any, Literal
-from services.topic_average_rating_service import _fetch_all_rows, get_topic_rating_timeseries
+from services.topic_average_rating_service import fetch_all_rows_parallel, get_topic_rating_timeseries
 import services.review_service as review_service
 from services.keyword_topic_service import analyze_topic, topic_definitions_for, topic_for_dimension, topic_spans, topics_in_review
 from services.review_service import (
@@ -607,11 +607,11 @@ def get_topic_overview(
     Themen-Definitionen und ``analyze_topic`` stehen in
     ``services/keyword_topic_service.py``.
 
-    Alle Bewertungen werden seitenweise gelesen (``_fetch_all_rows``, nach ``id``
-    sortiert); bis 2026-10-04 las die Route je Quelle nur eine Abfrage und damit
-    höchstens 1000 Zeilen (PostgREST-Grenze).
+    Alle Bewertungen werden seitenweise gelesen (nach ``id`` sortiert); bis
+    2026-10-04 las die Route je Quelle nur eine Abfrage und damit höchstens
+    1000 Zeilen (PostgREST-Grenze). Seit 2026-10-05 werden die Seiten nach der
+    ersten parallel geholt (``fetch_all_rows_parallel``).
     """
-    supabase = get_supabase_client()
     try:
         end_day = parse_day(end_date, "end_date")
     except ValueError as e:
@@ -623,25 +623,23 @@ def get_topic_overview(
         candidates_data = []
         employee_data = []
 
+        def review_query(table: str):
+            # Baut die Abfrage je Aufruf neu, auch in den Threads des parallelen
+            # Seitenabrufs (jeder mit eigenem Supabase-Client).
+            def build(count=None):
+                query = get_supabase_client().table(table).select("*", count=count).eq("company_id", company_id)
+                if start_date:
+                    query = query.gte("datum", start_date)
+                if end_exclusive:
+                    query = query.lt("datum", end_exclusive)
+                return query.order("id")
+            return build
+
         if source is None or source == "candidates":
-            candidates_query = supabase.table("candidates")\
-                .select("*")\
-                .eq("company_id", company_id)
-            if start_date:
-                candidates_query = candidates_query.gte("datum", start_date)
-            if end_exclusive:
-                candidates_query = candidates_query.lt("datum", end_exclusive)
-            candidates_data = _fetch_all_rows(candidates_query.order("id"), page_size=review_service.PAGE_SIZE)
+            candidates_data = fetch_all_rows_parallel(review_query("candidates"), page_size=review_service.PAGE_SIZE)
 
         if source is None or source == "employee":
-            employee_query = supabase.table("employee")\
-                .select("*")\
-                .eq("company_id", company_id)
-            if start_date:
-                employee_query = employee_query.gte("datum", start_date)
-            if end_exclusive:
-                employee_query = employee_query.lt("datum", end_exclusive)
-            employee_data = _fetch_all_rows(employee_query.order("id"), page_size=review_service.PAGE_SIZE)
+            employee_data = fetch_all_rows_parallel(review_query("employee"), page_size=review_service.PAGE_SIZE)
         
         all_reviews = candidates_data + employee_data
         
