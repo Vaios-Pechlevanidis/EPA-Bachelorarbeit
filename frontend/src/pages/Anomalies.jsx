@@ -18,6 +18,7 @@ import { useAnomalyComparison, usePeriodComparison } from "@/hooks/useAnomalyCom
 import { useCompanyResource } from "@/hooks/useCompanyResource"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
+import { SHOW_FINANCE_EXTRAS } from "@/config"
 import { loadCompany, loadCompanyName } from "@/lib/companies"
 
 /* ============================================================================
@@ -322,7 +323,7 @@ export default function AnomaliesPage() {
                                         <p className="m-0 text-[11px] text-slate-500">{noPriceText(market.data?.reason)}</p>
                                     ))}
                                     <p className="m-0 text-[11px] text-slate-500">
-                                        Aktienkurs, Kennzahlen und Nachrichten stehen im{" "}
+                                        {SHOW_FINANCE_EXTRAS ? "Aktienkurs, Kennzahlen und Nachrichten" : "Aktienkurs und Kennzahlen"} stehen im{" "}
                                         <button
                                             type="button"
                                             className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
