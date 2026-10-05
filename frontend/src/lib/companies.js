@@ -42,9 +42,14 @@ export function invalidateCompanies() {
   pending = null
 }
 
+/* Eintrag einer Firma aus der Liste (mit ticker, peer_group …) oder null. */
+export async function loadCompany(companyId) {
+  const list = await loadCompanies()
+  return list.find((c) => String(c.id) === String(companyId)) ?? null
+}
+
 /* Name einer Firma aus der Liste ("" wenn unbekannt). */
 export async function loadCompanyName(companyId) {
-  const list = await loadCompanies()
-  const company = list.find((c) => String(c.id) === String(companyId))
+  const company = await loadCompany(companyId)
   return company?.name?.trim() ?? ""
 }

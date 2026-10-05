@@ -13,9 +13,12 @@ export function fmtPriceTick(v) {
   return v == null ? "" : Number(v).toLocaleString("de-DE", { maximumFractionDigits: 2 })
 }
 
-/* Umschalter in der URL: ?kurs=aus blendet den Kurs aus, Standard an. */
+/* Umschalter in der URL: Im Aktien-Dashboard ist der Kurs Standard an
+   (?kurs=aus blendet ihn aus), auf der Anomalien-Seite Standard aus
+   (?kurs=an blendet ihn ein). */
 export const PRICE_PARAM = "kurs"
 export const PRICE_OFF = "aus"
+export const PRICE_ON = "an"
 
 /* Großer Betrag kompakt: "212,3 Mrd. EUR", "4,6 Mio. EUR". */
 export function fmtAmount(v, unit) {

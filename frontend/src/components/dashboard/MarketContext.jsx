@@ -1,8 +1,9 @@
 /* ============================================================================
    MarketContext — Kennzahlen, Herkunft und Hinweis im Aktien-Dashboard
-   (Inkrement 3, E15, E16). Daten: GET /analytics/company/{id}/finance. Der
-   Kurs zeigt das Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht
-   behauptet und nicht berechnet.
+   (Inkrement 3, E15, E16; Daten: GET /analytics/company/{id}/finance) sowie
+   Umschalter und Hinweis für den einblendbaren Kurs auf der Anomalien-Seite
+   (Daten: /market). Der Kurs zeigt das Marktumfeld; ein Zusammenhang mit den
+   Bewertungen wird nicht behauptet und nicht berechnet.
    ============================================================================ */
 import {
     MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE,
@@ -74,21 +75,22 @@ export function FinanceKpis({ market, last, first, change }) {
 }
 
 /* Wessen Kurs gezeigt wird: Wertpapier und Ticker; bei der Konzernmutter ausdrücklich. */
-function securityText(market, companyName) {
+function securityText(market, companyName, subject) {
     const security = market.ticker_name ? `${market.ticker_name} (${market.ticker})` : market.ticker
     if (market.ticker_scope === PARENT_SCOPE) {
-        return `Kurs und Kennzahlen der Konzernmutter ${security}, nicht${companyName ? ` von ${companyName}` : " des Unternehmens"} selbst.`
+        return `${subject} der Konzernmutter ${security}, nicht${companyName ? ` von ${companyName}` : " des Unternehmens"} selbst.`
     }
-    return `Kurs und Kennzahlen: ${security}.`
+    return `${subject}: ${security}.`
 }
 
-/* Eine Zeile mit Wertpapier, Quelle, Abrufdatum und festem Hinweis (E15). */
-export function MarketSourceNote({ market, companyName }) {
+/* Eine Zeile mit Wertpapier, Quelle, Abrufdatum und festem Hinweis (E15).
+   subject nennt, was gezeigt wird ("Kurs" auf der Anomalien-Seite). */
+export function MarketSourceNote({ market, companyName, subject = "Kurs und Kennzahlen" }) {
     if (!market?.available) return null
     return (
         <p className="m-0 text-[11px] text-slate-500 leading-4">
             <span className="font-medium text-slate-700">{MARKET_DISCLAIMER_LEAD}</span> {MARKET_DISCLAIMER_TEXT}{" "}
-            {securityText(market, companyName)} Quelle: {market.source}, Monatsschlusskurse um Splits und Dividenden
+            {securityText(market, companyName, subject)} Quelle: {market.source}, Monatsschlusskurse um Splits und Dividenden
             bereinigt; abgerufen am {fmtDay(market.fetched_at?.slice(0, 10))}.
         </p>
     )

@@ -6,16 +6,19 @@ import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
+import { MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isPeriod, isTimeRangeKey, outlierCountText, periodIndex, periodWindows, selectionLabel, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
+import { PRICE_ON, PRICE_PARAM, noPriceText } from "@/lib/market"
 import { groupLabel, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison, usePeriodComparison } from "@/hooks/useAnomalyComparison"
+import { useCompanyResource } from "@/hooks/useCompanyResource"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
-import { loadCompanyName } from "@/lib/companies"
+import { loadCompany, loadCompanyName } from "@/lib/companies"
 
 /* ============================================================================
    Anomalies — Detailseite "Anomalien im Verlauf" (Inkrement 1).
@@ -33,8 +36,12 @@ import { loadCompanyName } from "@/lib/companies"
    (YYYY-MM; das ältere ?month= gilt als from = to); darunter stehen der
    Vergleich mit dem Zeitraum davor und die Bewertungen der Auswahl, auch wenn
    die Reihe keine erkannte Veränderung hat.
-   Der Aktienkurs (Inkrement 3, E15) steht nicht hier, sondern im
-   Aktien-Dashboard (/aktie, E16); unter dem Diagramm führt ein Link dorthin.
+   Aktienkurs (Inkrement 3, E15, Nachtrag 2026-10-05): Hat die Firma einen
+   Ticker, blendet das Kästchen "Aktienkurs" im Kopf des Monatsverlaufs den
+   Kurs auf einer zweiten Achse ein (?kurs=an, Standard aus). Erst dann wird
+   /market geladen; unter dem Diagramm stehen dann der feste Hinweis und bei
+   der Konzernmutter der Vermerk. Der Link zum Aktien-Dashboard (/aktie, E16)
+   bleibt in jedem Fall.
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -89,6 +96,25 @@ export default function AnomaliesPage() {
             .catch(() => {})
         return () => { active = false }
     }, [companyId, names])
+
+    // Ticker aus der gemeinsamen Firmenliste: Nur mit Ticker gibt es das Kästchen
+    // "Aktienkurs". null = kein Ticker oder Firma unbekannt.
+    const [tickers, setTickers] = useState({})
+    useEffect(() => {
+        if (!companyId || companyId in tickers) return undefined
+        let active = true
+        loadCompany(companyId)
+            .then((company) => {
+                if (active) setTickers((t) => ({ ...t, [companyId]: company?.ticker || null }))
+            })
+            .catch(() => {})
+        return () => { active = false }
+    }, [companyId, tickers])
+    const hasTicker = Boolean(companyId && tickers[companyId])
+    // Kurs als Einordnung (E15): Standard aus; /market wird erst geladen, wenn er an ist.
+    const showPrice = hasTicker && searchParams.get(PRICE_PARAM) === PRICE_ON
+    const market = useCompanyResource(showPrice ? companyId : null, "market")
+    const marketData = market.data?.available ? market.data : null
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
     const selectedId = searchParams.get("anomaly")
@@ -253,10 +279,18 @@ export default function AnomaliesPage() {
                                 title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
                                 subtitle={chartSubtitle}
                                 actions={
-                                    <TimeRangeFilter
-                                        value={rangeKey}
-                                        onChange={(key) => updateParams({ range: key === DEFAULT_TIME_RANGE ? null : key })}
-                                    />
+                                    <>
+                                        {hasTicker && (
+                                            <PriceToggle
+                                                checked={showPrice}
+                                                onChange={(on) => updateParams({ [PRICE_PARAM]: on ? PRICE_ON : null })}
+                                            />
+                                        )}
+                                        <TimeRangeFilter
+                                            value={rangeKey}
+                                            onChange={(key) => updateParams({ range: key === DEFAULT_TIME_RANGE ? null : key })}
+                                        />
+                                    </>
                                 }
                                 bodyClassName="px-4 pt-3 pb-3"
                             >
@@ -274,18 +308,31 @@ export default function AnomaliesPage() {
                                     onSelectOutlier={selectOutlier}
                                     selection={selection}
                                     onSelectPeriod={selectPeriod}
+                                    market={showPrice ? marketData : null}
                                 />
-                                <p className="m-0 mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
-                                    Aktienkurs, Kennzahlen und Nachrichten stehen im{" "}
-                                    <button
-                                        type="button"
-                                        className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
-                                        onClick={() => navigate(`/aktie?company=${companyId}`, { state: { company: { id: companyId, name: companyName } } })}
-                                    >
-                                        Aktien-Dashboard
-                                    </button>
-                                    , dort auch zusammen mit diesem Bewertungsverlauf.
-                                </p>
+                                <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                                    {/* Eingeblendeter Kurs: fester Hinweis, Wertpapier (Konzernmutter ausdrücklich), Quelle */}
+                                    {showPrice && (market.loading ? (
+                                        <p className="m-0 text-[11px] text-slate-500">Lade Aktienkurs…</p>
+                                    ) : market.error ? (
+                                        <p className="m-0 text-[11px] text-slate-500">Aktienkurs konnte nicht geladen werden: {market.error}</p>
+                                    ) : marketData ? (
+                                        <MarketSourceNote market={marketData} companyName={companyName} subject="Kurs" />
+                                    ) : (
+                                        <p className="m-0 text-[11px] text-slate-500">{noPriceText(market.data?.reason)}</p>
+                                    ))}
+                                    <p className="m-0 text-[11px] text-slate-500">
+                                        Aktienkurs, Kennzahlen und Nachrichten stehen im{" "}
+                                        <button
+                                            type="button"
+                                            className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                            onClick={() => navigate(`/aktie?company=${companyId}`, { state: { company: { id: companyId, name: companyName } } })}
+                                        >
+                                            Aktien-Dashboard
+                                        </button>
+                                        , dort auch zusammen mit diesem Bewertungsverlauf.
+                                    </p>
+                                </div>
                             </PageSection>
 
                             <PageSection
