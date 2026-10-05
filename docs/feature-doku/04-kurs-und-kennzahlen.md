@@ -6,7 +6,7 @@
 | Anforderungen | Kurs und Kennzahlen als Einordnung neben dem Bewertungsverlauf (Auftrag Inkrement 3) |
 | Entscheidungen | E15 in `docs/entscheidungen.md`; E6 (Ticker, Sonderfälle) und E8 (yfinance als Abhängigkeit) unverändert |
 | Status | umgesetzt; **vorläufig** (Nutzungsbedingungen von Yahoo Finance offen) |
-| Stand | 2026-10-04 |
+| Stand | 2026-10-05 |
 
 ## 1. Vorstellung
 
@@ -123,6 +123,44 @@ Kennzahlen; der Umsatz reicht vier Geschäftsjahre zurück (2022 bis 2025, NTT 0
 - Manuelle Prüfung 2026-10-04 im Browser: SAP SE (Kurs, Tooltip, Umschalter, 12 Monate),
   NTT DATA SE (Konzernmutter in Legende und Hinweis, JPY), Open Grid Europe (kein Kurs),
   helles und dunkles Farbschema. Dashboard-Karte und PDF-Export nicht verändert.
+
+### Bestand des Zwischenspeichers (Beleg für die Abnahme von Inkrement 3)
+
+Ausgegeben am 2026-10-05 mit `cd backend && uv run python scripts/fetch_market_data.py --summary`.
+Die Option liest nur Metadatei und Zwischenspeicher: kein Abruf, keine Datenbank, keine
+Schreibzugriffe (Test: `backend/tests/market/test_market_summary.py`). Exit-Code 0 heißt, dass
+jeder Ticker der Metadatei eine Kursreihe hat. **Abrufdatum** des Zwischenspeichers
+(`fetched_at`) ist für alle 17 Ticker der **2026-10-04**.
+
+Die Tabelle nennt nur Zeiträume und Verfügbarkeit, keine Kurs- oder Kennzahlwerte. Der Stand
+der Marktkapitalisierung ist der Tag des letzten Kurses, der Stand der Mitarbeitenden das
+Abrufdatum (E15). Beim Umsatz steht die Zahl der Geschäftsjahre (GJ) mit dem Monat, in dem das
+erste und das letzte Geschäftsjahr enden. Alle Kursreihen sind lückenlos: Die Zahl der Monate
+entspricht der Spanne vom ersten bis zum letzten Monat.
+
+| Unternehmen (id) | Ticker | ticker_scope | Erster Monat | Letzter Monat | Monate | Währung | Marktkapitalisierung | Mitarbeitende | Umsatz je Geschäftsjahr | Abruf |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Thyssenkrupp (3) | TKA.DE | eigene Aktie | 1999-03 | 2026-09 | 331 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-09 bis 2025-09 | 2026-10-04 |
+| E.ON (7) | EOAN.DE | eigene Aktie | 2000-01 | 2026-09 | 321 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| RWE (8) | RWE.DE | eigene Aktie | 1996-12 | 2026-09 | 358 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| SAP SE (19) | SAP.DE | eigene Aktie | 1998-04 | 2026-09 | 342 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| NTT DATA SE (20) | 9432.T | Konzernmutter | 2000-01 | 2026-09 | 321 | JPY | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2023-03 bis 2026-03 | 2026-10-04 |
+| 1&1 AG (21) | 1U1.DE | eigene Aktie | 1998-11 | 2026-09 | 335 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Aixtron (22) | AIXA.DE | eigene Aktie | 1997-11 | 2026-09 | 347 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Atoss (23) | AOF.DE | eigene Aktie | 1999-06 | 2026-09 | 328 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Bechtle (24) | BC8.DE | eigene Aktie | 2000-01 | 2026-09 | 321 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Cancom (25) | COK.DE | eigene Aktie | 1999-09 | 2026-09 | 325 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Carl Zeiss (26) | AFX.DE | – | 2000-03 | 2026-09 | 319 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-09 bis 2025-09 | 2026-10-04 |
+| Telekom (28) | DTE.DE | eigene Aktie | 1996-11 | 2026-09 | 359 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Eckert Ziegler (29) | EUZ.DE | eigene Aktie | 1999-05 | 2026-09 | 329 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Elmos Semiconductor (30) | ELG.DE | eigene Aktie | 1999-10 | 2026-09 | 324 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Evotec (31) | EVT.DE | eigene Aktie | 1999-11 | 2026-09 | 323 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Formycon (32) | FYB.DE | eigene Aktie | 2011-01 | 2026-09 | 189 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+| Freenet (33) | FNTN.DE | eigene Aktie | 2000-01 | 2026-09 | 321 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
+
+`ticker_scope` „–“ bei Carl Zeiss: Die Zuordnung zur Carl Zeiss Meditec AG ist offen (E15).
+Nicht in der Tabelle, weil ohne Ticker: die 9 nicht notierten Unternehmen (darunter
+Compugroup Medical, E6) und die Demo-Unternehmen.
 
 ## 6. Offene Punkte
 
