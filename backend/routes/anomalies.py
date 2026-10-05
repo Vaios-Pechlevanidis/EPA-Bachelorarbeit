@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from models.changepoint_detector import DEFAULT_PENALTY_FACTOR
 from services.anomaly_service import DEFAULT_MIN_DELTA, company_anomalies, company_anomalies_all
-from services.explanation_service import DEFAULT_WINDOW_MONTHS, explain_anomaly
+from services.explanation_service import DEFAULT_WINDOW_MONTHS, compare_period, explain_anomaly
 from services.rating_series_service import OVERALL_DIMENSION
 
 router = APIRouter(prefix="/api/analytics", tags=["Anomalies"])
@@ -158,3 +158,28 @@ def get_anomaly_explanations(
     if result is None:
         raise HTTPException(status_code=404, detail=f"Auffällige Veränderung '{anomaly_id}' nicht gefunden.")
     return result
+
+
+@router.get("/company/{company_id}/compare")
+def get_period_comparison(
+    company_id: int,
+    from_: str = Query(..., alias="from", description="Erster Monat der Auswahl (YYYY-MM)"),
+    to: str = Query(..., description="Letzter Monat der Auswahl (YYYY-MM, einschließlich)"),
+    source: str = Query("employee", description="Quelle: employee oder candidates"),
+    dimension: Optional[str] = Query(None, description="Dimension; Standard Gesamtbewertung"),
+    status: Optional[str] = Query(None, description="Statusschlüssel der Bewertendengruppe (E13); ohne = alle"),
+):
+    """
+    Vergleich einer frei gewählten Auswahl von Monaten mit dem Zeitraum davor (E17),
+    unabhängig von erkannten Veränderungen (Drill-down auch ohne Anomalie).
+
+    ``windows.after`` ist die Auswahl ``from`` bis ``to``, ``windows.before`` der gleich
+    lange Zeitraum direkt davor, mindestens 6 Monate (``MIN_BASELINE_MONTHS``). ``comparison``
+    wie bei ``/anomalies/{id}/explanations``. Ungültige Angaben: 400.
+    """
+    try:
+        return compare_period(company_id, from_, to, source=source, dimension=dimension, status=status)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error comparing periods: {str(e)}")

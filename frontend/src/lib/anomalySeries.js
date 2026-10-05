@@ -183,3 +183,28 @@ export function outlierCountText(n) {
 export function monthSpan(period) {
   return windowSpan(periodIndex(period), periodIndex(period))
 }
+
+/* Fenster einer frei gewählten Auswahl (E17, vorläufig): "after" ist die
+ * Auswahl from–to (YYYY-MM, einschließlich), "before" der gleich lange Zeitraum
+ * direkt davor, mindestens minBaseline Monate. Dieselbe Regel rechnet das
+ * Backend in services/explanation_service.py (period_windows). */
+export const MIN_BASELINE_MONTHS = 6
+
+export function periodWindows(from, to, minBaseline = MIN_BASELINE_MONTHS) {
+  if (!from || !to) return null
+  const first = Math.min(periodIndex(from), periodIndex(to))
+  const last = Math.max(periodIndex(from), periodIndex(to))
+  const baseline = Math.max(last - first + 1, minBaseline)
+  return { windowMonths: baseline, before: windowSpan(first - baseline, first - 1), after: windowSpan(first, last) }
+}
+
+/* Gültiger Monat "YYYY-MM" oder null. */
+export function isPeriod(value) {
+  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value)
+}
+
+/* "März 2024" oder "Jan. 2024 – Juni 2024" für eine Auswahl {from, to}. */
+export function selectionLabel(selection) {
+  if (!selection) return ""
+  return selection.from === selection.to ? fmtPeriod(selection.from) : `${fmtPeriod(selection.from)} – ${fmtPeriod(selection.to)}`
+}

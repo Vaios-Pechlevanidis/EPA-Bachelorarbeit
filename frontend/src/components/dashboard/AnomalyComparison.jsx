@@ -75,7 +75,11 @@ function WindowHeader({ label, win, stats }) {
     )
 }
 
-export function AnomalyComparison({ data, loading, error }) {
+/* labels: Bezeichnungen der beiden Fenster, Standard für eine auffällige
+   Veränderung; bei freier Auswahl (E17) "Zeitraum davor" und "Auswahl". */
+export function AnomalyComparison({ data, loading, error, labels = { before: "davor", after: "ab dem markierten Monat" } }) {
+    // Kurzformen für die Tabellenköpfe ("Anteil davor" / "Anteil Auswahl").
+    const short = { before: "davor", after: labels.after === "ab dem markierten Monat" ? "danach" : labels.after }
     const [showAll, setShowAll] = useState(false)
 
     if (loading) {
@@ -104,7 +108,7 @@ export function AnomalyComparison({ data, loading, error }) {
         .map((side) => {
             const s = sample[side]
             if (!s) return null
-            const label = side === "before" ? "davor" : "danach"
+            const label = side === "before" ? labels.before : labels.after
             return s.limited ? `${label} die jüngsten ${s.analyzed} von ${s.with_text}` : `${label} alle ${s.analyzed}`
         })
         .filter(Boolean)
@@ -113,8 +117,8 @@ export function AnomalyComparison({ data, loading, error }) {
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap gap-3">
-                <WindowHeader label="davor" win={windows.before} stats={comparison.before} />
-                <WindowHeader label="ab dem markierten Monat" win={windows.after} stats={comparison.after} />
+                <WindowHeader label={labels.before} win={windows.before} stats={comparison.before} />
+                <WindowHeader label={labels.after} win={windows.after} stats={comparison.after} />
                 <div className="flex-1 min-w-[180px] rounded-md border border-slate-200 px-3 py-2.5">
                     <p className="m-0 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500">Verschiebung</p>
                     <p className="m-0 mt-0.5 text-[13px] font-semibold text-slate-900 tnum">{signed(comparison.rating_shift)} Sterne</p>
@@ -139,11 +143,11 @@ export function AnomalyComparison({ data, loading, error }) {
                         <thead>
                             <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500">
                                 <th className="font-medium py-1.5 pr-3">Thema</th>
-                                <th className="font-medium py-1.5 pr-3 text-right">Anteil davor</th>
-                                <th className="font-medium py-1.5 pr-3 text-right">Anteil danach</th>
+                                <th className="font-medium py-1.5 pr-3 text-right">Anteil {short.before}</th>
+                                <th className="font-medium py-1.5 pr-3 text-right">Anteil {short.after}</th>
                                 <th className="font-medium py-1.5 pr-3 text-right">Differenz</th>
-                                <th className="font-medium py-1.5 pr-3">Stimmung davor</th>
-                                <th className="font-medium py-1.5">Stimmung danach</th>
+                                <th className="font-medium py-1.5 pr-3">Stimmung {short.before}</th>
+                                <th className="font-medium py-1.5">Stimmung {short.after}</th>
                             </tr>
                         </thead>
                         <tbody>

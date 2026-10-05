@@ -404,7 +404,81 @@ def explain_anomaly(
     }
 
 
+# ── Freie Auswahl (E17) ─────────────────────────────────────────────────────
+
+MIN_BASELINE_MONTHS = 6   # E17, vorläufig: Vergleichszeitraum mindestens 6 Monate
+
+
+def _parse_month(value: str, name: str) -> int:
+    try:
+        y, m = (int(x) for x in str(value).split("-"))
+        if not 1 <= m <= 12 or len(str(value)) != 7:
+            raise ValueError
+    except ValueError:
+        raise ValueError(f"{name} '{value}' ist kein Monat im Format YYYY-MM.") from None
+    return y * 12 + (m - 1)
+
+
+def period_windows(from_month: str, to_month: str, min_baseline: int = MIN_BASELINE_MONTHS) -> Dict[str, Any]:
+    """Fenster für eine frei gewählte Auswahl ``from_month`` bis ``to_month``
+    (einschließlich): ``after`` ist die Auswahl, ``before`` der gleich lange
+    Zeitraum direkt davor, mindestens ``min_baseline`` Monate (E17).
+    ValueError bei falschem Format oder ``from_month`` nach ``to_month``."""
+    first, last = _parse_month(from_month, "from"), _parse_month(to_month, "to")
+    if first > last:
+        raise ValueError("from liegt nach to.")
+    length = last - first + 1
+    baseline = max(length, min_baseline)
+    return {
+        "window_months": baseline,
+        "before": _span(first - baseline, first - 1),
+        "after": _span(first, last),
+    }
+
+
+def compare_period(
+    company_id: int,
+    from_month: str,
+    to_month: str,
+    source: str = "employee",
+    dimension: Optional[str] = None,
+    *,
+    status: Optional[str] = None,
+    analyzer=None,
+) -> Dict[str, Any]:
+    """Vergleich einer frei gewählten Auswahl mit dem Zeitraum davor (E17), auch
+    ohne erkannte Veränderung; sonst wie ``explain_anomaly``. Nur lesend.
+    ValueError bei ungültiger Quelle, Dimension, Status oder Monatsangabe."""
+    from services.rating_series_service import OVERALL_DIMENSION, value_column
+    from services.review_service import fetch_review_rows_in_range, filter_by_status, parse_day, validate_status
+
+    dimension = dimension or OVERALL_DIMENSION
+    column = value_column(source, dimension)
+    validate_status(source, status)
+    windows = period_windows(from_month, to_month)
+    rows = fetch_review_rows_in_range(
+        source, company_id, parse_day(windows["before"]["start"], "start"), parse_day(windows["after"]["end"], "end"),
+    )
+    by_window = split_rows_by_window(filter_by_status(rows, source, status), windows)
+    for side in ("before", "after"):
+        windows[side]["n_reviews"] = len(by_window[side])
+    return {
+        "company_id": company_id,
+        "source": source,
+        "dimension": dimension,
+        "status": status,
+        "dimension_topic": topic_for_dimension(source, dimension),
+        "selection": {"from": from_month, "to": to_month},
+        "windows": windows,
+        "comparison": compare_windows(
+            by_window["before"], by_window["after"], source, analyzer=analyzer, value_column=column,
+        ),
+        "explanations": [],
+    }
+
+
 __all__ = [
+    "MIN_BASELINE_MONTHS", "period_windows", "compare_period",
     "parse_anomaly_id", "explain_anomaly",
     "DEFAULT_WINDOW_MONTHS", "SENTIMENT_SAMPLE_LIMIT", "LOW_BASIS_MIN_REVIEWS", "LOW_BASIS_MIN_MENTIONS",
     "comparison_windows", "split_rows_by_window", "get_sentiment_analyzer", "set_sentiment_analyzer",

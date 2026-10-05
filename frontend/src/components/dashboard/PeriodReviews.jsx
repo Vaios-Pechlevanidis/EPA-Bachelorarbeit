@@ -20,10 +20,10 @@ const WINDOW_SIDES = [
 ]
 
 /* Umschalter "davor" / "ab dem markierten Monat" im Stil des Zeitfilters. */
-export function WindowSideToggle({ value, onChange }) {
+export function WindowSideToggle({ value, onChange, labels = null }) {
     return (
         <div className="ds-time-filter" role="group" aria-label="Vergleichsfenster">
-            {WINDOW_SIDES.map(({ key, label }) => (
+            {WINDOW_SIDES.map(({ key, label: defaultLabel }) => ({ key, label: labels?.[key] ?? defaultLabel })).map(({ key, label }) => (
                 <button
                     key={key}
                     type="button"
