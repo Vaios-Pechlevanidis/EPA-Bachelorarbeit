@@ -32,7 +32,7 @@ router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
 
 @router.get("/company/{company_id}/overview")
-async def get_company_overview(company_id: int):
+def get_company_overview(company_id: int):
     """Get overall statistics for a company."""
     supabase = get_supabase_client()
     try:
@@ -88,7 +88,7 @@ async def get_company_overview(company_id: int):
         trend = round(recent_avg - previous_avg, 2)
         
         # Find most critical category
-        critical_category = await get_most_critical_category(company_id)
+        critical_category = get_most_critical_category(company_id)
         
         return {
             "average_score": avg_score,
@@ -104,7 +104,7 @@ async def get_company_overview(company_id: int):
 
 
 @router.get("/company/{company_id}/timeline")
-async def get_company_timeline(
+def get_company_timeline(
     company_id: int,
     days: int = Query(default=365, description="Number of days to include"),
     forecast_months: int = Query(default=12, description="Number of months to forecast"),
@@ -257,7 +257,7 @@ def calculate_forecast(historical_data: List[Dict[str, Any]], months: int) -> Li
 
 
 @router.get("/company/{company_id}/category-ratings")
-async def get_category_ratings(company_id: int):
+def get_category_ratings(company_id: int):
     """Get average ratings for each category."""
     supabase = get_supabase_client()
     try:
@@ -317,10 +317,10 @@ async def get_category_ratings(company_id: int):
         raise HTTPException(status_code=500, detail=f"Error fetching category ratings: {str(e)}")
 
 
-async def get_most_critical_category(company_id: int) -> Dict[str, Any]:
+def get_most_critical_category(company_id: int) -> Dict[str, Any]:
     """Helper function to find the most critical (lowest rated) category."""
     try:
-        category_data = await get_category_ratings(company_id)
+        category_data = get_category_ratings(company_id)
         
         all_categories = {
             **category_data["candidate_categories"],
@@ -442,7 +442,7 @@ HIGHLIGHT_FIELDS = (
 
 
 @router.get("/company/{company_id}/reviews")
-async def get_company_reviews(
+def get_company_reviews(
     company_id: int,
     limit: int = Query(default=50, description="Maximum number of reviews to return"),
     source: Optional[str] = Query(default=None, description="Filter by source: 'candidates' or 'employee'"),
@@ -525,7 +525,7 @@ async def get_company_reviews(
 
 
 @router.get("/company/{company_id}/negative-topics")
-async def get_negative_topics(company_id: int):
+def get_negative_topics(company_id: int):
     """Get the most mentioned negative topics."""
     supabase = get_supabase_client()
     try:
@@ -584,7 +584,7 @@ async def get_negative_topics(company_id: int):
 
 
 @router.get("/company/{company_id}/topic-overview")
-async def get_topic_overview(
+def get_topic_overview(
     company_id: int,
     source: Optional[str] = Query(default=None, description="Filter by source: 'candidates' or 'employee'"),
     start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
@@ -708,7 +708,7 @@ async def get_topic_overview(
 
 #sara: topicRatingCard
 @router.get("/company/{company_id}/topic-ratings-timeseries")
-async def topic_ratings_timeseries(
+def topic_ratings_timeseries(
     company_id: int,
     source: Literal["employee", "candidates"] = Query(..., description="employee or candidates"),
     granularity: Literal["month", "year"] = Query("month", description="month or year"),
@@ -820,7 +820,7 @@ def extract_short_kritikpunkt(text: str, max_words: int = 4) -> str:
 
 
 @router.get("/company/{company_id}/negative-kritikpunkte")
-async def get_negative_kritikpunkte(company_id: int):
+def get_negative_kritikpunkte(company_id: int):
     """
     Findet das negativste Topic und extrahiert 2 kurze Kritikpunkte 
     aus den schlechtesten Bewertungen.
@@ -952,7 +952,7 @@ async def get_negative_kritikpunkte(company_id: int):
 # ============================================================================
 
 @router.get("/statistical/validate-sample-size")
-async def validate_sample_size(
+def validate_sample_size(
     n: int = Query(..., description="Sample size to validate", ge=1)
 ) -> Dict[str, Any]:
     """
@@ -979,7 +979,7 @@ async def validate_sample_size(
 
 
 @router.get("/statistical/validate-comparison")
-async def validate_comparison(
+def validate_comparison(
     n1: int = Query(..., description="Size of group 1 (or total n for ANOVA)", ge=1),
     n2: int = Query(..., description="Size of group 2 (or k groups for ANOVA)", ge=1),
     comparison_type: Literal["two_group", "anova"] = Query(
@@ -1010,7 +1010,7 @@ async def validate_comparison(
 
 
 @router.get("/statistical/validate-correlation")
-async def validate_correlation(
+def validate_correlation(
     n: int = Query(..., description="Sample size for correlation analysis", ge=1)
 ) -> Dict[str, Any]:
     """
@@ -1028,7 +1028,7 @@ async def validate_correlation(
 
 
 @router.get("/company/{company_id}/statistical-assessment")
-async def get_company_statistical_assessment(company_id: int) -> Dict[str, Any]:
+def get_company_statistical_assessment(company_id: int) -> Dict[str, Any]:
     """
     Get comprehensive statistical assessment for company's review data.
     

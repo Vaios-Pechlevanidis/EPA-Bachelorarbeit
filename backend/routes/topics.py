@@ -63,7 +63,7 @@ class AnalyzeRecordRequest(BaseModel):
 
 
 @router.get("/status")
-async def get_model_status():
+def get_model_status():
     """Get current model status and information."""
     global _topic_analyzer
     
@@ -78,7 +78,7 @@ async def get_model_status():
 
 
 @router.get("/database/stats")
-async def get_database_stats():
+def get_database_stats():
     """Get database statistics for topic modeling."""
     try:
         stats = _topic_db.get_statistics()
@@ -91,7 +91,7 @@ async def get_database_stats():
 
 
 @router.post("/train")
-async def train_model(request: TrainModelRequest):
+def train_model(request: TrainModelRequest):
     """
     Train a new LDA topic model on data from the database.
     
@@ -155,7 +155,7 @@ async def train_model(request: TrainModelRequest):
 
 
 @router.get("/topics")
-async def get_topics(num_words: int = 10):
+def get_topics(num_words: int = 10):
     """
     Get all discovered topics with their top words.
     
@@ -185,7 +185,7 @@ async def get_topics(num_words: int = 10):
 
 
 @router.post("/predict")
-async def predict_topics(request: PredictTopicsRequest):
+def predict_topics(request: PredictTopicsRequest):
     """
     Predict topics for a given text.
     
@@ -220,7 +220,7 @@ async def predict_topics(request: PredictTopicsRequest):
 
 
 @router.post("/analyze-record")
-async def analyze_record(request: AnalyzeRecordRequest):
+def analyze_record(request: AnalyzeRecordRequest):
     """
     Analyze a specific record from the database.
     
@@ -313,7 +313,7 @@ async def analyze_record(request: AnalyzeRecordRequest):
 
 
 @router.get("/models/list")
-async def list_saved_models():
+def list_saved_models():
     """List all saved model files."""
     models_dir = "models/saved_models"
     
@@ -339,7 +339,7 @@ async def list_saved_models():
 
 
 @router.post("/models/load")
-async def load_saved_model(model_name: str):
+def load_saved_model(model_name: str):
     """Load a previously saved model."""
     global _topic_analyzer
     
@@ -369,7 +369,7 @@ async def load_saved_model(model_name: str):
 
 
 @router.get("/analyze/employee-reviews-with-ratings")
-async def analyze_employee_reviews_with_ratings(limit: Optional[int] = None):
+def analyze_employee_reviews_with_ratings(limit: Optional[int] = None):
     """
     Analyze employee reviews combining topics, sentiment analysis, and star ratings.
     
@@ -409,7 +409,7 @@ async def analyze_employee_reviews_with_ratings(limit: Optional[int] = None):
 
 
 @router.get("/analyze/candidate-reviews-with-ratings")
-async def analyze_candidate_reviews_with_ratings(limit: Optional[int] = None):
+def analyze_candidate_reviews_with_ratings(limit: Optional[int] = None):
     """
     Analyze candidate reviews combining topics, sentiment analysis, and star ratings.
     
@@ -443,7 +443,7 @@ async def analyze_candidate_reviews_with_ratings(limit: Optional[int] = None):
 
 
 @router.get("/analyze/topic-rating-correlation")
-async def get_topic_rating_correlation(limit: Optional[int] = None):
+def get_topic_rating_correlation(limit: Optional[int] = None):
     """
     Get correlation analysis between discovered topics and star ratings.
     
@@ -483,7 +483,7 @@ async def get_topic_rating_correlation(limit: Optional[int] = None):
 
 
 @router.get("/company/{company_id}/negative-topics")
-async def get_negative_topics_by_company(company_id: int, limit: Optional[int] = None):
+def get_negative_topics_by_company(company_id: int, limit: Optional[int] = None):
     """
     Return topics with negative sentiment for a given company id.
 
@@ -596,7 +596,7 @@ async def get_negative_topics_by_company(company_id: int, limit: Optional[int] =
 
 
 @router.get("/company/{company_id}/most-critical")
-async def get_most_critical_topic_by_company(
+def get_most_critical_topic_by_company(
     company_id: int,
     limit: Optional[int] = None,
     threshold: float = Query(
