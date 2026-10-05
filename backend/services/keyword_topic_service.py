@@ -23,6 +23,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 from services.review_service import build_full_review, clean_html_text
@@ -297,6 +298,18 @@ CANDIDATE_TOPIC_DEFINITIONS: Dict[str, Dict[str, List[str]]] = {
 }
 
 
+@lru_cache(maxsize=256)
+def _compiled_keywords(keywords: tuple) -> tuple:
+    """Muster eines Themas, einmal kompiliert: einzeln in Listenreihenfolge
+    (sie bestimmt, welcher Satz zitiert wird) und als eine Alternation, die als
+    Vorfilter ein Textfeld mit einem einzigen Suchlauf prüft. Die Muster sind
+    einfache Wortmuster ohne Gruppen, die Alternation trifft daher genau dann,
+    wenn eines der einzelnen Muster trifft."""
+    single = tuple(re.compile(p, re.IGNORECASE) for p in keywords)
+    combined = re.compile("|".join(f"(?:{p})" for p in keywords), re.IGNORECASE)
+    return single, combined
+
+
 def analyze_topic(
     topic_name: str,
     keywords: List[str],
@@ -310,6 +323,7 @@ def analyze_topic(
     """
     # Text fields to search
     text_fields = TOPIC_TEXT_FIELDS
+    keyword_res, any_keyword = _compiled_keywords(tuple(keywords))
     
     # Find mentions and collect data
     mentions = []
@@ -329,13 +343,16 @@ def analyze_topic(
             text = review.get(field, "")
             if text and isinstance(text, str):
                 text_lower = text.lower()
-                for keyword_pattern in keywords:
-                    if re.search(keyword_pattern, text_lower, re.IGNORECASE):
+                # Vorfilter: ein Suchlauf für alle Muster; ohne Treffer ist das Feld erledigt.
+                if not any_keyword.search(text_lower):
+                    continue
+                for keyword_re in keyword_res:
+                    if keyword_re.search(text_lower):
                         mentioned = True
                         # Extract sentence containing keyword
                         sentences = re.split(r'[.!?]+', text)
                         for sentence in sentences:
-                            if re.search(keyword_pattern, sentence, re.IGNORECASE) and len(sentence.strip()) > 20:
+                            if keyword_re.search(sentence) and len(sentence.strip()) > 20:
                                 mention_texts.append(sentence.strip())
                                 break
                         
