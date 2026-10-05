@@ -20,6 +20,7 @@ import {
   Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon, TrendUp,
 } from "../icons"
 import { loadCompanies } from "@/lib/companies"
+import { fetchJsonShared } from "@/lib/sharedFetch"
 import { useTheme } from "../hooks/useTheme"
 import { API_URL } from "../config"
 import { exportKPIsAsPDF } from "../utils/pdfExport"
@@ -258,9 +259,8 @@ export default function Dashboard() {
       const fallbackUrl = startDate
         ? `${API_URL}/analytics/company/${companyId}/topic-overview?start_date=${startDate}`
         : `${API_URL}/analytics/company/${companyId}/topic-overview`
-      const fallbackRes = await fetch(fallbackUrl)
-      if (!fallbackRes.ok) { setNegativeTopicItem(null); return }
-      const fallbackJson = await fallbackRes.json()
+      // Gemeinsamer Abruf mit der Themenkarte (dieselbe Adresse, lib/sharedFetch.js).
+      const fallbackJson = await fetchJsonShared(fallbackUrl)
       const topics = Array.isArray(fallbackJson?.topics) ? fallbackJson.topics : []
       setNegativeTopicItem(pickFromTopics(topics))
     } catch { setNegativeTopicItem(null) }

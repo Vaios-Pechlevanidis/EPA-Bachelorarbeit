@@ -3,6 +3,7 @@ import { Loader2, X, FileSpreadsheet, CheckCircle2, AlertCircle, Upload } from "
 import ModalShell from "./ModalShell"
 import { API_URL } from "@/config"
 import { invalidateCompanies } from "@/lib/companies"
+import { invalidateSharedFetches } from "@/lib/sharedFetch"
 
 /* ---- constants ---- */
 const VALID_TYPES = [
@@ -296,6 +297,7 @@ export default function ImportModal({ open, onOpenChange, companyId, companyName
         files: results.filter((r) => r.ok).map((r) => r.filename),
       })
       invalidateCompanies() // Bewertungszahlen der Firmenliste neu laden
+      invalidateSharedFetches() // Themenauswertungen neu laden
       onImportSuccess?.()
     }
 

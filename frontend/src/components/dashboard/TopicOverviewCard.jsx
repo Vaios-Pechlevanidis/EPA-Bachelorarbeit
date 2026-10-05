@@ -6,6 +6,7 @@ import { Tag } from "../../icons"
 import TopicDetailModal from "./modals/TopicDetailModal"
 import TopicTableModal from "./modals/TopicTableModal"
 import { API_URL } from "@/config"
+import { fetchJsonShared } from "@/lib/sharedFetch"
 
 const SOURCE_OPTIONS = [
   { value: "all",        label: "Alle",        color: "#64748b" },
@@ -74,9 +75,8 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
         }
         const qs = params.toString()
         if (qs) url += `?${qs}`
-        const res = await fetch(url)
-        if (!res.ok) throw new Error(`API Error: ${res.status}`)
-        const data = await res.json()
+        // Gemeinsamer Abruf: die Kachel "Negativstes Thema" lädt dieselbe Adresse.
+        const data = await fetchJsonShared(url)
         setTopicsData(data.topics || [])
         setTotalReviews(data.total_reviews ?? null)
       } catch (err) {

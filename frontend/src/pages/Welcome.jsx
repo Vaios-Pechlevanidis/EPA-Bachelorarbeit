@@ -6,6 +6,7 @@ import { WorkPulseLogo } from "@/components/WorkPulseLogo"
 import { Button } from "@/components/ui/button"
 import { API_URL } from "../config"
 import { invalidateCompanies, loadCompanies } from "@/lib/companies"
+import { invalidateSharedFetches } from "@/lib/sharedFetch"
 
 
 export default function Welcome() {
@@ -275,6 +276,7 @@ export default function Welcome() {
             setError(err.message || "Fehler beim Löschen der Firmendaten")
         } finally {
             invalidateCompanies()
+            invalidateSharedFetches()
             setDeletingData(null)
         }
     }
@@ -330,6 +332,7 @@ export default function Welcome() {
             setError(err.message || "Fehler beim Löschen der Firma")
         } finally {
             invalidateCompanies()
+            invalidateSharedFetches()
             setDeletingCompany(null)
         }
     }
@@ -432,6 +435,7 @@ export default function Welcome() {
             setError(err.message || "Fehler beim Hochladen der Dateien")
         } finally {
             invalidateCompanies()
+            invalidateSharedFetches()
             setUploading(false)
         }
     }
