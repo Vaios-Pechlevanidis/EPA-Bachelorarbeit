@@ -1,0 +1,3008 @@
+{
+  "generated_at": "2026-10-08T17:36:39+00:00",
+  "n_markers": 28,
+  "companies": [
+    {
+      "company_id": 7,
+      "company": "E.ON",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 8,
+      "company": "RWE",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 1.0
+          }
+        },
+        "einzelmonat": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.5
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 1,
+          "share": 0.5
+        }
+      }
+    },
+    {
+      "company_id": 19,
+      "company": "SAP SE",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 20,
+      "company": "NTT DATA SE",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 4,
+          "covered": 4,
+          "share": 1.0,
+          "news": {
+            "covered": 4,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.25
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 3,
+          "covered": 3,
+          "share": 1.0,
+          "news": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.3333
+          }
+        }
+      },
+      "all": {
+        "n": 4,
+        "covered": 4,
+        "share": 1.0,
+        "news": {
+          "covered": 4,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 0,
+          "share": 0.0
+        },
+        "global": {
+          "covered": 1,
+          "share": 0.25
+        }
+      }
+    },
+    {
+      "company_id": 21,
+      "company": "1&1 AG",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 24,
+      "company": "Bechtle",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 25,
+      "company": "Cancom",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "einzelmonat": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 26,
+      "company": "Carl Zeiss",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "einzelmonat": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 0.5
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 0.5
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 27,
+      "company": "Compugroup Medical Deutschland",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 1.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 1.0
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 1,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "company_id": 28,
+      "company": "Telekom",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 4,
+          "covered": 4,
+          "share": 1.0,
+          "news": {
+            "covered": 4,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 3,
+            "share": 0.75
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.25
+          }
+        },
+        "einzelmonat": {
+          "n": 3,
+          "covered": 3,
+          "share": 1.0,
+          "news": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.3333
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 5,
+          "covered": 5,
+          "share": 1.0,
+          "news": {
+            "covered": 5,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 4,
+            "share": 0.8
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.2
+          }
+        },
+        "ab 2019": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.5
+          }
+        }
+      },
+      "all": {
+        "n": 7,
+        "covered": 7,
+        "share": 1.0,
+        "news": {
+          "covered": 7,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 6,
+          "share": 0.8571
+        },
+        "global": {
+          "covered": 2,
+          "share": 0.2857
+        }
+      }
+    },
+    {
+      "company_id": 33,
+      "company": "Freenet",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 5,
+          "covered": 5,
+          "share": 1.0,
+          "news": {
+            "covered": 5,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 5,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.2
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 3,
+          "covered": 3,
+          "share": 1.0,
+          "news": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 1,
+            "share": 0.3333
+          }
+        }
+      },
+      "all": {
+        "n": 5,
+        "covered": 5,
+        "share": 1.0,
+        "news": {
+          "covered": 5,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 5,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 1,
+          "share": 0.2
+        }
+      }
+    }
+  ],
+  "total": {
+    "kinds": {
+      "niveauwechsel": {
+        "n": 19,
+        "covered": 19,
+        "share": 1.0,
+        "news": {
+          "covered": 19,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 14,
+          "share": 0.7368
+        },
+        "global": {
+          "covered": 5,
+          "share": 0.2632
+        }
+      },
+      "einzelmonat": {
+        "n": 9,
+        "covered": 9,
+        "share": 1.0,
+        "news": {
+          "covered": 9,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 8,
+          "share": 0.8889
+        },
+        "global": {
+          "covered": 1,
+          "share": 0.1111
+        }
+      }
+    },
+    "years": {
+      "bis 2018": {
+        "n": 13,
+        "covered": 13,
+        "share": 1.0,
+        "news": {
+          "covered": 13,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 10,
+          "share": 0.7692
+        },
+        "global": {
+          "covered": 1,
+          "share": 0.0769
+        }
+      },
+      "ab 2019": {
+        "n": 15,
+        "covered": 15,
+        "share": 1.0,
+        "news": {
+          "covered": 15,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 12,
+          "share": 0.8
+        },
+        "global": {
+          "covered": 5,
+          "share": 0.3333
+        }
+      }
+    },
+    "all": {
+      "n": 28,
+      "covered": 28,
+      "share": 1.0,
+      "news": {
+        "covered": 28,
+        "share": 1.0
+      },
+      "adhoc": {
+        "covered": 22,
+        "share": 0.7857
+      },
+      "global": {
+        "covered": 6,
+        "share": 0.2143
+      }
+    }
+  },
+  "uncovered": [],
+  "window_before": 3,
+  "window_after": 1,
+  "comparison": {
+    "offsets": [
+      -12,
+      12,
+      -24,
+      24
+    ],
+    "max_per_marker": 3,
+    "n_markers": 28,
+    "n_comparison_windows": 76,
+    "companies": [
+      {
+        "company_id": 7,
+        "company": "E.ON",
+        "n_markers": 1,
+        "n_comparison_windows": 3,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 1,
+          "share": 1.0,
+          "median": 373.0,
+          "min": 373,
+          "max": 373,
+          "news": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 364.0,
+            "min": 364,
+            "max": 364
+          },
+          "adhoc": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 9.0,
+            "min": 9,
+            "max": 9
+          },
+          "global": {
+            "n": 1,
+            "with_event": 0
+          }
+        },
+        "vergleich": {
+          "n": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 3,
+          "share": 1.0,
+          "median": 335.0,
+          "min": 302,
+          "max": 438,
+          "news": {
+            "n": 3,
+            "complete": 3,
+            "covered": 3,
+            "share": 1.0,
+            "median": 323.0,
+            "min": 291,
+            "max": 420
+          },
+          "adhoc": {
+            "n": 3,
+            "complete": 3,
+            "covered": 3,
+            "share": 1.0,
+            "median": 12.0,
+            "min": 11,
+            "max": 18
+          },
+          "global": {
+            "n": 3,
+            "with_event": 2
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2023-11",
+            "offset_months": -12,
+            "from": "2022-02",
+            "to": "2022-12",
+            "months": 11,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2023-11",
+            "offset_months": 12,
+            "from": "2024-02",
+            "to": "2024-12",
+            "months": 11,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2023-11",
+            "offset_months": -24,
+            "from": "2021-02",
+            "to": "2021-12",
+            "months": 11,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 8,
+        "company": "RWE",
+        "n_markers": 2,
+        "n_comparison_windows": 6,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 2,
+          "share": 1.0,
+          "median": 304.5,
+          "min": 301,
+          "max": 308,
+          "news": {
+            "n": 2,
+            "complete": 2,
+            "covered": 2,
+            "share": 1.0,
+            "median": 287.5,
+            "min": 277,
+            "max": 298
+          },
+          "adhoc": {
+            "n": 2,
+            "complete": 2,
+            "covered": 2,
+            "share": 1.0,
+            "median": 17.0,
+            "min": 10,
+            "max": 24
+          },
+          "global": {
+            "n": 2,
+            "with_event": 1
+          }
+        },
+        "vergleich": {
+          "n": 6,
+          "complete": 6,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 6,
+          "share": 1.0,
+          "median": 171.0,
+          "min": 110,
+          "max": 459,
+          "news": {
+            "n": 6,
+            "complete": 6,
+            "covered": 6,
+            "share": 1.0,
+            "median": 156.5,
+            "min": 100,
+            "max": 452
+          },
+          "adhoc": {
+            "n": 6,
+            "complete": 6,
+            "covered": 6,
+            "share": 1.0,
+            "median": 12.5,
+            "min": 7,
+            "max": 21
+          },
+          "global": {
+            "n": 6,
+            "with_event": 3
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2023-02",
+            "offset_months": -12,
+            "from": "2021-09",
+            "to": "2022-03",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2023-02",
+            "offset_months": 12,
+            "from": "2023-09",
+            "to": "2024-03",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2023-02",
+            "offset_months": -24,
+            "from": "2020-09",
+            "to": "2021-03",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-07",
+            "offset_months": -12,
+            "from": "2023-04",
+            "to": "2023-08",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-07",
+            "offset_months": 12,
+            "from": "2025-04",
+            "to": "2025-08",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-07",
+            "offset_months": -24,
+            "from": "2022-04",
+            "to": "2022-08",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 19,
+        "company": "SAP SE",
+        "n_markers": 2,
+        "n_comparison_windows": 6,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 2,
+          "share": 1.0,
+          "median": 345.5,
+          "min": 329,
+          "max": 362,
+          "news": {
+            "n": 2,
+            "complete": 2,
+            "covered": 2,
+            "share": 1.0,
+            "median": 330.5,
+            "min": 311,
+            "max": 350
+          },
+          "adhoc": {
+            "n": 2,
+            "complete": 2,
+            "covered": 2,
+            "share": 1.0,
+            "median": 15.0,
+            "min": 12,
+            "max": 18
+          },
+          "global": {
+            "n": 2,
+            "with_event": 0
+          }
+        },
+        "vergleich": {
+          "n": 6,
+          "complete": 6,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 6,
+          "share": 1.0,
+          "median": 195.5,
+          "min": 163,
+          "max": 460,
+          "news": {
+            "n": 6,
+            "complete": 6,
+            "covered": 6,
+            "share": 1.0,
+            "median": 186.0,
+            "min": 150,
+            "max": 431
+          },
+          "adhoc": {
+            "n": 6,
+            "complete": 6,
+            "covered": 6,
+            "share": 1.0,
+            "median": 14.5,
+            "min": 6,
+            "max": 36
+          },
+          "global": {
+            "n": 6,
+            "with_event": 3
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2024-07",
+            "offset_months": -12,
+            "from": "2023-04",
+            "to": "2023-08",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2024-07",
+            "offset_months": 12,
+            "from": "2025-04",
+            "to": "2025-08",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2024-07",
+            "offset_months": -24,
+            "from": "2022-04",
+            "to": "2022-08",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-03",
+            "offset_months": -12,
+            "from": "2022-12",
+            "to": "2023-04",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-03",
+            "offset_months": 12,
+            "from": "2024-12",
+            "to": "2025-04",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-03",
+            "offset_months": -24,
+            "from": "2021-12",
+            "to": "2022-04",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 20,
+        "company": "NTT DATA SE",
+        "n_markers": 4,
+        "n_comparison_windows": 10,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 4,
+          "complete": 4,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 4,
+          "share": 1.0,
+          "median": 2.0,
+          "min": 1,
+          "max": 21,
+          "news": {
+            "n": 4,
+            "complete": 4,
+            "covered": 4,
+            "share": 1.0,
+            "median": 2.0,
+            "min": 1,
+            "max": 21
+          },
+          "adhoc": {
+            "n": 0,
+            "complete": 0,
+            "covered": 0,
+            "share": null,
+            "median": null,
+            "min": null,
+            "max": null
+          },
+          "global": {
+            "n": 4,
+            "with_event": 1
+          }
+        },
+        "vergleich": {
+          "n": 10,
+          "complete": 10,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 10,
+          "share": 1.0,
+          "median": 5.0,
+          "min": 1,
+          "max": 28,
+          "news": {
+            "n": 10,
+            "complete": 10,
+            "covered": 10,
+            "share": 1.0,
+            "median": 5.0,
+            "min": 1,
+            "max": 28
+          },
+          "adhoc": {
+            "n": 0,
+            "complete": 0,
+            "covered": 0,
+            "share": null,
+            "median": null,
+            "min": null,
+            "max": null
+          },
+          "global": {
+            "n": 10,
+            "with_event": 5
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-07",
+            "offset_months": -12,
+            "from": "2018-03",
+            "to": "2018-08",
+            "months": 6,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-07",
+            "offset_months": 24,
+            "from": "2021-03",
+            "to": "2021-08",
+            "months": 6,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2017-11",
+            "offset_months": -12,
+            "from": "2016-08",
+            "to": "2016-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2017-11",
+            "offset_months": 12,
+            "from": "2018-08",
+            "to": "2018-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2017-11",
+            "offset_months": -24,
+            "from": "2015-08",
+            "to": "2015-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2024-03",
+            "offset_months": -12,
+            "from": "2022-09",
+            "to": "2023-04",
+            "months": 8,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2024-03",
+            "offset_months": 12,
+            "from": "2024-09",
+            "to": "2025-04",
+            "months": 8,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2024-03",
+            "offset_months": -24,
+            "from": "2021-09",
+            "to": "2022-04",
+            "months": 8,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2020-06",
+            "offset_months": 12,
+            "from": "2020-12",
+            "to": "2021-07",
+            "months": 8,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2020-06",
+            "offset_months": 24,
+            "from": "2021-12",
+            "to": "2022-07",
+            "months": 8,
+            "missing": {
+              "gnews": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 21,
+        "company": "1&1 AG",
+        "n_markers": 1,
+        "n_comparison_windows": 3,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 1,
+          "share": 1.0,
+          "median": 25.0,
+          "min": 25,
+          "max": 25,
+          "news": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 19.0,
+            "min": 19,
+            "max": 19
+          },
+          "adhoc": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 6.0,
+            "min": 6,
+            "max": 6
+          },
+          "global": {
+            "n": 1,
+            "with_event": 0
+          }
+        },
+        "vergleich": {
+          "n": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 3,
+          "share": 1.0,
+          "median": 30.0,
+          "min": 27,
+          "max": 37,
+          "news": {
+            "n": 3,
+            "complete": 3,
+            "covered": 3,
+            "share": 1.0,
+            "median": 23.0,
+            "min": 16,
+            "max": 24
+          },
+          "adhoc": {
+            "n": 3,
+            "complete": 3,
+            "covered": 3,
+            "share": 1.0,
+            "median": 11.0,
+            "min": 7,
+            "max": 13
+          },
+          "global": {
+            "n": 3,
+            "with_event": 0
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-10",
+            "offset_months": -12,
+            "from": "2015-07",
+            "to": "2015-11",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-10",
+            "offset_months": 12,
+            "from": "2017-07",
+            "to": "2017-11",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-10",
+            "offset_months": -24,
+            "from": "2014-07",
+            "to": "2014-11",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 24,
+        "company": "Bechtle",
+        "n_markers": 1,
+        "n_comparison_windows": 3,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 1,
+          "share": 1.0,
+          "median": 6.0,
+          "min": 6,
+          "max": 6,
+          "news": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 5.0,
+            "min": 5,
+            "max": 5
+          },
+          "adhoc": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 1.0,
+            "min": 1,
+            "max": 1
+          },
+          "global": {
+            "n": 1,
+            "with_event": 0
+          }
+        },
+        "vergleich": {
+          "n": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 3,
+          "share": 1.0,
+          "median": 7.0,
+          "min": 4,
+          "max": 7,
+          "news": {
+            "n": 3,
+            "complete": 3,
+            "covered": 3,
+            "share": 1.0,
+            "median": 4.0,
+            "min": 3,
+            "max": 7
+          },
+          "adhoc": {
+            "n": 3,
+            "complete": 3,
+            "covered": 2,
+            "share": 0.6667,
+            "median": 1.0,
+            "min": 0,
+            "max": 3
+          },
+          "global": {
+            "n": 3,
+            "with_event": 0
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-02",
+            "offset_months": -12,
+            "from": "2014-11",
+            "to": "2015-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-02",
+            "offset_months": 12,
+            "from": "2016-11",
+            "to": "2017-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-02",
+            "offset_months": -24,
+            "from": "2013-11",
+            "to": "2014-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 25,
+        "company": "Cancom",
+        "n_markers": 2,
+        "n_comparison_windows": 6,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 2,
+          "share": 1.0,
+          "median": 7.0,
+          "min": 5,
+          "max": 9,
+          "news": {
+            "n": 2,
+            "complete": 2,
+            "covered": 2,
+            "share": 1.0,
+            "median": 3.0,
+            "min": 3,
+            "max": 3
+          },
+          "adhoc": {
+            "n": 2,
+            "complete": 2,
+            "covered": 2,
+            "share": 1.0,
+            "median": 4.0,
+            "min": 2,
+            "max": 6
+          },
+          "global": {
+            "n": 2,
+            "with_event": 0
+          }
+        },
+        "vergleich": {
+          "n": 6,
+          "complete": 6,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 6,
+          "share": 1.0,
+          "median": 4.0,
+          "min": 2,
+          "max": 5,
+          "news": {
+            "n": 6,
+            "complete": 6,
+            "covered": 5,
+            "share": 0.8333,
+            "median": 2.0,
+            "min": 0,
+            "max": 4
+          },
+          "adhoc": {
+            "n": 6,
+            "complete": 6,
+            "covered": 4,
+            "share": 0.6667,
+            "median": 1.5,
+            "min": 0,
+            "max": 5
+          },
+          "global": {
+            "n": 6,
+            "with_event": 0
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2016-05",
+            "offset_months": -12,
+            "from": "2015-02",
+            "to": "2015-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2016-05",
+            "offset_months": -24,
+            "from": "2014-02",
+            "to": "2014-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2016-05",
+            "offset_months": 24,
+            "from": "2018-02",
+            "to": "2018-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2017-08",
+            "offset_months": 12,
+            "from": "2018-05",
+            "to": "2018-09",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2017-08",
+            "offset_months": -24,
+            "from": "2015-05",
+            "to": "2015-09",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2017-08",
+            "offset_months": 24,
+            "from": "2019-05",
+            "to": "2019-09",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 26,
+        "company": "Carl Zeiss",
+        "n_markers": 2,
+        "n_comparison_windows": 5,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 2,
+          "share": 1.0,
+          "median": 59.5,
+          "min": 30,
+          "max": 89,
+          "news": {
+            "n": 2,
+            "complete": 2,
+            "covered": 2,
+            "share": 1.0,
+            "median": 58.5,
+            "min": 30,
+            "max": 87
+          },
+          "adhoc": {
+            "n": 2,
+            "complete": 2,
+            "covered": 1,
+            "share": 0.5,
+            "median": 1.0,
+            "min": 0,
+            "max": 2
+          },
+          "global": {
+            "n": 2,
+            "with_event": 0
+          }
+        },
+        "vergleich": {
+          "n": 5,
+          "complete": 5,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 5,
+          "share": 1.0,
+          "median": 34.0,
+          "min": 16,
+          "max": 69,
+          "news": {
+            "n": 5,
+            "complete": 5,
+            "covered": 5,
+            "share": 1.0,
+            "median": 34.0,
+            "min": 15,
+            "max": 63
+          },
+          "adhoc": {
+            "n": 5,
+            "complete": 5,
+            "covered": 4,
+            "share": 0.8,
+            "median": 2.0,
+            "min": 0,
+            "max": 6
+          },
+          "global": {
+            "n": 5,
+            "with_event": 1
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-12",
+            "offset_months": -12,
+            "from": "2023-09",
+            "to": "2024-01",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2024-12",
+            "offset_months": -24,
+            "from": "2022-09",
+            "to": "2023-01",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2016-11",
+            "offset_months": -12,
+            "from": "2015-08",
+            "to": "2015-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2016-11",
+            "offset_months": 12,
+            "from": "2017-08",
+            "to": "2017-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2016-11",
+            "offset_months": -24,
+            "from": "2014-08",
+            "to": "2014-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 27,
+        "company": "Compugroup Medical Deutschland",
+        "n_markers": 1,
+        "n_comparison_windows": 3,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 1,
+          "share": 1.0,
+          "median": 38.0,
+          "min": 38,
+          "max": 38,
+          "news": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 18.0,
+            "min": 18,
+            "max": 18
+          },
+          "adhoc": {
+            "n": 1,
+            "complete": 1,
+            "covered": 1,
+            "share": 1.0,
+            "median": 20.0,
+            "min": 20,
+            "max": 20
+          },
+          "global": {
+            "n": 1,
+            "with_event": 1
+          }
+        },
+        "vergleich": {
+          "n": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 3,
+          "share": 1.0,
+          "median": 25.0,
+          "min": 19,
+          "max": 32,
+          "news": {
+            "n": 3,
+            "complete": 3,
+            "covered": 3,
+            "share": 1.0,
+            "median": 9.0,
+            "min": 9,
+            "max": 18
+          },
+          "adhoc": {
+            "n": 3,
+            "complete": 3,
+            "covered": 3,
+            "share": 1.0,
+            "median": 14.0,
+            "min": 10,
+            "max": 16
+          },
+          "global": {
+            "n": 3,
+            "with_event": 1
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2022-08",
+            "offset_months": -12,
+            "from": "2021-05",
+            "to": "2021-09",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2022-08",
+            "offset_months": 12,
+            "from": "2023-05",
+            "to": "2023-09",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2022-08",
+            "offset_months": -24,
+            "from": "2020-05",
+            "to": "2020-09",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 28,
+        "company": "Telekom",
+        "n_markers": 7,
+        "n_comparison_windows": 16,
+        "markers_without_comparison": 1,
+        "markierung": {
+          "n": 7,
+          "complete": 7,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 7,
+          "share": 1.0,
+          "median": 61.0,
+          "min": 51,
+          "max": 129,
+          "news": {
+            "n": 7,
+            "complete": 7,
+            "covered": 7,
+            "share": 1.0,
+            "median": 51.0,
+            "min": 48,
+            "max": 119
+          },
+          "adhoc": {
+            "n": 7,
+            "complete": 7,
+            "covered": 6,
+            "share": 0.8571,
+            "median": 10.0,
+            "min": 0,
+            "max": 19
+          },
+          "global": {
+            "n": 7,
+            "with_event": 2
+          }
+        },
+        "vergleich": {
+          "n": 16,
+          "complete": 16,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 16,
+          "share": 1.0,
+          "median": 60.0,
+          "min": 47,
+          "max": 168,
+          "news": {
+            "n": 16,
+            "complete": 16,
+            "covered": 16,
+            "share": 1.0,
+            "median": 50.0,
+            "min": 38,
+            "max": 160
+          },
+          "adhoc": {
+            "n": 16,
+            "complete": 16,
+            "covered": 15,
+            "share": 0.9375,
+            "median": 5.5,
+            "min": 0,
+            "max": 17
+          },
+          "global": {
+            "n": 16,
+            "with_event": 4
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2010-07",
+            "offset_months": 12,
+            "from": "2011-02",
+            "to": "2011-08",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2010-07",
+            "offset_months": 24,
+            "from": "2012-02",
+            "to": "2012-08",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2018-11",
+            "offset_months": -12,
+            "from": "2017-08",
+            "to": "2017-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2018-11",
+            "offset_months": 12,
+            "from": "2019-08",
+            "to": "2019-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2018-11",
+            "offset_months": -24,
+            "from": "2016-08",
+            "to": "2016-12",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-02",
+            "offset_months": -12,
+            "from": "2017-11",
+            "to": "2018-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-02",
+            "offset_months": 12,
+            "from": "2019-11",
+            "to": "2020-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-02",
+            "offset_months": 24,
+            "from": "2020-11",
+            "to": "2021-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2022-12",
+            "offset_months": -12,
+            "from": "2021-09",
+            "to": "2022-01",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2022-12",
+            "offset_months": 12,
+            "from": "2023-09",
+            "to": "2024-01",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2022-12",
+            "offset_months": -24,
+            "from": "2020-09",
+            "to": "2021-01",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2015-05",
+            "offset_months": -12,
+            "from": "2014-02",
+            "to": "2014-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2015-05",
+            "offset_months": 12,
+            "from": "2016-02",
+            "to": "2016-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2015-05",
+            "offset_months": -24,
+            "from": "2013-02",
+            "to": "2013-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2017-05",
+            "offset_months": -12,
+            "from": "2016-02",
+            "to": "2016-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "einzelmonat",
+            "marker_date": "2017-05",
+            "offset_months": 12,
+            "from": "2018-02",
+            "to": "2018-06",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      },
+      {
+        "company_id": 33,
+        "company": "Freenet",
+        "n_markers": 5,
+        "n_comparison_windows": 15,
+        "markers_without_comparison": 0,
+        "markierung": {
+          "n": 5,
+          "complete": 5,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 5,
+          "share": 1.0,
+          "median": 31.0,
+          "min": 18,
+          "max": 57,
+          "news": {
+            "n": 5,
+            "complete": 5,
+            "covered": 5,
+            "share": 1.0,
+            "median": 30.0,
+            "min": 16,
+            "max": 46
+          },
+          "adhoc": {
+            "n": 5,
+            "complete": 5,
+            "covered": 5,
+            "share": 1.0,
+            "median": 5.0,
+            "min": 1,
+            "max": 11
+          },
+          "global": {
+            "n": 5,
+            "with_event": 1
+          }
+        },
+        "vergleich": {
+          "n": 15,
+          "complete": 15,
+          "incomplete": 0,
+          "missing_months": 0,
+          "covered": 15,
+          "share": 1.0,
+          "median": 41.0,
+          "min": 7,
+          "max": 98,
+          "news": {
+            "n": 15,
+            "complete": 15,
+            "covered": 15,
+            "share": 1.0,
+            "median": 32.0,
+            "min": 5,
+            "max": 87
+          },
+          "adhoc": {
+            "n": 15,
+            "complete": 15,
+            "covered": 15,
+            "share": 1.0,
+            "median": 5.0,
+            "min": 1,
+            "max": 12
+          },
+          "global": {
+            "n": 15,
+            "with_event": 5
+          }
+        },
+        "windows": [
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2021-09",
+            "offset_months": -12,
+            "from": "2020-05",
+            "to": "2020-10",
+            "months": 6,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2021-09",
+            "offset_months": 12,
+            "from": "2022-05",
+            "to": "2022-10",
+            "months": 6,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2021-09",
+            "offset_months": 24,
+            "from": "2023-05",
+            "to": "2023-10",
+            "months": 6,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2015-10",
+            "offset_months": -12,
+            "from": "2014-05",
+            "to": "2014-11",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2015-10",
+            "offset_months": -24,
+            "from": "2013-05",
+            "to": "2013-11",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2015-10",
+            "offset_months": 24,
+            "from": "2017-05",
+            "to": "2017-11",
+            "months": 7,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-04",
+            "offset_months": 12,
+            "from": "2017-01",
+            "to": "2017-05",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-04",
+            "offset_months": -24,
+            "from": "2014-01",
+            "to": "2014-05",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2016-04",
+            "offset_months": 24,
+            "from": "2018-01",
+            "to": "2018-05",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2022-02",
+            "offset_months": -12,
+            "from": "2020-11",
+            "to": "2021-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2022-02",
+            "offset_months": 12,
+            "from": "2022-11",
+            "to": "2023-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2022-02",
+            "offset_months": 24,
+            "from": "2023-11",
+            "to": "2024-03",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-10",
+            "offset_months": -12,
+            "from": "2018-07",
+            "to": "2018-11",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-10",
+            "offset_months": 12,
+            "from": "2020-07",
+            "to": "2020-11",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          },
+          {
+            "marker_kind": "niveauwechsel",
+            "marker_date": "2019-10",
+            "offset_months": -24,
+            "from": "2017-07",
+            "to": "2017-11",
+            "months": 5,
+            "missing": {
+              "gnews": 0,
+              "eqs": 0
+            },
+            "missing_months": 0
+          }
+        ]
+      }
+    ],
+    "total": {
+      "markierung": {
+        "n": 28,
+        "complete": 28,
+        "incomplete": 0,
+        "missing_months": 0,
+        "covered": 28,
+        "share": 1.0,
+        "median": 45.0,
+        "min": 1,
+        "max": 373,
+        "news": {
+          "n": 28,
+          "complete": 28,
+          "covered": 28,
+          "share": 1.0,
+          "median": 38.0,
+          "min": 1,
+          "max": 364
+        },
+        "adhoc": {
+          "n": 24,
+          "complete": 24,
+          "covered": 22,
+          "share": 0.9167,
+          "median": 7.5,
+          "min": 0,
+          "max": 24
+        },
+        "global": {
+          "n": 28,
+          "with_event": 6
+        }
+      },
+      "vergleich": {
+        "n": 76,
+        "complete": 76,
+        "incomplete": 0,
+        "missing_months": 0,
+        "covered": 76,
+        "share": 1.0,
+        "median": 47.5,
+        "min": 1,
+        "max": 460,
+        "news": {
+          "n": 76,
+          "complete": 76,
+          "covered": 75,
+          "share": 0.9868,
+          "median": 40.0,
+          "min": 0,
+          "max": 452
+        },
+        "adhoc": {
+          "n": 66,
+          "complete": 66,
+          "covered": 61,
+          "share": 0.9242,
+          "median": 6.5,
+          "min": 0,
+          "max": 36
+        },
+        "global": {
+          "n": 76,
+          "with_event": 24
+        }
+      }
+    },
+    "note": "Beschreibende Zahlen ohne Signifikanzaussage; ein Beleg ist eine zeitlich nahe Meldung, keine Ursache. Allgemeine Ereignisse zählen nicht als Beleg und stehen getrennt."
+  }
+}
