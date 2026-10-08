@@ -309,6 +309,21 @@ class TestText:
 # 5. Stimmung und Rangfolge
 # ═══════════════════════════════════════════════════════════════════════════════
 
+class TestCompanyInTitle:
+
+    def test_flag_without_effect_on_stage(self):
+        words = {"beispielwerk", "bwk"}
+        assert er.company_in_title("Beispielwerk streicht Stellen", words) is True
+        assert er.company_in_title("Beispielwerks Zahlen", words) is True, "Wortanfang ab 5 Zeichen"
+        assert er.company_in_title("Konzern streicht Stellen", words) is False
+        assert er.company_in_title("BWK streicht Stellen", words) is True
+        assert er.company_in_title("Konzern streicht Stellen", set()) is None and er.company_in_title("", words) is None
+        with_name = er.score_item(item("Beispielwerk streicht 500 Stellen", "2023-02-10"), WINDOW, [], {}, CATS, {"beispielwerk"})
+        without = er.score_item(item("Konzern streicht 500 Stellen", "2023-02-10"), WINDOW, [], {}, CATS, {"beispielwerk"})
+        assert with_name["company_in_title"] is True and without["company_in_title"] is False
+        assert with_name["stage"] == without["stage"] == "mittel"
+
+
 class TestSentiment:
 
     def test_fits_direction(self):
@@ -368,6 +383,8 @@ class TestRankEvidence:
         assert top["category"]["id"] == "personalabbau" and top["category"]["match"] == 1.0
         assert top["category"]["shifted_topics"][0]["topic"] == "Arbeitsatmosphäre"
         assert top["sentiment"] == {"label": "negative", "polarity": -0.6, "fits_direction": True}
+        assert top["company_in_title"] is True and top["items"][0]["company_in_title"] is True
+        assert result["item_scores"][top["id"]]["company_in_title"] is True
         assert top["text"].startswith("Möglicher Zusammenhang: 3 Meldungen (darunter eine Ad-hoc-Mitteilung) zu Personalabbau")
         assert len(top["items"]) == 3 and {"id", "title", "stage", "time_match"} <= set(top["items"][0])
         assert top["items"][0]["source_type"] == "adhoc", "Stellvertreter zuerst"

@@ -118,7 +118,8 @@ internen interner extern externe externen wechseln manchmal möglich möglichst 
 besserer besseren hoch hohe hohen hoher höher niedrig niedrige groß große großen großer größer klein kleine kleinen
 kleiner lang lange langen länger kurz kurze kurzen schnell schnelle schnellen langsam richtig richtige falsch
 wichtig wichtige wichtigen eigentlich natürlich leider wirklich absolut echt total voll ziemlich relativ recht
-interessant interessante interessanten interessanter ordnung
+interessant interessante interessanten interessanter ordnung oben unten nix fast sicher sicherlich spannend spannende
+spannenden spannender besonders insbesondere sternen befriedigend ausreichend mangelhaft realität zumeist
 employee employees employer company companies work working works worked job jobs team teams people colleagues
 colleague staff good bad great nice best better worse worst really lot lots much many always never sometimes often
 things thing way ways time times year years month months day days get got gets make made makes going come comes

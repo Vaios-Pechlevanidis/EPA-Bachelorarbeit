@@ -59,6 +59,7 @@ Alle Schwellen sind Setzungen (vorläufig). Alle Funktionen sind rein; nur
 
 from __future__ import annotations
 
+import re
 from datetime import date as _date
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -66,7 +67,9 @@ from services.event_categories import classify_title, load_event_categories
 from services.evidence_service import KIND_CHANGE, KIND_OUTLIER, KIND_SELECTION, month_index
 from services.evidence_sources import TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS
 from services.keyword_topic_service import topic_definitions_for, topics_in_review
-from services.review_terms import match_terms, term_set
+from services.review_terms import COMPANY_PREFIX_MIN_LENGTH, match_terms, term_set
+
+_TITLE_WORD_RE = re.compile(r"[a-zäöüß0-9&]+")
 
 # ── Schwellen und Regeln (Setzungen, vorläufig; nur hier) ────────────────────
 
@@ -212,8 +215,22 @@ def stage_for(topic: float, time: float, employer_related: Optional[bool] = None
     return stage
 
 
+def company_in_title(title: Any, company_words: Iterable[str]) -> Optional[bool]:
+    """Nennt der Titel das Unternehmen? Ein Wort des Titels gleicht einem Wortteil des
+    Namens oder beginnt mit einem Wortteil ab ``COMPANY_PREFIX_MIN_LENGTH`` Zeichen. None
+    ohne Wortteile (dann nicht prüfbar). Nur Information, ohne Einfluss auf die Stufe."""
+    words = [w for w in (company_words or ()) if w]
+    if not words or not title or not isinstance(title, str):
+        return None
+    tokens = _TITLE_WORD_RE.findall(title.lower())
+    prefixes = tuple(w for w in words if len(w) >= COMPANY_PREFIX_MIN_LENGTH)
+    exact = set(words)
+    return any(t in exact or (prefixes and t.startswith(prefixes)) for t in tokens)
+
+
 def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[str, Any]],
-               shifts: Dict[str, Dict[str, Any]], categories: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+               shifts: Dict[str, Dict[str, Any]], categories: Optional[List[Dict[str, Any]]] = None,
+               company_words: Iterable[str] = ()) -> Dict[str, Any]:
     """Signale, Begriffe, Ereignisart und Stufe eines Belegs (reine Funktion)."""
     title = item.get("title") or ""
     matched = match_terms(title, terms)
@@ -237,6 +254,7 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
                    "n_before": t["n_before"], "n_after": t["n_after"], "strong": is_strong_term(t)} for t in matched],
         "category": category,
         "employer_related": employer,
+        "company_in_title": company_in_title(title, company_words),
         "stage": stage_for(topic, tm, employer),
     }
 
@@ -327,6 +345,7 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
         "stage": stage_for(topic, tm, employer),
         "source_type": representative.get("source_type"),
         "has_adhoc": any(i.get("source_type") == TYPE_ADHOC for i in items),
+        "company_in_title": representative.get("company_in_title"),
     }
 
 
@@ -457,7 +476,7 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
            cache: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     rep = bundle["representative"]
     item_fields = ("id", "date", "title", "publisher", "url", "source", "source_type", "reliability", "language", "issuer",
-                   "time_match", "term_match", "category_match", "topic_match", "stage")
+                   "time_match", "term_match", "category_match", "topic_match", "stage", "company_in_title")
     return {
         "id": rep.get("id"),
         "confidence": bundle["stage"],
@@ -477,6 +496,7 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
         "terms": bundle["terms"],
         "category": bundle["category"],
         "time_phrase": time_phrase(rep.get("date"), window, kind),
+        "company_in_title": bundle.get("company_in_title"),
         "sentiment": title_sentiment(rep.get("title") or "", analyzer, direction, cache),
         "text": explanation_text(bundle, window, kind),
         "items": [{k: i.get(k) for k in item_fields} for i in bundle["items"]],
@@ -514,7 +534,7 @@ def rank_evidence(
     cats = load_event_categories() if categories is None else categories
     kind = kind or window.get("kind") or KIND_CHANGE
     shifts = topic_shift_index(topics)
-    scored = [score_item(i, window, terms, shifts, cats) for i in items if i.get("source_type") != TYPE_GLOBAL]
+    scored = [score_item(i, window, terms, shifts, cats, exclude) for i in items if i.get("source_type") != TYPE_GLOBAL]
     bundles = sorted(bundle_items(scored, exclude), key=sort_key)
     n_by_stage = {s: 0 for s in STAGES}
     for b in bundles:
@@ -536,6 +556,7 @@ def rank_evidence(
                 "category": i["category"]["id"] if i.get("category") else None,
                 "category_label": i["category"]["label"] if i.get("category") else None,
                 "employer_related": i.get("employer_related"),
+                "company_in_title": i.get("company_in_title"),
                 "terms": [t["term"] for t in i["terms"]],
             }
     state = STATE_FOUND if explanations else STATE_OPEN
@@ -589,6 +610,6 @@ __all__ = [
     "TIME_MID", "TIME_MIN", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
     "OPEN_NOTE", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
-    "score_item", "title_similarity", "bundle_items", "sort_key", "fmt_month", "time_phrase", "explanation_text",
+    "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "fmt_month", "time_phrase", "explanation_text",
     "title_sentiment", "rank_evidence", "topic_shift_table",
 ]

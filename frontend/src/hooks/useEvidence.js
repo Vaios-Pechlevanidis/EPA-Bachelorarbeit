@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { API_URL } from "../config"
 
 export const EVIDENCE_PAGE_SIZE = 25
+/* Seitengröße beim Laden aller Belege (Sortierung nach Relevanz, Filter nach Ereignisart; Inkrement 5);
+ * entspricht MAX_LIMIT der Route. */
+export const EVIDENCE_ALL_PAGE_SIZE = 200
 /* Dauert die erste Seite länger als so viele Millisekunden, werden Monate zum ersten Mal von
  * den Quellen geladen (ein Abruf je Quelle und Monat mit 2 s Abstand); aus dem Speicher
  * antwortet die Route in Bruchteilen einer Sekunde. Dann zeigt der Abschnitt den Hinweis. */
@@ -11,18 +14,19 @@ export const FIRST_FETCH_HINT_MS = 2000
  * GET /analytics/company/{id}/anomalies/{anomalyId}/context für eine Veränderung
  * oder einen Einzelmonat, GET /analytics/company/{id}/context?from=&to= für eine
  * freie Auswahl. Die erste Seite kommt beim Wechsel der Auswahl, weitere mit
- * loadMore. Ergebnis je Anfrage-Schlüssel, wie in useReviewPages. `slow` ist
- * wahr, solange die erste Seite länger als FIRST_FETCH_HINT_MS braucht. */
+ * loadMore; loadAll holt alle restlichen Seiten (für Sortierung und Filter der
+ * Belegliste, Inkrement 5). Ergebnis je Anfrage-Schlüssel, wie in useReviewPages.
+ * `slow` ist wahr, solange die erste Seite länger als FIRST_FETCH_HINT_MS braucht. */
 export function useEvidence(companyId, { anomalyId = null, selection = null, source = "employee", dimension = null, status = null } = {}) {
   const anchorKey = anomalyId ? `a:${anomalyId}` : selection?.from && selection?.to ? `s:${selection.from}:${selection.to}` : null
   const requestKey = companyId && anchorKey ? `${companyId}:${anchorKey}:${source}:${dimension ?? ""}:${status ?? ""}` : null
-  const [result, setResult] = useState({ key: null, data: null, items: [], total: 0, error: "", loadingMore: false })
+  const [result, setResult] = useState({ key: null, data: null, items: [], total: 0, error: "", loadingMore: false, loadingAll: false })
   const [slowKey, setSlowKey] = useState(null)
   const controllerRef = useRef(null)
 
   const fetchPage = useCallback(
-    (offset, signal) => {
-      const params = new URLSearchParams({ offset: String(offset), limit: String(EVIDENCE_PAGE_SIZE) })
+    (offset, signal, limit = EVIDENCE_PAGE_SIZE) => {
+      const params = new URLSearchParams({ offset: String(offset), limit: String(limit) })
       let url
       if (anomalyId) {
         params.set("source", source)
@@ -48,9 +52,9 @@ export function useEvidence(companyId, { anomalyId = null, selection = null, sou
     const controller = new AbortController()
     controllerRef.current = controller
     fetchPage(0, controller.signal)
-      .then((json) => setResult({ key: requestKey, data: json, items: json.items ?? [], total: json.total ?? 0, error: "", loadingMore: false }))
+      .then((json) => setResult({ key: requestKey, data: json, items: json.items ?? [], total: json.total ?? 0, error: "", loadingMore: false, loadingAll: false }))
       .catch((e) => {
-        if (e.name !== "AbortError") setResult({ key: requestKey, data: null, items: [], total: 0, error: e.message, loadingMore: false })
+        if (e.name !== "AbortError") setResult({ key: requestKey, data: null, items: [], total: 0, error: e.message, loadingMore: false, loadingAll: false })
       })
     return () => controller.abort()
   }, [requestKey, fetchPage])
@@ -77,6 +81,29 @@ export function useEvidence(companyId, { anomalyId = null, selection = null, sou
       })
   }, [current, fetchPage, requestKey])
 
+  /* Alle restlichen Belege in Seiten von EVIDENCE_ALL_PAGE_SIZE nachladen. */
+  const loadAll = useCallback(async () => {
+    if (!current || current.loadingMore || current.items.length >= current.total) return
+    const signal = controllerRef.current?.signal
+    setResult((r) => ({ ...r, loadingMore: true, loadingAll: true }))
+    try {
+      let items = current.items
+      let total = current.total
+      while (items.length < total) {
+        const json = await fetchPage(items.length, signal, EVIDENCE_ALL_PAGE_SIZE)
+        const page = json.items ?? []
+        if (!page.length) break
+        items = [...items, ...page]
+        total = json.total ?? total
+      }
+      const done = items
+      const doneTotal = total
+      setResult((r) => (r.key === requestKey ? { ...r, items: done, total: doneTotal, loadingMore: false, loadingAll: false } : r))
+    } catch (e) {
+      if (e.name !== "AbortError") setResult((r) => (r.key === requestKey ? { ...r, loadingMore: false, loadingAll: false, error: e.message } : r))
+    }
+  }, [current, fetchPage, requestKey])
+
   return {
     loading,
     slow: loading && slowKey === requestKey,
@@ -86,7 +113,9 @@ export function useEvidence(companyId, { anomalyId = null, selection = null, sou
     total: current?.total ?? 0,
     hasMore: Boolean(current) && current.items.length < current.total,
     loadingMore: current?.loadingMore ?? false,
+    loadingAll: current?.loadingAll ?? false,
     loadMore,
+    loadAll,
   }
 }
 
