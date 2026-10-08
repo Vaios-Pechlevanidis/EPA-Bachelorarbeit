@@ -111,6 +111,23 @@ The share price can run along the rating chart on a second y-axis: on the anomal
 
 ---
 
+## 🧾 Cycle 2 – Increment 4 "Externe Belege im Ereignisfenster"
+
+A piece of evidence is a message close in time with date, title, publisher and link. It is not a cause: the interface claims no relation to the ratings and does not rate any message. Feature doc: `docs/feature-doku/07-externe-belege.md` (follows); decisions E7 (sources, measures of 2026-10-08), E18 (event window, evidence store).
+
+| Part | Where | Notes |
+|---|---|---|
+| Event window | `backend/services/evidence_service.py` (`window_for_change`, `window_for_outlier`, `window_for_selection`) | Level shift: from 3 months before the start of the transition (month after `previous_period`, or `date` without a gap) to 1 month after `date`; outlier month and free selection: the same distances around the month or period. Both sizes are parameters, preliminary |
+| Sources | `backend/services/evidence_sources.py` | Google News RSS as main source (one query per company and month with `after:`/`before:`, exclusion terms from `company_metadata.json`: `news_term`, `news_exclude`, `news_term_confirmed`), EQS as second source for listed companies, GDELT only behind `CONTEXT_GDELT=1` (off). Only title, publisher, link, date, source and language are kept; at least 2 s between requests of one source; `source_type` news / adhoc / global (market reserved) with reliability mittel / hoch / Hypothese |
+| Evidence store | `backend/data/context/<company_id>/<source>/<YYYY-MM>.json` (git-ignored) | Per company, source and calendar month, not per change; completed months are not fetched again, the current month after 12 hours; a changed search term invalidates a month; duplicates (same link or normalised title) count once |
+| API | `backend/routes/context.py` | `GET /api/analytics/company/{id}/anomalies/{anomaly_id}/context?source=&dimension=&status=&window_before=&window_after=&limit=&offset=` (also for an outlier month id `…:einzelmonat`) and `GET /api/analytics/company/{id}/context?from=&to=` → `anchor`, `window`, `items` (newest first, paged), `total`, `counts` per type, `sources` with state and errors, `coverage`, `reason`, `note`. Unknown change 404; no data an empty list with reason, never 500 for a failing source |
+| Detail page | `frontend/src/components/dashboard/EvidenceSection.jsx`, `hooks/useEvidence.js`, `pages/Anomalies.jsx` | Section "Externe Belege im Ereignisfenster" under the comparison for the selected change, the selected outlier month and the free selection: window and counts per type in the header, per item date, title as link (new tab), publisher, type badge, EN badge; more on demand; fixed note |
+| Prefetch | `backend/scripts/fetch_context.py` | `cd backend && uv run python scripts/fetch_context.py` fills the store for all level shifts and outlier months of the eligible companies (employees, overall rating), throttled and resumable; `--dry-run` only counts, `--source`, `--company`, `--max-fetches`, `--json`. Reads the database, writes only files |
+| Runtime | `CONTEXT_LIVE_FETCH` (environment) | `0` blocks every fetch; then only the store is used (see Environment Variables) |
+| Tests | `backend/tests/evidence/` (window, store, routes, script; fake fetchers, temporary store, no network) | `cd backend && uv run python -m pytest tests/evidence -q` |
+
+---
+
 ## ⚡ Quick Start
 
 ```bash
@@ -249,6 +266,8 @@ The frontend reads `VITE_*` variables when Vite starts or builds (shell environm
 | Variable | Default | Meaning |
 |---|---|---|
 | `VITE_API_URL` | `http://localhost:8000` | Backend URL (`/api` is appended) |
+| `CONTEXT_LIVE_FETCH` (backend) | on | `0` blocks every fetch of external evidence (Google News RSS, EQS); the context routes and `fetch_context.py` then use only the evidence store under `backend/data/context/`. Set it on the interview day after prefetching (decision E7, 2026-10-08) |
+| `CONTEXT_GDELT` (backend) | off | `1` adds GDELT DOC as a third source of evidence; off by default (rate limit, mostly English) |
 | `VITE_SHOW_FINANCE_EXTRAS` | on | `false` (or `0`) hides the extras of the stock dashboard: the cards analyst recommendations, revenue and net income, recent news and the tiles net income and analysts. The page then shows the price (with and without rating history), the figures of FA-15 (market cap, employees, revenue) and the fixed note, and does not call `/finance` or `/news`. Meant for hiding the extras in the evaluation instance (decision E16). Decision D3 of 2026-10-08: the evaluation instance for the interviews is built with `false`, see `docs/evaluationsinstanz.md` |
 
 ```bash

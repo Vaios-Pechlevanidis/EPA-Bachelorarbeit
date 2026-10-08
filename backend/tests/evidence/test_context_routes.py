@@ -11,7 +11,7 @@ Ausführen:
 
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 from email.utils import format_datetime
 
 import pytest
