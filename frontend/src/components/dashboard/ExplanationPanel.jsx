@@ -18,7 +18,10 @@ import { PageSection } from "./PageSection"
    Themenbezug", "nur Ereignisart"), und bewertet nicht; alle Badges in
    derselben neutralen Farbe, keine Ampel. Die Schlüssel der Schnittstelle
    (hoch, mittel, niedrig) bleiben; die Bezeichnung kommt als stage_label bzw.
-   rules.stage_labels aus der Antwort.
+   rules.stage_labels aus der Antwort. Befund 3: In der obersten Liste steht
+   höchstens ein Eintrag je Ereignisart (ohne Ereignisart je Begriff); die
+   übrigen Bündel der Gruppe (entry.group.others) sind aufklappbar, mit Anzahl
+   und Herausgebern. Beides ändert keine Stufe und keine Zahl der Auswertung.
    ============================================================================ */
 
 export const EXPLANATION_NOTE = "Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine Ursachen."
@@ -153,9 +156,40 @@ function BundledItems({ items, rules }) {
     )
 }
 
+/* Weitere Bündel derselben Gruppe (Ereignisart oder Begriff), aufklappbar unter dem Stellvertreter. */
+function GroupMembers({ others, rules }) {
+    return (
+        <ul className="m-0 mt-2 p-0 list-none border-l-2 border-slate-200 pl-3 space-y-1.5">
+            {others.map((o) => (
+                <li key={o.id} className="flex items-start gap-2 text-[11.5px]">
+                    <span className="w-[70px] flex-none text-slate-500 tnum">{fmtDay(o.date)}</span>
+                    <span className="min-w-0 flex-1">
+                        <a href={o.url} target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:underline underline-offset-2 inline-flex items-center gap-1 min-w-0">
+                            <span className="truncate">{o.event}</span>
+                            <ExternalLink className="w-3 h-3 flex-none text-slate-400" aria-hidden="true" />
+                        </a>
+                        <span className="block text-[10.5px] text-slate-500">
+                            {o.source || "Herausgeber unbekannt"} · {TYPE_LABELS[o.source_type] ?? o.source_type}
+                            {o.issuer ? ` · Mitteilung von ${o.issuer}` : ""}
+                            {o.n_items > 1 ? ` · ${o.n_items} Meldungen (${(o.publishers ?? []).join(", ")})` : ""}
+                            {" "}· {o.time_phrase} · Zeit {num(o.time_match, 2)}, Thema {num(o.topic_match, 2)}
+                            {o.terms?.length ? ` · Begriff: ${o.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
+                        </span>
+                    </span>
+                    <StageBadge stage={o.confidence} rules={rules} small />
+                </li>
+            ))}
+        </ul>
+    )
+}
+
 function ExplanationEntry({ entry, rules }) {
     const [open, setOpen] = useState(false)
+    const [groupOpen, setGroupOpen] = useState(false)
     const bundled = entry.n_items > 1
+    const group = entry.group ?? null
+    const others = group?.others ?? []
+    const groupLabel = group ? (group.kind === "ereignisart" ? `Ereignisart ${group.label}` : group.label) : ""
     return (
         <li className="border-t border-slate-100 first:border-t-0 py-3 flex items-start gap-3">
             <div className="flex-none pt-0.5 w-[118px]">
@@ -193,6 +227,26 @@ function ExplanationEntry({ entry, rules }) {
                     </button>
                 )}
                 {bundled && open && <BundledItems items={entry.items ?? []} rules={rules} />}
+                {others.length > 0 && (
+                    <div className="mt-1.5">
+                        <p className="m-0 text-[11px] text-slate-600 flex flex-wrap items-center gap-x-1.5">
+                            <button
+                                type="button"
+                                className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline"
+                                onClick={() => setGroupOpen((v) => !v)}
+                                aria-expanded={groupOpen}
+                                title={`In der obersten Liste steht je ${group.kind === "ereignisart" ? "Ereignisart" : "Begriff"} ein Eintrag; die übrigen Bündel der Gruppe stehen hier.`}
+                            >
+                                {groupOpen ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />}
+                                {groupOpen ? `Weitere Einträge zu ${groupLabel} ausblenden` : `${others.length} ${others.length === 1 ? "weiterer Eintrag" : "weitere Einträge"} zu ${groupLabel} anzeigen`}
+                            </button>
+                            <span className="text-slate-400">
+                                · Gruppe: {group.n_bundles} Bündel, {group.n_items} {group.n_items === 1 ? "Meldung" : "Meldungen"} ({(group.publishers ?? []).join(", ")})
+                            </span>
+                        </p>
+                        {groupOpen && <GroupMembers others={others} rules={rules} />}
+                    </div>
+                )}
             </div>
         </li>
     )
@@ -217,7 +271,7 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
             : summary
                 ? open
                     ? `offen · ${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"} im Ereignisfenster, keiner erreicht die Stufe niedrig`
-                    : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel)${stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
+                    : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel${summary.n_groups != null ? `, ${summary.n_groups} ${summary.n_groups === 1 ? "Gruppe" : "Gruppen"} nach Ereignisart` : ""})${stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
                 : ""
     return (
         <PageSection className={className} icon={<Lightbulb />} eyebrow={eyebrow} title="Mögliche Zusammenhänge" subtitle={subtitle}>
@@ -269,7 +323,8 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
                                 {" "}<span className="font-medium">{stageLabel("niedrig", rules)}</span> (Schlüssel niedrig) = {rules.stages?.niedrig};
                                 sonst kein Bezug. Meldungen ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt) eine Stufe tiefer. Die Quellenart ordnet
                                 nur innerhalb einer Stufe. Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens {rules.bundle_max_days} Tage Abstand,
-                                ähnlicher Titel) sind gebündelt. Höchstens {rules.max_explanations} Einträge. Alle Schwellen sind vorläufige Setzungen.
+                                ähnlicher Titel) sind gebündelt. In der obersten Liste steht höchstens ein Eintrag je Ereignisart (ohne Ereignisart je Begriff),
+                                die übrigen Bündel der Gruppe sind darunter aufklappbar. Höchstens {rules.max_explanations} Einträge. Alle Schwellen sind vorläufige Setzungen.
                             </p>
                             <p className="m-0">
                                 {rules.finding_note ?? "In der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung ähnlich häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung."}

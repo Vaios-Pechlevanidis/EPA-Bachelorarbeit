@@ -53,6 +53,15 @@ erreicht kein Bündel die Stufe niedrig, ist die Liste leer und der Zustand
 ``offen``. Zusätzlich, ohne Einfluss auf die Stufe: die Stimmung des Titels
 über den ``SentimentAnalyzer`` und ob sie zur Richtung der Veränderung passt.
 
+Oberste Liste nach Ereignisart (Iteration 2, Befund 3, nur Darstellung): In
+der obersten Liste steht höchstens ein Eintrag je Ereignisart; ohne
+Ereignisart gilt der getroffene Begriff als Gruppe. Stellvertreter ist der
+beste Eintrag der Gruppe nach der Sortierung oben; die übrigen Bündel der
+Gruppe stehen im Eintrag unter ``group`` mit Anzahl und Herausgebern. Die
+Stufe je Fenster (oberster Eintrag), ``n_by_stage``, ``n_bundles`` und
+``item_scores`` ändern sich dadurch nicht (``group_by_category=False`` gibt
+die ungruppierte Liste, Test in ``tests/explanations``).
+
 Alle Schwellen sind Setzungen, vom Autor am 2026-10-08 bestätigt (D2) und für
 die Auswertung festgeschrieben. Alle Funktionen sind rein; nur
 ``title_sentiment`` ruft den übergebenen Analyzer.
@@ -494,6 +503,54 @@ def title_sentiment(title: str, analyzer, direction: Optional[str], cache: Optio
     return {**raw, "fits_direction": fits}
 
 
+# ── Gruppen der obersten Liste (nur Darstellung) ─────────────────────────────
+
+GROUP_BY_CATEGORY, GROUP_BY_TERM = "ereignisart", "begriff"
+
+
+def group_key(bundle: Dict[str, Any]) -> Tuple[str, str, str]:
+    """``(Art, Schlüssel, Bezeichnung)`` der Gruppe eines Bündels: die Ereignisart, sonst die
+    getroffenen Begriffe. Reine Funktion."""
+    category = bundle.get("category")
+    if category:
+        return (GROUP_BY_CATEGORY, str(category["id"]), str(category["label"]))
+    terms = sorted({t["term"] for t in bundle.get("terms") or []})
+    label = "Begriff " + ", ".join(f"'{t}'" for t in terms) if terms else "ohne Ereignisart und Begriff"
+    return (GROUP_BY_TERM, "+".join(terms), label)
+
+
+def group_bundles(bundles: List[Dict[str, Any]]) -> List[Tuple[Tuple[str, str, str], List[Dict[str, Any]]]]:
+    """Bündel (bereits sortiert) nach ``group_key`` in der Reihenfolge ihres ersten Auftretens;
+    das erste Bündel jeder Gruppe ist ihr Stellvertreter. Reine Funktion."""
+    groups: Dict[Tuple[str, str, str], List[Dict[str, Any]]] = {}
+    for b in bundles:
+        groups.setdefault(group_key(b), []).append(b)
+    return list(groups.items())
+
+
+def _group_member(bundle: Dict[str, Any], window: Dict[str, Any], kind: str) -> Dict[str, Any]:
+    """Ein weiteres Bündel derselben Gruppe für die aufklappbare Liste (ohne Stimmung)."""
+    rep = bundle["representative"]
+    return {
+        "id": rep.get("id"), "confidence": bundle["stage"], "stage_label": bundle["stage_label"],
+        "event": rep.get("title"), "date": rep.get("date"), "source": rep.get("publisher"), "url": rep.get("url"),
+        "source_type": rep.get("source_type"), "language": rep.get("language"), "issuer": rep.get("issuer"),
+        "n_items": bundle["n_items"], "publishers": bundle["publishers"],
+        "time_match": bundle["time_match"], "topic_match": bundle["topic_match"], "term_match": bundle["term_match"],
+        "terms": [t["term"] for t in bundle["terms"]], "time_phrase": time_phrase(rep.get("date"), window, kind),
+        "company_in_title": bundle.get("company_in_title"), "text": explanation_text(bundle, window, kind),
+    }
+
+
+def _group_info(key: Tuple[str, str, str], members: List[Dict[str, Any]], window: Dict[str, Any], kind: str) -> Dict[str, Any]:
+    publishers = list(dict.fromkeys(p for m in members for p in m["publishers"]))
+    return {
+        "kind": key[0], "key": key[1], "label": key[2],
+        "n_bundles": len(members), "n_items": sum(m["n_items"] for m in members), "publishers": publishers,
+        "others": [_group_member(m, window, kind) for m in members[1:]],
+    }
+
+
 # ── Rangfolge ────────────────────────────────────────────────────────────────
 
 def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, direction: Optional[str],
@@ -540,6 +597,7 @@ def rank_evidence(
     analyzer=None,
     kind: Optional[str] = None,
     max_explanations: int = MAX_EXPLANATIONS,
+    group_by_category: bool = True,
 ) -> Dict[str, Any]:
     """Rangfolge der Belege eines Fensters als Erklärungsansätze.
 
@@ -550,11 +608,15 @@ def rank_evidence(
     Stimmung. ``exclude``: Wortteile des Unternehmensnamens (Titelähnlichkeit).
     ``analyzer``: ``SentimentAnalyzer`` oder None (dann keine Stimmung).
 
-    Rückgabe ``{"state", "explanations", "n_items", "n_bundles", "n_by_stage",
-    "item_scores", "terms", "note", "rules"}``: höchstens ``max_explanations`` Bündel mit
-    Stufe mindestens niedrig; ``state`` ``offen`` ohne solches Bündel. ``item_scores``
-    nennt je Beleg Stufe, Signale, Ereignisart und Rang (1 = oberster Beleg) für die
-    Sortierung der Belegliste. Reine Funktion bis auf den Analyzer.
+    Rückgabe ``{"state", "explanations", "n_items", "n_bundles", "n_groups", "n_by_stage",
+    "item_scores", "terms", "note", "rules"}``: höchstens ``max_explanations`` Einträge mit
+    Stufe mindestens niedrig, mit ``group_by_category`` (Standard) je Gruppe nach
+    ``group_key`` der beste Eintrag mit den übrigen Bündeln der Gruppe unter ``group``;
+    ``state`` ``offen`` ohne Bündel der Stufe niedrig. ``n_groups`` zählt die Gruppen mit
+    Stufe mindestens niedrig. ``item_scores`` nennt je Beleg Stufe, Signale, Ereignisart und
+    Rang (1 = oberster Beleg) für die Sortierung der Belegliste; die Gruppierung ändert
+    weder ``item_scores`` noch ``n_by_stage`` noch die Stufe des obersten Eintrags. Reine
+    Funktion bis auf den Analyzer.
     """
     cats = load_event_categories() if categories is None else categories
     kind = kind or window.get("kind") or KIND_CHANGE
@@ -565,8 +627,18 @@ def rank_evidence(
     for b in bundles:
         n_by_stage[b["stage"]] += 1
     cache: Dict[str, Dict[str, Any]] = {}
-    top = [b for b in bundles if b["stage"] != STAGE_NONE][:max_explanations]
-    explanations = [_entry(b, window, kind, analyzer, direction, cache) for b in top]
+    eligible = [b for b in bundles if b["stage"] != STAGE_NONE]
+    groups = group_bundles(eligible)
+    if group_by_category:
+        explanations = []
+        for key, members in groups[:max_explanations]:
+            e = _entry(members[0], window, kind, analyzer, direction, cache)
+            e["group"] = _group_info(key, members, window, kind)
+            explanations.append(e)
+    else:
+        explanations = [_entry(b, window, kind, analyzer, direction, cache) for b in eligible[:max_explanations]]
+        for e in explanations:
+            e["group"] = None
     for rank, e in enumerate(explanations, start=1):
         e["rank"] = rank
     item_scores: Dict[str, Dict[str, Any]] = {}
@@ -590,6 +662,7 @@ def rank_evidence(
         "explanations": explanations,
         "n_items": len(scored),
         "n_bundles": len(bundles),
+        "n_groups": len(groups),
         "n_by_stage": n_by_stage,
         "item_scores": item_scores,
         "terms": terms,
@@ -635,6 +708,6 @@ __all__ = [
     "TIME_MID", "TIME_MIN", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
     "OPEN_NOTE", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
-    "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "fmt_month", "time_phrase", "explanation_text",
+    "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "group_key", "group_bundles", "fmt_month", "time_phrase", "explanation_text",
     "title_sentiment", "rank_evidence", "topic_shift_table",
 ]

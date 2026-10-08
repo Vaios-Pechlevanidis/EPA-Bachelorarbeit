@@ -37,8 +37,8 @@ FALL_ID = "employee:durchschnittsbewertung:2023-01"
 NOW = datetime(2026, 1, 15, 12, 0, tzinfo=timezone.utc)
 ENTRY_FIELDS = {"id", "rank", "confidence", "stage_label", "event", "date", "source", "url", "source_type", "reliability", "language",
                 "issuer", "n_items", "publishers", "time_match", "topic_match", "term_match", "terms", "category",
-                "time_phrase", "sentiment", "text", "items"}
-SUMMARY_FIELDS = {"state", "kind", "window", "n_items", "n_bundles", "n_by_stage", "terms", "item_scores", "sources",
+                "time_phrase", "sentiment", "text", "items", "group"}
+SUMMARY_FIELDS = {"state", "kind", "window", "n_items", "n_bundles", "n_groups", "n_by_stage", "terms", "item_scores", "sources",
                   "coverage", "reason", "error", "note", "open_note", "rules"}
 
 

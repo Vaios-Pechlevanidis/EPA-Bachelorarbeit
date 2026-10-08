@@ -430,9 +430,14 @@ class TestRankEvidence:
 
     def test_max_explanations(self):
         items = [item(f"Streik Nummer {i} legt Werk lahm", f"2023-01-{1 + 5 * i:02d}") for i in range(0, 6)]   # je 5 Tage Abstand: kein Bündel
-        result = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=5)
+        result = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=5, group_by_category=False)
         assert len(result["explanations"]) == 5 and result["n_bundles"] == 6
-        assert er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=2)["n_bundles"] == 6
+        assert er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=2, group_by_category=False)["n_bundles"] == 6
+        # gruppiert: eine Ereignisart, also ein Eintrag mit fünf weiteren Bündeln darunter
+        grouped = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=5)
+        assert len(grouped["explanations"]) == 1 and grouped["n_bundles"] == 6 and grouped["n_groups"] == 1
+        assert grouped["explanations"][0]["group"]["n_bundles"] == 6 and len(grouped["explanations"][0]["group"]["others"]) == 5
+
 
     def test_topic_shift_table_matches_compare_windows_rules(self):
         before = self._reviews(20, "Das Gehalt ist in Ordnung", 1)
@@ -445,3 +450,63 @@ class TestRankEvidence:
         assert table[0]["topic"] == "Gehalt & Sozialleistungen", "sortiert nach Betrag der Verschiebung"
         small = er.topic_shift_table(before[:5], after[:5], "employee")
         assert all(t["low_basis"] for t in small)
+
+
+class TestGroupByCategory:
+    """Iteration 2 (Befund 3, nur Darstellung): höchstens ein Eintrag je Ereignisart in der obersten
+    Liste; ohne Ereignisart gilt der getroffene Begriff als Gruppe. Stufe je Fenster, n_by_stage,
+    n_bundles und item_scores bleiben gleich."""
+
+    def _ranked(self, grouped):
+        before = TestRankEvidence._reviews(None, 20, "Alles ruhig im Büro", 1)
+        after = TestRankEvidence._reviews(None, 12, "Der Stellenabbau drückt die Stimmung", 100) + TestRankEvidence._reviews(None, 8, "Alles ruhig im Büro", 200)
+        terms = distinctive_terms(before, after, exclude={"beispielwerk"})
+        topics = er.topic_shift_table(before, after, "employee")
+        items = [
+            item("Beispielwerk kündigt Stellenabbau in der Verwaltung an", "2023-02-10", publisher="A"),
+            item("Beispielwerk streicht Stellen im Vertrieb", "2023-01-20", publisher="B"),
+            item("Beispielwerk: Stellenabbau auch im Werk Süd", "2023-03-05", source_type="adhoc", publisher="EQS News", category="Ad-hoc"),
+            item("Neuer Chef bei Beispielwerk", "2023-02-05", publisher="C"),
+            item("Vorstand von Beispielwerk tritt zurück", "2023-02-20", publisher="D"),
+            item("Stellenabbau-Gerüchte bei Beispielwerk", "2023-02-25", publisher="E"),   # Begriff, Ereignisart Personalabbau
+            item("Aktie von Beispielwerk erreicht Kursziel", "2023-02-15", publisher="F"),
+        ]
+        return er.rank_evidence(items, WINDOW, terms=terms, topics=topics, exclude={"beispielwerk"}, categories=CATS,
+                                analyzer=None, group_by_category=grouped)
+
+    def test_group_key(self):
+        cat = {"category": {"id": "personalabbau", "label": "Personalabbau und Restrukturierung"}, "terms": [{"term": "x"}]}
+        assert er.group_key(cat) == ("ereignisart", "personalabbau", "Personalabbau und Restrukturierung")
+        assert er.group_key({"category": None, "terms": [{"term": "streik"}, {"term": "abbau"}]}) == ("begriff", "abbau+streik", "Begriff 'abbau', 'streik'")
+        assert er.group_key({"category": None, "terms": []})[0] == "begriff"
+
+    def test_one_entry_per_category_with_others_below(self):
+        g = self._ranked(True)
+        keys = [e["group"]["key"] for e in g["explanations"]]
+        assert len(keys) == len(set(keys)), "höchstens ein Eintrag je Ereignisart"
+        top = g["explanations"][0]
+        assert top["group"]["kind"] == "ereignisart" and top["group"]["key"] == "personalabbau"
+        assert top["group"]["n_bundles"] == 4 and top["group"]["n_items"] == 4 and len(top["group"]["others"]) == 3
+        assert set(top["group"]["publishers"]) == {"A", "B", "EQS News", "E"}
+        other = top["group"]["others"][0]
+        assert {"id", "confidence", "stage_label", "event", "date", "source", "url", "n_items", "publishers", "time_phrase", "text"} <= set(other)
+        assert "sentiment" not in other
+        assert [e["rank"] for e in g["explanations"]] == list(range(1, len(g["explanations"]) + 1))
+        assert g["n_groups"] == len([e for e in g["explanations"]])
+
+    def test_representative_is_best_by_existing_order(self):
+        g, u = self._ranked(True), self._ranked(False)
+        assert g["explanations"][0]["id"] == u["explanations"][0]["id"], "Stellvertreter = bester Eintrag der Gruppe"
+        ungrouped_ids = [e["id"] for e in u["explanations"]]
+        others = [o["id"] for o in g["explanations"][0]["group"]["others"]]
+        assert [i for i in ungrouped_ids if i in others] == others, "übrige Bündel in der bestehenden Sortierung"
+        assert all(e["group"] is None for e in u["explanations"])
+
+    def test_grouping_keeps_window_stage_and_e23_numbers(self):
+        """Die Zahlen von E23 (Zustand, oberste Stufe, Bündel je Stufe, Belege, Bündel) und die
+        item_scores der Belegliste sind mit und ohne Gruppierung identisch."""
+        g, u = self._ranked(True), self._ranked(False)
+        for key in ("state", "n_items", "n_bundles", "n_by_stage", "item_scores", "terms"):
+            assert g[key] == u[key], key
+        assert g["explanations"][0]["confidence"] == u["explanations"][0]["confidence"]
+        assert len(g["explanations"]) <= len(u["explanations"])
