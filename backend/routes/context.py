@@ -61,7 +61,7 @@ def get_anomaly_context(
           "counts": {"news", "adhoc", "global"},
           "sources": {"gnews": {"label", "status", "months", "from_store", "fetched_now", "missing",
                                 "stale", "errors": [{"month", "error"}], "fetched_at"}, ...},
-          "coverage": true | false,      # mindestens ein Beleg im Fenster
+          "coverage": true | false,      # mindestens eine Meldung oder Ad-hoc-Mitteilung (allgemeine Ereignisse zählen nicht)
           "reason": null | "...",         # Grund ohne Beleg
           "note": "Belege sind zeitlich nahe Meldungen ..."
         }

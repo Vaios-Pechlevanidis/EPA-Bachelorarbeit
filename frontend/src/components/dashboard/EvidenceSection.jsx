@@ -9,7 +9,9 @@ import { useEvidence } from "@/hooks/useEvidence"
    Auswahl die Meldungen externer Quellen, deren Datum im Ereignisfenster liegt:
    Datum, Titel als Link (neuer Tab), Herausgeber, Typ als Badge, Sprache als
    Badge bei englischen Meldungen; neueste zuerst, lange Listen werden
-   nachgeladen. Wortwahl: "Beleg" = zeitlich nahe Meldung; keine Aussage über
+   nachgeladen. Dauert die erste Seite länger als zwei Sekunden, nennt ein
+   Hinweis den Grund: Die Monate werden zum ersten Mal von den Quellen geladen.
+   Wortwahl: "Beleg" = zeitlich nahe Meldung; keine Aussage über
    Ursachen, keine Bewertung und keine Rangfolge der Meldungen.
    ============================================================================ */
 
@@ -108,12 +110,13 @@ function EvidenceRow({ item }) {
     )
 }
 
-/* Stand je Quelle: "Google News RSS: 5 Monate aus dem Speicher, Stand 08.10.2026; 1 Monat nicht abrufbar". */
+/* Stand je Quelle: "Google News RSS: 5 von 5 Monaten vorhanden, 5 gerade abgerufen, Stand 08.10.2026; 1 Monat nicht abrufbar". */
 function SourcesLine({ sources }) {
     if (!sources) return null
     const parts = Object.values(sources).map((s) => {
         const stored = s.from_store + s.fetched_now
         const bits = [`${stored} von ${s.months} ${s.months === 1 ? "Monat" : "Monaten"} vorhanden`]
+        if (s.fetched_now) bits.push(`${s.fetched_now} gerade abgerufen`)
         if (s.fetched_at) bits.push(`Stand ${fmtStamp(s.fetched_at)}`)
         if (s.errors?.length) bits.push(`${s.errors.length} ${s.errors.length === 1 ? "Monat" : "Monate"} nicht abrufbar`)
         return `${s.label}: ${bits.join(", ")}`
@@ -136,7 +139,16 @@ export function EvidenceSection({ companyId, anomalyId = null, selection = null,
     return (
         <PageSection className={className} icon={<Newspaper />} eyebrow={eyebrow} title="Externe Belege im Ereignisfenster" subtitle={subtitle}>
             {evidence.loading ? (
-                <p className="m-0 text-[12px] text-slate-500">Lade Belege…</p>
+                <div className="space-y-1">
+                    <p className="m-0 text-[12px] text-slate-500">Lade Belege…</p>
+                    {evidence.slow && (
+                        <p className="m-0 text-[12px] text-slate-500" role="status">
+                            Belege für diesen Zeitraum werden zum ersten Mal von den Quellen geladen; das dauert einige
+                            Sekunden (je Quelle ein Abruf je Monat mit zwei Sekunden Abstand). Beim nächsten Aufruf kommen sie
+                            aus dem Speicher.
+                        </p>
+                    )}
+                </div>
             ) : evidence.error ? (
                 <p className="m-0 text-[12px] text-slate-500">Belege konnten nicht geladen werden: {evidence.error}</p>
             ) : evidence.items.length === 0 ? (

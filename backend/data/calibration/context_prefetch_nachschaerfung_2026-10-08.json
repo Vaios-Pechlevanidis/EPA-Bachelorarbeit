@@ -1,0 +1,173 @@
+{
+  "generated_at": "2026-10-08T17:21:06+00:00",
+  "order": [
+    {
+      "label": "Schritt 1: geänderter Suchbegriff NTT DATA (nur Google News)",
+      "sources": {
+        "gnews": {
+          "generated_at": "2026-10-08T17:09:45+00:00",
+          "duration_s": 53.2,
+          "fetches": 27,
+          "companies": 1,
+          "months": 27,
+          "from_store": 0,
+          "fetched_now": 27,
+          "missing": 0,
+          "items": 26,
+          "errors": [],
+          "aborted": null,
+          "comparison": false,
+          "from_month": null,
+          "company_ids": [
+            20
+          ]
+        }
+      }
+    },
+    {
+      "label": "Schritt 2: Vergleichsfenster aller Unternehmen mit Markierungen",
+      "sources": {
+        "gnews": {
+          "generated_at": "2026-10-08T17:10:42+00:00",
+          "duration_s": 772.5,
+          "fetches": 385,
+          "companies": 15,
+          "months": 560,
+          "from_store": 175,
+          "fetched_now": 385,
+          "missing": 0,
+          "items": 7864,
+          "errors": [],
+          "aborted": null,
+          "comparison": true,
+          "from_month": null,
+          "company_ids": [
+            3,
+            4,
+            7,
+            8,
+            14,
+            15,
+            19,
+            20,
+            21,
+            24,
+            25,
+            26,
+            27,
+            28,
+            33
+          ]
+        },
+        "eqs": {
+          "generated_at": "2026-10-08T17:09:45+00:00",
+          "duration_s": 677.1,
+          "fetches": 328,
+          "companies": 11,
+          "months": 477,
+          "from_store": 148,
+          "fetched_now": 328,
+          "missing": 1,
+          "items": 908,
+          "errors": [
+            {
+              "company_id": 26,
+              "month": "2017-10",
+              "error": "EQS News für 2017-10 nicht abrufbar (TimeoutError: The read operation timed out)."
+            }
+          ],
+          "aborted": null,
+          "comparison": true,
+          "from_month": null,
+          "company_ids": [
+            3,
+            4,
+            7,
+            8,
+            14,
+            15,
+            19,
+            20,
+            21,
+            24,
+            25,
+            26,
+            27,
+            28,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "label": "Schritt 3: alle Monate ab 2019-01 für die acht Unternehmen mit Markierungen ab 2019",
+      "sources": {
+        "gnews": {
+          "generated_at": "2026-10-08T17:23:37+00:00",
+          "duration_s": 758.0,
+          "fetches": 378,
+          "companies": 8,
+          "months": 862,
+          "from_store": 484,
+          "fetched_now": 378,
+          "missing": 0,
+          "items": 16880,
+          "errors": [],
+          "aborted": null,
+          "comparison": true,
+          "from_month": "2019-01",
+          "company_ids": [
+            7,
+            8,
+            19,
+            20,
+            26,
+            27,
+            28,
+            33
+          ]
+        },
+        "eqs": {
+          "generated_at": "2026-10-08T17:21:06+00:00",
+          "duration_s": 691.4,
+          "fetches": 345,
+          "companies": 7,
+          "months": 745,
+          "from_store": 400,
+          "fetched_now": 345,
+          "missing": 0,
+          "items": 1711,
+          "errors": [],
+          "aborted": null,
+          "comparison": true,
+          "from_month": "2019-01",
+          "company_ids": [
+            7,
+            8,
+            19,
+            20,
+            26,
+            27,
+            28,
+            33
+          ]
+        }
+      }
+    }
+  ],
+  "note": "Vorabruf der Nachschärfung (B2) in der Reihenfolge geänderte Suchbegriffe, Vergleichsfenster, alle Monate; je Quelle ein Prozess, beide nebeneinander, 2 s Mindestabstand je Quelle. Nur Zahlen, keine Titel.",
+  "totals": {
+    "gnews": {
+      "fetches": 790,
+      "duration_s": 1583.7,
+      "errors": 0,
+      "items_fetched_now": 0
+    },
+    "eqs": {
+      "fetches": 673,
+      "duration_s": 1368.5,
+      "errors": 1,
+      "items_fetched_now": 0
+    }
+  }
+}

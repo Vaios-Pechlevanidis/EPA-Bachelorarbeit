@@ -39,7 +39,7 @@ Kurs; es gibt keine Korrelation und keine Aussage über einen Zusammenhang.
 | `SUPABASE_URL` | Adresse der gehosteten Datenbank | wie in der Entwicklung; der Wert bleibt in `backend/.env` (nicht im Repository) |
 | `SUPABASE_SERVICE_KEY` oder `SUPABASE_KEY` | Zugangsschlüssel; der Service-Key hat Vorrang (`backend/database/supabase_client.py`) | für die Instanz genügt ein lesender Schlüssel; die Instanz schreibt nicht |
 | `MARKET_LIVE_FETCH` | `0` unterbindet jeden Live-Abruf bei Yahoo Finance; dann gilt nur der Zwischenspeicher `backend/data/market/` (`backend/services/context_service.py`, E15) | `0` am Interviewtag: keine Abrufe bei Yahoo während des Gesprächs, keine Wartezeit, kein Fehlschlag wegen Netz; Voraussetzung ist ein vorher gefüllter Zwischenspeicher (Prüfliste) |
-| `CONTEXT_LIVE_FETCH` | `0` unterbindet jeden Abruf externer Belege (Google News RSS, EQS); dann gilt nur der Belegspeicher `backend/data/context/` (`backend/services/evidence_service.py`, Inkrement 4, E18) | `0` am Interviewtag: keine Abrufe bei Google News oder EQS während des Gesprächs (je Monat eines Fensters sonst ein Abruf mit 2 s Abstand); Voraussetzung ist der Vorabruf mit `scripts/fetch_context.py` (Prüfliste) |
+| `CONTEXT_LIVE_FETCH` | `0` unterbindet jeden Abruf externer Belege (Google News RSS, EQS); dann gilt nur der Belegspeicher `backend/data/context/` (`backend/services/evidence_service.py`, Inkrement 4, E18) | `0` am Interviewtag: keine Abrufe bei Google News oder EQS während des Gesprächs (ein nicht gespeichertes Fenster braucht sonst beim ersten Abruf rund 10 s, die Ansicht zeigt dann einen Hinweis); Voraussetzung ist der Vorabruf mit `scripts/fetch_context.py --comparison` und `--from-month` (Prüfliste, Punkt 4a) |
 | `CONTEXT_GDELT` | `1` schaltet GDELT als dritte Belegquelle ein (Standard aus) | aus lassen |
 | Port | `uvicorn main:app --port 8000` (`.claude/launch.json`, README) | 8000; die Browser-Freigabe (CORS in `backend/main.py`) erlaubt nur `localhost:3000` und `localhost:5173` als Frontend-Adresse |
 
@@ -114,11 +114,19 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
    `cd backend && uv run python scripts/fetch_market_data.py` und danach
    `uv run python scripts/fetch_market_data.py --summary` mit Exit-Code 0 (alle 17 Ticker mit
    Kursreihe); `fetched_at` notieren.
-4a. **Belegspeicher füllen** (Inkrement 4): `cd backend && uv run python scripts/fetch_context.py`
+4a. **Belegspeicher füllen** (Inkrement 4): `cd backend && uv run python scripts/fetch_context.py --comparison`
    holt die Meldungen für alle Fenster der Niveauwechsel und Einzelmonate der geeigneten
-   Unternehmen (gedrosselt, fortsetzbar; `--dry-run` zählt nur). Danach `CONTEXT_LIVE_FETCH=0`
-   für den Interviewprozess setzen, damit im Gespräch keine Abrufe laufen; für frei gewählte
-   Zeiträume außerhalb der Fenster gibt es dann keine Belege, die Ansicht nennt den Grund.
+   Unternehmen und für die Vergleichsfenster (gedrosselt, fortsetzbar; `--dry-run` zählt nur).
+   Für die Unternehmen, die im Interview frei durchsucht werden sollen, zusätzlich alle Monate
+   laden, damit jede Dimension und jede freie Auswahl sofort antwortet:
+   `uv run python scripts/fetch_context.py --from-month 2019-01 --company <id> …` (Stand
+   2026-10-08 für die acht Unternehmen mit Markierungen ab 2019 geladen; rund 2 s je Abruf,
+   die Quellen `--source gnews` und `--source eqs` lassen sich in zwei Prozessen nebeneinander
+   laufen). Bricht eine Quelle nach wiederholten Fehlern ab (Status 429 oder 503), nennt die
+   Zusammenfassung Unternehmen und Monat; nach einer Pause denselben Aufruf wiederholen, geladene
+   Monate werden übersprungen. Danach `CONTEXT_LIVE_FETCH=0` für den Interviewprozess setzen,
+   damit im Gespräch keine Abrufe laufen; für Zeiträume, die nicht im Speicher liegen, gibt es
+   dann keine Belege, die Ansicht nennt den Grund.
 5. **Entfällt bei Variante B** (nur Variante A: Meldungen füllen mit
    `uv run python scripts/fetch_market_data.py --news`).
 6. **Frontend bauen** mit `VITE_SHOW_FINANCE_EXTRAS=false` (Variante B, Abschnitt 2.2) und

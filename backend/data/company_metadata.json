@@ -16,8 +16,8 @@
       "company_name": "ThyssenKrupp AG",
       "isin": "DE0007500001",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -105,14 +105,14 @@
     "peer_group": "Börsennotiert DE",
     "news_term": null,
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b70cf04-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "E.ON SE",
       "isin": "DE000ENAG999",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -134,14 +134,14 @@
     "peer_group": "Börsennotiert DE",
     "news_term": null,
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b70f704-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "RWE AG",
       "isin": "DE0007037129",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -273,14 +273,14 @@
     "peer_group": "Börsennotiert DE",
     "news_term": null,
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b70fd47-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "SAP SE",
       "isin": "DE0007164600",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -300,9 +300,9 @@
     "isin": null,
     "sector": "IT-Dienstleistung",
     "peer_group": "Börsennotiert Ausland",
-    "news_term": null,
+    "news_term": "\"NTT DATA\" OR \"NTT Data Deutschland\" OR itelligence",
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": null,
     "listed": true,
     "verification": {
@@ -311,7 +311,7 @@
       "isin_source": "unverified",
       "checked_at": "2026-10-02"
     },
-    "note": "Deutsche Landesgesellschaft der NTT DATA Group (Tokio). Deren Aktie (9613.T) wurde 2025 nach dem Übernahmeangebot von NTT von der Börse genommen; yfinance liefert dafür keine Kursdaten mehr. Der in der Vorgabe genannte Ticker 3850.T gehört laut yfinance zu Intramart Corp. Verwendet wird daher die börsennotierte Konzernmutter NTT, Inc. (9432.T, Tokio). DB-Name enthält ein doppeltes Leerzeichen."
+    "note": "Deutsche Landesgesellschaft der NTT DATA Group (Tokio). Deren Aktie (9613.T) wurde 2025 nach dem Übernahmeangebot von NTT von der Börse genommen; yfinance liefert dafür keine Kursdaten mehr. Der in der Vorgabe genannte Ticker 3850.T gehört laut yfinance zu Intramart Corp. Verwendet wird daher die börsennotierte Konzernmutter NTT, Inc. (9432.T, Tokio). DB-Name enthält ein doppeltes Leerzeichen. Suchbegriff am 2026-10-08 vom Autor geändert (D1): \"NTT Data Deutschland\" und itelligence (bis 2021 Name der deutschen Gesellschaft) ergänzt, weil der Niveauwechsel 2017-11 ohne Beleg blieb; gespeicherte Monate mit dem alten Begriff werden beim nächsten Abruf ersetzt."
   },
   {
     "company_id": 21,
@@ -324,14 +324,14 @@
     "peer_group": "Börsennotiert DE",
     "news_term": "\"1&1\"",
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b779354-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "1&1 AG",
       "isin": "DE0005545503",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -411,14 +411,14 @@
     "peer_group": "Börsennotiert DE",
     "news_term": null,
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b745f9b-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "Bechtle AG",
       "isin": "DE0005158703",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -440,14 +440,14 @@
     "peer_group": "Börsennotiert DE",
     "news_term": null,
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b744de8-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "CANCOM SE",
       "isin": "DE0005419105",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -473,14 +473,14 @@
       "Fußball",
       "Regionalliga"
     ],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b76996b-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "Carl Zeiss Meditec AG",
       "isin": "DE0005313704",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen (Konzerngesellschaft Carl Zeiss Meditec AG, nicht der Gesamtkonzern)"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2) (Konzerngesellschaft Carl Zeiss Meditec AG, nicht der Gesamtkonzern)"
     },
     "listed": true,
     "verification": {
@@ -502,14 +502,14 @@
     "peer_group": "Nicht börsennotiert",
     "news_term": "\"CompuGroup Medical\" OR CompuGroup",
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5bf86096-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "CompuGroup Medical SE & Co. KGaA",
       "isin": "DE000A288904",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen (ehemals notiert, Mitteilungen bis zum Delisting 2025)"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2) (ehemals notiert, Mitteilungen bis zum Delisting 2025)"
     },
     "listed": false,
     "verification": {
@@ -534,14 +534,14 @@
       "Baskets",
       "Basketball"
     ],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b70cbe7-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "Deutsche Telekom AG",
       "isin": "DE0005557508",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {
@@ -679,14 +679,14 @@
     "peer_group": "Börsennotiert DE",
     "news_term": null,
     "news_exclude": [],
-    "news_term_confirmed": false,
+    "news_term_confirmed": true,
     "eqs": {
       "uuid": "5b752905-ea7c-11e8-902f-2c44fd856d8c",
       "company_name": "freenet AG",
       "isin": "DE000A0Z2ZZ5",
       "found_at": "2026-10-08",
-      "confirmed": false,
-      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+      "confirmed": true,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor bestätigt am 2026-10-08 (D2)"
     },
     "listed": true,
     "verification": {

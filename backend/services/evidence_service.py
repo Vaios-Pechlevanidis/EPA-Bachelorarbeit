@@ -26,7 +26,7 @@ sind rein (kein Datei-, DB- oder Netzzugriff).
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_WINDOW_BEFORE = 3   # Monate vor dem Beginn des Übergangs (vorläufig, E18)
 DEFAULT_WINDOW_AFTER = 1    # Monate nach dem markierten Monat bzw. dem Ende der Auswahl (vorläufig, E18)
@@ -35,6 +35,13 @@ MAX_WINDOW_MONTHS = 24      # Obergrenze je Seite für die API
 KIND_CHANGE = "niveauwechsel"
 KIND_OUTLIER = "einzelmonat"
 KIND_SELECTION = "auswahl"
+KIND_COMPARISON = "vergleich"
+
+# Vergleichsfenster (Nachschärfung Inkrement 4): zu jeder Markierung bis zu
+# COMPARISON_MAX Fenster desselben Unternehmens, um diese Monatsabstände
+# verschoben und in dieser Reihenfolge geprüft.
+COMPARISON_OFFSETS = (-12, 12, -24, 24)
+COMPARISON_MAX = 3
 
 _PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
@@ -150,11 +157,74 @@ def window_months(window: Dict[str, Any]) -> List[str]:
     return month_range(window["from"], window["to"])
 
 
+# ── Vergleichsfenster ────────────────────────────────────────────────────────
+# Die Abdeckung der Markierungen allein sagt wenig, wenn ein Unternehmen in fast
+# jedem Monat Meldungen hat. Deshalb bekommt jede Markierung Vergleichsfenster
+# desselben Unternehmens: das Fenster der Markierung, um 12 bzw. 24 Monate nach
+# hinten oder vorn verschoben (gleiche Länge, gleiche Lage zum Anker). Ein
+# Vergleichsfenster ist nur ein Vergleich der Zahlen; es sagt nichts über
+# Ursachen und nichts darüber, ob eine Markierung Meldungen "auslöst".
+
+def windows_overlap(a: Dict[str, Any], b: Dict[str, Any]) -> bool:
+    """Zwei Fenster (``from``..``to``) überschneiden sich in mindestens einem Monat."""
+    return a["from"] <= b["to"] and b["from"] <= a["to"]
+
+
+def shift_window(window: Dict[str, Any], months: int) -> Dict[str, Any]:
+    """Das Fenster um ``months`` Kalendermonate verschoben, gleiche Länge, als Fenster der
+    Art ``vergleich``; ``reference`` nennt das Fenster der Markierung."""
+    return {
+        "kind": KIND_COMPARISON,
+        "from": shift_month(window["from"], months),
+        "to": shift_month(window["to"], months),
+        "months": window["months"],
+        "transition_from": shift_month(window["transition_from"], months),
+        "anchor_from": shift_month(window["anchor_from"], months),
+        "anchor_to": shift_month(window["anchor_to"], months),
+        "window_before": window["window_before"],
+        "window_after": window["window_after"],
+        "offset_months": months,
+        "reference": {"kind": window["kind"], "from": window["from"], "to": window["to"],
+                      "anchor_from": window["anchor_from"], "anchor_to": window["anchor_to"]},
+    }
+
+
+def comparison_windows(
+    window: Dict[str, Any],
+    marker_windows: List[Dict[str, Any]],
+    series_from: Optional[str] = None,
+    series_to: Optional[str] = None,
+    offsets: Tuple[int, ...] = COMPARISON_OFFSETS,
+    max_count: int = COMPARISON_MAX,
+) -> List[Dict[str, Any]]:
+    """Bis zu ``max_count`` Vergleichsfenster zu einem Markierungsfenster, in der Reihenfolge
+    der ``offsets`` (Standard: −12, +12, −24, +24 Monate) geprüft. Ein verschobenes Fenster
+    entfällt, wenn es ein Fenster aus ``marker_windows`` (alle Markierungen des Unternehmens,
+    das eigene eingeschlossen) überschneidet oder nicht vollständig in der bewerteten Reihe
+    ``series_from``..``series_to`` liegt (None = keine Grenze). Reine Funktion."""
+    if series_from is not None and series_to is not None and month_index(series_from) > month_index(series_to):
+        raise ValueError("series_from liegt nach series_to.")
+    out: List[Dict[str, Any]] = []
+    for offset in offsets:
+        if len(out) >= max_count:
+            break
+        candidate = shift_window(window, offset)
+        if series_from is not None and candidate["from"] < series_from:
+            continue
+        if series_to is not None and candidate["to"] > series_to:
+            continue
+        if any(windows_overlap(candidate, m) for m in marker_windows):
+            continue
+        out.append(candidate)
+    return out
+
+
 __all__ = [
     "DEFAULT_WINDOW_BEFORE", "DEFAULT_WINDOW_AFTER", "MAX_WINDOW_MONTHS",
-    "KIND_CHANGE", "KIND_OUTLIER", "KIND_SELECTION",
+    "KIND_CHANGE", "KIND_OUTLIER", "KIND_SELECTION", "KIND_COMPARISON", "COMPARISON_OFFSETS", "COMPARISON_MAX",
     "is_period", "month_index", "period_from_index", "shift_month", "month_range",
     "window_for_change", "window_for_anomaly", "window_for_outlier", "window_for_selection", "window_months",
+    "windows_overlap", "shift_window", "comparison_windows",
 ]
 
 
@@ -170,16 +240,19 @@ __all__ = [
 # abgerufen, der laufende Monat frühestens nach ``CURRENT_MONTH_MAX_AGE``; ein
 # anderer Suchbegriff macht einen gespeicherten Monat ungültig.
 # ``CONTEXT_LIVE_FETCH=0`` unterbindet jeden Abruf; dann gilt nur der Speicher.
-# Jede Quelle läuft getrennt: Fällt eine aus, liefern die anderen weiter.
+# Jede Quelle läuft getrennt und in einem eigenen Strang (Nachschärfung A2):
+# Fällt eine aus, liefern die anderen weiter; der Mindestabstand von 2 Sekunden
+# gilt je Quelle, zwei Quellen warten nicht aufeinander.
 
 import json  # noqa: E402
 import logging  # noqa: E402
 import os  # noqa: E402
 import tempfile  # noqa: E402
 import time  # noqa: E402
+from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 from datetime import datetime, timedelta, timezone  # noqa: E402
 from pathlib import Path  # noqa: E402
-from typing import Callable, Tuple  # noqa: E402
+from typing import Callable  # noqa: E402
 
 from services import news_service  # noqa: E402
 from services.evidence_sources import (  # noqa: E402
@@ -197,6 +270,7 @@ CURRENT_MONTH_MAX_AGE = timedelta(hours=12)
 FAILED_FETCH_TTL = 15 * 60      # Sekunden ohne neuen Versuch nach einem fehlgeschlagenen Abruf
 STORE_VERSION = 1
 GLOBAL_EVENTS_PATH = BACKEND_DIR / "data" / "global_events.json"
+MAX_GLOBAL_EVENT_MONTHS = 6     # vorläufig (E20): ein allgemeines Ereignis dauert höchstens so viele Monate
 
 EVIDENCE_NOTE = ("Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie sind keine Aussage über "
                  "Ursachen; interne Auslöser sind von außen nicht sichtbar.")
@@ -423,10 +497,18 @@ def month_record(
 _EVENT_FIELDS = ("id", "date_from", "date_to", "title", "scope", "note", "url", "confirmed")
 
 
-def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True) -> List[Dict[str, Any]]:
+def event_months(event: Dict[str, Any]) -> int:
+    """Dauer eines allgemeinen Ereignisses in Kalendermonaten (``date_from`` bis ``date_to`` einschließlich)."""
+    return month_index(event["date_to"]) - month_index(event["date_from"]) + 1
+
+
+def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True,
+                       max_months: int = MAX_GLOBAL_EVENT_MONTHS) -> List[Dict[str, Any]]:
     """Allgemeine Ereignisse aus ``backend/data/global_events.json``; standardmäßig nur
     bestätigte (``confirmed`` true). Fehlende oder unlesbare Datei und unvollständige
-    Einträge ergeben keine Ereignisse, keinen Fehler."""
+    Einträge ergeben keine Ereignisse, keinen Fehler. Einträge, die länger als ``max_months``
+    Kalendermonate dauern, werden zurückgewiesen (Dauerregel, E20): Ein allgemeines Ereignis
+    muss datierbar sein; ein Zeitraum über Jahre hinge an fast jeder Markierung."""
     path = Path(path or GLOBAL_EVENTS_PATH)
     if not path.exists():
         return []
@@ -441,6 +523,10 @@ def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True)
         if not isinstance(raw, dict) or any(k not in raw for k in _EVENT_FIELDS):
             continue
         if not (is_period(raw["date_from"]) and is_period(raw["date_to"])) or raw["date_from"] > raw["date_to"]:
+            continue
+        if event_months(raw) > max_months:
+            logger.warning("Allgemeines Ereignis %r zurückgewiesen: %d Monate, erlaubt sind höchstens %d.",
+                           raw.get("id"), event_months(raw), max_months)
             continue
         if confirmed_only and raw.get("confirmed") is not True:
             continue
@@ -498,21 +584,29 @@ def evidence_for_window(
 ) -> Dict[str, Any]:
     """Alle Belege eines Fensters, neueste zuerst, mit Anzahl je Typ, Stand je Quelle und
     ``coverage`` (mindestens ein Beleg). Monate kommen aus dem Speicher oder werden
-    (wenn erlaubt) abgerufen; ``fetchers`` ordnet Quellen Abruffunktionen zu (Tests).
+    (wenn erlaubt) abgerufen, die Quellen nebeneinander in je einem Strang (der
+    Mindestabstand gilt je Quelle; fällt eine Quelle aus, liefert die andere weiter);
+    ``fetchers`` ordnet Quellen Abruffunktionen zu (Tests).
     ``events`` sind allgemeine Ereignisse (Schritt 7); None lädt die bestätigten aus
     ``global_events.json``, eine leere Liste schaltet sie ab."""
     now = now or utc_now()
     months = window_months(window)
     used_sources = list(sources) if sources else available_sources(info)
-    items: List[Dict[str, Any]] = []
-    summary: Dict[str, Dict[str, Any]] = {}
-    for source in used_sources:
+
+    def collect(source: str) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Alle Monate einer Quelle (ein Strang je Quelle); wirft nicht."""
         fetcher = (fetchers or {}).get(source)
         s: Dict[str, Any] = {"label": SOURCE_LABELS.get(source, source), "months": len(months), "from_store": 0,
                              "fetched_now": 0, "missing": 0, "stale": 0, "errors": [], "fetched_at": None}
+        found: List[Dict[str, Any]] = []
         for month in months:
-            result = month_record(info, source, month, fetcher=fetcher, store_dir=store_dir, now=now, live=live,
-                                  sleep=sleep, clock=clock)
+            try:
+                result = month_record(info, source, month, fetcher=fetcher, store_dir=store_dir, now=now, live=live,
+                                      sleep=sleep, clock=clock)
+            except Exception as exc:  # noqa: BLE001 – Speicher oder Quelle: dieser Monat fehlt, der Rest läuft weiter
+                logger.warning("Beleg %s/%s/%s: %s", source, info.get("company_id"), month, exc)
+                result = {"record": None, "fetched_now": False, "stale": False,
+                          "error": f"{SOURCE_LABELS.get(source, source)} für {month} nicht lesbar ({type(exc).__name__}: {exc})."}
             record = result["record"]
             if record is None:
                 s["missing"] += 1
@@ -523,7 +617,7 @@ def evidence_for_window(
                 fetched_at = record.get("fetched_at")
                 if fetched_at and (s["fetched_at"] is None or fetched_at > s["fetched_at"]):
                     s["fetched_at"] = fetched_at
-                items.extend(with_language(it) for it in record.get("items") or [] if _in_window(it, window))
+                found.extend(with_language(it) for it in record.get("items") or [] if _in_window(it, window))
             if result["error"]:
                 s["errors"].append({"month": month, "error": result["error"]})
         if not s["errors"] and s["missing"] == 0:
@@ -532,7 +626,18 @@ def evidence_for_window(
             s["status"] = "fehlgeschlagen"
         else:
             s["status"] = "teilweise"
+        return s, found
+
+    if len(used_sources) > 1:
+        with ThreadPoolExecutor(max_workers=len(used_sources), thread_name_prefix="evidence") as pool:
+            collected = list(pool.map(collect, used_sources))
+    else:
+        collected = [collect(source) for source in used_sources]
+    items: List[Dict[str, Any]] = []
+    summary: Dict[str, Dict[str, Any]] = {}
+    for source, (s, found) in zip(used_sources, collected):
         summary[source] = s
+        items.extend(found)
     if events is None:
         events = load_global_events()
     if events:
@@ -555,7 +660,9 @@ def evidence_for_window(
         "total": len(items),
         "counts": counts,
         "sources": summary,
-        "coverage": bool(items),
+        # Abdeckung: mindestens eine Meldung oder Ad-hoc-Mitteilung; allgemeine Ereignisse
+        # zählen nicht als Beleg (E20) und stehen nur in counts["global"].
+        "coverage": counts[TYPE_NEWS] + counts[TYPE_ADHOC] > 0,
         "reason": reason,
         "note": EVIDENCE_NOTE,
     }
@@ -566,7 +673,7 @@ __all__ += [
     "live_fetch_enabled", "gdelt_enabled", "company_context_info", "available_sources",
     "record_path", "load_record", "save_record", "is_month_complete", "build_record", "record_is_current",
     "expected_query", "fetch_source_month", "month_record", "with_language", "evidence_for_window",
-    "GLOBAL_EVENTS_PATH", "load_global_events", "global_event_items",
+    "GLOBAL_EVENTS_PATH", "MAX_GLOBAL_EVENT_MONTHS", "event_months", "load_global_events", "global_event_items",
 ]
 
 

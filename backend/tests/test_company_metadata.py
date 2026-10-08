@@ -381,9 +381,14 @@ def test_ticker_scope_decisions(entries):
     assert sum(1 for e in entries if e["ticker_scope"] == "eigene Aktie") == 15
 
 
+CONFIRMED_SEARCH_TERMS = {7, 8, 19, 20, 21, 24, 25, 26, 27, 28, 33}   # D1, Autor 2026-10-08: Unternehmen mit Markierungen
+CONFIRMED_EQS = {3, 7, 8, 19, 21, 24, 25, 26, 27, 28, 33}            # D2, Autor 2026-10-08
+
+
 def test_news_search_fields(entries):
-    """Suchbegriff und Ausschlussbegriffe für die Belege (Inkrement 4): optional, Vorschläge
-    sind als unbestätigt gekennzeichnet (news_term_confirmed false), bis der Autor sie prüft."""
+    """Suchbegriff und Ausschlussbegriffe für die Belege (Inkrement 4): optional; für die
+    Unternehmen mit Markierungen am 2026-10-08 vom Autor bestätigt (D1), NTT DATA mit
+    geändertem Begriff; die übrigen Vorschläge bleiben unbestätigt (news_term_confirmed false)."""
     for e in entries:
         assert e["news_term"] is None or (isinstance(e["news_term"], str) and e["news_term"].strip())
         assert isinstance(e["news_exclude"], list) and all(isinstance(x, str) and x.strip() for x in e["news_exclude"])
@@ -391,14 +396,16 @@ def test_news_search_fields(entries):
     by_id = {e["company_id"]: e for e in entries}
     assert by_id[26]["news_term"] and by_id[26]["news_exclude"], "Carl Zeiss: mehrdeutiger Name braucht Vorschlag"
     assert by_id[28]["news_term"] == '"Deutsche Telekom"'
-    assert all(not e["news_term_confirmed"] for e in entries if e["news_term"] or e["news_exclude"]), \
-        "Vorschläge gelten erst nach Bestätigung durch den Autor"
+    assert by_id[20]["news_term"] == '"NTT DATA" OR "NTT Data Deutschland" OR itelligence' and "D1" in by_id[20]["note"]
+    assert {e["company_id"] for e in entries if e["news_term_confirmed"]} == CONFIRMED_SEARCH_TERMS, \
+        "bestätigt sind genau die Unternehmen mit Markierungen (D1); andere Vorschläge erst nach Bestätigung durch den Autor"
 
 
 def test_eqs_issuer_fields(entries):
     """EQS-companyUUID je Emittent (Inkrement 4, Schritt 5): für alle Unternehmen mit Ticker
-    außer NTT DATA SE (nicht bei EQS) und für Compugroup (ehemals notiert); unbestätigt, bis
-    der Autor sie prüft."""
+    außer NTT DATA SE (nicht bei EQS) und für Compugroup (ehemals notiert); die Emittenten
+    der Unternehmen mit Markierungen und Thyssenkrupp am 2026-10-08 vom Autor bestätigt (D2),
+    die übrigen unbestätigt."""
     for e in entries:
         eqs = e["eqs"]
         assert eqs is None or (
@@ -409,6 +416,9 @@ def test_eqs_issuer_fields(entries):
     assert by_id[20]["eqs"] is None, "NTT DATA: kein Emittent bei EQS"
     assert by_id[26]["eqs"]["company_name"] == "Carl Zeiss Meditec AG"
     assert by_id[27]["eqs"] and "ehemals" in by_id[27]["eqs"]["note"]
+    assert {e["company_id"] for e in entries if e["eqs"] and e["eqs"]["confirmed"]} == CONFIRMED_EQS
+    assert all("bestätigt am 2026-10-08" in e["eqs"]["note"] for e in entries if e["company_id"] in CONFIRMED_EQS)
     with_ticker = [e for e in entries if e["ticker"] and e["company_id"] != 20]
     assert all(e["eqs"] for e in with_ticker)
-    assert all(not e["eqs"]["confirmed"] for e in entries if e["eqs"]), "UUIDs gelten erst nach Bestätigung"
+    assert all(not e["eqs"]["confirmed"] for e in entries if e["eqs"] and e["company_id"] not in CONFIRMED_EQS), \
+        "übrige UUIDs gelten erst nach Bestätigung durch den Autor"

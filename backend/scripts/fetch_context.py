@@ -14,12 +14,25 @@ Quellen: Google News RSS immer, EQS für Unternehmen mit companyUUID in der
 Metadatei (Schritt 5), GDELT nur mit ``CONTEXT_GDELT=1``. Mit
 ``CONTEXT_LIVE_FETCH=0`` ruft das Skript nichts ab und zählt nur.
 
+``--comparison`` nimmt die Vergleichsfenster der Markierungen dazu (je
+Markierung bis zu drei, um −12, +12, −24, +24 Monate verschoben,
+``evidence_service.comparison_windows``). ``--from-month YYYY-MM`` lädt
+zusätzlich alle Monate eines Unternehmens ab diesem Monat bis zum letzten
+bewerteten Monat plus ``window_after`` (höchstens bis zum laufenden Monat),
+damit jede Dimension und jede freie Auswahl aus dem Speicher antwortet. Bei
+``MAX_CONSECUTIVE_ERRORS`` Fehlern in Folge einer
+Quelle (zum Beispiel Status 429 oder 503) bricht der Lauf für diese Quelle ab
+und nennt Unternehmen und Monat, ab dem er fortgesetzt werden kann; die
+anderen Quellen laufen weiter.
+
 Verwendung
 ----------
     cd backend
     uv run python scripts/fetch_context.py                   # alle Quellen, alle geeigneten Unternehmen
     uv run python scripts/fetch_context.py --dry-run         # nur zählen: Markierungen, Monate, fehlende Monate
     uv run python scripts/fetch_context.py --source gnews --company 19 --company 28
+    uv run python scripts/fetch_context.py --comparison                      # dazu die Vergleichsfenster
+    uv run python scripts/fetch_context.py --company 19 --from-month 2019-01   # alle Monate ab 2019-01
     uv run python scripts/fetch_context.py --max-fetches 50  # Teil-Lauf, später fortsetzen
     uv run python scripts/fetch_context.py --json data/calibration/context_prefetch.json
 """
@@ -45,6 +58,7 @@ from services.rating_series_service import OVERALL_DIMENSION  # noqa: E402
 
 SOURCE = "employee"
 DIMENSION = OVERALL_DIMENSION
+MAX_CONSECUTIVE_ERRORS = 3     # Abbruch je Quelle nach so vielen Fehlern in Folge
 _DEMO_RE = re.compile(r"^demo\s*\d+$")
 
 
@@ -62,28 +76,52 @@ def list_companies() -> List[Dict[str, Any]]:
 
 def company_anchors(company_id: int) -> Dict[str, Any]:
     """Niveauwechsel und Einzelmonate eines Unternehmens (Standardparameter) oder
-    ``eligible: False``; nur lesend."""
+    ``eligible: False``, dazu der erste und letzte Monat der bewerteten Reihe; nur lesend."""
     result = company_anomalies(company_id, source=SOURCE, dimension=DIMENSION)
+    series = result.get("series") or []
     return {
         "eligible": bool(result["eligibility"]["eligible"]),
         "anomalies": result["anomalies"],
         "outliers": result.get("outlier_months") or [],
+        "series_from": series[0]["period"] if series else None,   # erster und letzter bewerteter Monat
+        "series_to": series[-1]["period"] if series else None,     # (Grenzen der Vergleichsfenster)
     }
 
 
-def months_for_anchors(anchors: Dict[str, Any], window_before: int, window_after: int) -> Dict[str, Any]:
-    """Kalendermonate aller Fenster eines Unternehmens, dazu die Fenster je Markierung."""
+def months_for_anchors(anchors: Dict[str, Any], window_before: int, window_after: int,
+                       comparison: bool = False) -> Dict[str, Any]:
+    """Kalendermonate aller Fenster eines Unternehmens, dazu die Fenster je Markierung. Mit
+    ``comparison`` auch die Vergleichsfenster (Art ``vergleich``, ``offset_months``), begrenzt
+    durch die bewertete Reihe ``series_from``..``series_to`` der Markierungen."""
     windows = []
     months: Set[str] = set()
+    marker_windows = []
     for anomaly in anchors["anomalies"]:
         w = ev.window_for_anomaly(anomaly, window_before, window_after)
         windows.append({"id": anomaly["id"], "kind": w["kind"], "from": w["from"], "to": w["to"]})
-        months.update(ev.window_months(w))
+        marker_windows.append(w)
     for outlier in anchors["outliers"]:
         w = ev.window_for_outlier(outlier["date"], window_before, window_after)
         windows.append({"id": outlier["id"], "kind": w["kind"], "from": w["from"], "to": w["to"]})
+        marker_windows.append(w)
+    for w in marker_windows:
         months.update(ev.window_months(w))
+    if comparison:
+        for entry, w in zip(list(windows), marker_windows):
+            for c in ev.comparison_windows(w, marker_windows, anchors.get("series_from"), anchors.get("series_to")):
+                windows.append({"id": entry["id"], "kind": c["kind"], "from": c["from"], "to": c["to"],
+                                "offset_months": c["offset_months"]})
+                months.update(ev.window_months(c))
     return {"windows": windows, "months": sorted(months)}
+
+
+def months_from(from_month: str, series_to: Optional[str], window_after: int, now: datetime) -> List[str]:
+    """Alle Kalendermonate ab ``from_month`` bis zum letzten bewerteten Monat plus
+    ``window_after``, höchstens bis zum laufenden Monat (ohne ``series_to``: bis zum
+    laufenden Monat). Leer, wenn ``from_month`` danach liegt."""
+    current = now.strftime("%Y-%m")
+    end = min(ev.shift_month(series_to, window_after), current) if series_to else current
+    return ev.month_range(from_month, end)
 
 
 def run(
@@ -95,20 +133,30 @@ def run(
     max_fetches: Optional[int] = None,
     interval: float = MIN_FETCH_INTERVAL_S,
     verbose: bool = True,
+    from_month: Optional[str] = None,
+    max_consecutive_errors: int = MAX_CONSECUTIVE_ERRORS,
+    comparison: bool = False,
 ) -> Dict[str, Any]:
-    """Vorabruf; liefert die Zusammenfassung (auch bei ``dry_run``)."""
+    """Vorabruf; liefert die Zusammenfassung (auch bei ``dry_run``). ``comparison`` nimmt die
+    Vergleichsfenster dazu, ``from_month`` lädt zusätzlich alle Monate ab diesem Monat
+    (``months_from``). Nach
+    ``max_consecutive_errors`` Fehlern in Folge einer Quelle werden deren restliche Monate
+    übersprungen; ``summary["sources"][quelle]["aborted"]`` nennt Unternehmen und Monat."""
     started = time.monotonic()
     now = datetime.now(timezone.utc)
+    if from_month is not None and not ev.is_period(from_month):
+        raise ValueError(f"from_month muss das Format YYYY-MM haben, nicht {from_month!r}.")
     live = ev.live_fetch_enabled() and not dry_run
     companies = [c for c in list_companies() if not company_ids or c["id"] in company_ids]
     summary: Dict[str, Any] = {
         "generated_at": now.isoformat(timespec="seconds"),
-        "window_before": window_before, "window_after": window_after,
+        "window_before": window_before, "window_after": window_after, "from_month": from_month, "comparison": comparison,
         "live": live, "dry_run": dry_run, "live_fetch_env": ev.live_fetch_enabled(),
         "companies": [], "sources": {}, "fetch_limit_reached": False,
     }
     fetches = 0
     stopped = False
+    consecutive: Dict[str, int] = {}
     for company in companies:
         anchors = company_anchors(company["id"])
         entry: Dict[str, Any] = {"company_id": company["id"], "name": company["name"], "eligible": anchors["eligible"],
@@ -117,7 +165,12 @@ def run(
         if not anchors["eligible"]:
             summary["companies"].append(entry)
             continue
-        plan = months_for_anchors(anchors, window_before, window_after)
+        plan = months_for_anchors(anchors, window_before, window_after, comparison=comparison)
+        if from_month:
+            extra = months_from(from_month, anchors.get("series_to"), window_after, now)
+            plan["months"] = sorted(set(plan["months"]) | set(extra))
+            entry["from_month"] = from_month
+            entry["series_to"] = anchors.get("series_to")
         entry["months"] = len(plan["months"])
         entry["windows"] = plan["windows"]
         info = ev.company_context_info(company["id"])
@@ -135,9 +188,10 @@ def run(
             s_sum["companies"] += 1
             c_src = {"months": len(plan["months"]), "from_store": 0, "fetched_now": 0, "missing": 0, "errors": 0, "items": 0}
             for month in plan["months"]:
-                if stopped:
+                if stopped or s_sum.get("aborted"):
                     c_src["missing"] += 1
                     s_sum["missing"] += 1
+                    s_sum["skipped"] = s_sum.get("skipped", 0) + 1
                     continue
                 allow = live and (max_fetches is None or fetches < max_fetches)
                 result = ev.month_record(info, source, month, now=now, live=allow,
@@ -147,6 +201,7 @@ def run(
                     fetches += 1
                     c_src["fetched_now"] += 1
                     s_sum["fetched_now"] += 1
+                    consecutive[source] = 0
                 elif result["record"] is not None:
                     c_src["from_store"] += 1
                     s_sum["from_store"] += 1
@@ -157,9 +212,13 @@ def run(
                     n = len(result["record"].get("items") or [])
                     c_src["items"] += n
                     s_sum["items"] += n
-                if result["error"] and live:
+                if result["error"] and allow:
                     c_src["errors"] += 1
                     s_sum["errors"].append({"company_id": company["id"], "month": month, "error": result["error"]})
+                    consecutive[source] = consecutive.get(source, 0) + 1
+                    if consecutive[source] >= max_consecutive_errors:
+                        s_sum["aborted"] = {"company_id": company["id"], "company": company["name"], "month": month,
+                                            "after_errors": consecutive[source], "last_error": result["error"]}
                 if max_fetches is not None and fetches >= max_fetches and live:
                     summary["fetch_limit_reached"] = True
             entry["sources"][source] = c_src
@@ -176,8 +235,10 @@ def format_summary(summary: Dict[str, Any]) -> str:
     lines = ["Vorabruf der externen Belege (Inkrement 4)"]
     mode = "nur zählen (--dry-run)" if summary["dry_run"] else ("Abruf erlaubt" if summary["live"] else
                                                              f"kein Abruf ({ev.LIVE_FETCH_ENV}=0), nur Speicher")
-    lines.append(f"  Modus: {mode}; Fenster {summary['window_before']} Monate davor, {summary['window_after']} danach; "
-                 f"Dauer {summary['duration_s']} s; Abrufe in diesem Lauf: {summary['fetches']}"
+    lines.append(f"  Modus: {mode}; Fenster {summary['window_before']} Monate davor, {summary['window_after']} danach"
+                 + ("; dazu die Vergleichsfenster" if summary.get("comparison") else "")
+                 + (f"; dazu alle Monate ab {summary['from_month']}" if summary.get("from_month") else "")
+                 + f"; Dauer {summary['duration_s']} s; Abrufe in diesem Lauf: {summary['fetches']}"
                  + (" (Grenze erreicht)" if summary["fetch_limit_reached"] else ""))
     eligible = [c for c in summary["companies"] if c["eligible"]]
     lines.append(f"  Unternehmen: {len(summary['companies'])}, geeignet {len(eligible)}; Markierungen: "
@@ -190,6 +251,12 @@ def format_summary(summary: Dict[str, Any]) -> str:
             lines.append(f"      - Unternehmen {e['company_id']}, {e['month']}: {e['error']}")
         if len(s["errors"]) > 10:
             lines.append(f"      … {len(s['errors']) - 10} weitere")
+        if s.get("aborted"):
+            a = s["aborted"]
+            resume = f"--source {source} --company {a['company_id']}" + (f" --from-month {summary['from_month']}" if summary.get("from_month") else "")
+            lines.append(f"    ABGEBROCHEN nach {a['after_errors']} Fehlern in Folge bei {a['company']} ({a['company_id']}), Monat {a['month']}; "
+                         f"{s.get('skipped', 0)} Monate übersprungen. Fortsetzen (geladene Monate werden übersprungen), bei Status 429 "
+                         f"oder 503 erst nach einer Pause: uv run python scripts/fetch_context.py {resume} … und danach die weiteren Unternehmen.")
     unconfirmed = [c["name"] for c in eligible if not c.get("term_confirmed", True)]
     if unconfirmed:
         lines.append(f"  Suchbegriffe noch nicht vom Autor bestätigt: {', '.join(unconfirmed)}")
@@ -204,12 +271,21 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--window-after", type=int, default=ev.DEFAULT_WINDOW_AFTER)
     parser.add_argument("--dry-run", action="store_true", help="nichts abrufen, nur zählen")
     parser.add_argument("--max-fetches", type=int, default=None, help="höchstens so viele Abrufe in diesem Lauf")
+    parser.add_argument("--comparison", action="store_true",
+                        help="auch die Vergleichsfenster der Markierungen (−12, +12, −24, +24 Monate, höchstens drei je Markierung)")
+    parser.add_argument("--from-month", default=None, metavar="YYYY-MM",
+                        help="zusätzlich alle Monate je Unternehmen ab diesem Monat (bis zum letzten bewerteten Monat plus window_after)")
+    parser.add_argument("--max-consecutive-errors", type=int, default=MAX_CONSECUTIVE_ERRORS,
+                        help=f"Abbruch je Quelle nach so vielen Fehlern in Folge (Standard {MAX_CONSECUTIVE_ERRORS})")
     parser.add_argument("--json", dest="json_out", help="Zusammenfassung zusätzlich als JSON-Datei")
     parser.add_argument("--quiet", action="store_true", help="keine Zeile je Unternehmen und Quelle")
     args = parser.parse_args(argv)
+    if args.from_month is not None and not ev.is_period(args.from_month):
+        parser.error(f"--from-month muss das Format YYYY-MM haben, nicht {args.from_month!r}")
     summary = run(sources=args.source, company_ids=args.company, window_before=args.window_before,
                   window_after=args.window_after, dry_run=args.dry_run, max_fetches=args.max_fetches,
-                  verbose=not args.quiet)
+                  verbose=not args.quiet, from_month=args.from_month, max_consecutive_errors=args.max_consecutive_errors,
+                  comparison=args.comparison)
     print(format_summary(summary))
     if args.json_out:
         os.makedirs(os.path.dirname(os.path.abspath(args.json_out)), exist_ok=True)

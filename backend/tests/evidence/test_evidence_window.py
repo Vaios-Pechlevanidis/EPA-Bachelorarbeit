@@ -114,3 +114,49 @@ class TestOutlierAndSelection:
     def test_window_months_list(self):
         w = ev.window_for_outlier("2019-12", window_before=1, window_after=1)
         assert ev.window_months(w) == ["2019-11", "2019-12", "2020-01"]
+
+
+class TestComparisonWindows:
+    """Vergleichsfenster (Nachschärfung Inkrement 4): das Fenster der Markierung um −12, +12,
+    −24, +24 Monate verschoben, höchstens drei, ohne Überschneidung mit einem Fenster einer
+    Markierung des Unternehmens und nur innerhalb der bewerteten Reihe."""
+
+    WINDOW = ev.window_for_change("2021-09", previous_period="2021-08", gap_months=0)   # 2021-06 .. 2021-10
+
+    def test_three_windows_in_order_with_same_length_and_position(self):
+        found = ev.comparison_windows(self.WINDOW, [self.WINDOW], "2015-01", "2024-12")
+        assert [(c["offset_months"], c["from"], c["to"]) for c in found] == [
+            (-12, "2020-06", "2020-10"), (12, "2022-06", "2022-10"), (-24, "2019-06", "2019-10")]
+        first = found[0]
+        assert first["kind"] == "vergleich" and first["months"] == 5 == self.WINDOW["months"]
+        assert (first["anchor_from"], first["anchor_to"], first["transition_from"]) == ("2020-09", "2020-09", "2020-09")
+        assert (first["window_before"], first["window_after"]) == (3, 1)
+        assert first["reference"] == {"kind": "niveauwechsel", "from": "2021-06", "to": "2021-10",
+                                      "anchor_from": "2021-09", "anchor_to": "2021-09"}
+        assert ev.window_months(first) == ["2020-06", "2020-07", "2020-08", "2020-09", "2020-10"]
+
+    def test_overlap_with_any_marker_window_drops_the_anchor(self):
+        other = ev.window_for_outlier("2020-08")          # 2020-05 .. 2020-09 überschneidet −12
+        found = ev.comparison_windows(self.WINDOW, [self.WINDOW, other], "2015-01", "2024-12")
+        assert [c["offset_months"] for c in found] == [12, -24, 24], "−12 entfällt, +24 rückt nach"
+        edge = ev.window_for_outlier("2020-11", 1, 0)     # 2020-10 .. 2020-11: Randmonat 2020-10 gemeinsam
+        assert [c["offset_months"] for c in ev.comparison_windows(self.WINDOW, [edge], "2015-01", "2024-12")] == [12, -24, 24]
+
+    def test_long_marker_window_overlaps_itself(self):
+        long = ev.window_for_change("2010-01", previous_period="2008-07", gap_months=17)   # 2008-05 .. 2010-02, 22 Monate
+        found = ev.comparison_windows(long, [long], "2005-01", "2015-12")
+        assert [c["offset_months"] for c in found] == [-24, 24], "±12 überschneiden das eigene Fenster"
+
+    def test_outside_the_series_is_dropped(self):
+        found = ev.comparison_windows(self.WINDOW, [self.WINDOW], "2019-07", "2022-09")
+        assert [c["offset_months"] for c in found] == [-12], "+12 endet nach der Reihe, −24 beginnt davor, +24 ebenso"
+        assert ev.comparison_windows(self.WINDOW, [self.WINDOW], "2021-01", "2021-12") == []
+        assert [c["offset_months"] for c in ev.comparison_windows(self.WINDOW, [self.WINDOW])] == [-12, 12, -24], "ohne Grenzen"
+        with pytest.raises(ValueError):
+            ev.comparison_windows(self.WINDOW, [], "2022-01", "2021-01")
+
+    def test_offsets_and_count_are_parameters(self):
+        found = ev.comparison_windows(self.WINDOW, [self.WINDOW], "2015-01", "2024-12", offsets=(6, -6), max_count=1)
+        assert [(c["offset_months"], c["from"]) for c in found] == [(6, "2021-12")]
+        assert ev.windows_overlap({"from": "2020-01", "to": "2020-03"}, {"from": "2020-03", "to": "2020-05"})
+        assert not ev.windows_overlap({"from": "2020-01", "to": "2020-03"}, {"from": "2020-04", "to": "2020-05"})

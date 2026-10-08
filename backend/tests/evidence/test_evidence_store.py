@@ -31,6 +31,12 @@ FAST = {"sleep": lambda s: None, "clock": lambda: 1000.0}
 
 
 @pytest.fixture(autouse=True)
+def no_repository_events(tmp_path, monkeypatch):
+    """Speicher-Tests ohne die vom Autor bestätigten allgemeinen Ereignisse der Repository-Datei (D3)."""
+    monkeypatch.setattr(ev, "GLOBAL_EVENTS_PATH", tmp_path / "keine_ereignisse.json")
+
+
+@pytest.fixture(autouse=True)
 def clean(monkeypatch):
     monkeypatch.setattr(ev, "_failed_fetches", {})
     monkeypatch.setattr(src, "_last_request", {})

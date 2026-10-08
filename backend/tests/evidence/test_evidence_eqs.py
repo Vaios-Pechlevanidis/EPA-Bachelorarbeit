@@ -147,3 +147,55 @@ class TestGdelt:
         assert [i["title"] for i in items] == ["Zeiss expands"]
         assert (items[0]["source"], items[0]["source_type"], items[0]["language"], items[0]["publisher"]) == ("gdelt", "news", "en", "g.example")
         assert src.fetch_gdelt_month(INFO, "2023-12", lambda url: b"")[0] == []
+
+
+class TestParallelSources:
+    """Nachschärfung A2: die Quellen laufen nebeneinander (je Quelle ein Strang), der
+    Mindestabstand gilt je Quelle auch über Stränge hinweg."""
+
+    def test_sources_run_side_by_side(self, tmp_path):
+        import threading
+
+        from _evidence_helpers import rss
+
+        barrier = threading.Barrier(2, timeout=3)   # beide Abrufe müssen gleichzeitig laufen, sonst BrokenBarrierError
+
+        def gnews(query):
+            barrier.wait()
+            return rss([("Zeitung", "https://z/1", "2023-12-03", "P")])
+
+        def eqs(url):
+            barrier.wait()
+            return body([record(1, "2023-12-05 10:00:00")])
+
+        window = ev.window_for_outlier("2023-12", 0, 0)
+        result = ev.evidence_for_window(INFO, window, fetchers={"gnews": gnews, "eqs": eqs}, store_dir=tmp_path, now=NOW, **FAST)
+        assert (result["sources"]["gnews"]["status"], result["sources"]["eqs"]["status"]) == ("ok", "ok")
+        assert result["counts"] == {"news": 1, "adhoc": 1, "global": 0}
+        assert list(result["sources"]) == ["gnews", "eqs"], "Reihenfolge der Quellen bleibt"
+
+    def test_source_failure_in_one_thread_leaves_the_other(self, tmp_path):
+        gnews = FakeRss({"2023-12": [("Zeitung", "https://z/1", "2023-12-03", "P")]})
+        eqs = FakeEqs(error=ValueError("EQS: 503"))
+        result = ev.evidence_for_window(INFO, ev.window_for_outlier("2023-12", 1, 0), fetchers={"gnews": gnews, "eqs": eqs},
+                                        store_dir=tmp_path, now=NOW, **FAST)
+        assert result["sources"]["eqs"]["status"] == "fehlgeschlagen" and result["sources"]["gnews"]["status"] == "ok"
+        assert result["coverage"] is True and "503" in result["sources"]["eqs"]["errors"][0]["error"]
+
+    def test_throttle_lock_keeps_the_interval_between_threads(self):
+        import threading
+        import time
+
+        starts = []
+
+        def worker():
+            src.throttle("probe", interval=0.15)
+            starts.append(time.monotonic())
+
+        threads = [threading.Thread(target=worker) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert len(starts) == 2 and abs(starts[1] - starts[0]) >= 0.14, "zweiter Abruf derselben Quelle wartet"
+        assert src.throttle("other", interval=0.15) == 0.0, "andere Quelle wartet nicht"
