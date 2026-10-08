@@ -25,7 +25,7 @@ NOW = datetime(2024, 3, 15, 12, 0, tzinfo=timezone.utc)
 def rec(company, kind, date, news=0, adhoc=0, glob=0, missing=0):
     return {"company_id": 1 if company == "A" else 2, "company": company, "kind": kind, "date": date,
             "window_from": date, "window_to": date, "counts": {"news": news, "adhoc": adhoc, "global": glob},
-            "total": news + adhoc + glob, "missing_months": missing}
+            "total": news + adhoc, "missing_months": missing}   # allgemeine Ereignisse zählen nicht (E20)
 
 
 RECORDS = [
@@ -47,12 +47,13 @@ class TestAggregate:
                                                "global": {"covered": 0, "share": 0.0}}
         assert a["kinds"]["einzelmonat"]["covered"] == 0 and a["years"]["bis 2018"]["n"] == 1 and a["years"]["ab 2019"]["n"] == 2
         t = s["total"]
-        assert (t["all"]["n"], t["all"]["covered"]) == (5, 3)
+        assert (t["all"]["n"], t["all"]["covered"]) == (5, 2), "B 2020-04 hat nur ein allgemeines Ereignis: kein Beleg"
         assert (t["years"]["bis 2018"]["covered"], t["years"]["bis 2018"]["n"]) == (1, 2)
-        assert (t["years"]["ab 2019"]["covered"], t["years"]["ab 2019"]["n"]) == (2, 3)
-        assert t["kinds"]["einzelmonat"]["global"]["covered"] == 1
+        assert (t["years"]["ab 2019"]["covered"], t["years"]["ab 2019"]["n"]) == (1, 3)
+        assert t["kinds"]["einzelmonat"]["global"]["covered"] == 1, "getrennt ausgewiesen"
         assert s["uncovered"] == [{"company": "A", "kind": "einzelmonat", "date": "2022-12", "missing_months": 0},
-                                  {"company": "B", "kind": "niveauwechsel", "date": "2015-10", "missing_months": 5}]
+                                  {"company": "B", "kind": "niveauwechsel", "date": "2015-10", "missing_months": 5},
+                                  {"company": "B", "kind": "einzelmonat", "date": "2020-04", "missing_months": 0}]
 
     def test_empty(self):
         s = script.aggregate([])
@@ -61,9 +62,10 @@ class TestAggregate:
     def test_markdown_has_numbers_only(self):
         text = script.markdown_tables(script.aggregate(RECORDS))
         assert "| A | 2/2 (100 %) | 2/2 (100 %) | 1/2 (50 %) | 0/2 (0 %) | 0/1 (0 %) |" in text
-        assert "| **Gesamt** | 1/2 (50 %) | 2/3 (67 %) | 3/5 (60 %) |" in text
-        assert "- B, niveauwechsel, 2015-10 (5 Monate nicht im Speicher)" in text
-        assert "Meldung" not in text and "http" not in text
+        assert "| **Gesamt** | 1/2 (50 %) | 1/3 (33 %) | 2/5 (40 %) |" in text
+        assert "mit allgemeinem Ereignis (zählt nicht)" in text and "| 0/1 (0 %) | 0/1 (0 %) | 0/1 (0 %) | 1/1 (100 %) |" in text
+        assert "- B, niveauwechsel, 2015-10 (5 Monate nicht im Speicher)" in text and "- B, einzelmonat, 2020-04" in text
+        assert "Meldung" not in text.replace("Meldung (news)", "") and "http" not in text
 
 
 class TestRun:
@@ -95,7 +97,7 @@ class TestRun:
 def win(news=0, adhoc=0, glob=0, missing=None, sources=("gnews", "eqs"), offset=None, date="2021-09"):
     missing = dict(missing or {})
     row = {"window_from": date, "window_to": date, "months": 5, "counts": {"news": news, "adhoc": adhoc, "global": glob},
-           "total": news + adhoc + glob, "sources": sorted(sources), "missing": {s: missing.get(s, 0) for s in sources},
+           "total": news + adhoc, "sources": sorted(sources), "missing": {s: missing.get(s, 0) for s in sources},
            "missing_months": sum(missing.get(s, 0) for s in sources)}
     if offset is not None:
         row["offset_months"] = offset

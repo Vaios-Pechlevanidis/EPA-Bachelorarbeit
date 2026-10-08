@@ -270,6 +270,7 @@ CURRENT_MONTH_MAX_AGE = timedelta(hours=12)
 FAILED_FETCH_TTL = 15 * 60      # Sekunden ohne neuen Versuch nach einem fehlgeschlagenen Abruf
 STORE_VERSION = 1
 GLOBAL_EVENTS_PATH = BACKEND_DIR / "data" / "global_events.json"
+MAX_GLOBAL_EVENT_MONTHS = 6     # vorläufig (E20): ein allgemeines Ereignis dauert höchstens so viele Monate
 
 EVIDENCE_NOTE = ("Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie sind keine Aussage über "
                  "Ursachen; interne Auslöser sind von außen nicht sichtbar.")
@@ -496,10 +497,18 @@ def month_record(
 _EVENT_FIELDS = ("id", "date_from", "date_to", "title", "scope", "note", "url", "confirmed")
 
 
-def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True) -> List[Dict[str, Any]]:
+def event_months(event: Dict[str, Any]) -> int:
+    """Dauer eines allgemeinen Ereignisses in Kalendermonaten (``date_from`` bis ``date_to`` einschließlich)."""
+    return month_index(event["date_to"]) - month_index(event["date_from"]) + 1
+
+
+def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True,
+                       max_months: int = MAX_GLOBAL_EVENT_MONTHS) -> List[Dict[str, Any]]:
     """Allgemeine Ereignisse aus ``backend/data/global_events.json``; standardmäßig nur
     bestätigte (``confirmed`` true). Fehlende oder unlesbare Datei und unvollständige
-    Einträge ergeben keine Ereignisse, keinen Fehler."""
+    Einträge ergeben keine Ereignisse, keinen Fehler. Einträge, die länger als ``max_months``
+    Kalendermonate dauern, werden zurückgewiesen (Dauerregel, E20): Ein allgemeines Ereignis
+    muss datierbar sein; ein Zeitraum über Jahre hinge an fast jeder Markierung."""
     path = Path(path or GLOBAL_EVENTS_PATH)
     if not path.exists():
         return []
@@ -514,6 +523,10 @@ def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True)
         if not isinstance(raw, dict) or any(k not in raw for k in _EVENT_FIELDS):
             continue
         if not (is_period(raw["date_from"]) and is_period(raw["date_to"])) or raw["date_from"] > raw["date_to"]:
+            continue
+        if event_months(raw) > max_months:
+            logger.warning("Allgemeines Ereignis %r zurückgewiesen: %d Monate, erlaubt sind höchstens %d.",
+                           raw.get("id"), event_months(raw), max_months)
             continue
         if confirmed_only and raw.get("confirmed") is not True:
             continue
@@ -647,7 +660,9 @@ def evidence_for_window(
         "total": len(items),
         "counts": counts,
         "sources": summary,
-        "coverage": bool(items),
+        # Abdeckung: mindestens eine Meldung oder Ad-hoc-Mitteilung; allgemeine Ereignisse
+        # zählen nicht als Beleg (E20) und stehen nur in counts["global"].
+        "coverage": counts[TYPE_NEWS] + counts[TYPE_ADHOC] > 0,
         "reason": reason,
         "note": EVIDENCE_NOTE,
     }
@@ -658,7 +673,7 @@ __all__ += [
     "live_fetch_enabled", "gdelt_enabled", "company_context_info", "available_sources",
     "record_path", "load_record", "save_record", "is_month_complete", "build_record", "record_is_current",
     "expected_query", "fetch_source_month", "month_record", "with_language", "evidence_for_window",
-    "GLOBAL_EVENTS_PATH", "load_global_events", "global_event_items",
+    "GLOBAL_EVENTS_PATH", "MAX_GLOBAL_EVENT_MONTHS", "event_months", "load_global_events", "global_event_items",
 ]
 
 

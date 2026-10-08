@@ -4,10 +4,11 @@ Schritt 8, Kontrollpunkt 2; Vergleichsfenster seit der Nachschärfung).
 
 Je Unternehmen der Anteil der Niveauwechsel und der auffälligen Einzelmonate
 (Mitarbeitende, Gesamtbewertung, Standardparameter), deren Ereignisfenster
-mindestens einen Beleg enthält, getrennt nach Typ (news, adhoc, global) und
-nach Jahr der Markierung (bis 2018, ab 2019). Nur Zahlen, keine Titel. Die
-Belege kommen allein aus dem Belegspeicher (kein Abruf); die Datenbank wird
-nur gelesen. Bestätigte allgemeine Ereignisse zählen als Typ global.
+mindestens einen Beleg enthält, getrennt nach Typ (news, adhoc) und nach
+Jahr der Markierung (bis 2018, ab 2019). Nur Zahlen, keine Titel. Die Belege
+kommen allein aus dem Belegspeicher (kein Abruf); die Datenbank wird nur
+gelesen. Bestätigte allgemeine Ereignisse (Typ global) zählen nicht als
+Beleg; sie werden je Fenster getrennt ausgewiesen (E20).
 
 Mit ``--comparison`` bekommt jede Markierung bis zu drei Vergleichsfenster
 desselben Unternehmens (das Fenster um −12, +12, −24, +24 Monate verschoben,
@@ -61,9 +62,10 @@ def _window_record(info: Dict[str, Any], window: Dict[str, Any], events: List[Di
     Monate je Quelle."""
     result = ev.evidence_for_window(info, window, live=False, events=events)
     missing = {source: int(s["missing"]) for source, s in result["sources"].items()}
+    counts = {t: int(result["counts"].get(t, 0)) for t in TYPES}
     return {
         "window_from": window["from"], "window_to": window["to"], "months": int(window["months"]),
-        "counts": {t: int(result["counts"].get(t, 0)) for t in TYPES}, "total": int(result["total"]),
+        "counts": counts, "total": counts[TYPE_NEWS] + counts[TYPE_ADHOC],   # Belege ohne allgemeine Ereignisse
         "sources": sorted(result["sources"].keys()), "missing": missing, "missing_months": sum(missing.values()),
     }
 
@@ -116,7 +118,8 @@ def _cell(k: int, n: int) -> str:
 
 def aggregate(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Anteile je Unternehmen und gesamt: je Art (Niveauwechsel, Einzelmonat) mit Beleg
-    überhaupt und je Typ; je Jahresgruppe (bis 2018, ab 2019) mit Beleg überhaupt."""
+    überhaupt (news oder adhoc) und je Typ; je Jahresgruppe (bis 2018, ab 2019) mit Beleg
+    überhaupt. ``global`` zählt nicht als Beleg und steht getrennt (Fenster mit Ereignis)."""
     def bucket(date: str) -> str:
         return "bis 2018" if int(date[:4]) < YEAR_SPLIT else "ab 2019"
 
@@ -284,7 +287,7 @@ def markdown_comparison(summary: Dict[str, Any]) -> str:
 def markdown_tables(summary: Dict[str, Any]) -> str:
     """Zwei Markdown-Tabellen: je Art und Typ, je Jahresgruppe; dazu die Markierungen ohne Beleg."""
     lines = []
-    lines.append("| Unternehmen | Niveauwechsel mit Beleg | davon news | davon adhoc | davon global | Einzelmonate mit Beleg | davon news | davon adhoc | davon global |")
+    lines.append("| Unternehmen | Niveauwechsel mit Beleg | davon news | davon adhoc | mit allgemeinem Ereignis (zählt nicht) | Einzelmonate mit Beleg | davon news | davon adhoc | mit allgemeinem Ereignis (zählt nicht) |")
     lines.append("|---|---|---|---|---|---|---|---|---|")
     rows = summary["companies"] + [{"company": "**Gesamt**", **summary["total"]}]
     for c in rows:
@@ -301,6 +304,9 @@ def markdown_tables(summary: Dict[str, Any]) -> str:
         y = c["years"]
         lines.append(f"| {c['company']} | {_cell(y['bis 2018']['covered'], y['bis 2018']['n'])} | "
                      f"{_cell(y['ab 2019']['covered'], y['ab 2019']['n'])} | {_cell(c['all']['covered'], c['all']['n'])} |")
+    lines.append("")
+    lines.append("Ein Beleg ist eine Meldung (news) oder eine Ad-hoc-Mitteilung (adhoc); bestätigte allgemeine Ereignisse "
+                 "zählen nicht als Beleg und stehen getrennt (E20).")
     if summary["uncovered"]:
         lines.append("")
         lines.append("Markierungen ohne Beleg (Unternehmen, Art, Monat; fehlende Monate im Speicher):")

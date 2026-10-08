@@ -57,6 +57,23 @@ class TestLoad:
         assert all(e["url"].startswith("https://") for e in proposals)
         assert ev.load_global_events() == [], "Vorschläge gelten erst nach Bestätigung durch den Autor"
 
+    def test_repository_file_respects_the_duration_rule(self):
+        path = ev.GLOBAL_EVENTS_PATH
+        raw = json.loads(path.read_text(encoding="utf-8"))["events"]
+        assert all(ev.event_months(e) <= ev.MAX_GLOBAL_EVENT_MONTHS for e in raw), "kein Eintrag länger als 6 Monate"
+        assert len(ev.load_global_events(path, confirmed_only=False)) == len(raw), "der Lader weist keinen Eintrag zurück"
+
+    def test_duration_rule_rejects_long_events(self, tmp_path, caplog):
+        path = tmp_path / "events.json"
+        write_events(path, [event("sechs", "2023-01", "2023-06"), event("sieben", "2023-01", "2023-07"),
+                            event("jahre", "2023-01", "2024-12")])
+        assert ev.MAX_GLOBAL_EVENT_MONTHS == 6
+        assert ev.event_months(event("x", "2023-01", "2023-07")) == 7
+        with caplog.at_level("WARNING"):
+            assert [e["id"] for e in ev.load_global_events(path)] == ["sechs"]
+        assert "sieben" in caplog.text and "24 Monate" in caplog.text
+        assert [e["id"] for e in ev.load_global_events(path, max_months=24)] == ["sechs", "sieben", "jahre"], "Grenze ist Parameter"
+
 
 class TestItems:
 
@@ -87,7 +104,8 @@ class TestItems:
         monkeypatch.setattr(ev, "GLOBAL_EVENTS_PATH", path)
         result = ev.evidence_for_window(INFO, ev.window_for_outlier("2020-04", 0, 0), fetchers={"gnews": FakeRss()},
                                         store_dir=tmp_path, now=NOW, **FAST)
-        assert result["counts"]["global"] == 1 and result["coverage"] is True
+        assert result["counts"]["global"] == 1 and result["total"] == 1
+        assert result["coverage"] is False, "ein allgemeines Ereignis zählt nicht als Beleg (E20)"
 
 
 class TestRoute:
