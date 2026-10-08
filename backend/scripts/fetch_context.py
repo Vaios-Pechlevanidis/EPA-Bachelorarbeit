@@ -14,10 +14,13 @@ Quellen: Google News RSS immer, EQS für Unternehmen mit companyUUID in der
 Metadatei (Schritt 5), GDELT nur mit ``CONTEXT_GDELT=1``. Mit
 ``CONTEXT_LIVE_FETCH=0`` ruft das Skript nichts ab und zählt nur.
 
-``--from-month YYYY-MM`` lädt zusätzlich alle Monate eines Unternehmens ab
-diesem Monat bis zum letzten bewerteten Monat plus ``window_after`` (höchstens
-bis zum laufenden Monat), damit jede Dimension und jede freie Auswahl aus dem
-Speicher antwortet. Bei ``MAX_CONSECUTIVE_ERRORS`` Fehlern in Folge einer
+``--comparison`` nimmt die Vergleichsfenster der Markierungen dazu (je
+Markierung bis zu drei, um −12, +12, −24, +24 Monate verschoben,
+``evidence_service.comparison_windows``). ``--from-month YYYY-MM`` lädt
+zusätzlich alle Monate eines Unternehmens ab diesem Monat bis zum letzten
+bewerteten Monat plus ``window_after`` (höchstens bis zum laufenden Monat),
+damit jede Dimension und jede freie Auswahl aus dem Speicher antwortet. Bei
+``MAX_CONSECUTIVE_ERRORS`` Fehlern in Folge einer
 Quelle (zum Beispiel Status 429 oder 503) bricht der Lauf für diese Quelle ab
 und nennt Unternehmen und Monat, ab dem er fortgesetzt werden kann; die
 anderen Quellen laufen weiter.
@@ -28,6 +31,7 @@ Verwendung
     uv run python scripts/fetch_context.py                   # alle Quellen, alle geeigneten Unternehmen
     uv run python scripts/fetch_context.py --dry-run         # nur zählen: Markierungen, Monate, fehlende Monate
     uv run python scripts/fetch_context.py --source gnews --company 19 --company 28
+    uv run python scripts/fetch_context.py --comparison                      # dazu die Vergleichsfenster
     uv run python scripts/fetch_context.py --company 19 --from-month 2019-01   # alle Monate ab 2019-01
     uv run python scripts/fetch_context.py --max-fetches 50  # Teil-Lauf, später fortsetzen
     uv run python scripts/fetch_context.py --json data/calibration/context_prefetch.json
@@ -84,18 +88,30 @@ def company_anchors(company_id: int) -> Dict[str, Any]:
     }
 
 
-def months_for_anchors(anchors: Dict[str, Any], window_before: int, window_after: int) -> Dict[str, Any]:
-    """Kalendermonate aller Fenster eines Unternehmens, dazu die Fenster je Markierung."""
+def months_for_anchors(anchors: Dict[str, Any], window_before: int, window_after: int,
+                       comparison: bool = False) -> Dict[str, Any]:
+    """Kalendermonate aller Fenster eines Unternehmens, dazu die Fenster je Markierung. Mit
+    ``comparison`` auch die Vergleichsfenster (Art ``vergleich``, ``offset_months``), begrenzt
+    durch die bewertete Reihe ``series_from``..``series_to`` der Markierungen."""
     windows = []
     months: Set[str] = set()
+    marker_windows = []
     for anomaly in anchors["anomalies"]:
         w = ev.window_for_anomaly(anomaly, window_before, window_after)
         windows.append({"id": anomaly["id"], "kind": w["kind"], "from": w["from"], "to": w["to"]})
-        months.update(ev.window_months(w))
+        marker_windows.append(w)
     for outlier in anchors["outliers"]:
         w = ev.window_for_outlier(outlier["date"], window_before, window_after)
         windows.append({"id": outlier["id"], "kind": w["kind"], "from": w["from"], "to": w["to"]})
+        marker_windows.append(w)
+    for w in marker_windows:
         months.update(ev.window_months(w))
+    if comparison:
+        for entry, w in zip(list(windows), marker_windows):
+            for c in ev.comparison_windows(w, marker_windows, anchors.get("series_from"), anchors.get("series_to")):
+                windows.append({"id": entry["id"], "kind": c["kind"], "from": c["from"], "to": c["to"],
+                                "offset_months": c["offset_months"]})
+                months.update(ev.window_months(c))
     return {"windows": windows, "months": sorted(months)}
 
 
@@ -119,9 +135,11 @@ def run(
     verbose: bool = True,
     from_month: Optional[str] = None,
     max_consecutive_errors: int = MAX_CONSECUTIVE_ERRORS,
+    comparison: bool = False,
 ) -> Dict[str, Any]:
-    """Vorabruf; liefert die Zusammenfassung (auch bei ``dry_run``). ``from_month`` lädt
-    zusätzlich alle Monate ab diesem Monat (``months_from``). Nach
+    """Vorabruf; liefert die Zusammenfassung (auch bei ``dry_run``). ``comparison`` nimmt die
+    Vergleichsfenster dazu, ``from_month`` lädt zusätzlich alle Monate ab diesem Monat
+    (``months_from``). Nach
     ``max_consecutive_errors`` Fehlern in Folge einer Quelle werden deren restliche Monate
     übersprungen; ``summary["sources"][quelle]["aborted"]`` nennt Unternehmen und Monat."""
     started = time.monotonic()
@@ -132,7 +150,7 @@ def run(
     companies = [c for c in list_companies() if not company_ids or c["id"] in company_ids]
     summary: Dict[str, Any] = {
         "generated_at": now.isoformat(timespec="seconds"),
-        "window_before": window_before, "window_after": window_after, "from_month": from_month,
+        "window_before": window_before, "window_after": window_after, "from_month": from_month, "comparison": comparison,
         "live": live, "dry_run": dry_run, "live_fetch_env": ev.live_fetch_enabled(),
         "companies": [], "sources": {}, "fetch_limit_reached": False,
     }
@@ -147,7 +165,7 @@ def run(
         if not anchors["eligible"]:
             summary["companies"].append(entry)
             continue
-        plan = months_for_anchors(anchors, window_before, window_after)
+        plan = months_for_anchors(anchors, window_before, window_after, comparison=comparison)
         if from_month:
             extra = months_from(from_month, anchors.get("series_to"), window_after, now)
             plan["months"] = sorted(set(plan["months"]) | set(extra))
@@ -218,6 +236,7 @@ def format_summary(summary: Dict[str, Any]) -> str:
     mode = "nur zählen (--dry-run)" if summary["dry_run"] else ("Abruf erlaubt" if summary["live"] else
                                                              f"kein Abruf ({ev.LIVE_FETCH_ENV}=0), nur Speicher")
     lines.append(f"  Modus: {mode}; Fenster {summary['window_before']} Monate davor, {summary['window_after']} danach"
+                 + ("; dazu die Vergleichsfenster" if summary.get("comparison") else "")
                  + (f"; dazu alle Monate ab {summary['from_month']}" if summary.get("from_month") else "")
                  + f"; Dauer {summary['duration_s']} s; Abrufe in diesem Lauf: {summary['fetches']}"
                  + (" (Grenze erreicht)" if summary["fetch_limit_reached"] else ""))
@@ -252,6 +271,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--window-after", type=int, default=ev.DEFAULT_WINDOW_AFTER)
     parser.add_argument("--dry-run", action="store_true", help="nichts abrufen, nur zählen")
     parser.add_argument("--max-fetches", type=int, default=None, help="höchstens so viele Abrufe in diesem Lauf")
+    parser.add_argument("--comparison", action="store_true",
+                        help="auch die Vergleichsfenster der Markierungen (−12, +12, −24, +24 Monate, höchstens drei je Markierung)")
     parser.add_argument("--from-month", default=None, metavar="YYYY-MM",
                         help="zusätzlich alle Monate je Unternehmen ab diesem Monat (bis zum letzten bewerteten Monat plus window_after)")
     parser.add_argument("--max-consecutive-errors", type=int, default=MAX_CONSECUTIVE_ERRORS,
@@ -263,7 +284,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         parser.error(f"--from-month muss das Format YYYY-MM haben, nicht {args.from_month!r}")
     summary = run(sources=args.source, company_ids=args.company, window_before=args.window_before,
                   window_after=args.window_after, dry_run=args.dry_run, max_fetches=args.max_fetches,
-                  verbose=not args.quiet, from_month=args.from_month, max_consecutive_errors=args.max_consecutive_errors)
+                  verbose=not args.quiet, from_month=args.from_month, max_consecutive_errors=args.max_consecutive_errors,
+                  comparison=args.comparison)
     print(format_summary(summary))
     if args.json_out:
         os.makedirs(os.path.dirname(os.path.abspath(args.json_out)), exist_ok=True)

@@ -185,3 +185,18 @@ def test_cli_rejects_bad_from_month(world, capsys):
     with pytest.raises(SystemExit):
         script.main(["--quiet", "--from-month", "2021"])
     assert "YYYY-MM" in capsys.readouterr().err
+
+
+def test_comparison_option_adds_the_comparison_windows(world, monkeypatch):
+    monkeypatch.setattr(script, "company_anchors", lambda cid: ANCHORS_WITH_SERIES if cid == 7 else {"eligible": False, "anomalies": [], "outliers": []})
+    plan = script.months_for_anchors(ANCHORS_WITH_SERIES, 3, 1, comparison=True)
+    # Niveauwechsel 2021-09 (2021-06..10): −12 und −24 liegen in der Reihe 2019-01..2021-12, +12/+24 danach;
+    # Einzelmonat 2021-11 (2021-08..12): ebenso −12 und −24
+    assert [(w["kind"], w.get("offset_months")) for w in plan["windows"]] == [
+        ("niveauwechsel", None), ("einzelmonat", None), ("vergleich", -12), ("vergleich", -24), ("vergleich", -12), ("vergleich", -24)]
+    assert len(plan["months"]) == 21 and plan["months"][0] == "2019-06" and plan["months"][-1] == "2021-12"
+    summary = script.run(comparison=True, verbose=False)
+    assert summary["sources"]["gnews"]["months"] == 21 and len(world.queries) == 21 and summary["comparison"] is True
+    assert "dazu die Vergleichsfenster" in script.format_summary(summary)
+    again = script.run(verbose=False)
+    assert len(world.queries) == 21 and again["sources"]["gnews"]["months"] == 7, "ohne Option nur die Markierungsfenster"
