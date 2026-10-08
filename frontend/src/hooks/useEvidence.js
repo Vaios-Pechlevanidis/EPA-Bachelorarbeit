@@ -75,3 +75,26 @@ export function useEvidence(companyId, { anomalyId = null, selection = null, sou
     loadMore,
   }
 }
+
+/* Bestätigte allgemeine Ereignisse (GET /analytics/global-events, Inkrement 4, Schritt 7)
+ * für das Overlay im Diagramm; enabled=false lädt nichts. Ergebnis: {loading, error, events}. */
+export function useGlobalEvents(enabled) {
+  const [result, setResult] = useState({ loaded: false, events: [], error: "" })
+
+  useEffect(() => {
+    if (!enabled) return undefined
+    const controller = new AbortController()
+    fetch(`${API_URL}/analytics/global-events`, { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(typeof json.detail === "string" ? json.detail : `HTTP ${res.status}`)
+        setResult({ loaded: true, events: json.events ?? [], error: "" })
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") setResult({ loaded: true, events: [], error: e.message })
+      })
+    return () => controller.abort()
+  }, [enabled])
+
+  return { loading: enabled && !result.loaded, error: result.error, events: enabled ? result.events : [] }
+}

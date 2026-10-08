@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "hinweise": {
+    "zweck": "Allgemeine Ereignisse (Inkrement 4, Schritt 7): Zeiträume, die viele Unternehmen zugleich betreffen. Ein bestätigtes Ereignis erscheint im Ereignisfenster als Beleg vom Typ 'global' mit der Verlässlichkeit 'hypothese' und als einblendbares Overlay im Diagramm der Detailseite, beschriftet als 'Allgemeines Ereignis, Hypothese'. Es ist keine Aussage über Ursachen.",
+    "felder": {
+      "id": "Kurzkennung (stabil, für Tests und Verweise).",
+      "date_from": "Erster Monat (YYYY-MM).",
+      "date_to": "Letzter Monat (YYYY-MM), einschließlich.",
+      "title": "Kurzer Titel.",
+      "scope": "Reichweite, z. B. 'Deutschland', 'weltweit', 'Deutschland; Energiewirtschaft'.",
+      "note": "Datierung und Kernfakten in einem Satz, ohne Wertung.",
+      "url": "Belegende Adresse (abgerufen am 2026-10-08, HTTP 200).",
+      "confirmed": "false = Vorschlag des Entwicklers; der Autor setzt true, wenn er das Ereignis übernimmt. Nur bestätigte Ereignisse werden angezeigt."
+    },
+    "stand": "Vorschläge vom 2026-10-08, alle unbestätigt. Höchstens zehn Einträge; Ereignisse ohne Bezug zu Arbeitgeberbewertungen wurden nicht aufgenommen."
+  },
+  "events": [
+    {
+      "id": "finanzkrise-2008",
+      "date_from": "2008-09",
+      "date_to": "2009-06",
+      "title": "Finanz- und Wirtschaftskrise",
+      "scope": "weltweit; Deutschland",
+      "note": "Insolvenz von Lehman Brothers am 15.09.2008; die deutsche Wirtschaft schrumpfte 2009 deutlich, in der Industrie Kurzarbeit in großem Umfang.",
+      "url": "https://de.wikipedia.org/wiki/Finanzkrise_ab_2007",
+      "confirmed": false
+    },
+    {
+      "id": "atom-moratorium-2011",
+      "date_from": "2011-03",
+      "date_to": "2011-06",
+      "title": "Reaktorunfall Fukushima, Atom-Moratorium und Atomausstiegsbeschluss",
+      "scope": "Deutschland; Energiewirtschaft",
+      "note": "Moratorium ab 14.03.2011 mit Abschaltung von acht Kernkraftwerken; Beschluss zum Ausstieg bis 2022 am 30.06.2011. Betrifft vor allem E.ON und RWE.",
+      "url": "https://de.wikipedia.org/wiki/Atom-Moratorium",
+      "confirmed": false
+    },
+    {
+      "id": "corona-lockdown-1",
+      "date_from": "2020-03",
+      "date_to": "2020-05",
+      "title": "Erster Corona-Lockdown in Deutschland",
+      "scope": "Deutschland; alle Branchen",
+      "note": "Kontaktbeschränkungen ab 22.03.2020, Schließungen, Kurzarbeit auf Rekordniveau im April 2020, Umstellung auf Homeoffice.",
+      "url": "https://de.wikipedia.org/wiki/COVID-19-Pandemie_in_Deutschland",
+      "confirmed": false
+    },
+    {
+      "id": "corona-lockdown-2",
+      "date_from": "2020-11",
+      "date_to": "2021-05",
+      "title": "Zweiter Lockdown und Bundesnotbremse",
+      "scope": "Deutschland; alle Branchen",
+      "note": "Teil-Lockdown ab 02.11.2020, verschärft ab 16.12.2020; Bundesnotbremse vom 23.04. bis 30.06.2021.",
+      "url": "https://de.wikipedia.org/wiki/Bundesnotbremse",
+      "confirmed": false
+    },
+    {
+      "id": "homeoffice-pflicht-2021",
+      "date_from": "2021-01",
+      "date_to": "2021-06",
+      "title": "Homeoffice-Pflicht nach der Corona-Arbeitsschutzverordnung",
+      "scope": "Deutschland; Büroarbeit",
+      "note": "Arbeitgeber mussten Homeoffice anbieten, wo möglich: 27.01.2021 bis 30.06.2021; eine zweite Phase galt vom 24.11.2021 bis 19.03.2022.",
+      "url": "https://de.wikipedia.org/wiki/SARS-CoV-2-Arbeitsschutzverordnung",
+      "confirmed": false
+    },
+    {
+      "id": "ukraine-krieg-2022",
+      "date_from": "2022-02",
+      "date_to": "2022-03",
+      "title": "Russischer Überfall auf die Ukraine",
+      "scope": "weltweit; Europa",
+      "note": "Kriegsbeginn am 24.02.2022; Sanktionen und sprunghafter Anstieg der Energiepreise.",
+      "url": "https://de.wikipedia.org/wiki/Russischer_%C3%9Cberfall_auf_die_Ukraine_2022",
+      "confirmed": false
+    },
+    {
+      "id": "energiepreise-inflation-2022",
+      "date_from": "2022-06",
+      "date_to": "2023-03",
+      "title": "Energiepreiskrise und Inflationshoch",
+      "scope": "Deutschland; Europa",
+      "note": "Inflationsrate 2022 bei +7,9 % (Destatis) mit Höchstwerten von 8,8 % im Oktober und November 2022; Gas- und Strompreisbremse ab 2023.",
+      "url": "https://www.destatis.de/DE/Presse/Pressemitteilungen/2023/01/PD23_022_611.html",
+      "confirmed": false
+    },
+    {
+      "id": "rezession-2023-2024",
+      "date_from": "2023-01",
+      "date_to": "2024-12",
+      "title": "Konjunkturschwäche: Rezession 2023 und 2024",
+      "scope": "Deutschland",
+      "note": "Bruttoinlandsprodukt 2023 um 0,3 % und 2024 um 0,2 % gesunken (Destatis, Pressemitteilung vom 15.01.2025).",
+      "url": "https://www.destatis.de/DE/Presse/Pressemitteilungen/2025/01/PD25_019_811.html",
+      "confirmed": false
+    }
+  ]
+}

@@ -183,8 +183,8 @@ from typing import Callable, Tuple  # noqa: E402
 
 from services import news_service  # noqa: E402
 from services.evidence_sources import (  # noqa: E402
-    SOURCE_EQS, SOURCE_GDELT, SOURCE_GNEWS, SOURCE_LABELS, TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS,
-    dedupe, fetch_gnews_month, gnews_month_query, guess_language, throttle, utc_now,
+    SOURCE_EQS, SOURCE_GDELT, SOURCE_GLOBAL, SOURCE_GNEWS, SOURCE_LABELS, TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS,
+    dedupe, fetch_gnews_month, gnews_month_query, guess_language, make_item, throttle, utc_now,
 )
 
 logger = logging.getLogger(__name__)
@@ -196,6 +196,7 @@ GDELT_ENV = "CONTEXT_GDELT"
 CURRENT_MONTH_MAX_AGE = timedelta(hours=12)
 FAILED_FETCH_TTL = 15 * 60      # Sekunden ohne neuen Versuch nach einem fehlgeschlagenen Abruf
 STORE_VERSION = 1
+GLOBAL_EVENTS_PATH = BACKEND_DIR / "data" / "global_events.json"
 
 EVIDENCE_NOTE = ("Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie sind keine Aussage über "
                  "Ursachen; interne Auslöser sind von außen nicht sichtbar.")
@@ -417,6 +418,52 @@ def month_record(
     return {"record": new, "fetched_now": True, "error": None, "stale": False}
 
 
+# ── Allgemeine Ereignisse (Schritt 7) ────────────────────────────────────────
+
+_EVENT_FIELDS = ("id", "date_from", "date_to", "title", "scope", "note", "url", "confirmed")
+
+
+def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True) -> List[Dict[str, Any]]:
+    """Allgemeine Ereignisse aus ``backend/data/global_events.json``; standardmäßig nur
+    bestätigte (``confirmed`` true). Fehlende oder unlesbare Datei und unvollständige
+    Einträge ergeben keine Ereignisse, keinen Fehler."""
+    path = Path(path or GLOBAL_EVENTS_PATH)
+    if not path.exists():
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            doc = json.load(fh)
+    except (OSError, ValueError) as exc:
+        logger.warning("global_events.json nicht lesbar: %s", exc)
+        return []
+    events = []
+    for raw in (doc.get("events") if isinstance(doc, dict) else []) or []:
+        if not isinstance(raw, dict) or any(k not in raw for k in _EVENT_FIELDS):
+            continue
+        if not (is_period(raw["date_from"]) and is_period(raw["date_to"])) or raw["date_from"] > raw["date_to"]:
+            continue
+        if confirmed_only and raw.get("confirmed") is not True:
+            continue
+        events.append({k: raw[k] for k in _EVENT_FIELDS})
+    return events
+
+
+def global_event_items(events: List[Dict[str, Any]], window: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Ereignisse, deren Zeitraum das Fenster berührt, als Belege vom Typ ``global``
+    (Verlässlichkeit ``hypothese``); ``date`` ist der erste Tag des Ereignisbeginns,
+    ``event`` nennt Zeitraum, Reichweite und Vermerk."""
+    items = []
+    for e in events:
+        if e["date_from"] > window["to"] or e["date_to"] < window["from"]:
+            continue
+        item = make_item(title=e["title"], url=e["url"], published_at=f"{e['date_from']}-01", publisher="Allgemeines Ereignis",
+                         source=SOURCE_GLOBAL, source_type=TYPE_GLOBAL, language="de", category=e.get("scope") or None)
+        item["id"] = f"global:{e['id']}"
+        item["event"] = {"id": e["id"], "from": e["date_from"], "to": e["date_to"], "scope": e.get("scope"), "note": e.get("note")}
+        items.append(item)
+    return items
+
+
 # ── Belege eines Fensters ────────────────────────────────────────────────────
 
 def _in_window(item: Dict[str, Any], window: Dict[str, Any]) -> bool:
@@ -452,7 +499,8 @@ def evidence_for_window(
     """Alle Belege eines Fensters, neueste zuerst, mit Anzahl je Typ, Stand je Quelle und
     ``coverage`` (mindestens ein Beleg). Monate kommen aus dem Speicher oder werden
     (wenn erlaubt) abgerufen; ``fetchers`` ordnet Quellen Abruffunktionen zu (Tests).
-    ``events`` sind bestätigte allgemeine Ereignisse (Schritt 7)."""
+    ``events`` sind allgemeine Ereignisse (Schritt 7); None lädt die bestätigten aus
+    ``global_events.json``, eine leere Liste schaltet sie ab."""
     now = now or utc_now()
     months = window_months(window)
     used_sources = list(sources) if sources else available_sources(info)
@@ -485,8 +533,9 @@ def evidence_for_window(
         else:
             s["status"] = "teilweise"
         summary[source] = s
+    if events is None:
+        events = load_global_events()
     if events:
-        from services.evidence_service import global_event_items  # Schritt 7
         items.extend(global_event_items(events, window))
     items = dedupe(items)
     items.sort(key=_sort_key, reverse=True)
@@ -517,6 +566,7 @@ __all__ += [
     "live_fetch_enabled", "gdelt_enabled", "company_context_info", "available_sources",
     "record_path", "load_record", "save_record", "is_month_complete", "build_record", "record_is_current",
     "expected_query", "fetch_source_month", "month_record", "with_language", "evidence_for_window",
+    "GLOBAL_EVENTS_PATH", "load_global_events", "global_event_items",
 ]
 
 

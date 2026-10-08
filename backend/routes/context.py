@@ -15,9 +15,11 @@ from fastapi import APIRouter, HTTPException, Query
 from services.evidence_service import (
     DEFAULT_WINDOW_AFTER,
     DEFAULT_WINDOW_BEFORE,
+    EVIDENCE_NOTE,
     MAX_WINDOW_MONTHS,
     context_for_anchor,
     context_for_selection,
+    load_global_events,
     paginate,
 )
 
@@ -111,3 +113,26 @@ def get_selection_context(
     if result is None:
         raise HTTPException(status_code=404, detail=f"Unternehmen {company_id} nicht gefunden.")
     return paginate(result, offset, limit)
+
+
+@router.get("/global-events")
+def get_global_events(
+    all_events: bool = Query(False, alias="all", description="auch unbestätigte Vorschläge"),
+):
+    """
+    Allgemeine Ereignisse aus ``backend/data/global_events.json`` (Inkrement 4, Schritt 7),
+    standardmäßig nur die vom Autor bestätigten::
+
+        {"events": [{"id", "date_from", "date_to", "title", "scope", "note", "url", "confirmed"}, ...],
+         "n_confirmed", "note"}
+
+    Bestätigte Ereignisse erscheinen im Ereignisfenster als Belege vom Typ ``global``
+    (Verlässlichkeit ``hypothese``) und als einblendbares Overlay im Diagramm der
+    Detailseite, beschriftet als „Allgemeines Ereignis, Hypothese“.
+    """
+    events = load_global_events(confirmed_only=not all_events)
+    return {
+        "events": events,
+        "n_confirmed": sum(1 for e in events if e.get("confirmed") is True),
+        "note": EVIDENCE_NOTE,
+    }

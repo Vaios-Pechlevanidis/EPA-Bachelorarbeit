@@ -16,7 +16,23 @@ import { useEvidence } from "@/hooks/useEvidence"
 const TYPE_LABELS = {
     news: { label: "Meldung", className: "bg-slate-100 text-slate-600", title: "Nachrichtenmeldung (Google News RSS), Verlässlichkeit mittel" },
     adhoc: { label: "Ad-hoc", className: "bg-blue-100 text-slate-700", title: "Pflicht- oder Unternehmensmitteilung (EQS News), Verlässlichkeit hoch" },
-    global: { label: "Allgemeines Ereignis", className: "bg-amber-100 text-slate-700", title: "Allgemeines Ereignis, Hypothese" },
+    global: { label: "Allgemeines Ereignis, Hypothese", className: "bg-amber-100 text-slate-700", title: "Allgemeines Ereignis aus global_events.json (vom Autor bestätigt), Verlässlichkeit: Hypothese" },
+}
+
+/* Kästchen "Allgemeine Ereignisse" im Kopf des Monatsverlaufs (Overlay, Standard aus). */
+export function EventsToggle({ checked, onChange }) {
+    return (
+        <label className="inline-flex items-center gap-1.5 text-[12px] text-slate-700 cursor-pointer select-none"
+            onClick={(e) => e.stopPropagation()}>
+            <input
+                type="checkbox"
+                className="accent-amber-600"
+                checked={checked}
+                onChange={(e) => onChange(e.target.checked)}
+            />
+            Allgemeine Ereignisse
+        </label>
+    )
 }
 
 const fmtDay = (value) => {
@@ -83,9 +99,9 @@ function EvidenceRow({ item }) {
                     )}
                 </span>
                 <span className="block mt-0.5 text-[11px] text-slate-500">
-                    {item.publisher || (item.source === "eqs" ? "EQS News" : "Herausgeber unbekannt")}
-                    {item.issuer ? ` · Mitteilung von ${item.issuer}` : ""}
-                    {item.category ? ` · ${item.category}` : ""}
+                    {item.event
+                        ? `${fmtPeriod(item.event.from)} – ${fmtPeriod(item.event.to)}${item.event.scope ? ` · ${item.event.scope}` : ""}${item.event.note ? ` · ${item.event.note}` : ""}`
+                        : `${item.publisher || (item.source === "eqs" ? "EQS News" : "Herausgeber unbekannt")}${item.issuer ? ` · Mitteilung von ${item.issuer}` : ""}${item.category ? ` · ${item.category}` : ""}`}
                 </span>
             </span>
         </li>
