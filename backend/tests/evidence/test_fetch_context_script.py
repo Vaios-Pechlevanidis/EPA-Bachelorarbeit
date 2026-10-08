@@ -116,3 +116,72 @@ def test_cli_writes_json(world, tmp_path, capsys):
     out = tmp_path / "s.json"
     assert script.main(["--quiet", "--json", str(out)]) == 0
     assert out.exists() and "Vorabruf der externen Belege" in capsys.readouterr().out
+
+
+# ── Nachschärfung A2: alle Monate ab einem Startmonat, Abbruch je Quelle ─────
+
+ANCHORS_WITH_SERIES = {**ANCHORS, "series_from": "2019-01", "series_to": "2021-12"}
+
+
+def test_months_from_runs_to_the_last_rated_month_plus_window_after():
+    from datetime import timezone
+
+    now = datetime(2026, 10, 8, tzinfo=timezone.utc)
+    assert script.months_from("2021-10", "2021-12", 1, now) == ["2021-10", "2021-11", "2021-12", "2022-01"]
+    assert script.months_from("2026-09", "2026-12", 1, now) == ["2026-09", "2026-10"], "höchstens bis zum laufenden Monat"
+    assert script.months_from("2026-09", None, 1, now) == ["2026-09", "2026-10"], "ohne Reihe bis zum laufenden Monat"
+    assert script.months_from("2022-03", "2021-12", 1, now) == []
+
+
+def test_from_month_loads_all_months_of_the_company(world, monkeypatch):
+    monkeypatch.setattr(script, "company_anchors", lambda cid: ANCHORS_WITH_SERIES if cid == 7 else {"eligible": False, "anomalies": [], "outliers": []})
+    summary = script.run(from_month="2021-03", verbose=False)
+    # Fenster 2021-06..2021-12 vereinigt mit 2021-03..2022-01 (letzter bewerteter Monat 2021-12 plus 1)
+    assert summary["sources"]["gnews"]["months"] == 11 and len(world.queries) == 11
+    assert summary["companies"][0]["from_month"] == "2021-03" and summary["companies"][0]["series_to"] == "2021-12"
+    assert "dazu alle Monate ab 2021-03" in script.format_summary(summary)
+    with pytest.raises(ValueError):
+        script.run(from_month="2021-3", verbose=False)
+
+
+def test_consecutive_errors_abort_the_source_and_name_the_resume_point(world, monkeypatch):
+    def failing(query):
+        world.queries.append(query)
+        raise OSError("HTTP Error 429: Too Many Requests")
+
+    monkeypatch.setattr(news_service, "fetch_rss", failing)
+    summary = script.run(verbose=False)
+    g = summary["sources"]["gnews"]
+    assert len(world.queries) == 3, "nach drei Fehlern in Folge kein weiterer Abruf dieser Quelle"
+    assert g["aborted"]["company_id"] == 7 and g["aborted"]["month"] == "2021-08" and g["aborted"]["after_errors"] == 3
+    assert (g["missing"], g["skipped"], len(g["errors"])) == (7, 4, 3)
+    text = script.format_summary(summary)
+    assert "ABGEBROCHEN nach 3 Fehlern in Folge bei E.ON (7), Monat 2021-08" in text
+    assert "--source gnews --company 7" in text and "429" in text
+
+
+def test_errors_with_successes_in_between_do_not_abort(world, monkeypatch):
+    calls = {"n": 0}
+
+    def flaky(query):
+        calls["n"] += 1
+        world.queries.append(query)
+        if calls["n"] % 2 == 1:
+            raise OSError("Netz weg")
+        return rss(1)
+
+    monkeypatch.setattr(news_service, "fetch_rss", flaky)
+    summary = script.run(verbose=False)
+    g = summary["sources"]["gnews"]
+    assert "aborted" not in g and len(world.queries) == 7 and len(g["errors"]) == 4
+
+
+def test_max_fetches_limit_is_not_counted_as_error(world):
+    summary = script.run(max_fetches=2, verbose=False)
+    assert summary["sources"]["gnews"]["errors"] == [] and "aborted" not in summary["sources"]["gnews"]
+
+
+def test_cli_rejects_bad_from_month(world, capsys):
+    with pytest.raises(SystemExit):
+        script.main(["--quiet", "--from-month", "2021"])
+    assert "YYYY-MM" in capsys.readouterr().err

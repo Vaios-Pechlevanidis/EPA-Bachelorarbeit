@@ -31,6 +31,7 @@ import calendar
 import hashlib
 import json
 import re
+import threading
 import time
 import unicodedata
 import urllib.parse
@@ -62,25 +63,40 @@ Fetcher = Callable[[str], bytes]
 
 # Zeitpunkt des letzten Abrufs je Quelle (monotonic), für die Drosselung.
 _last_request: Dict[str, float] = {}
+# Eine Sperre je Quelle: Die Quellen werden nebeneinander abgerufen (je Quelle ein
+# Strang), der Mindestabstand gilt je Quelle auch dann, wenn mehrere Anfragen
+# dieselbe Quelle zugleich brauchen.
+_source_locks: Dict[str, threading.Lock] = {}
+_source_locks_guard = threading.Lock()
 
 
 # ── Drosselung ───────────────────────────────────────────────────────────────
+
+def source_lock(source: str) -> threading.Lock:
+    with _source_locks_guard:
+        lock = _source_locks.get(source)
+        if lock is None:
+            lock = _source_locks[source] = threading.Lock()
+        return lock
+
 
 def throttle(source: str, sleep: Optional[Callable[[float], None]] = None,
              clock: Optional[Callable[[], float]] = None, interval: float = MIN_FETCH_INTERVAL_S) -> float:
     """Wartet, bis seit dem letzten Abruf derselben Quelle ``interval`` Sekunden
     vergangen sind; liefert die gewartete Zeit. ``sleep`` und ``clock`` werden erst
-    beim Aufruf aufgelöst (Tests ersetzen ``time.sleep``)."""
+    beim Aufruf aufgelöst (Tests ersetzen ``time.sleep``). Die Sperre je Quelle hält
+    den Abstand auch zwischen Strängen ein; andere Quellen warten nicht."""
     sleep = sleep or time.sleep
     clock = clock or time.monotonic
-    last = _last_request.get(source)
-    now = clock()
-    waited = 0.0
-    if last is not None and now - last < interval:
-        waited = interval - (now - last)
-        sleep(waited)
+    with source_lock(source):
+        last = _last_request.get(source)
         now = clock()
-    _last_request[source] = now
+        waited = 0.0
+        if last is not None and now - last < interval:
+            waited = interval - (now - last)
+            sleep(waited)
+            now = clock()
+        _last_request[source] = now
     return waited
 
 
@@ -363,7 +379,7 @@ def fetch_gdelt_month(info: Dict[str, Any], month: str, fetcher: Optional[Fetche
 __all__ = [
     "SOURCE_GNEWS", "SOURCE_EQS", "SOURCE_GDELT", "SOURCE_GLOBAL",
     "TYPE_NEWS", "TYPE_ADHOC", "TYPE_GLOBAL", "TYPE_MARKET", "SOURCE_TYPES", "RELIABILITY", "SOURCE_LABELS",
-    "MIN_FETCH_INTERVAL_S", "throttle", "guess_language", "normalize_title", "item_id", "make_item", "dedupe",
+    "MIN_FETCH_INTERVAL_S", "throttle", "source_lock", "guess_language", "normalize_title", "item_id", "make_item", "dedupe",
     "gnews_month_query", "fetch_gnews_month", "utc_now", "http_get",
     "EQS_URL", "EQS_COMPANIES_URL", "slugify", "eqs_news_url", "eqs_month_url", "fetch_eqs_month", "eqs_search_companies",
     "GDELT_URL", "gdelt_month_url", "fetch_gdelt_month",

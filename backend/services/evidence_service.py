@@ -240,13 +240,16 @@ __all__ = [
 # abgerufen, der laufende Monat frühestens nach ``CURRENT_MONTH_MAX_AGE``; ein
 # anderer Suchbegriff macht einen gespeicherten Monat ungültig.
 # ``CONTEXT_LIVE_FETCH=0`` unterbindet jeden Abruf; dann gilt nur der Speicher.
-# Jede Quelle läuft getrennt: Fällt eine aus, liefern die anderen weiter.
+# Jede Quelle läuft getrennt und in einem eigenen Strang (Nachschärfung A2):
+# Fällt eine aus, liefern die anderen weiter; der Mindestabstand von 2 Sekunden
+# gilt je Quelle, zwei Quellen warten nicht aufeinander.
 
 import json  # noqa: E402
 import logging  # noqa: E402
 import os  # noqa: E402
 import tempfile  # noqa: E402
 import time  # noqa: E402
+from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 from datetime import datetime, timedelta, timezone  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import Callable  # noqa: E402
@@ -568,21 +571,29 @@ def evidence_for_window(
 ) -> Dict[str, Any]:
     """Alle Belege eines Fensters, neueste zuerst, mit Anzahl je Typ, Stand je Quelle und
     ``coverage`` (mindestens ein Beleg). Monate kommen aus dem Speicher oder werden
-    (wenn erlaubt) abgerufen; ``fetchers`` ordnet Quellen Abruffunktionen zu (Tests).
+    (wenn erlaubt) abgerufen, die Quellen nebeneinander in je einem Strang (der
+    Mindestabstand gilt je Quelle; fällt eine Quelle aus, liefert die andere weiter);
+    ``fetchers`` ordnet Quellen Abruffunktionen zu (Tests).
     ``events`` sind allgemeine Ereignisse (Schritt 7); None lädt die bestätigten aus
     ``global_events.json``, eine leere Liste schaltet sie ab."""
     now = now or utc_now()
     months = window_months(window)
     used_sources = list(sources) if sources else available_sources(info)
-    items: List[Dict[str, Any]] = []
-    summary: Dict[str, Dict[str, Any]] = {}
-    for source in used_sources:
+
+    def collect(source: str) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Alle Monate einer Quelle (ein Strang je Quelle); wirft nicht."""
         fetcher = (fetchers or {}).get(source)
         s: Dict[str, Any] = {"label": SOURCE_LABELS.get(source, source), "months": len(months), "from_store": 0,
                              "fetched_now": 0, "missing": 0, "stale": 0, "errors": [], "fetched_at": None}
+        found: List[Dict[str, Any]] = []
         for month in months:
-            result = month_record(info, source, month, fetcher=fetcher, store_dir=store_dir, now=now, live=live,
-                                  sleep=sleep, clock=clock)
+            try:
+                result = month_record(info, source, month, fetcher=fetcher, store_dir=store_dir, now=now, live=live,
+                                      sleep=sleep, clock=clock)
+            except Exception as exc:  # noqa: BLE001 – Speicher oder Quelle: dieser Monat fehlt, der Rest läuft weiter
+                logger.warning("Beleg %s/%s/%s: %s", source, info.get("company_id"), month, exc)
+                result = {"record": None, "fetched_now": False, "stale": False,
+                          "error": f"{SOURCE_LABELS.get(source, source)} für {month} nicht lesbar ({type(exc).__name__}: {exc})."}
             record = result["record"]
             if record is None:
                 s["missing"] += 1
@@ -593,7 +604,7 @@ def evidence_for_window(
                 fetched_at = record.get("fetched_at")
                 if fetched_at and (s["fetched_at"] is None or fetched_at > s["fetched_at"]):
                     s["fetched_at"] = fetched_at
-                items.extend(with_language(it) for it in record.get("items") or [] if _in_window(it, window))
+                found.extend(with_language(it) for it in record.get("items") or [] if _in_window(it, window))
             if result["error"]:
                 s["errors"].append({"month": month, "error": result["error"]})
         if not s["errors"] and s["missing"] == 0:
@@ -602,7 +613,18 @@ def evidence_for_window(
             s["status"] = "fehlgeschlagen"
         else:
             s["status"] = "teilweise"
+        return s, found
+
+    if len(used_sources) > 1:
+        with ThreadPoolExecutor(max_workers=len(used_sources), thread_name_prefix="evidence") as pool:
+            collected = list(pool.map(collect, used_sources))
+    else:
+        collected = [collect(source) for source in used_sources]
+    items: List[Dict[str, Any]] = []
+    summary: Dict[str, Dict[str, Any]] = {}
+    for source, (s, found) in zip(used_sources, collected):
         summary[source] = s
+        items.extend(found)
     if events is None:
         events = load_global_events()
     if events:
