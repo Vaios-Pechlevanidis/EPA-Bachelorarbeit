@@ -55,12 +55,18 @@ _failed_fetches: Dict[int, tuple[float, str]] = {}
 _LEGAL_FORM_RE = re.compile(r"\s+(SE|AG|GmbH|KGaA|SE & Co\. KGaA|Inc\.?)$", re.IGNORECASE)
 
 
-def news_query(name: str) -> str:
-    """Suchbegriff für Google News: Name ohne Rechtsform am Ende (in Meldungen
-    selten mitgeschrieben), mit Leerzeichen in Anführungszeichen."""
+def search_term(name: str) -> str:
+    """Suchbegriff aus dem Firmennamen: ohne Rechtsform am Ende (in Meldungen
+    selten mitgeschrieben), mit Leerzeichen in Anführungszeichen. Auch die
+    Monatsabfragen der Belege (Inkrement 4, ``services/evidence_sources.py``)
+    gehen von diesem Begriff aus."""
     clean = _LEGAL_FORM_RE.sub("", " ".join(str(name).split()))
-    term = f'"{clean}"' if " " in clean else clean
-    return f"{term} when:{NEWS_DAYS}d"
+    return f'"{clean}"' if " " in clean else clean
+
+
+def news_query(name: str) -> str:
+    """Suchbegriff für die aktuellen Meldungen: ``search_term`` plus ``when:{NEWS_DAYS}d``."""
+    return f"{search_term(name)} when:{NEWS_DAYS}d"
 
 
 def fetch_rss(query: str) -> bytes:

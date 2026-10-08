@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-08 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-08 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -181,7 +181,31 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   3-Monats-Fenster.
 - **Offen:** Nutzungsbedingungen von Google News RSS und EQS für die Arbeit, Umgang mit
   englischsprachigen Treffern, Fenstergröße 1 oder 3 Monate.
-- **Status:** vorläufig.
+- **Entscheidung 2026-10-08 (Autor):** Die Nutzung von Google News RSS, EQS und Yahoo Finance
+  gilt im Rahmen der wissenschaftlichen Arbeit als vertretbar (Fundstellen und offene Fragen in
+  `docs/nutzungsbedingungen.md`). Dafür gelten folgende Maßnahmen, umgesetzt in Inkrement 4
+  (E18–E20):
+  - Google News RSS ist Hauptquelle: eine Abfrage je Unternehmen und Kalendermonat mit den
+    Operatoren `after:` und `before:` (Suchbegriff und Ausschlussbegriffe je Unternehmen in
+    `backend/data/company_metadata.json`, Felder `news_term`, `news_exclude`,
+    `news_term_confirmed`). EQS News ist zweite Quelle für börsennotierte Unternehmen
+    (companyUUID je Emittent in der Metadatei, Feld `eqs`). GDELT bleibt hinter dem Schalter
+    `CONTEXT_GDELT=1` und ist aus.
+  - Gespeichert werden nur Titel, Herausgeber, Link, Datum, Quelle, Typ, Verlässlichkeit und
+    Sprache; keine Volltexte, keine Textauszüge. Die Beispieltitel aus dem Spike wurden am
+    2026-10-08 aus `backend/data/spike_news_sources.json` entfernt, die Zahlen bleiben.
+  - Zwischen zwei Abrufen derselben Quelle liegen mindestens 2 Sekunden; die Kennung nennt
+    Forschung und nicht-kommerzielle Nutzung (`USER_AGENT` in `backend/services/news_service.py`).
+  - Der Belegspeicher liegt unter `backend/data/context/` und steht in `.gitignore`; keine
+    Schlagzeilen in Code, Tests, Dokumentation oder Commits.
+  - `CONTEXT_LIVE_FETCH=0` unterbindet jeden Abruf; dann gilt nur der Speicher (Evaluationsinstanz,
+    `docs/evaluationsinstanz.md`).
+  - Jede Quelle läuft getrennt; fällt eine aus, liefert die andere weiter.
+  - Englischsprachige Treffer bleiben enthalten und tragen eine Sprachkennzeichnung (E19);
+    das Fenster ist nicht mehr 1 oder 3 Monate je Abfrage, sondern das Ereignisfenster aus E18
+    über mehrere Monatsabfragen.
+- **Status:** Quellen entschieden (2026-10-08); die Fragen an den Betreuer aus
+  `docs/nutzungsbedingungen.md` bleiben zu klären.
 
 ## E8 – Reproduzierbarkeit des Docker-Stacks
 
@@ -663,3 +687,102 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   unverändert.
 - **Status:** vorläufig (Mindestlänge 6 Monate ist eine Setzung).
 
+
+## E18 – Ereignisfenster und Belegspeicher (Inkrement 4)
+
+- **Kontext:** Inkrement 4 „Externe Belege im Ereignisfenster“ stellt zu einer auffälligen
+  Veränderung, einem auffälligen Einzelmonat oder einer frei gewählten Auswahl zeitlich nahe
+  Meldungen aus externen Quellen (E7). Ein Beleg ist eine Meldung mit Datum, Titel, Herausgeber
+  und Link; er ist keine Ursache, die Oberfläche behauptet keinen Zusammenhang und bewertet
+  keine Meldung. Die Roadmap sah für Kontext und Erklärungen Datenbanktabellen (Migrationen 007
+  und 008) vor.
+- **Entscheidung (2026-10-08):**
+  - **Ereignisfenster (vorläufig):** Für einen Niveauwechsel reicht das Fenster von
+    `window_before` = 3 Monaten vor dem Beginn des Übergangs bis `window_after` = 1 Monat nach
+    `date`. Der Beginn des Übergangs ist der Monat nach `previous_period` (dem letzten bewerteten
+    Monat vor `date`); ohne Lücke ist das `date` selbst, am Reihenrand ohne Vormonat ebenfalls.
+    Für einen Einzelmonat und eine freie Auswahl gelten dieselben Abstände um den Monat bzw. den
+    Zeitraum. Beide Größen sind Parameter der Routen (0 bis 24 Monate). Umsetzung:
+    `backend/services/evidence_service.py` (`window_for_change`, `window_for_outlier`,
+    `window_for_selection`).
+  - **Belegspeicher:** Meldungen werden je Unternehmen, Quelle und Kalendermonat als Datei
+    abgelegt (`backend/data/context/<company_id>/<quelle>/<YYYY-MM>.json`, in `.gitignore`), nicht
+    je Veränderung. Die Belege eines Fensters sind alle gespeicherten Meldungen, deren Datum im
+    Fenster liegt. Abgeschlossene Monate werden nicht erneut abgerufen, der laufende Monat
+    frühestens nach 12 Stunden; ein geänderter Suchbegriff macht einen gespeicherten Monat
+    ungültig. Doppelte Meldungen (gleicher Link oder gleicher normalisierter Titel) zählen einmal.
+    Fehlgeschlagene Abrufe werden nicht gespeichert und 15 Minuten lang nicht wiederholt.
+  - **Abweichung von der Roadmap:** Dateispeicher je Monat statt der Tabellen 007 und 008, weil
+    die Erkennung noch nicht gegen Referenzzeiträume kalibriert ist (E5, E9) und sich Monate,
+    Parameter und Markierungen daher noch ändern; ein Speicher je Monat bleibt dabei gültig. Die
+    Datenbank wird in Zyklus 2 nur gelesen (E1, keine Migration).
+  - **Routen:** `GET /api/analytics/company/{id}/anomalies/{anomaly_id}/context` (auch für die
+    Kennung eines Einzelmonats `…:einzelmonat`) und `GET /api/analytics/company/{id}/context?from=&to=`
+    mit `window_before`, `window_after`, `limit`, `offset`; Antwort mit Fenster, Belegen (neueste
+    zuerst, seitenweise), Anzahl je Typ, Stand und Fehlern je Quelle und `coverage`. Unbekannte
+    Veränderung 404; ohne Daten eine leere Liste mit Grund, kein 500.
+  - **Ansicht:** Abschnitt „Externe Belege im Ereignisfenster“ auf der Detailseite unter dem
+    Vergleich, mit festem Hinweis: „Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie
+    sind keine Aussage über Ursachen; interne Auslöser sind von außen nicht sichtbar.“ Keine
+    Rangfolge nach Erklärungskraft, keine thematische Zuordnung, keine Stimmung (Inkrement 5).
+  - **Vorabruf und Betrieb:** `backend/scripts/fetch_context.py` füllt den Speicher für alle
+    Markierungen der geeigneten Unternehmen (gedrosselt, fortsetzbar); `CONTEXT_LIVE_FETCH=0`
+    unterbindet jeden Abruf zur Laufzeit.
+- **Begründung:** Drei Monate vor dem Übergang decken die Reaktionszeit ab, die die Literatur
+  für Arbeitgeberbewertungen nennt (Reaktion innerhalb des Folgequartals, Green et al. 2019 in
+  `docs/referenzzeitraeume-literatur.md`), ein Monat danach fängt Meldungen ein, die auf die
+  Veränderung folgen; bei einer Lücke beginnt das Fenster vor der Lücke, weil der Übergang
+  irgendwo darin liegen kann. Der Speicher je Monat trennt Abruf und Erkennung und hält die
+  Zahl der Abrufe klein (eine Abfrage je Unternehmen, Quelle und Monat).
+- **Grenzen:** Die Fenstergrößen sind Setzungen des Autors ohne Kalibrierung. Google News
+  liefert höchstens rund 100 Einträge je Abfrage, für ältere Zeiträume und kleine Unternehmen
+  oft wenige oder keine; mehrdeutige Namen bringen fremde Treffer. Ein fehlender Beleg heißt
+  nicht, dass nichts geschehen ist.
+- **Status:** vorläufig (Fenstergrößen 3 und 1 Monat als Setzung; Suchbegriffe und UUIDs vom
+  Autor zu bestätigen).
+
+## E19 – Quellenarten und Verlässlichkeit der Belege
+
+- **Kontext:** Belege stammen aus Quellen unterschiedlicher Art; die Ansicht soll das sichtbar
+  machen, ohne Meldungen zu bewerten oder zu ordnen.
+- **Entscheidung (2026-10-08):** Jeder Beleg trägt `source_type` und eine Verlässlichkeitsstufe:
+  - `adhoc` (EQS News: Ad-hoc-, Stimmrechts-, Finanzberichts- und weitere Pflicht- oder
+    Unternehmensmitteilungen des Emittenten) → `hoch`; der Beleg nennt den Emittenten
+    (`issuer`), damit bei Konzernmutter (NTT DATA SE, kein EQS-Emittent) oder
+    Konzerngesellschaft (Carl Zeiss → Carl Zeiss Meditec AG) sichtbar bleibt, zu welcher
+    Gesellschaft er gehört;
+  - `news` (Google News RSS; GDELT hinter dem Schalter) → `mittel`;
+  - `global` (bestätigte allgemeine Ereignisse, E20) → `hypothese`;
+  - `market` ist reserviert und wird nicht erzeugt.
+  Die Sprache je Titel wird mit der Stoppwort-Heuristik aus dem Spike geschätzt
+  (`de`, `en` oder unbestimmt; EQS und GDELT melden die Sprache selbst); englische Meldungen
+  tragen in der Ansicht die Kennzeichnung „EN“. EQS liefert in der Listenroute die englische
+  Fassung einer Meldung; die deutsche Fassung existiert, ihr Abruf bräuchte eine Detailanfrage je
+  Meldung und unterbleibt. Innerhalb eines Fensters gibt es keine Rangfolge nach
+  Erklärungskraft, keine thematische Zuordnung und keine Stimmung der Meldungen; das folgt in
+  Inkrement 5.
+- **Begründung:** Pflichtmitteilungen sind datiert, vom Unternehmen selbst verantwortet und
+  präzise, Nachrichtenmeldungen sind breiter, aber mit Streutreffern; allgemeine Ereignisse
+  betreffen viele Unternehmen zugleich und sind nur eine Hypothese. Die Stufen beschreiben die
+  Art der Quelle, nicht den Wahrheitsgehalt einer Meldung.
+- **Status:** vorläufig (Stufen sind Setzungen des Autors).
+
+## E20 – Allgemeine Ereignisse
+
+- **Kontext:** Manche Zeiträume betreffen viele Unternehmen zugleich (Pandemie, Energiekrise);
+  sie sollen als Hypothese sichtbar sein, ohne als Ursache zu gelten.
+- **Entscheidung (2026-10-08):** `backend/data/global_events.json` führt allgemeine Ereignisse mit
+  `date_from`, `date_to`, `title`, `scope`, `note`, `url` und `confirmed`. Der Entwickler hat acht
+  Vorschläge mit belegender Adresse angelegt (Finanzkrise 2008/09, Atom-Moratorium 2011, zwei
+  Corona-Lockdowns, Homeoffice-Pflicht 2021, Überfall auf die Ukraine 2022, Energiepreiskrise und
+  Inflationshoch 2022/23, Rezession 2023/24), alle `confirmed: false`; nur vom Autor bestätigte
+  Ereignisse werden gezeigt. Bestätigte Ereignisse erscheinen als Belege vom Typ `global`
+  (Verlässlichkeit `hypothese`) und als einblendbares Overlay im Diagramm der Detailseite
+  (Kästchen „Allgemeine Ereignisse“, `?ereignisse=an`, Standard aus), beschriftet als
+  „Allgemeines Ereignis, Hypothese“. Route `GET /api/analytics/global-events`.
+- **Begründung:** Ein Overlay macht sichtbar, ob eine Markierung in einen allgemeinen Zeitraum
+  fällt, ohne die Ansicht ohne Zutun zu verändern; die Bestätigung durch den Autor hält die
+  Auswahl bei ihm.
+- **Grenzen:** Ein zeitliches Zusammentreffen ist keine Erklärung; lange Ereignisse (Rezession
+  2023/24) treffen viele Fenster. Die Liste ist eine Auswahl, keine Vollständigkeit.
+- **Status:** vorläufig; Vorschläge unbestätigt (Autor).

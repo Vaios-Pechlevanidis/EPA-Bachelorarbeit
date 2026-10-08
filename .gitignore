@@ -154,3 +154,6 @@ backend/data/market/
 docker-compose.yml
 # Annotationsbogen (E5, scripts/make_annotation_sheet.py): erzeugte Datei, nicht einchecken
 backend/data/annotationsbogen*.html
+
+# Belegspeicher der externen Belege (Inkrement 4, E18): nicht einchecken
+backend/data/context/

@@ -393,7 +393,7 @@ function isolatedDot(chartData, opacity = 1) {
    kein Zusammenhang mit den Bewertungen berechnet.
    showLegend=false blendet die Zeilen unter dem Diagramm aus (kleine Karte im
    Aktien-Dashboard; die vergrößerte Ansicht zeigt sie). */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null, showLegend = true, selection = null, onSelectPeriod = null }) {
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null, showLegend = true, selection = null, onSelectPeriod = null, events = null }) {
     // Freie Auswahl (E17): Ziehen mit gedrückter Maustaste, {start, end} als "YYYY-MM".
     const [drag, setDrag] = useState(null)
     const minReviews = data?.params?.min_reviews_per_month
@@ -503,6 +503,22 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
             ...clamp("sel-after", win.after.from, win.after.to, "var(--selection-fill, #f59e0b)", 0.14),
         ]
     }, [compact, chartData, drag, selection])
+    // Allgemeine Ereignisse (Inkrement 4, E20) als Flächen, auf den sichtbaren Ausschnitt begrenzt;
+    // nur bestätigte Ereignisse, Standard aus ("Hypothese", keine Aussage über Ursachen).
+    const eventAreas = useMemo(() => {
+        if (!events?.length || !chartData.length) return []
+        const first = periodIndex(chartData[0].period)
+        const last = periodIndex(chartData[chartData.length - 1].period)
+        const period = (i) => chartData.find((m) => periodIndex(m.period) === i)?.period
+        return events.flatMap((e) => {
+            const a = Math.max(periodIndex(e.date_from), first)
+            const b = Math.min(periodIndex(e.date_to), last)
+            if (a > b) return []
+            const x1 = period(a)
+            const x2 = period(b)
+            return x1 && x2 ? [{ key: `event-${e.id}`, x1, x2, title: e.title, from: e.date_from, to: e.date_to }] : []
+        })
+    }, [events, chartData])
     const periodAt = (state) => {
         const idx = Number(state?.activeTooltipIndex)
         return state?.activeLabel ?? (Number.isInteger(idx) ? chartData[idx]?.period : null)
@@ -568,6 +584,10 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                         ))}
                         {windowAreas.map((a) => (
                             <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill={a.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
+                        ))}
+                        {eventAreas.map((a) => (
+                            <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill="var(--event-fill, #d97706)" fillOpacity={0.1}
+                                stroke="var(--event-fill, #d97706)" strokeOpacity={0.5} strokeDasharray="3 3" ifOverflow="hidden" />
                         ))}
                         <XAxis
                             dataKey="period"
@@ -776,6 +796,17 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                         <span className="inline-block w-3 h-2.5 rounded-[2px] bg-slate-200 ml-1.5" /> Vergleichszeitraum davor
                     </span>
                 )}
+            </p>
+        )}
+        {showLegend && !error && eventAreas.length > 0 && (
+            <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-2.5 rounded-[2px] border border-dashed border-amber-600 bg-amber-100" />
+                    Allgemeines Ereignis, Hypothese:
+                </span>
+                {eventAreas.map((a) => (
+                    <span key={a.key}>{a.title} ({fmtPeriod(a.from)}{a.from !== a.to ? ` – ${fmtPeriod(a.to)}` : ""})</span>
+                ))}
             </p>
         )}
         {showLegend && !error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (

@@ -6,6 +6,7 @@ import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
+import { EventsToggle, EvidenceSection } from "@/components/dashboard/EvidenceSection"
 import { MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
@@ -16,6 +17,7 @@ import { groupLabel, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison, usePeriodComparison } from "@/hooks/useAnomalyComparison"
 import { useCompanyResource } from "@/hooks/useCompanyResource"
+import { useGlobalEvents } from "@/hooks/useEvidence"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
 import { SHOW_FINANCE_EXTRAS } from "@/config"
@@ -43,6 +45,13 @@ import { loadCompany, loadCompanyName } from "@/lib/companies"
    /market geladen; unter dem Diagramm stehen dann der feste Hinweis und bei
    der Konzernmutter der Vermerk. Der Link zum Aktien-Dashboard (/aktie, E16)
    bleibt in jedem Fall.
+   Externe Belege (Inkrement 4, E18): Unter dem Vergleich steht für die
+   ausgewählte Veränderung, den Einzelmonat oder die freie Auswahl der Abschnitt
+   "Externe Belege im Ereignisfenster" (EvidenceSection): zeitlich nahe
+   Meldungen aus externen Quellen, keine Aussage über Ursachen. Das Kästchen
+   "Allgemeine Ereignisse" (?ereignisse=an, Standard aus) blendet bestätigte
+   allgemeine Ereignisse als Flächen in den Monatsverlauf ein, beschriftet als
+   "Allgemeines Ereignis, Hypothese".
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -116,6 +125,9 @@ export default function AnomaliesPage() {
     const showPrice = hasTicker && searchParams.get(PRICE_PARAM) === PRICE_ON
     const market = useCompanyResource(showPrice ? companyId : null, "market")
     const marketData = market.data?.available ? market.data : null
+    // Allgemeine Ereignisse als Overlay (Inkrement 4, E20): Standard aus, Zustand in der URL.
+    const showEvents = searchParams.get("ereignisse") === "an"
+    const globalEvents = useGlobalEvents(showEvents)
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
     const selectedId = searchParams.get("anomaly")
@@ -281,6 +293,10 @@ export default function AnomaliesPage() {
                                 subtitle={chartSubtitle}
                                 actions={
                                     <>
+                                        <EventsToggle
+                                            checked={showEvents}
+                                            onChange={(on) => updateParams({ ereignisse: on ? "an" : null })}
+                                        />
                                         {hasTicker && (
                                             <PriceToggle
                                                 checked={showPrice}
@@ -310,8 +326,17 @@ export default function AnomaliesPage() {
                                     selection={selection}
                                     onSelectPeriod={selectPeriod}
                                     market={showPrice ? marketData : null}
+                                    events={showEvents ? globalEvents.events : null}
                                 />
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                                    {showEvents && !globalEvents.loading && !globalEvents.error && globalEvents.events.length === 0 && (
+                                        <p className="m-0 text-[11px] text-slate-500">
+                                            Keine bestätigten allgemeinen Ereignisse hinterlegt (backend/data/global_events.json).
+                                        </p>
+                                    )}
+                                    {showEvents && globalEvents.error && (
+                                        <p className="m-0 text-[11px] text-slate-500">Allgemeine Ereignisse konnten nicht geladen werden: {globalEvents.error}</p>
+                                    )}
                                     {/* Eingeblendeter Kurs: fester Hinweis, Wertpapier (Konzernmutter oder Konzerngesellschaft ausdrücklich), Quelle */}
                                     {showPrice && (market.loading ? (
                                         <p className="m-0 text-[11px] text-slate-500">Lade Aktienkurs…</p>
@@ -478,6 +503,16 @@ export default function AnomaliesPage() {
                             </div>
                         )}
 
+                        {/* Externe Belege im Ereignisfenster der ausgewählten Veränderung (Inkrement 4) */}
+                        {selectedAnomaly && (
+                            <EvidenceSection
+                                companyId={companyId}
+                                anomalyId={selectedAnomaly.id}
+                                group={{ source, dimension, status }}
+                                eyebrow={`EXTERNE BELEGE · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                            />
+                        )}
+
                         {/* Freie Auswahl (E17): Vergleich mit dem Zeitraum davor und Bewertungen */}
                         {selection && selectionWindows && (
                             <div className="grid gap-3 xl:grid-cols-5">
@@ -535,6 +570,17 @@ export default function AnomaliesPage() {
                                     </PageSection>
                                 )}
                             </div>
+                        )}
+
+                        {/* Externe Belege zur Auswahl bzw. zum ausgewählten Einzelmonat (Inkrement 4) */}
+                        {selection && (
+                            <EvidenceSection
+                                companyId={companyId}
+                                anomalyId={selectedOutlier?.id ?? null}
+                                selection={selectedOutlier ? null : selection}
+                                group={{ source, dimension, status }}
+                                eyebrow={`EXTERNE BELEGE · ${selectedOutlier ? "EINZELMONAT" : "AUSWAHL"} ${selectionLabel(selection).toUpperCase()}`}
+                            />
                         )}
                     </>
                 )}

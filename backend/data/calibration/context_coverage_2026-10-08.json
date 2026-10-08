@@ -1,0 +1,1130 @@
+{
+  "generated_at": "2026-10-08T13:44:30+00:00",
+  "n_markers": 28,
+  "companies": [
+    {
+      "company_id": 7,
+      "company": "E.ON",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 8,
+      "company": "RWE",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 19,
+      "company": "SAP SE",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 20,
+      "company": "NTT DATA SE",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 4,
+          "covered": 3,
+          "share": 0.75,
+          "news": {
+            "covered": 3,
+            "share": 0.75
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 0,
+          "share": 0.0,
+          "news": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 3,
+          "covered": 3,
+          "share": 1.0,
+          "news": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 4,
+        "covered": 3,
+        "share": 0.75,
+        "news": {
+          "covered": 3,
+          "share": 0.75
+        },
+        "adhoc": {
+          "covered": 0,
+          "share": 0.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 21,
+      "company": "1&1 AG",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 24,
+      "company": "Bechtle",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 25,
+      "company": "Cancom",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "einzelmonat": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 26,
+      "company": "Carl Zeiss",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "einzelmonat": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 0.5
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": 0.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 2,
+        "covered": 2,
+        "share": 1.0,
+        "news": {
+          "covered": 2,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 0.5
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 27,
+      "company": "Compugroup Medical Deutschland",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        },
+        "ab 2019": {
+          "n": 1,
+          "covered": 1,
+          "share": 1.0,
+          "news": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 1,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 1,
+        "covered": 1,
+        "share": 1.0,
+        "news": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 1,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 28,
+      "company": "Telekom",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 4,
+          "covered": 4,
+          "share": 1.0,
+          "news": {
+            "covered": 4,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 3,
+            "share": 0.75
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 3,
+          "covered": 3,
+          "share": 1.0,
+          "news": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 5,
+          "covered": 5,
+          "share": 1.0,
+          "news": {
+            "covered": 5,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 4,
+            "share": 0.8
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 7,
+        "covered": 7,
+        "share": 1.0,
+        "news": {
+          "covered": 7,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 6,
+          "share": 0.8571
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    {
+      "company_id": 33,
+      "company": "Freenet",
+      "kinds": {
+        "niveauwechsel": {
+          "n": 5,
+          "covered": 5,
+          "share": 1.0,
+          "news": {
+            "covered": 5,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 5,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "einzelmonat": {
+          "n": 0,
+          "covered": 0,
+          "share": null,
+          "news": {
+            "covered": 0,
+            "share": null
+          },
+          "adhoc": {
+            "covered": 0,
+            "share": null
+          },
+          "global": {
+            "covered": 0,
+            "share": null
+          }
+        }
+      },
+      "years": {
+        "bis 2018": {
+          "n": 2,
+          "covered": 2,
+          "share": 1.0,
+          "news": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 2,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        },
+        "ab 2019": {
+          "n": 3,
+          "covered": 3,
+          "share": 1.0,
+          "news": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "adhoc": {
+            "covered": 3,
+            "share": 1.0
+          },
+          "global": {
+            "covered": 0,
+            "share": 0.0
+          }
+        }
+      },
+      "all": {
+        "n": 5,
+        "covered": 5,
+        "share": 1.0,
+        "news": {
+          "covered": 5,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 5,
+          "share": 1.0
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    }
+  ],
+  "total": {
+    "kinds": {
+      "niveauwechsel": {
+        "n": 19,
+        "covered": 18,
+        "share": 0.9474,
+        "news": {
+          "covered": 18,
+          "share": 0.9474
+        },
+        "adhoc": {
+          "covered": 14,
+          "share": 0.7368
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      },
+      "einzelmonat": {
+        "n": 9,
+        "covered": 9,
+        "share": 1.0,
+        "news": {
+          "covered": 9,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 8,
+          "share": 0.8889
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "years": {
+      "bis 2018": {
+        "n": 13,
+        "covered": 12,
+        "share": 0.9231,
+        "news": {
+          "covered": 12,
+          "share": 0.9231
+        },
+        "adhoc": {
+          "covered": 10,
+          "share": 0.7692
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      },
+      "ab 2019": {
+        "n": 15,
+        "covered": 15,
+        "share": 1.0,
+        "news": {
+          "covered": 15,
+          "share": 1.0
+        },
+        "adhoc": {
+          "covered": 12,
+          "share": 0.8
+        },
+        "global": {
+          "covered": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "all": {
+      "n": 28,
+      "covered": 27,
+      "share": 0.9643,
+      "news": {
+        "covered": 27,
+        "share": 0.9643
+      },
+      "adhoc": {
+        "covered": 22,
+        "share": 0.7857
+      },
+      "global": {
+        "covered": 0,
+        "share": 0.0
+      }
+    }
+  },
+  "uncovered": [
+    {
+      "company": "NTT DATA SE",
+      "kind": "niveauwechsel",
+      "date": "2017-11",
+      "missing_months": 0
+    }
+  ],
+  "window_before": 3,
+  "window_after": 1
+}

@@ -1,0 +1,716 @@
+{
+  "generated_at": "2026-10-08T13:33:23+00:00",
+  "window_before": 3,
+  "window_after": 1,
+  "live": true,
+  "dry_run": false,
+  "live_fetch_env": true,
+  "companies": [
+    {
+      "company_id": 3,
+      "name": "Thyssenkrupp",
+      "eligible": true,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {
+        "gnews": {
+          "months": 0,
+          "from_store": 0,
+          "fetched_now": 0,
+          "missing": 0,
+          "errors": 0,
+          "items": 0
+        },
+        "eqs": {
+          "months": 0,
+          "from_store": 0,
+          "fetched_now": 0,
+          "missing": 0,
+          "errors": 0,
+          "items": 0
+        }
+      },
+      "windows": [],
+      "search_term": "Thyssenkrupp",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 4,
+      "name": "Open Grid Europe",
+      "eligible": true,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {
+        "gnews": {
+          "months": 0,
+          "from_store": 0,
+          "fetched_now": 0,
+          "missing": 0,
+          "errors": 0,
+          "items": 0
+        }
+      },
+      "windows": [],
+      "search_term": "\"Open Grid Europe\"",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 5,
+      "name": "PLEdoc GmbH",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 6,
+      "name": "E.ON Digital Technology",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 7,
+      "name": "E.ON",
+      "eligible": true,
+      "n_changes": 1,
+      "n_outliers": 0,
+      "months": 11,
+      "sources": {
+        "gnews": {
+          "months": 11,
+          "from_store": 0,
+          "fetched_now": 11,
+          "missing": 0,
+          "errors": 0,
+          "items": 374
+        },
+        "eqs": {
+          "months": 11,
+          "from_store": 0,
+          "fetched_now": 11,
+          "missing": 0,
+          "errors": 0,
+          "items": 12
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2023-11",
+          "kind": "niveauwechsel",
+          "from": "2023-02",
+          "to": "2023-12"
+        }
+      ],
+      "search_term": "E.ON",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 8,
+      "name": "RWE",
+      "eligible": true,
+      "n_changes": 1,
+      "n_outliers": 1,
+      "months": 12,
+      "sources": {
+        "gnews": {
+          "months": 12,
+          "from_store": 0,
+          "fetched_now": 12,
+          "missing": 0,
+          "errors": 0,
+          "items": 590
+        },
+        "eqs": {
+          "months": 12,
+          "from_store": 0,
+          "fetched_now": 12,
+          "missing": 0,
+          "errors": 0,
+          "items": 55
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2023-02",
+          "kind": "niveauwechsel",
+          "from": "2022-09",
+          "to": "2023-03"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2024-07:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2024-04",
+          "to": "2024-08"
+        }
+      ],
+      "search_term": "RWE",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 9,
+      "name": "Thyssengas GmbH",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 13,
+      "name": "Universität Duisburg-Essen",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 14,
+      "name": "Karlsruher Institut für Technologie",
+      "eligible": true,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {
+        "gnews": {
+          "months": 0,
+          "from_store": 0,
+          "fetched_now": 0,
+          "missing": 0,
+          "errors": 0,
+          "items": 0
+        }
+      },
+      "windows": [],
+      "search_term": "\"Karlsruher Institut für Technologie\" OR \"KIT Karlsruhe\"",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 15,
+      "name": "Technische Universität München",
+      "eligible": true,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {
+        "gnews": {
+          "months": 0,
+          "from_store": 0,
+          "fetched_now": 0,
+          "missing": 0,
+          "errors": 0,
+          "items": 0
+        }
+      },
+      "windows": [],
+      "search_term": "\"Technische Universität München\" OR \"TU München\"",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 16,
+      "name": "Universität zu Köln",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 19,
+      "name": "SAP SE",
+      "eligible": true,
+      "n_changes": 1,
+      "n_outliers": 1,
+      "months": 9,
+      "sources": {
+        "gnews": {
+          "months": 9,
+          "from_store": 5,
+          "fetched_now": 4,
+          "missing": 0,
+          "errors": 0,
+          "items": 603
+        },
+        "eqs": {
+          "months": 9,
+          "from_store": 1,
+          "fetched_now": 8,
+          "missing": 0,
+          "errors": 0,
+          "items": 41
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2024-07",
+          "kind": "niveauwechsel",
+          "from": "2024-04",
+          "to": "2024-08"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2024-03:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2023-12",
+          "to": "2024-04"
+        }
+      ],
+      "search_term": "SAP",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 20,
+      "name": "NTT DATA SE",
+      "eligible": true,
+      "n_changes": 4,
+      "n_outliers": 0,
+      "months": 27,
+      "sources": {
+        "gnews": {
+          "months": 27,
+          "from_store": 0,
+          "fetched_now": 27,
+          "missing": 0,
+          "errors": 0,
+          "items": 54
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2019-07",
+          "kind": "niveauwechsel",
+          "from": "2019-03",
+          "to": "2019-08"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2017-11",
+          "kind": "niveauwechsel",
+          "from": "2017-08",
+          "to": "2017-12"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2024-03",
+          "kind": "niveauwechsel",
+          "from": "2023-09",
+          "to": "2024-04"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2020-06",
+          "kind": "niveauwechsel",
+          "from": "2019-12",
+          "to": "2020-07"
+        }
+      ],
+      "search_term": "\"NTT DATA\"",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 21,
+      "name": "1&1 AG",
+      "eligible": true,
+      "n_changes": 1,
+      "n_outliers": 0,
+      "months": 5,
+      "sources": {
+        "gnews": {
+          "months": 5,
+          "from_store": 0,
+          "fetched_now": 5,
+          "missing": 0,
+          "errors": 0,
+          "items": 19
+        },
+        "eqs": {
+          "months": 5,
+          "from_store": 0,
+          "fetched_now": 5,
+          "missing": 0,
+          "errors": 0,
+          "items": 6
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2016-10",
+          "kind": "niveauwechsel",
+          "from": "2016-07",
+          "to": "2016-11"
+        }
+      ],
+      "search_term": "\"1&1\"",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 22,
+      "name": "Aixtron",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 23,
+      "name": "Atoss",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 24,
+      "name": "Bechtle",
+      "eligible": true,
+      "n_changes": 1,
+      "n_outliers": 0,
+      "months": 5,
+      "sources": {
+        "gnews": {
+          "months": 5,
+          "from_store": 0,
+          "fetched_now": 5,
+          "missing": 0,
+          "errors": 0,
+          "items": 6
+        },
+        "eqs": {
+          "months": 5,
+          "from_store": 0,
+          "fetched_now": 5,
+          "missing": 0,
+          "errors": 0,
+          "items": 1
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2016-02",
+          "kind": "niveauwechsel",
+          "from": "2015-11",
+          "to": "2016-03"
+        }
+      ],
+      "search_term": "Bechtle",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 25,
+      "name": "Cancom",
+      "eligible": true,
+      "n_changes": 0,
+      "n_outliers": 2,
+      "months": 10,
+      "sources": {
+        "gnews": {
+          "months": 10,
+          "from_store": 0,
+          "fetched_now": 10,
+          "missing": 0,
+          "errors": 0,
+          "items": 7
+        },
+        "eqs": {
+          "months": 10,
+          "from_store": 0,
+          "fetched_now": 10,
+          "missing": 0,
+          "errors": 0,
+          "items": 8
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2016-05:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2016-02",
+          "to": "2016-06"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2017-08:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2017-05",
+          "to": "2017-09"
+        }
+      ],
+      "search_term": "Cancom",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 26,
+      "name": "Carl Zeiss",
+      "eligible": true,
+      "n_changes": 0,
+      "n_outliers": 2,
+      "months": 10,
+      "sources": {
+        "gnews": {
+          "months": 10,
+          "from_store": 0,
+          "fetched_now": 10,
+          "missing": 0,
+          "errors": 0,
+          "items": 118
+        },
+        "eqs": {
+          "months": 10,
+          "from_store": 0,
+          "fetched_now": 10,
+          "missing": 0,
+          "errors": 0,
+          "items": 2
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2024-12:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2024-09",
+          "to": "2025-01"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2016-11:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2016-08",
+          "to": "2016-12"
+        }
+      ],
+      "search_term": "\"Carl Zeiss\" OR ZEISS",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 27,
+      "name": "Compugroup Medical Deutschland",
+      "eligible": true,
+      "n_changes": 1,
+      "n_outliers": 0,
+      "months": 5,
+      "sources": {
+        "gnews": {
+          "months": 5,
+          "from_store": 0,
+          "fetched_now": 5,
+          "missing": 0,
+          "errors": 0,
+          "items": 19
+        },
+        "eqs": {
+          "months": 5,
+          "from_store": 0,
+          "fetched_now": 5,
+          "missing": 0,
+          "errors": 0,
+          "items": 22
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2022-08",
+          "kind": "niveauwechsel",
+          "from": "2022-05",
+          "to": "2022-09"
+        }
+      ],
+      "search_term": "\"CompuGroup Medical\" OR CompuGroup",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 28,
+      "name": "Telekom",
+      "eligible": true,
+      "n_changes": 4,
+      "n_outliers": 3,
+      "months": 48,
+      "sources": {
+        "gnews": {
+          "months": 48,
+          "from_store": 5,
+          "fetched_now": 43,
+          "missing": 0,
+          "errors": 0,
+          "items": 443
+        },
+        "eqs": {
+          "months": 48,
+          "from_store": 5,
+          "fetched_now": 43,
+          "missing": 0,
+          "errors": 0,
+          "items": 68
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2010-07",
+          "kind": "niveauwechsel",
+          "from": "2010-02",
+          "to": "2010-08"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2018-11",
+          "kind": "niveauwechsel",
+          "from": "2018-08",
+          "to": "2018-12"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2019-02",
+          "kind": "niveauwechsel",
+          "from": "2018-11",
+          "to": "2019-03"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2009-12",
+          "kind": "niveauwechsel",
+          "from": "2008-08",
+          "to": "2010-01"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2022-12:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2022-09",
+          "to": "2023-01"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2015-05:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2015-02",
+          "to": "2015-06"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2017-05:einzelmonat",
+          "kind": "einzelmonat",
+          "from": "2017-02",
+          "to": "2017-06"
+        }
+      ],
+      "search_term": "\"Deutsche Telekom\"",
+      "term_confirmed": false
+    },
+    {
+      "company_id": 29,
+      "name": "Eckert Ziegler",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 30,
+      "name": "Elmos Semiconductor",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 31,
+      "name": "Evotec",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 32,
+      "name": "Formycon",
+      "eligible": false,
+      "n_changes": 0,
+      "n_outliers": 0,
+      "months": 0,
+      "sources": {}
+    },
+    {
+      "company_id": 33,
+      "name": "Freenet",
+      "eligible": true,
+      "n_changes": 5,
+      "n_outliers": 0,
+      "months": 28,
+      "sources": {
+        "gnews": {
+          "months": 28,
+          "from_store": 0,
+          "fetched_now": 28,
+          "missing": 0,
+          "errors": 0,
+          "items": 142
+        },
+        "eqs": {
+          "months": 28,
+          "from_store": 0,
+          "fetched_now": 28,
+          "missing": 0,
+          "errors": 0,
+          "items": 37
+        }
+      },
+      "windows": [
+        {
+          "id": "employee:durchschnittsbewertung:2021-09",
+          "kind": "niveauwechsel",
+          "from": "2021-05",
+          "to": "2021-10"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2015-10",
+          "kind": "niveauwechsel",
+          "from": "2015-05",
+          "to": "2015-11"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2016-04",
+          "kind": "niveauwechsel",
+          "from": "2016-01",
+          "to": "2016-05"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2022-02",
+          "kind": "niveauwechsel",
+          "from": "2021-11",
+          "to": "2022-03"
+        },
+        {
+          "id": "employee:durchschnittsbewertung:2019-10",
+          "kind": "niveauwechsel",
+          "from": "2019-07",
+          "to": "2019-11"
+        }
+      ],
+      "search_term": "Freenet",
+      "term_confirmed": false
+    }
+  ],
+  "sources": {
+    "gnews": {
+      "label": "Google News RSS",
+      "companies": 15,
+      "months": 170,
+      "from_store": 10,
+      "fetched_now": 160,
+      "missing": 0,
+      "errors": [],
+      "items": 2375
+    },
+    "eqs": {
+      "label": "EQS News",
+      "companies": 11,
+      "months": 143,
+      "from_store": 6,
+      "fetched_now": 137,
+      "missing": 0,
+      "errors": [],
+      "items": 252
+    }
+  },
+  "fetch_limit_reached": false,
+  "fetches": 297,
+  "duration_s": 586.0
+}

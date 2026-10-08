@@ -8,6 +8,17 @@
     "isin": null,
     "sector": "Stahl/Industrie",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b6db068-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "ThyssenKrupp AG",
+      "isin": "DE0007500001",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -26,6 +37,10 @@
     "isin": null,
     "sector": "Gasnetz",
     "peer_group": "Nicht börsennotiert",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -44,6 +59,10 @@
     "isin": null,
     "sector": "Gasnetz",
     "peer_group": "Nicht börsennotiert",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -62,6 +81,10 @@
     "isin": null,
     "sector": "IT-Dienstleistung",
     "peer_group": "Nicht börsennotiert",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -80,6 +103,17 @@
     "isin": null,
     "sector": "Energie",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b70cf04-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "E.ON SE",
+      "isin": "DE000ENAG999",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -98,6 +132,17 @@
     "isin": null,
     "sector": "Energie",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b70f704-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "RWE AG",
+      "isin": "DE0007037129",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -116,6 +161,10 @@
     "isin": null,
     "sector": "Gasnetz",
     "peer_group": "Nicht börsennotiert",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -134,6 +183,10 @@
     "isin": null,
     "sector": "Hochschule",
     "peer_group": "Nicht börsennotiert",
+    "news_term": "\"Universität Duisburg-Essen\" OR \"Uni Duisburg-Essen\"",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -152,6 +205,10 @@
     "isin": null,
     "sector": "Hochschule",
     "peer_group": "Nicht börsennotiert",
+    "news_term": "\"Karlsruher Institut für Technologie\" OR \"KIT Karlsruhe\"",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -170,6 +227,10 @@
     "isin": null,
     "sector": "Hochschule",
     "peer_group": "Nicht börsennotiert",
+    "news_term": "\"Technische Universität München\" OR \"TU München\"",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -188,6 +249,10 @@
     "isin": null,
     "sector": "Hochschule",
     "peer_group": "Nicht börsennotiert",
+    "news_term": "\"Universität zu Köln\" OR \"Uni Köln\"",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -206,6 +271,17 @@
     "isin": null,
     "sector": "Software",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b70fd47-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "SAP SE",
+      "isin": "DE0007164600",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -224,6 +300,10 @@
     "isin": null,
     "sector": "IT-Dienstleistung",
     "peer_group": "Börsennotiert Ausland",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": null,
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -242,6 +322,17 @@
     "isin": null,
     "sector": "Telekommunikation",
     "peer_group": "Börsennotiert DE",
+    "news_term": "\"1&1\"",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b779354-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "1&1 AG",
+      "isin": "DE0005545503",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -260,6 +351,17 @@
     "isin": null,
     "sector": "Halbleiter",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b711015-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "AIXTRON SE",
+      "isin": "DE000A0WMPJ6",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -278,6 +380,17 @@
     "isin": null,
     "sector": "Software",
     "peer_group": "Börsennotiert DE",
+    "news_term": "\"ATOSS Software\" OR Atoss",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b74b757-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "ATOSS Software SE",
+      "isin": "DE0005104400",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -296,6 +409,17 @@
     "isin": null,
     "sector": "IT-Dienstleistung",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b745f9b-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "Bechtle AG",
+      "isin": "DE0005158703",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -314,6 +438,17 @@
     "isin": null,
     "sector": "IT-Dienstleistung",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b744de8-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "CANCOM SE",
+      "isin": "DE0005419105",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -332,6 +467,21 @@
     "isin": null,
     "sector": "Optik/Medizintechnik",
     "peer_group": "Börsennotiert DE",
+    "news_term": "\"Carl Zeiss\" OR ZEISS",
+    "news_exclude": [
+      "FC Carl Zeiss",
+      "Fußball",
+      "Regionalliga"
+    ],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b76996b-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "Carl Zeiss Meditec AG",
+      "isin": "DE0005313704",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen (Konzerngesellschaft Carl Zeiss Meditec AG, nicht der Gesamtkonzern)"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -350,6 +500,17 @@
     "isin": null,
     "sector": "Software (Gesundheitswesen)",
     "peer_group": "Nicht börsennotiert",
+    "news_term": "\"CompuGroup Medical\" OR CompuGroup",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5bf86096-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "CompuGroup Medical SE & Co. KGaA",
+      "isin": "DE000A288904",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen (ehemals notiert, Mitteilungen bis zum Delisting 2025)"
+    },
     "listed": false,
     "verification": {
       "ticker_checked_with": null,
@@ -368,6 +529,20 @@
     "isin": null,
     "sector": "Telekommunikation",
     "peer_group": "Börsennotiert DE",
+    "news_term": "\"Deutsche Telekom\"",
+    "news_exclude": [
+      "Baskets",
+      "Basketball"
+    ],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b70cbe7-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "Deutsche Telekom AG",
+      "isin": "DE0005557508",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -386,6 +561,17 @@
     "isin": null,
     "sector": "Medizintechnik",
     "peer_group": "Börsennotiert DE",
+    "news_term": "\"Eckert & Ziegler\"",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b6e4698-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "Eckert & Ziegler SE",
+      "isin": "DE0005659700",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -404,6 +590,17 @@
     "isin": null,
     "sector": "Halbleiter",
     "peer_group": "Börsennotiert DE",
+    "news_term": "\"Elmos Semiconductor\" OR Elmos",
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b752601-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "Elmos Semiconductor SE",
+      "isin": "DE0005677108",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -422,6 +619,17 @@
     "isin": null,
     "sector": "Biotechnologie",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b6e3e62-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "Evotec SE",
+      "isin": "DE0005664809",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -440,6 +648,17 @@
     "isin": null,
     "sector": "Biotechnologie",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5bd4035a-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "Formycon AG",
+      "isin": "DE000A1EWVY8",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
@@ -458,6 +677,17 @@
     "isin": null,
     "sector": "Telekommunikation",
     "peer_group": "Börsennotiert DE",
+    "news_term": null,
+    "news_exclude": [],
+    "news_term_confirmed": false,
+    "eqs": {
+      "uuid": "5b752905-ea7c-11e8-902f-2c44fd856d8c",
+      "company_name": "freenet AG",
+      "isin": "DE000A0Z2ZZ5",
+      "found_at": "2026-10-08",
+      "confirmed": false,
+      "note": "Emittent bei EQS News; Suche companies?search= am 2026-10-08, erster Treffer; vom Autor zu bestätigen"
+    },
     "listed": true,
     "verification": {
       "ticker_checked_with": "yfinance history 2y",
