@@ -315,10 +315,11 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
                                 {" "}<span className="font-medium">Ereignisart</span> (aus Schlüsselwörtern im Titel; {num(rules.category_match_with_shift, 1)}, wenn sich ein
                                 zugeordnetes Thema im Vergleich um mindestens {num(rules.topic_shift_min_pp, 0)} Prozentpunkte verschoben hat, sonst
                                 {" "}{num(rules.category_match_only, 1)}) und <span className="font-medium">zeitliche Nähe</span> (1 im Monat vor dem Übergang und im Übergang,
-                                abnehmend zum Rand des Fensters, danach {num(rules.time_after_factor, 1)}). Thema = Maximum aus Begriff und Ereignisart.
+                                abnehmend zum Rand des Fensters, danach {num(rules.time_after_factor, 1)}). Thema = Maximum aus Begriff und Ereignisart
+                                (ordnet nur innerhalb einer Stufe).
                             </p>
                             <p className="m-0">
-                                Stufen nach festen Regeln: <span className="font-medium">{stageLabel("hoch", rules)}</span> (Schlüssel hoch) = {rules.stages?.hoch};
+                                Stufen nach festen Regeln{rules.version ? ` (Fassung ${rules.version}${rules.version_date ? `, ${rules.version_date}` : ""})` : ""}: <span className="font-medium">{stageLabel("hoch", rules)}</span> (Schlüssel hoch) = {rules.stages?.hoch};
                                 {" "}<span className="font-medium">{stageLabel("mittel", rules)}</span> (Schlüssel mittel) = {rules.stages?.mittel};
                                 {" "}<span className="font-medium">{stageLabel("niedrig", rules)}</span> (Schlüssel niedrig) = {rules.stages?.niedrig};
                                 sonst kein Bezug. Meldungen ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt) eine Stufe tiefer. Die Quellenart ordnet

@@ -117,28 +117,37 @@ class TestCategoryMatch:
 
 class TestStages:
 
-    @pytest.mark.parametrize("topic, time, expected", [
-        (1.0, 1.0, "hoch"),
-        (1.0, 0.67, "mittel"),
-        (1.0, 0.5, "mittel"),
-        (0.5, 1.0, "mittel"),
-        (1.0, 0.33, "niedrig"),
-        (0.5, 0.67, "niedrig"),
-        (0.5, 0.5, "niedrig"),
-        (0.5, 0.33, "niedrig"),
-        (0.5, 0.17, "keine"),    # Rand eines Fensters von 6 Monaten
-        (0.0, 1.0, "keine"),     # zeitliche Nähe allein genügt nie
-        (0.0, 0.0, "keine"),
+    @pytest.mark.parametrize("term, category, time, expected", [
+        # zweite Fassung (RULES_VERSION 2, 2026-10-08): hoch nur mit Wortbezug und Ereignisart
+        (0.5, 0.5, 1.0, "hoch"),
+        (1.0, 1.0, 1.0, "hoch"),
+        (0.0, 1.0, 1.0, "mittel"),    # Ereignisart mit Themenverschiebung, ohne Wortbezug (erste Fassung: hoch)
+        (1.0, 0.0, 1.0, "mittel"),    # Wortbezug ohne Ereignisart
+        (0.5, 0.5, 0.67, "mittel"),   # Wortbezug und Ereignisart, aber Zeit unter 1
+        (0.5, 0.0, 0.5, "mittel"),
+        (0.0, 1.0, 0.5, "mittel"),
+        (0.0, 0.5, 1.0, "niedrig"),   # nur Ereignisart erkannt
+        (0.0, 0.5, 0.33, "niedrig"),
+        (0.5, 0.0, 0.33, "niedrig"),  # Wortbezug am Rand des Fensters
+        (0.0, 0.5, 0.17, "keine"),    # Rand eines Fensters von 6 Monaten
+        (0.0, 0.0, 1.0, "keine"),     # zeitliche Nähe allein genügt nie
+        (0.0, 0.0, 0.0, "keine"),
     ])
-    def test_rules(self, topic, time, expected):
-        assert er.stage_for(topic, time) == expected
+    def test_rules(self, term, category, time, expected):
+        assert er.stage_for(term, category, time) == expected
 
     def test_group_without_employer_relation_one_stage_lower(self):
-        assert er.stage_for(1.0, 1.0, employer_related=False) == "mittel"
-        assert er.stage_for(1.0, 0.5, employer_related=False) == "niedrig"
-        assert er.stage_for(0.5, 0.5, employer_related=False) == "keine"
-        assert er.stage_for(0.0, 1.0, employer_related=False) == "keine"
-        assert er.stage_for(1.0, 1.0, employer_related=True) == "hoch" and er.stage_for(1.0, 1.0, None) == "hoch"
+        # Gruppe ohne Arbeitgeberbezug: category_match ist 0, nur der Wortbezug zählt, dann eine Stufe tiefer
+        assert er.stage_for(1.0, 0.0, 1.0, employer_related=False) == "niedrig"
+        assert er.stage_for(0.5, 0.0, 0.5, employer_related=False) == "niedrig"
+        assert er.stage_for(0.5, 0.0, 0.33, employer_related=False) == "keine"
+        assert er.stage_for(0.0, 0.0, 1.0, employer_related=False) == "keine"
+        assert er.stage_for(0.5, 0.5, 1.0, employer_related=True) == "hoch" and er.stage_for(0.5, 0.5, 1.0, None) == "hoch"
+
+    def test_rules_version(self):
+        r = er.rules()
+        assert r["version"] == er.RULES_VERSION == 2 and r["version_date"] == "2026-10-08"
+        assert r["stages"]["hoch"].startswith("term_match") and "Ereignisart erkannt" in r["stages"]["hoch"]
 
     def test_stage_labels_describe_not_judge(self):
         """Iteration 2 (Befund 1): Je Stufe eine Bezeichnung, die nennt, was gefunden wurde; die Schlüssel
@@ -169,12 +178,13 @@ class TestStages:
         assert with_term["category"]["id"] == "personalabbau" and with_term["stage"] == "hoch", "Arbeitgeberbezug hat Vorrang"
         stock_with_term = er.score_item(item("Aktie unter Druck, Analysten senken Kursziel nach Entlassungswelle im Vertrieb", "2023-02-10"),
                                         WINDOW, [{**TERM_STRONG, "term": "vertrieb"}], {}, CATS)
-        assert stock_with_term["stage"] in ("hoch", "mittel")
+        assert stock_with_term["category"]["id"] == "ohne_arbeitgeberbezug"
+        assert stock_with_term["stage"] == "niedrig", "Wortbezug ohne Arbeitgeberbezug: mittel, eine Stufe tiefer (Fassung 2)"
 
     def test_score_item_only_stock_terms_downgrade(self):
         """Test: Börsenbericht mit Wortbezug, aber ohne Ereignisart mit Arbeitgeberbezug: eine Stufe tiefer."""
         scored = er.score_item(item("Aktie steigt dank Dividende", "2023-02-10"), WINDOW, [{**TERM_STRONG, "term": "dividende"}], {}, CATS)
-        assert scored["category"]["id"] == "ohne_arbeitgeberbezug" and scored["topic_match"] == 1.0 and scored["stage"] == "mittel"
+        assert scored["category"]["id"] == "ohne_arbeitgeberbezug" and scored["topic_match"] == 1.0 and scored["stage"] == "niedrig"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -207,7 +217,7 @@ class TestBundling:
         scored = self._scored(items, [TERM_WEAK])
         assert [s["time_match"] for s in scored] == [0.33, 0.67]
         bundle = er.bundle_items(scored)
-        assert len(bundle) == 1 and bundle[0]["time_match"] == 0.67 and bundle[0]["stage"] == "niedrig"
+        assert len(bundle) == 1 and bundle[0]["time_match"] == 0.67 and bundle[0]["stage"] == "mittel"
 
     def test_company_name_does_not_make_titles_similar(self):
         items = [item("Beispielwerk AG eröffnet Standort", "2023-02-10"), item("Beispielwerk AG schließt Standort", "2023-02-10")]
@@ -335,7 +345,7 @@ class TestCompanyInTitle:
         with_name = er.score_item(item("Beispielwerk streicht 500 Stellen", "2023-02-10"), WINDOW, [], {}, CATS, {"beispielwerk"})
         without = er.score_item(item("Konzern streicht 500 Stellen", "2023-02-10"), WINDOW, [], {}, CATS, {"beispielwerk"})
         assert with_name["company_in_title"] is True and without["company_in_title"] is False
-        assert with_name["stage"] == without["stage"] == "mittel"
+        assert with_name["stage"] == without["stage"] == "niedrig", "nur Ereignisart erkannt"
 
 
 class TestSentiment:

@@ -27,17 +27,31 @@ Signale je Beleg (0 bis 1, aus Titel und Bewertungen):
   (``1 − Abstand / window_before``), nach dem markierten Monat
   ``TIME_AFTER_FACTOR`` (0,5) und weiter abnehmend.
 
-``topic_match`` ist das Maximum aus ``term_match`` und ``category_match``.
+``topic_match`` ist das Maximum aus ``term_match`` und ``category_match``
+(ordnet innerhalb einer Stufe).
 
-Stufen (feste Regeln, keine gewichtete Summe):
+Stufen (feste Regeln, keine gewichtete Summe), **zweite Fassung**
+(``RULES_VERSION`` 2, vom Autor am 2026-10-08 festgelegt, Iteration 2,
+Befunde 1 und 2 der Bewertung: ``hoch`` war ohne Wortbezug erreichbar):
 
-- **hoch**: ``topic_match ≥ TOPIC_STRONG`` und ``time_match ≥ TIME_NEAR``
-- **mittel**: ``topic_match ≥ TOPIC_STRONG`` und ``time_match ≥ TIME_MID``,
-  oder ``topic_match ≥ TOPIC_WEAK`` und ``time_match ≥ TIME_NEAR``
-- **niedrig**: ``topic_match ≥ TOPIC_WEAK`` und ``time_match ≥ TIME_MIN``
+- **hoch**: ``term_match ≥ TOPIC_WEAK`` und Ereignisart erkannt
+  (``category_match ≥ CATEGORY_MATCH_ONLY``) und ``time_match ≥ TIME_NEAR``
+- **mittel**: (``term_match ≥ TOPIC_WEAK`` oder ``category_match ≥ TOPIC_STRONG``)
+  und ``time_match ≥ TIME_MID``
+- **niedrig**: (Ereignisart erkannt oder ``term_match ≥ TOPIC_WEAK``) und
+  ``time_match ≥ TIME_MIN``
 - **keine**: sonst (insbesondere ohne thematische Korrespondenz)
 - Gruppe ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt):
   eine Stufe tiefer.
+
+Erste Fassung (``RULES_VERSION`` 1, D2, Lauf in
+``data/calibration/explanation_validity_2026-10-08.json``, reproduzierbar mit
+Commit 59f5d82): hoch bei ``topic_match ≥ 1`` und ``time_match ≥ 1``; mittel
+bei ``topic_match ≥ 1`` und ``time_match ≥ 0,5`` oder ``topic_match ≥ 0,5``
+und ``time_match ≥ 1``; niedrig bei ``topic_match ≥ 0,5`` und
+``time_match ≥ 0,3``. Die Signale, ihre Schwellen, die Ereignisarten und die
+Zuordnungen sind in beiden Fassungen gleich; es ändert sich nur die Zuordnung
+zu den Stufen.
 
 Bündelung: Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens
 ``BUNDLE_MAX_DAYS`` Tage Abstand, Titelähnlichkeit mindestens
@@ -63,7 +77,8 @@ Stufe je Fenster (oberster Eintrag), ``n_by_stage``, ``n_bundles`` und
 die ungruppierte Liste, Test in ``tests/explanations``).
 
 Alle Schwellen sind Setzungen, vom Autor am 2026-10-08 bestätigt (D2) und für
-die Auswertung festgeschrieben. Alle Funktionen sind rein; nur
+die Auswertung festgeschrieben; die Stufenregeln in der zweiten Fassung
+(``tests/explanations/test_frozen_rules.py``). Alle Funktionen sind rein; nur
 ``title_sentiment`` ruft den übergebenen Analyzer.
 """
 
@@ -100,10 +115,15 @@ CATEGORY_MATCH_ONLY = 0.5        # nur Ereignisart erkannt
 TIME_NEAR = 1.0                  # Monat vor dem Übergang und Übergang bis zum markierten Monat
 TIME_AFTER_FACTOR = 0.5          # erster Monat nach dem markierten Monat
 
-TOPIC_STRONG = 1.0               # Stufenregeln: thematische Korrespondenz stark
-TOPIC_WEAK = 0.5                 # thematische Korrespondenz vorhanden
+TOPIC_STRONG = 1.0               # Stufenregeln: thematische Korrespondenz stark (category_match mit Themenverschiebung)
+TOPIC_WEAK = 0.5                 # thematische Korrespondenz vorhanden (term_match mindestens ein Begriff)
 TIME_MID = 0.5                   # zeitliche Nähe mittel
 TIME_MIN = 0.3                   # zeitliche Nähe mindestens (Rand eines Fensters von 3 Monaten: 0,33)
+
+# Fassung der Stufenregeln (Iteration 2). 1 = D2 (Auswertung 2026-10-08, Commit 59f5d82);
+# 2 = vom Autor am 2026-10-08 festgelegt: hoch nur mit Wortbezug und Ereignisart.
+RULES_VERSION = 2
+RULES_VERSION_DATE = "2026-10-08"
 
 STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE = "hoch", "mittel", "niedrig", "keine"
 STAGES = (STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE)
@@ -148,12 +168,13 @@ def rules() -> Dict[str, Any]:
         "topic_strong": TOPIC_STRONG, "topic_weak": TOPIC_WEAK, "time_mid": TIME_MID, "time_min": TIME_MIN,
         "bundle_max_days": BUNDLE_MAX_DAYS, "bundle_title_similarity": BUNDLE_TITLE_SIMILARITY,
         "max_explanations": MAX_EXPLANATIONS,
+        "version": RULES_VERSION, "version_date": RULES_VERSION_DATE,
         "stage_labels": dict(STAGE_LABELS),
         "finding_note": STAGE_FINDING_NOTE,
         "stages": {
-            STAGE_HIGH: f"topic_match >= {TOPIC_STRONG} und time_match >= {TIME_NEAR}",
-            STAGE_MEDIUM: f"topic_match >= {TOPIC_STRONG} und time_match >= {TIME_MID}, oder topic_match >= {TOPIC_WEAK} und time_match >= {TIME_NEAR}",
-            STAGE_LOW: f"topic_match >= {TOPIC_WEAK} und time_match >= {TIME_MIN}",
+            STAGE_HIGH: f"term_match >= {TOPIC_WEAK} und Ereignisart erkannt (category_match >= {CATEGORY_MATCH_ONLY}) und time_match >= {TIME_NEAR}",
+            STAGE_MEDIUM: f"term_match >= {TOPIC_WEAK} oder category_match >= {TOPIC_STRONG}, und time_match >= {TIME_MID}",
+            STAGE_LOW: f"Ereignisart erkannt (category_match >= {CATEGORY_MATCH_ONLY}) oder term_match >= {TOPIC_WEAK}, und time_match >= {TIME_MIN}",
             STAGE_NONE: "sonst; Gruppe ohne Arbeitgeberbezug eine Stufe tiefer",
         },
     }
@@ -228,14 +249,19 @@ def category_match(primary: Optional[Dict[str, Any]], shifts: Dict[str, Dict[str
     return (CATEGORY_MATCH_WITH_SHIFT, shifted) if shifted else (CATEGORY_MATCH_ONLY, [])
 
 
-def stage_for(topic: float, time: float, employer_related: Optional[bool] = None) -> str:
-    """Stufe aus ``topic_match`` und ``time_match`` nach festen Regeln; ``employer_related``
-    False (Gruppe ohne Arbeitgeberbezug) eine Stufe tiefer."""
-    if topic >= TOPIC_STRONG and time >= TIME_NEAR:
+def stage_for(term: float, category: float, time: float, employer_related: Optional[bool] = None) -> str:
+    """Stufe aus ``term_match``, ``category_match`` und ``time_match`` nach den festen Regeln
+    der zweiten Fassung (``RULES_VERSION`` 2): hoch nur mit Wortbezug, erkannter Ereignisart
+    und zeitlicher Nähe 1; ``employer_related`` False (Gruppe ohne Arbeitgeberbezug) eine
+    Stufe tiefer. Reine Funktion."""
+    has_term = term >= TOPIC_WEAK
+    has_category = category >= CATEGORY_MATCH_ONLY
+    has_shift = category >= TOPIC_STRONG
+    if has_term and has_category and time >= TIME_NEAR:
         stage = STAGE_HIGH
-    elif (topic >= TOPIC_STRONG and time >= TIME_MID) or (topic >= TOPIC_WEAK and time >= TIME_NEAR):
+    elif (has_term or has_shift) and time >= TIME_MID:
         stage = STAGE_MEDIUM
-    elif topic >= TOPIC_WEAK and time >= TIME_MIN:
+    elif (has_category or has_term) and time >= TIME_MIN:
         stage = STAGE_LOW
     else:
         stage = STAGE_NONE
@@ -269,7 +295,7 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
     t_match, tm = term_match(matched), time_match(item.get("date"), window)
     topic = max(t_match, cat_match)
     employer = primary["employer_related"] if primary else None
-    stage = stage_for(topic, tm, employer)
+    stage = stage_for(t_match, cat_match, tm, employer)
     category = None
     if primary:
         category = {"id": primary["id"], "label": primary["label"], "employer_related": primary["employer_related"],
@@ -363,7 +389,7 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
     if category:
         category = {**category, "match": cat_match}
     publishers = list(dict.fromkeys(i.get("publisher") for i in items if i.get("publisher")))
-    stage = stage_for(topic, tm, employer)
+    stage = stage_for(t_match, cat_match, tm, employer)
     return {
         "representative": representative,
         "items": items,
@@ -705,7 +731,7 @@ __all__ = [
     "TERM_MATCH_PER_TERM", "TERM_MATCH_STRONG", "TERM_STRONG_MIN_AFTER", "TERM_STRONG_MIN_RATIO", "TERM_STRONG_MIN_SHIFT",
     "TOPIC_SHIFT_MIN_PP",
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
-    "TIME_MID", "TIME_MIN", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
+    "TIME_MID", "TIME_MIN", "RULES_VERSION", "RULES_VERSION_DATE", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
     "OPEN_NOTE", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
     "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "group_key", "group_bundles", "fmt_month", "time_phrase", "explanation_text",

@@ -83,7 +83,7 @@ class TestAnomalyExplanations:
         assert SUMMARY_FIELDS <= set(s) and s["kind"] == "niveauwechsel"
         assert s["coverage"] is False and "Live-Abruf" in (s["reason"] or "") and s["open_note"]
         assert s["window"]["from"] == ev.shift_month(s["window"]["transition_from"], -3)
-        assert s["rules"]["stages"]["hoch"].startswith("topic_match")
+        assert s["rules"]["stages"]["hoch"].startswith("term_match") and s["rules"]["version"] == 2
 
     def test_entries_from_store(self, client, store):
         anomaly = _fall(client)
