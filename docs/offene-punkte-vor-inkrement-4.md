@@ -225,3 +225,15 @@ gar kein Wertpapier, dafür der Hinweis „nicht börsennotiert“).
 > Varianten, Folgen, Einstellungen und Prüfliste stehen in `docs/evaluationsinstanz.md`;
 > umgesetzt in Phase B (B3): E16, Evaluationsdokument, Feature-Doku 05 und der Tooltip „Aktie“
 > in der Seitenleiste.
+
+## Stand nach Phase B (2026-10-08)
+
+| Schritt | Commit | Inhalt |
+|---|---|---|
+| B1 | 1f9578b | Statuszuordnung bestätigt (D1): Bezeichnung „Zurückgestellt oder Absage“, Herkunft in Kommentaren, Vertragstests, E13, Feature-Doku 02 |
+| B2 | ba2f804 | Carl Zeiss (D2, Option A): `ticker_scope` „Konzerngesellschaft“, ausdrücklicher Vermerk in der Ansicht, Tests, E15, Feature-Doku 04, README |
+| B3 | f83aedc | Evaluationsinstanz (D3, Variante B): Tooltip „Aktie“ nach Schalter, E16, Evaluationsdokument, Feature-Doku 05, README |
+| B4 | dieser Commit | E5: Umfang, Werkzeuge und Ablauf der Annotation; README-Tabelle |
+
+Offen bleiben die Nutzungsbedingungen (`docs/nutzungsbedingungen.md`, Fragen an den Betreuer)
+und das Eintragen der Referenzzeiträume durch den Autor.

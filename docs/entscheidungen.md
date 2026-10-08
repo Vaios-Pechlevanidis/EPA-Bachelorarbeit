@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-08 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -104,6 +104,45 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Git-Historie belegen, sondern nur über die Selbstverpflichtung des Autors. Zudem kennt der
   Autor die Ergebnisse für Demo 3 und die Größenordnung der Treffer aus der Parameterübersicht
   (E9). Beides ist in der Evaluation als Grenze der Validität zu nennen.
+- **Aktualisierung 2026-10-08 – Umfang, Werkzeuge und Ablauf (Vorbereitung vor Inkrement 4):**
+  - **Umfang der Annotation:** Quelle Mitarbeitende, Dimension Gesamtbewertung, alle nach E4
+    geeigneten Unternehmen; Stand 2026-10-08 sind das 15 Reihen (Thyssenkrupp, Open Grid
+    Europe, E.ON, RWE, KIT, TU München, SAP SE, NTT DATA SE, 1&1 AG, Bechtle, Cancom, Carl
+    Zeiss, Compugroup Medical Deutschland, Telekom, Freenet). Unternehmen unter der
+    Mindestdichte erhalten keine Einträge (Protokoll-Regel 9). Die Bewerberquelle (5 geeignete
+    Reihen) und Einzeldimensionen gehören nicht zum Umfang; der Bogen lässt sich mit
+    `--source candidates` erzeugen, falls der Autor sie später aufnimmt.
+  - **Serien-CSVs:** am 2026-10-08 neu erzeugt und mit dem eingecheckten Stand verglichen,
+    identisch; sie entsprechen damit der Datenbank.
+  - **Annotationsbogen:** `backend/scripts/make_annotation_sheet.py` schreibt eine
+    eigenständige HTML-Datei (`backend/data/annotationsbogen.html`, nicht eingecheckt) mit
+    einem Diagramm je Reihe (Monatsmittel, Anzahl je Monat, Monate unter der Mindestdichte in
+    Grau, Linie der Mindestdichte), einer aufklappbaren Monatstabelle für die Angaben der
+    `note` sowie der Kurzfassung des Protokolls und den Regeln aus `annotations.json`. Das
+    Skript importiert weder `anomaly_service` noch `changepoint_detector` und zeichnet keine
+    Markierung, keine Niveaulinie und keinen Einzelmonat (Test
+    `backend/tests/test_make_annotation_sheet.py`).
+  - **Abgleich:** `backend/scripts/evaluate_detection.py` berechnet die Erkennung mit den
+    Standardparametern (E9, E14) für jede annotierte Reihe und gleicht nach Regel 6 ab, fest im
+    Skript: Toleranz ±1 Monat, bei nicht bewertetem Nachbarmonat bis zu 3 Kalendermonate,
+    gleiche Richtung, Eins-zu-eins-Zuordnung (Annotationen in zeitlicher Reihenfolge, früheste
+    passende Erkennung). Ausgabe je Reihe, je Quelle und gesamt: Precision, Recall und F1,
+    getrennt für Niveauwechsel allein und für Niveauwechsel mit Einzelmonaten, dazu Treffer,
+    verfehlte Zeiträume und zusätzliche Markierungen; `--json` schreibt das Ergebnis als Datei.
+    Reihen unter der Mindestdichte werden übersprungen (Regel 9); bei leerer Annotationsliste
+    bricht das Skript mit einem Hinweis ab. Tests mit konstruierten Reihen und Annotationen in
+    `backend/tests/test_evaluate_detection.py`.
+  - **Ablauf (verbindlich):** (1) `uv run python scripts/make_annotation_sheet.py`;
+    (2) annotieren in `backend/data/annotations.json` allein aus dem Bogen, ohne Karte,
+    Detailseite, API-Antwort oder Parameterübersicht zu öffnen, Ereignisanker erst danach
+    (Regel 7); (3) `uv run python scripts/validate_annotations.py`; (4) die Annotationsdatei in
+    einem eigenen Commit versionieren, der sonst nichts ändert; (5) erst dann
+    `uv run python scripts/evaluate_detection.py --json data/calibration/dz1_ergebnis.json` und
+    das Ergebnis in einem weiteren Commit ablegen; (6) E9 und E14 mit dem Beleg aktualisieren.
+    Die Auswertung darf vor Schritt 4 nicht auf echten Reihen laufen, weil ihre Ausgabe alle
+    erkannten Veränderungen der Reihe nennt.
+- **Status (2026-10-08):** Protokoll, Validierung, Bogen und Abgleich vorhanden; Einträge offen
+  (Handarbeit des Autors). Die Referenzzeiträume bleiben außerhalb des Dashboards.
 
 ## E6 – Unternehmens-Metadaten
 
