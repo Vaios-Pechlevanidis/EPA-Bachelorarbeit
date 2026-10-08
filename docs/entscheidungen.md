@@ -734,12 +734,48 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Veränderung folgen; bei einer Lücke beginnt das Fenster vor der Lücke, weil der Übergang
   irgendwo darin liegen kann. Der Speicher je Monat trennt Abruf und Erkennung und hält die
   Zahl der Abrufe klein (eine Abfrage je Unternehmen, Quelle und Monat).
-- **Grenzen:** Die Fenstergrößen sind Setzungen des Autors ohne Kalibrierung. Google News
-  liefert höchstens rund 100 Einträge je Abfrage, für ältere Zeiträume und kleine Unternehmen
-  oft wenige oder keine; mehrdeutige Namen bringen fremde Treffer. Ein fehlender Beleg heißt
-  nicht, dass nichts geschehen ist.
-- **Status:** vorläufig (Fenstergrößen 3 und 1 Monat als Setzung; Suchbegriffe und UUIDs vom
-  Autor zu bestätigen).
+- **Vergleichsfenster (2026-10-08, Nachschärfung A1, vorläufig):** Die Prüfung vom 2026-10-08
+  ergab rund 14 Meldungen je Unternehmensmonat; große Unternehmen haben in fast jedem Fenster
+  eine Meldung, die Abdeckung allein unterscheidet kaum. Deshalb gehören zu jeder Markierung mit
+  Ankermonat m bis zu drei Vergleichsfenster desselben Unternehmens: das Fenster der Markierung
+  um −12, +12, −24, +24 Monate verschoben, in dieser Reihenfolge geprüft, gleiche Länge und Lage
+  zum Anker. Ein Vergleichsfenster entfällt, wenn es ein Fenster einer Markierung dieses
+  Unternehmens überschneidet (auch das eigene) oder nicht vollständig in der bewerteten Reihe
+  liegt (`comparison_windows` in `backend/services/evidence_service.py`;
+  `scripts/report_context_coverage.py --comparison`; Vorabruf `scripts/fetch_context.py
+  --comparison`). ±12 und ±24 Monate halten Jahreszeit und Berichtskalender gleich. Fenster mit
+  fehlenden Monaten im Speicher werden ausgewiesen und nicht als „kein Beleg“ gezählt.
+- **Befund (2026-10-08, `backend/data/calibration/context_coverage_vergleich_2026-10-08.json`):**
+  28 von 28 Markierungsfenstern und 76 von 76 Vergleichsfenstern haben mindestens einen Beleg
+  (Meldung oder Ad-hoc-Mitteilung; allgemeine Ereignisse zählen nicht); die Mediane der Belege je
+  Fenster liegen in derselben Größenordnung (Markierung 45, Vergleich 47,5), je Unternehmen mal
+  über, mal unter dem Vergleich. Die Abdeckung allein ist deshalb kein Gütemaß für die Belege: In
+  der Zahl der Meldungen unterscheidet sich ein Markierungsfenster nicht erkennbar von einem um
+  ein oder zwei Jahre verschobenen Fenster desselben Unternehmens. Die Unterscheidung liefert
+  erst die thematische Korrespondenz in Inkrement 5. Die Zahlen sind beschreibend, ohne
+  Signifikanzaussage; ein Unterschied sagt nichts über Ursachen und nichts darüber, ob
+  Markierungen Meldungen „auslösen“.
+- **Abruf (2026-10-08, Nachschärfung A2):** Die Quellen werden nebeneinander abgerufen, je
+  Quelle ein Strang; der Mindestabstand von 2 Sekunden gilt je Quelle (Sperre je Quelle). Erster
+  Abruf eines Fensters von fünf Monaten mit zwei Quellen: 16,6 s vorher, 9,8 s nachher. Während
+  eines ersten Abrufs nennt der Abschnitt nach zwei Sekunden den Grund der Wartezeit.
+  `fetch_context.py --from-month` lädt alle Monate eines Unternehmens ab einem Startmonat; nach
+  drei Fehlern in Folge einer Quelle (etwa Status 429 oder 503) bricht der Lauf für diese Quelle
+  ab und nennt die Stelle zum Fortsetzen. Vorabruf vom 2026-10-08
+  (`context_prefetch_nachschaerfung_2026-10-08.json`): Vergleichsfenster aller elf Unternehmen mit
+  Markierungen und alle Monate ab 2019-01 für die acht Unternehmen mit Markierungen ab 2019
+  (Autor, D4); 1463 Abrufe in 27 Minuten, ein Zeitüberschreitungsfehler, nachgeholt.
+- **Bestätigung (Autor, 2026-10-08, D1 und D2):** Suchbegriffe der elf Unternehmen mit
+  Markierungen bestätigt, NTT DATA SE erweitert auf `"NTT DATA" OR "NTT Data Deutschland" OR
+  itelligence` (der Niveauwechsel 2017-11 hat damit einen Beleg; die 27 Markierungsmonate liefern
+  mit dem neuen Begriff 26 statt 54 Meldungen); EQS-companyUUIDs der elf Emittenten bestätigt.
+- **Grenzen:** Die Fenstergrößen und die Versätze der Vergleichsfenster sind Setzungen des Autors
+  ohne Kalibrierung. Google News liefert höchstens rund 100 Einträge je Abfrage, für ältere
+  Zeiträume und kleine Unternehmen oft wenige oder keine; mehrdeutige Namen bringen fremde
+  Treffer. Ein fehlender Beleg heißt nicht, dass nichts geschehen ist; ein Vergleich der Anzahlen
+  sagt nichts über den Inhalt der Meldungen.
+- **Status:** vorläufig (Fenstergrößen 3 und 1 Monat sowie Versätze ±12/±24 Monate als Setzung);
+  Suchbegriffe und UUIDs der Unternehmen mit Markierungen bestätigt (2026-10-08).
 
 ## E19 – Quellenarten und Verlässlichkeit der Belege
 
@@ -783,6 +819,20 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Begründung:** Ein Overlay macht sichtbar, ob eine Markierung in einen allgemeinen Zeitraum
   fällt, ohne die Ansicht ohne Zutun zu verändern; die Bestätigung durch den Autor hält die
   Auswahl bei ihm.
-- **Grenzen:** Ein zeitliches Zusammentreffen ist keine Erklärung; lange Ereignisse (Rezession
-  2023/24) treffen viele Fenster. Die Liste ist eine Auswahl, keine Vollständigkeit.
-- **Status:** vorläufig; Vorschläge unbestätigt (Autor).
+- **Dauerregel (2026-10-08, Nachschärfung A3, vorläufig):** Ein allgemeines Ereignis dauert
+  höchstens 6 Monate (`MAX_GLOBAL_EVENT_MONTHS` in `backend/services/evidence_service.py`); der
+  Lader weist längere Einträge mit Warnung zurück, ein Test prüft die Repository-Datei. Grund: Ein
+  vorgeschlagenes Ereignis über 24 Monate (Konjunkturschwäche 2023/24) hinge an fast jeder
+  Markierung dieser Jahre und wäre als Hypothese wertlos; ein allgemeines Ereignis muss datierbar
+  sein. Überarbeitung der Vorschläge: Finanzkrise auf 2008-09 bis 2009-02, zweiter Lockdown auf
+  2020-11 bis 2021-03 und Energiepreiskrise auf 2022-08 bis 2023-01 verkürzt (jeweils mit
+  belegender Adresse), die Konjunkturschwäche 2023/24 gestrichen. Allgemeine Ereignisse zählen in
+  der Abdeckung (`report_context_coverage.py`, Feld `coverage` der Routen) nicht als Beleg; die
+  Auswertung weist sie getrennt aus.
+- **Bestätigung (Autor, 2026-10-08, D3):** sechs Ereignisse bestätigt (Finanzkrise 2008/09,
+  Atom-Moratorium 2011, erster und zweiter Lockdown, Überfall auf die Ukraine 2022,
+  Energiepreiskrise 2022/23); die Homeoffice-Pflicht 2021 bleibt unbestätigt, weil sie den
+  zweiten Lockdown überschneidet.
+- **Grenzen:** Ein zeitliches Zusammentreffen ist keine Erklärung; auch sechs Monate treffen
+  mehrere Fenster. Die Liste ist eine Auswahl, keine Vollständigkeit.
+- **Status:** vorläufig (Dauergrenze ist eine Setzung); sechs Ereignisse bestätigt (2026-10-08).
