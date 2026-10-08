@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "description": "Ergebnisse des Quellen-Spikes (scripts/spike_news_sources.py); Schlüssel = normalisierter Firmenname|YYYY-MM",
+  "description": "Ergebnisse des Quellen-Spikes (scripts/spike_news_sources.py); Schlüssel = normalisierter Firmenname|YYYY-MM Beispieltitel am 2026-10-08 entfernt (Nutzungsbedingungen, E7); die Zahlen bleiben.",
   "runs": {
     "thyssenkrupp|2023-04": {
       "company": "Thyssenkrupp",
@@ -36,11 +36,7 @@
           "earliest": "2023-04-26T15:45:00+00:00",
           "latest": "2023-05-01T21:30:00+00:00",
           "language_guess": "de",
-          "sample_titles": [
-            " - ThyssenKrupp - Aktie : Kein Gerücht , sondern Faktencheck ! () ",
-            "PR - Journal - HR - Portale : Die persönliche Ansprache ist zurück",
-            "WOCHENVORSCHAU : Termine bis 15 . Mai 2023"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [],
           "languages_reported": {
@@ -72,11 +68,7 @@
           "earliest": "2023-04-02T07:00:00+00:00",
           "latest": "2023-04-28T07:00:00+00:00",
           "language_guess": "de",
-          "sample_titles": [
-            "Martina Merz tritt als Thyssenkrupp-Chefin zurück - Spiegel",
-            "Thyssenkrupp: Warum Chefin Martina Merz gehen muss - WiWo",
-            "Martina Merz: Umstrittene Thyssenkrupp-Chefin schmeißt hin - die möglichen Gründe - Wirtschaft - SZ.de - SZ.de"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
@@ -99,11 +91,7 @@
           "earliest": "2023-04-04T08:34:43+00:00",
           "latest": "2023-04-28T12:47:03+00:00",
           "language_guess": "en",
-          "sample_titles": [
-            "thyssenkrupp AG: Preliminary announcement of the publication of financial reports according to Articles 114, 115, 117 of the WpHG [the German Securities Act]",
-            "thyssenkrupp AG: Martina Merz asks the Supervisory Board for talks to end her mandate as Chief Executive Officer of thyssenkrupp AG in mutual agreement",
-            "Amundi S.A., Paris, Frankreich"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "company_name=<Klarname> liefert keine Datensätze (Backend interpretiert den Wert als companyUUID)",
@@ -192,11 +180,7 @@
             "earliest": "2026-07-06T13:42:30+00:00",
             "latest": "2026-10-02T12:40:02+00:00",
             "language_guess": "en",
-            "sample_titles": [
-              "Is ThyssenKrupp (TKAMY) Stock Undervalued Right Now?",
-              "Jacobs Extends Contract for Thyssenkrupp Steel Plant in Germany",
-              "Jacobs extends role on German hydrogen-capable direct reduction plant"
-            ],
+            "sample_titles": [],
             "error": null
           },
           "count": 0,
@@ -244,11 +228,7 @@
           "earliest": "2020-10-01T08:30:00+00:00",
           "latest": "2020-10-30T10:00:00+00:00",
           "language_guess": "en",
-          "sample_titles": [
-            "Bechtle Switzerland starts offering IoT services",
-            "Div | Bechtle , Cancom , SAP , Fraport , Deutz oder Patrizia : Schon Kaufkurse oder weiter runter ? - dax _ mdax - Börsennachrichten",
-            "Bechtle shows signs of COVID recovery in Q3"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "HTTP 429 (Rate-Limit: eine Anfrage je 5 s) – ein Retry nach 6 s"
@@ -281,11 +261,7 @@
           "earliest": "2020-10-11T07:00:00+00:00",
           "latest": "2020-10-30T07:00:00+00:00",
           "language_guess": "de",
-          "sample_titles": [
-            "Uwe Burk (56) wird neuer Bereichsvorstand im Familienunternehmen Bechtle - FAMILIENUNTERNEHMEN im FOKUS",
-            "Standort an der Hochschule Bonn Rhein-Sieg: IT-Systemhaus Bechtle expandiert nach Sankt Augustin - General-Anzeiger Bonn",
-            "Checkliste für Ihr Depot Ende 2020 - Im Interview mit Dr. Markus Elsässer - finanzen.net"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
@@ -308,9 +284,7 @@
           "earliest": "2020-10-26T12:38:40+00:00",
           "latest": "2020-10-26T12:38:40+00:00",
           "language_guess": "en",
-          "sample_titles": [
-            "Bechtle AG: Q3 earnings with above-average climb"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "company_name=<Klarname> liefert keine Datensätze (Backend interpretiert den Wert als companyUUID)",
@@ -396,10 +370,7 @@
             "earliest": "2026-08-12T08:02:13+00:00",
             "latest": "2026-08-12T15:00:30+00:00",
             "language_guess": "en",
-            "sample_titles": [
-              "Bechtle AG (BECTY) (Q2 2026) Earnings Call Highlights: Record Order Intake and Raised Guidance ...",
-              "Bechtle Q2 Earnings Call Highlights"
-            ],
+            "sample_titles": [],
             "error": null
           },
           "count": 0,
@@ -447,9 +418,7 @@
           "earliest": "2023-01-14T08:15:00+00:00",
           "latest": "2023-01-14T08:15:00+00:00",
           "language_guess": "en",
-          "sample_titles": [
-            "Carbon Harvested from the Air Using Capture Technology from German Researchers"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [],
           "languages_reported": {
@@ -471,11 +440,7 @@
           "earliest": "2023-01-10T08:00:00+00:00",
           "latest": "2023-02-01T08:00:00+00:00",
           "language_guess": "de",
-          "sample_titles": [
-            "Gas: Modernes Fracking laut Karlsruher Institut für Technologie „absolut vertretbar“ - WELT",
-            "Zu Gast im Studio | Valentin Goldberg - Planet Wissen",
-            "Herkulesaufgabe Transformation des Energiesystems - Helmholtz-Gemeinschaft Deutscher Forschungszentren"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "RSS liefert maximal ca. 100 Einträge; keine Paginierung"
@@ -714,11 +679,7 @@
           "earliest": "2019-02-03T20:30:00+00:00",
           "latest": "2019-03-26T18:30:00+00:00",
           "language_guess": "en",
-          "sample_titles": [
-            "Germany Uniper feeds wind power - to - methane into gas grid",
-            "Germany Uniper feeds wind power - to - methane into gas grid | Energy & Oil",
-            "Renewable gas has indispensable role in decarbonised future"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "HTTP 429 (Rate-Limit: eine Anfrage je 5 s) – ein Retry nach 6 s"
@@ -751,10 +712,7 @@
           "earliest": "2019-02-03T08:00:00+00:00",
           "latest": "2019-02-12T08:00:00+00:00",
           "language_guess": "gemischt",
-          "sample_titles": [
-            "Auch Amprion plant Power-to-Gas-Anlage - edison.media",
-            "Platzprobleme bei Aldi Nord: Discounter muss Büros anmieten - WAZ | Westdeutsche Allgemeine Zeitung"
-          ],
+          "sample_titles": [],
           "error": null,
           "notes": [
             "RSS liefert maximal ca. 100 Einträge; keine Paginierung"

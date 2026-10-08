@@ -32,6 +32,8 @@ Es werden nur `urllib`, `xml.etree`, `json` und das bereits vorhandene `yfinance
 Erfasst werden je Quelle: Trefferzahl, davon im Fenster, frühestes/spätestes
 Veröffentlichungsdatum, Sprachschätzung (Stoppwort-Heuristik über die Titel plus das
 Sprachfeld der Quelle, falls vorhanden), drei Beispieltitel, HTTP-Status, Fehler, Dauer.
+Nachtrag 2026-10-08: Die Beispieltitel wurden aus `backend/data/spike_news_sources.json`
+entfernt (Maßnahme zu den Nutzungsbedingungen, E7); die Zahlen und Anfrage-URLs bleiben.
 
 ### 2.2 Monatswahl (lesend aus der DB)
 

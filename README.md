@@ -113,7 +113,7 @@ The share price can run along the rating chart on a second y-axis: on the anomal
 
 ## 🧾 Cycle 2 – Increment 4 "Externe Belege im Ereignisfenster"
 
-A piece of evidence is a message close in time with date, title, publisher and link. It is not a cause: the interface claims no relation to the ratings and does not rate any message. Feature doc: `docs/feature-doku/07-externe-belege.md` (follows); decisions E7 (sources, measures of 2026-10-08), E18 (event window, evidence store).
+A piece of evidence is a message close in time with date, title, publisher and link. It is not a cause: the interface claims no relation to the ratings and does not rate any message. Feature doc: [docs/feature-doku/07-externe-belege.md](docs/feature-doku/07-externe-belege.md); decisions E7 (sources, measures of 2026-10-08), E18 (event window, evidence store), E19 (source types, reliability), E20 (general events).
 
 | Part | Where | Notes |
 |---|---|---|
@@ -123,6 +123,9 @@ A piece of evidence is a message close in time with date, title, publisher and l
 | API | `backend/routes/context.py` | `GET /api/analytics/company/{id}/anomalies/{anomaly_id}/context?source=&dimension=&status=&window_before=&window_after=&limit=&offset=` (also for an outlier month id `…:einzelmonat`) and `GET /api/analytics/company/{id}/context?from=&to=` → `anchor`, `window`, `items` (newest first, paged), `total`, `counts` per type, `sources` with state and errors, `coverage`, `reason`, `note`. Unknown change 404; no data an empty list with reason, never 500 for a failing source |
 | Detail page | `frontend/src/components/dashboard/EvidenceSection.jsx`, `hooks/useEvidence.js`, `pages/Anomalies.jsx` | Section "Externe Belege im Ereignisfenster" under the comparison for the selected change, the selected outlier month and the free selection: window and counts per type in the header, per item date, title as link (new tab), publisher, type badge, EN badge; more on demand; fixed note |
 | Prefetch | `backend/scripts/fetch_context.py` | `cd backend && uv run python scripts/fetch_context.py` fills the store for all level shifts and outlier months of the eligible companies (employees, overall rating), throttled and resumable; `--dry-run` only counts, `--source`, `--company`, `--max-fetches`, `--json`. Reads the database, writes only files |
+| General events | `backend/data/global_events.json`, `GET /api/analytics/global-events`, toggle "Allgemeine Ereignisse" on the detail page (`?ereignisse=an`, off by default) | Eight proposed events with source pages, all unconfirmed; confirmed events appear as evidence of type global (reliability Hypothese) and as dashed areas in the monthly chart, labelled "Allgemeines Ereignis, Hypothese" |
+| Coverage (checkpoint 2) | `backend/scripts/report_context_coverage.py` | `cd backend && uv run python scripts/report_context_coverage.py` reads only the store: per company the share of level shifts and outlier months with at least one piece of evidence, by type and by year of the marker (up to 2018, from 2019); numbers only (`--md`, `--json`) |
+| Issuer lookup | `backend/scripts/eqs_lookup.py` | `cd backend && uv run python scripts/eqs_lookup.py "Bechtle"` prints the EQS issuers with companyUUID and ISIN for a name; the confirmed UUID goes into `company_metadata.json` (`eqs`) |
 | Runtime | `CONTEXT_LIVE_FETCH` (environment) | `0` blocks every fetch; then only the store is used (see Environment Variables) |
 | Tests | `backend/tests/evidence/` (window, store, routes, script; fake fetchers, temporary store, no network) | `cd backend && uv run python -m pytest tests/evidence -q` |
 

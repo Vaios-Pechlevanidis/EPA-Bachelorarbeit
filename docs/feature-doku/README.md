@@ -33,3 +33,4 @@ Abgrenzung zu den anderen Dokumenten:
 | 04 | [Aktienkurs und Kennzahlen](04-kurs-und-kennzahlen.md) | 3 | Kurs und Kennzahlen als Einordnung (FA-15); Kurs auch auf der Anomalien-Seite einblendbar (TF4) | umgesetzt; vorläufig (E15, Nutzungsbedingungen offen) |
 | 05 | [Aktien-Dashboard](05-aktien-dashboard.md) | 3 (Nachtrag) | Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn, Nachrichten; Anforderung nur für Kurs und Kennzahlen (FA-15) | umgesetzt; vorläufig (E16); Zusatzkarten ausblendbar (`VITE_SHOW_FINANCE_EXTRAS`) |
 | 06 | [Freier Drill-down](06-freier-drilldown.md) | 2 (Nachtrag) | Bewertungen und Vergleich für jeden Zeitraum, auch ohne Anomalie | umgesetzt; vorläufig (E17) |
+| 07 | [Externe Belege im Ereignisfenster](07-externe-belege.md) | 4 | zeitlich nahe Meldungen externer Quellen zu Veränderung, Einzelmonat und Auswahl; allgemeine Ereignisse als Hypothese | umgesetzt; vorläufig (E7, E18–E20) |
