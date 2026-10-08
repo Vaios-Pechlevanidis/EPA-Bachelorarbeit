@@ -140,3 +140,73 @@ die Bewertungslisten und der Vergleich der Gruppe `abgelehnt` enthalten dann zus
   der Git-Historie (`git log -S`), ohne Ausführung.
 - Textsignale: reguläre Ausdrücke über Titel und Verbesserungsvorschlag je Bewerbungsstatus,
   nur Zählungen.
+
+## D2 – Zuordnung Carl Zeiss (E15)
+
+### 1. Ausgangslage
+
+- Datenbank: `companies` id 26, Name „Carl Zeiss“, `ticker` AFX.DE, `sector` „Optik/Medizintechnik“,
+  `peer_group` „Börsennotiert DE“ (die Spalten aus Migration 006 sind vorhanden; der Wert steht
+  also in der Datenbank, nicht nur in der Metadatei). `backend/data/company_metadata.json`:
+  `ticker_scope` leer, Vermerk, dass sich das Kununu-Profil möglicherweise auf die nicht
+  börsennotierte Carl Zeiss AG bezieht (E6, E15).
+- Bewertungen: 1 700 Mitarbeitende (2007-09 bis 2025-07), 704 Bewerbende (2011-04 bis 2025-07).
+  Die Exportdateien heißen `carl-zeissEmployee.xlsx` und `carl-zeissCandidates.xlsx`; der Scraper
+  benennt Dateien nach dem Profilpfad, das Profil ist also `kununu.com/de/carl-zeiss`. Welchen
+  Firmennamen dieses Profil trägt, konnte am 2026-10-08 nicht automatisiert geprüft werden
+  (Kununu antwortet auf Abrufe ohne Browser mit einer Bot-Sperre, HTTP 405 „Human
+  Verification“); **der Autor sieht das im Browser auf der Profilseite.**
+- Die Ansicht nennt heute das Wertpapier über `ticker_name` aus dem Zwischenspeicher
+  („Carl Zeiss Meditec AG · AFX.DE“ im Aktien-Dashboard, Legende und Hinweis auf der
+  Anomalien-Seite), ohne Vermerk zur Konzernzugehörigkeit; den gibt es nur für
+  `ticker_scope` = „Konzernmutter“ (`frontend/src/components/dashboard/MarketContext.jsx`,
+  `pages/Stock.jsx`).
+
+### 2. Hinweise in den Bewertungen (nur Zählungen)
+
+Gezählt wurde je Bewertung, ob ein Begriff in Titel, Positionsangabe oder einem Textfeld vorkommt
+(Groß-/Kleinschreibung egal). Mitarbeitende: 1 700 Bewertungen, Bewerbende: 704.
+
+| Begriff (Suchmuster) | Mitarbeitende: Bewertungen mit Nennung | Bewerbende: Bewertungen mit Nennung | Lesart |
+|---|---:|---:|---|
+| „Meditec“ | 10 | 3 | Carl Zeiss Meditec AG (AFX.DE) |
+| „Carl Zeiss AG“ / „ZEISS AG“ | 10 | 3 | Konzernmutter (nicht börsennotiert) |
+| „Stiftung“ | 27 | 0 | Carl-Zeiss-Stiftung als Eigentümerin der Carl Zeiss AG |
+| „Oberkochen“ | 34 | 9 | Sitz der Carl Zeiss AG und der SMT |
+| „Jena“ | 15 | 4 | Sitz der Meditec, aber auch Standort des Konzerns (nicht eindeutig) |
+| „SMT“ / „Halbleiter“ / „Semiconductor“ | 45 | 6 | Carl Zeiss SMT GmbH, Konzernsparte, nicht Meditec |
+| „Vision“ / „Brillen“ | 10 | 0 | Sparte Vision Care (Aalen), nicht Meditec |
+| „Microscopy“ / „Mikroskop“ | 5 | 4 | Sparte Mikroskopie (Jena, Göttingen) |
+| „Industrial Quality“ / „Messtechnik“ / „IMT“ | 7 | 3 | Sparte Messtechnik |
+| „Medizintechnik“ / „medical“ | 5 | 1 | Sparte Medizintechnik (Meditec) |
+| „Aalen“, „Wetzlar“, „Göttingen“ (Standorte) | 7, 3, 3 | 1, 1, 1 | Konzernstandorte außerhalb der Meditec |
+| „Konzern“ | 95 | 7 | Rahmen „Konzern“ überwiegt |
+| „Sparte“ / „Geschäftsbereich“ / „Business Unit“ | 11 | 2 | Sichtweise auf mehrere Bereiche |
+| „Tochter“ | 4 | 1 | – |
+| „Zeiss“ überhaupt | 267 | 97 | – |
+
+Beispiele ohne personenbezogene Angaben: Mehrere Bewertungen nennen als Arbeitgeber ausdrücklich
+die Carl Zeiss SMT GmbH; einige den Konzernslogan „one ZEISS“; mehrfach werden Oberkochen als
+Standort und die Stiftung als Eigentümerin genannt. Nennungen der Meditec sind selten (10 von
+1 700). Die Positionsfelder helfen nicht weiter: `jobbeschreibung` enthält nur Typ und Abteilung
+(am häufigsten „employee, research“ 250, „employee, operations“ 182, „employee, other“ 113),
+`stellenbeschreibung` nur Berufsbezeichnungen (am häufigsten „Entwicklungsingenieur“ 29,
+„Projektleiter“ 13, „Wissenschaftlicher Mitarbeiter“ 11).
+
+Lesart (vom Autor zu bestätigen): Die Bewertungen beschreiben den **Gesamtkonzern** mit mehreren
+Sparten und Standorten; die börsennotierte Meditec ist darin nur eine Gesellschaft. Eine
+Zuordnung „eigene Aktie“ lässt sich aus den Bewertungen nicht begründen.
+
+### 3. Optionen (Entscheidung D2)
+
+| | Option A: Ticker AFX.DE behalten, neuer `ticker_scope` | Option B: Ticker entfernen, „Nicht börsennotiert“ |
+|---|---|---|
+| Änderung | `company_metadata.json`: `ticker_scope` z. B. „Konzerngesellschaft“ (börsennotierte Gesellschaft des Konzerns, den das Profil beschreibt); erlaubte Werte in `backend/tests/test_company_metadata.py` erweitern; Frontend nennt bei diesem Wert ausdrücklich „Kurs der Konzerngesellschaft Carl Zeiss Meditec AG (AFX.DE), nicht des Gesamtkonzerns“ (wie heute bei der Konzernmutter); E15 und Feature-Doku 04 fortschreiben | `company_metadata.json`: `ticker` null, `listed` false, `peer_group` „Nicht börsennotiert“, Vermerk; E15 und Feature-Doku 04 fortschreiben. **Zusätzlich muss der Wert in der Datenbank geändert werden**, weil `companies.ticker` Vorrang vor der Metadatei hat (`context_service.company_ticker_info`): `uv run python scripts/seed_company_metadata.py --apply` durch den Autor (Schreibzugriff, nicht in diesem Branch) |
+| Folge in der Ansicht | Kurs und Kennzahlen der Meditec bleiben als Einordnung sichtbar, mit ausdrücklichem Vermerk; 17 Unternehmen mit Kurs bleiben | Carl Zeiss zeigt „Kein Aktienkurs: nicht börsennotiert“; das Kästchen auf der Anomalien-Seite entfällt; 16 Unternehmen mit Kurs |
+| Folge für die Arbeit | FA-15 bleibt für Carl Zeiss erfüllbar; die Grenze „Konzernkurs bildet die bewertete Einheit nur mittelbar ab“ (E15) gilt hier umgekehrt: Teilkonzernkurs für ein Profil des Gesamtkonzerns | Konsistent mit der Lesart der Bewertungen; die Einordnung über den Markt entfällt für eines der dichtesten Profile (99 bewertete Monate) |
+| Risiko | Leser könnte den Meditec-Kurs als Kurs „von Zeiss“ lesen; der Vermerk muss daher in jeder Kursansicht stehen | Information geht verloren, obwohl ein Teil der Bewertenden (Medizintechnik, Jena) zur notierten Gesellschaft gehören könnte |
+| Tests | `test_company_metadata.py` (erlaubte Werte), `tests/market/` (Vermerk), Frontend-Bau | `test_company_metadata.py`, `tests/market/test_market_summary.py` (Tabelle ohne AFX.DE), Frontend-Bau |
+
+Nicht vorgeschlagen: `ticker_scope` „eigene Aktie“ für AFX.DE, weil die Bewertungen das nicht
+stützen. In beiden Optionen nennt die Ansicht das Wertpapier weiterhin ausdrücklich (Option B:
+gar kein Wertpapier, dafür der Hinweis „nicht börsennotiert“).
