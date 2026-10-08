@@ -5,8 +5,8 @@
 | Inkrement | 3 (Nachtrag, Zyklus 2) |
 | Anforderungen | Wunsch des Autors vom 2026-10-04: eigenes Dashboard zum Aktienkurs mit Kursverlauf, Analystenempfehlungen, Umsatz und Gewinn sowie Nachrichten. Davon deckt nur der Teil Kurs und Kennzahlen eine Anforderung (FA-15) |
 | Entscheidungen | E16 in `docs/entscheidungen.md` (mit „Rolle in der Arbeit“); E7 (Nachrichtenquelle) und E15 (Kurs, Kennzahlen, Zwischenspeicher) |
-| Status | umgesetzt; **vorläufig** (Nutzungsbedingungen offen). Zusatzkarten außerhalb des evaluierten Artefakts, ausblendbar mit `VITE_SHOW_FINANCE_EXTRAS=false` |
-| Stand | 2026-10-05 |
+| Status | umgesetzt; **vorläufig** (Nutzungsbedingungen offen). Zusatzkarten außerhalb des evaluierten Artefakts, ausblendbar mit `VITE_SHOW_FINANCE_EXTRAS=false`; die Evaluationsinstanz wird ohne Zusatzkarten gebaut (E16, Entscheidung D3 vom 2026-10-08) |
+| Stand | 2026-10-08 |
 
 ## 1. Vorstellung
 
@@ -149,10 +149,10 @@ wichtigsten Marktinformationen auf einer Seite, ohne die Anomalien-Ansicht zu ü
 ## 6. Offene Punkte
 
 - Nutzungsbedingungen von Yahoo Finance und Google News (E7, E15, E16).
-- Soll die Seite in der Evaluation (DZ3) gezeigt werden? Nachtrag 2026-10-05: Kurs und
-  Kennzahlen gehören zum evaluierten Artefakt, die Zusatzkarten nicht (E16); offen bleibt, ob
-  die Evaluationsinstanz mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut wird.
-- Der Hinweistext des Eintrags „Aktie“ in der Seitenleiste des Dashboards nennt weiter
-  „Aktienkurs, Empfehlungen, Umsatz und Nachrichten“, auch ohne Zusatzkarten
-  (`frontend/src/pages/Dashboard.jsx` hat ältere Lint-Fehler und wurde nicht angefasst).
+- Evaluation (behoben 2026-10-08, E16, Entscheidung D3): Die Evaluationsinstanz wird mit
+  `VITE_SHOW_FINANCE_EXTRAS=false` gebaut; die Befragten sehen Kurs, Kurs mit Bewertungsverlauf
+  und die Kennzahlen aus FA-15. Einstellungen und Prüfliste in `docs/evaluationsinstanz.md`.
+- Hinweistext des Eintrags „Aktie“ in der Seitenleiste (behoben 2026-10-08): nennt ohne
+  Zusatzkarten „Aktienkurs und Kennzahlen“ (`frontend/src/pages/Dashboard.jsx`; die älteren
+  Lint-Fehler der Datei bleiben unberührt).
 - Bessere Suchbegriffe für mehrdeutige Namen (z. B. Carl Zeiss), vom Autor festzulegen.

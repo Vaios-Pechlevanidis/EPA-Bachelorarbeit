@@ -22,7 +22,7 @@ import {
 import { loadCompanies } from "@/lib/companies"
 import { fetchJsonShared } from "@/lib/sharedFetch"
 import { useTheme } from "../hooks/useTheme"
-import { API_URL } from "../config"
+import { API_URL, SHOW_FINANCE_EXTRAS } from "../config"
 import { exportKPIsAsPDF } from "../utils/pdfExport"
 import { waitForMultipleCharts, validateChart, waitForImagesInElement } from "../utils/chartValidator"
 
@@ -435,7 +435,9 @@ export default function Dashboard() {
               className="ds-nav-link"
               onClick={openStock}
               disabled={!effectiveCompanyId}
-              title={effectiveCompanyId ? "Aktienkurs, Empfehlungen, Umsatz und Nachrichten" : "Erst eine Firma auswählen"}
+              title={effectiveCompanyId
+                ? (SHOW_FINANCE_EXTRAS ? "Aktienkurs, Empfehlungen, Umsatz und Nachrichten" : "Aktienkurs und Kennzahlen")
+                : "Erst eine Firma auswählen"}
             >
               <TrendUp />
               Aktie

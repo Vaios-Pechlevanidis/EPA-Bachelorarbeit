@@ -37,8 +37,10 @@ def get_company_market(
         }
 
     Kurse sind um Splits und Dividenden bereinigt (Monatsschluss); der Monat
-    des Abrufs fehlt. ``ticker_scope`` ist ``"eigene Aktie"`` oder
-    ``"Konzernmutter"`` (Kurs des Mutterkonzerns, z. B. NTT DATA SE).
+    des Abrufs fehlt. ``ticker_scope`` ist ``"eigene Aktie"``, ``"Konzernmutter"``
+    (Kurs des Mutterkonzerns, z. B. NTT DATA SE) oder ``"Konzerngesellschaft"``
+    (Kurs einer börsennotierten Gesellschaft des Konzerns, den das Profil
+    beschreibt, z. B. Carl Zeiss → Carl Zeiss Meditec AG).
 
     Ohne Ticker (nicht börsennotiert, Demo) oder ohne abrufbare Kurse:
     ``available: false`` mit Begründung in ``reason``, Status 200. Unbekanntes

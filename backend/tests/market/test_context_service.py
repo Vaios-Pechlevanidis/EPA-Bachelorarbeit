@@ -165,6 +165,12 @@ class TestTicker:
     def test_parent_company_scope(self, fake_db):
         assert cs.company_ticker_info(20)["ticker_scope"] == "Konzernmutter"
 
+    def test_group_company_scope(self, fake_db):
+        """Carl Zeiss: Ticker der börsennotierten Konzerngesellschaft (Entscheidung D2, 2026-10-08)."""
+        info = cs.company_ticker_info(26)
+        assert (info["ticker"], info["ticker_scope"], info["ticker_source"]) == ("AFX.DE", "Konzerngesellschaft", "db")
+        assert set(cs.TICKER_SCOPES) == {"eigene Aktie", "Konzernmutter", "Konzerngesellschaft"}
+
     def test_unknown_company(self, fake_db):
         assert cs.company_ticker_info(999) is None
         assert cs.ticker_for_company(999) is None

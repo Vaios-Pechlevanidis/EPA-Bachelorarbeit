@@ -4,7 +4,9 @@ import { sourceLabel } from "./ratingCategories"
  * uneinheitlich: Mitarbeitende "1.0", "0.0", "True", "False", "Angestellt",
  * "Ex-Angestellt" oder leer; Bewerbende "hired", "offerDeclined", "rejected",
  * "deferred", "Bewerber" (nur Demo) oder leer. Die Zuordnung entspricht
- * normalize_status in backend/services/review_service.py. */
+ * normalize_status in backend/services/review_service.py. Bestätigt am
+ * 2026-10-08 (E13): "True"/"False" wie "1.0"/"0.0"; "deferred" enthält bei den
+ * Unternehmen aus Zyklus 1 auch Absagen, daher "Zurückgestellt oder Absage". */
 
 const RAW_LABELS = {
   "1": "Angestellt",
@@ -16,7 +18,7 @@ const RAW_LABELS = {
   hired: "Eingestellt",
   offerdeclined: "Angebot abgelehnt",
   rejected: "Abgelehnt",
-  deferred: "Zurückgestellt",
+  deferred: "Zurückgestellt oder Absage",
 }
 
 /* Anzeigename eines Rohwerts; unbekannte Werte bleiben, wie sie sind, leere → null. */
@@ -44,7 +46,7 @@ export const STATUS_OPTIONS_BY_SOURCE = {
     { key: "eingestellt", label: "Eingestellt" },
     { key: "angebot-abgelehnt", label: "Angebot abgelehnt" },
     { key: "abgelehnt", label: "Abgelehnt" },
-    { key: "zurueckgestellt", label: "Zurückgestellt" },
+    { key: "zurueckgestellt", label: "Zurückgestellt oder Absage" },
     { key: "unbekannt", label: "ohne Angabe" },
   ],
 }

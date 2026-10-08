@@ -19,7 +19,7 @@ import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
 import { groupLabel, statusOptions } from "@/lib/reviewerStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, periodWindows, trimToEvaluated } from "@/lib/anomalySeries"
-import { PARENT_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
+import { PARENT_SCOPE, GROUP_COMPANY_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -724,7 +724,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                 {showPrice && (
                     <span className="inline-flex items-center gap-1.5">
                         <span className="inline-block w-4 h-0 border-t" style={{ borderColor: "var(--market-price)" }} />
-                        Aktienkurs{market.ticker ? ` ${market.ticker}` : ""}{market.ticker_scope === PARENT_SCOPE ? " (Konzernmutter)" : ""}, Monatsschluss in {market.currency ?? "?"}, bereinigt (rechte Achse)
+                        Aktienkurs{market.ticker ? ` ${market.ticker}` : ""}{market.ticker_scope === PARENT_SCOPE ? " (Konzernmutter)" : market.ticker_scope === GROUP_COMPANY_SCOPE ? " (Konzerngesellschaft)" : ""}, Monatsschluss in {market.currency ?? "?"}, bereinigt (rechte Achse)
                     </span>
                 )}
             </p>

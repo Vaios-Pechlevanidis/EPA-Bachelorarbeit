@@ -15,7 +15,7 @@ import { SHOW_FINANCE_EXTRAS } from "@/config"
 import { loadCompanyName } from "@/lib/companies"
 import { DEFAULT_TIME_RANGE, fmtPeriod, isTimeRangeKey, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import {
-    DEFAULT_PRICE_RANGE, PARENT_SCOPE, PRICE_OFF, PRICE_PARAM, PRICE_RANGES, isPriceRangeKey, noPriceText, pricesInRange,
+    DEFAULT_PRICE_RANGE, PARENT_SCOPE, GROUP_COMPANY_SCOPE, PRICE_OFF, PRICE_PARAM, PRICE_RANGES, isPriceRangeKey, noPriceText, pricesInRange,
 } from "@/lib/market"
 
 /* ============================================================================
@@ -144,6 +144,8 @@ export default function StockPage() {
     const change = first && last && first.close ? ((last.close - first.close) / first.close) * 100 : null
     const security = data?.ticker ? `${data.ticker_name ?? data.ticker} · ${data.ticker}` : ""
     const isParent = data?.ticker_scope === PARENT_SCOPE
+    const isGroupCompany = data?.ticker_scope === GROUP_COMPANY_SCOPE
+    const scopeSuffix = isParent ? " · Kurs der Konzernmutter" : isGroupCompany ? " · Kurs der Konzerngesellschaft" : ""
     const priceView = searchParams.get("ansicht") === "bewertung" ? "bewertung" : "kurs"
 
     // Kurs und Bewertungsverlauf: Gesamtbewertung der Mitarbeitenden wie auf der Anomalien-Seite.
@@ -187,9 +189,9 @@ export default function StockPage() {
         </>
     )
     const priceSubtitle = priceView === "kurs"
-        ? `${security} · Monatsschluss in ${data?.currency ?? "?"}${isParent ? " · Kurs der Konzernmutter" : ""}`
+        ? `${security} · Monatsschluss in ${data?.currency ?? "?"}${scopeSuffix}`
         : `Mitarbeitende · Gesamtbewertung, Monatsmittel${showPrice ? ` · Kurs ${data?.ticker} rechts in ${data?.currency ?? "?"}` : ""}${
-            historyRange ? ` · ${fmtPeriod(historyRange.from)} – ${fmtPeriod(historyRange.to)}` : ""}${isParent ? " · Kurs der Konzernmutter" : ""}`
+            historyRange ? ` · ${fmtPeriod(historyRange.from)} – ${fmtPeriod(historyRange.to)}` : ""}${scopeSuffix}`
     const priceBody = ({ modal, height }) => (priceView === "kurs" ? (
         <StockPriceChart prices={visiblePrices} currency={data.currency} height={height} />
     ) : (

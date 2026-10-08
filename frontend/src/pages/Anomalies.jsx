@@ -312,7 +312,7 @@ export default function AnomaliesPage() {
                                     market={showPrice ? marketData : null}
                                 />
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
-                                    {/* Eingeblendeter Kurs: fester Hinweis, Wertpapier (Konzernmutter ausdrücklich), Quelle */}
+                                    {/* Eingeblendeter Kurs: fester Hinweis, Wertpapier (Konzernmutter oder Konzerngesellschaft ausdrücklich), Quelle */}
                                     {showPrice && (market.loading ? (
                                         <p className="m-0 text-[11px] text-slate-500">Lade Aktienkurs…</p>
                                     ) : market.error ? (

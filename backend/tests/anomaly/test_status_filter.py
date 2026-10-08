@@ -48,6 +48,41 @@ class TestNormalizeStatus:
         assert normalize_status(source, raw) == key
 
 
+class TestDecisionD1:
+    """Zuordnung der Rohwerte, vom Autor am 2026-10-08 bestätigt (E13, Entscheidung D1)."""
+
+    def test_keys_unchanged(self):
+        assert list(STATUS_LABELS["employee"]) == ["angestellt", "ex-angestellt", "unbekannt"]
+        assert list(STATUS_LABELS["candidates"]) == [
+            "eingestellt", "angebot-abgelehnt", "abgelehnt", "zurueckgestellt", "unbekannt",
+        ]
+
+    def test_label_names_the_ambiguity_of_deferred(self):
+        assert STATUS_LABELS["candidates"]["zurueckgestellt"] == "Zurückgestellt oder Absage"
+        assert STATUS_LABELS["candidates"]["unbekannt"] == "ohne Angabe"
+
+    @pytest.mark.parametrize("raw, key", [
+        ("True", "angestellt"), ("TRUE", "angestellt"), (" true ", "angestellt"),
+        ("False", "ex-angestellt"), ("FALSE", "ex-angestellt"),
+    ])
+    def test_boolean_export_values_confirmed(self, raw, key):
+        """Formycon exportierte den Kununu-Wert als Wahrheitswert; gleiche Zuordnung wie 1.0/0.0."""
+        assert normalize_status("employee", raw) == key
+
+    def test_deferred_and_rejected_stay_separate(self):
+        """Rohwerte bleiben unterscheidbar; die Lesart steht in der Bezeichnung, nicht im Schlüssel."""
+        assert normalize_status("candidates", "deferred") == "zurueckgestellt"
+        assert normalize_status("candidates", "rejected") == "abgelehnt"
+
+    def test_frontend_options_match_backend(self):
+        """Schlüssel und Bezeichnungen in frontend/src/lib/reviewerStatus.js entsprechen STATUS_LABELS."""
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "frontend", "src", "lib", "reviewerStatus.js")
+        text = open(path, encoding="utf-8").read()
+        for labels in STATUS_LABELS.values():
+            for key, label in labels.items():
+                assert f'{{ key: "{key}", label: "{label}" }}' in text, (key, label)
+
+
 class TestSeries:
 
     @pytest.mark.parametrize("status, raw", [("angestellt", "Angestellt"), ("ex-angestellt", "Ex-Angestellt")])

@@ -47,6 +47,8 @@ export const MARKET_DISCLAIMER_LEAD = "Einordnung, keine Erklärung."
 export const MARKET_DISCLAIMER_TEXT = "Der Kurs zeigt das Marktumfeld; ein Zusammenhang mit den Bewertungen wird nicht behauptet."
 
 export const PARENT_SCOPE = "Konzernmutter"
+/* Kurs einer börsennotierten Gesellschaft des Konzerns, den das Profil beschreibt (Carl Zeiss, E15). */
+export const GROUP_COMPANY_SCOPE = "Konzerngesellschaft"
 
 /* Grund ohne Kurs, immer mit "Kein Aktienkurs" am Anfang. */
 export function noPriceText(reason) {

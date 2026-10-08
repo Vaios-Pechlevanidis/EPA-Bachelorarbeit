@@ -77,6 +77,10 @@ class TestShape:
         body = client.get(URL.format(20)).json()
         assert body["ticker"] == "9432.T" and body["ticker_scope"] == "Konzernmutter"
 
+    def test_group_company_scope(self, client, fake_db, market):
+        body = client.get(URL.format(26)).json()
+        assert body["ticker"] == "AFX.DE" and body["ticker_scope"] == "Konzerngesellschaft"
+
 
 class TestPeriod:
 

@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-04 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-08 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -104,6 +104,45 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Git-Historie belegen, sondern nur über die Selbstverpflichtung des Autors. Zudem kennt der
   Autor die Ergebnisse für Demo 3 und die Größenordnung der Treffer aus der Parameterübersicht
   (E9). Beides ist in der Evaluation als Grenze der Validität zu nennen.
+- **Aktualisierung 2026-10-08 – Umfang, Werkzeuge und Ablauf (Vorbereitung vor Inkrement 4):**
+  - **Umfang der Annotation:** Quelle Mitarbeitende, Dimension Gesamtbewertung, alle nach E4
+    geeigneten Unternehmen; Stand 2026-10-08 sind das 15 Reihen (Thyssenkrupp, Open Grid
+    Europe, E.ON, RWE, KIT, TU München, SAP SE, NTT DATA SE, 1&1 AG, Bechtle, Cancom, Carl
+    Zeiss, Compugroup Medical Deutschland, Telekom, Freenet). Unternehmen unter der
+    Mindestdichte erhalten keine Einträge (Protokoll-Regel 9). Die Bewerberquelle (5 geeignete
+    Reihen) und Einzeldimensionen gehören nicht zum Umfang; der Bogen lässt sich mit
+    `--source candidates` erzeugen, falls der Autor sie später aufnimmt.
+  - **Serien-CSVs:** am 2026-10-08 neu erzeugt und mit dem eingecheckten Stand verglichen,
+    identisch; sie entsprechen damit der Datenbank.
+  - **Annotationsbogen:** `backend/scripts/make_annotation_sheet.py` schreibt eine
+    eigenständige HTML-Datei (`backend/data/annotationsbogen.html`, nicht eingecheckt) mit
+    einem Diagramm je Reihe (Monatsmittel, Anzahl je Monat, Monate unter der Mindestdichte in
+    Grau, Linie der Mindestdichte), einer aufklappbaren Monatstabelle für die Angaben der
+    `note` sowie der Kurzfassung des Protokolls und den Regeln aus `annotations.json`. Das
+    Skript importiert weder `anomaly_service` noch `changepoint_detector` und zeichnet keine
+    Markierung, keine Niveaulinie und keinen Einzelmonat (Test
+    `backend/tests/test_make_annotation_sheet.py`).
+  - **Abgleich:** `backend/scripts/evaluate_detection.py` berechnet die Erkennung mit den
+    Standardparametern (E9, E14) für jede annotierte Reihe und gleicht nach Regel 6 ab, fest im
+    Skript: Toleranz ±1 Monat, bei nicht bewertetem Nachbarmonat bis zu 3 Kalendermonate,
+    gleiche Richtung, Eins-zu-eins-Zuordnung (Annotationen in zeitlicher Reihenfolge, früheste
+    passende Erkennung). Ausgabe je Reihe, je Quelle und gesamt: Precision, Recall und F1,
+    getrennt für Niveauwechsel allein und für Niveauwechsel mit Einzelmonaten, dazu Treffer,
+    verfehlte Zeiträume und zusätzliche Markierungen; `--json` schreibt das Ergebnis als Datei.
+    Reihen unter der Mindestdichte werden übersprungen (Regel 9); bei leerer Annotationsliste
+    bricht das Skript mit einem Hinweis ab. Tests mit konstruierten Reihen und Annotationen in
+    `backend/tests/test_evaluate_detection.py`.
+  - **Ablauf (verbindlich):** (1) `uv run python scripts/make_annotation_sheet.py`;
+    (2) annotieren in `backend/data/annotations.json` allein aus dem Bogen, ohne Karte,
+    Detailseite, API-Antwort oder Parameterübersicht zu öffnen, Ereignisanker erst danach
+    (Regel 7); (3) `uv run python scripts/validate_annotations.py`; (4) die Annotationsdatei in
+    einem eigenen Commit versionieren, der sonst nichts ändert; (5) erst dann
+    `uv run python scripts/evaluate_detection.py --json data/calibration/dz1_ergebnis.json` und
+    das Ergebnis in einem weiteren Commit ablegen; (6) E9 und E14 mit dem Beleg aktualisieren.
+    Die Auswertung darf vor Schritt 4 nicht auf echten Reihen laufen, weil ihre Ausgabe alle
+    erkannten Veränderungen der Reihe nennt.
+- **Status (2026-10-08):** Protokoll, Validierung, Bogen und Abgleich vorhanden; Einträge offen
+  (Handarbeit des Autors). Die Referenzzeiträume bleiben außerhalb des Dashboards.
 
 ## E6 – Unternehmens-Metadaten
 
@@ -368,7 +407,34 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Grenzen:** Die meisten Gruppen der Bewerberquelle sind für die automatische Erkennung
   zu dünn; die Detailseite zeigt dann den Hinweis zur Eignung. Die Bedeutung von
   `deferred` ist aus den Daten nicht eindeutig („zurückgestellt“ ist eine Übersetzung).
-- **Status:** vorläufig (Zuordnung der Rohwerte vom Autor zu bestätigen).
+- **Aktualisierung 2026-10-08 – Zuordnung bestätigt (Entscheidung D1):** Belege in
+  `docs/offene-punkte-vor-inkrement-4.md`, Abschnitt D1 (nur lesend erhoben: Datenbank,
+  Rohexporte und Scraper des Autors). Der Autor hat den Vorschlag angenommen:
+  - `True`/`False` (nur Formycon, 15 Bewertungen) sind derselbe Kununu-Wert wie `1.0`/`0.0`,
+    im Export als Wahrheitswert statt als Zahl; die Zuordnung `True` → `angestellt`, `False`
+    → `ex-angestellt` ist damit belegt (mittlere Gesamtnote 4,55 bzw. 2,15 wie 4,31 bzw.
+    2,36 bei `1.0`/`0.0`). Formycon ist für die Erkennung nicht geeignet.
+  - `deferred` behält den Schlüssel `zurueckgestellt`; die Bezeichnung lautet jetzt
+    „Zurückgestellt oder Absage“. Grund: Die 13 Unternehmen aus Zyklus 1 (id 3–20) haben
+    keinen Wert `rejected`, weil ihr Scraper-Stand „Absage“ und `rejected` auf `deferred`
+    abbildet; 453 der 514 Zeilen mit `deferred` liegen dort, und 20 % ihrer Texte nennen eine
+    Absage. Bei den TecDAX-Exporten ist `deferred` der unveränderte Rohwert von Kununu.
+  - Leere Werte bleiben `unbekannt` („ohne Angabe“). Bei Mitarbeitenden fehlt das Feld vor
+    allem bei alten Bewertungen (bis 2013 bei 93–100 %, ab 2016 bei unter 6 %). `Bewerber`
+    (nur Demo) bleibt `unbekannt`.
+  - Einschränkung: Für die Unternehmen aus Zyklus 1 liegt keine Unterscheidung
+    aktuell/ehemalig vor (kein Wert `0.0`, 3 758 Zeilen `1.0`, 360 leer); `angestellt` heißt
+    dort „Bewertung mit Typangabe“ und entspricht bis auf die leeren Zeilen der Gruppe „alle“.
+    Das betrifft 8 der 15 geeigneten Mitarbeiter-Reihen (Thyssenkrupp, Open Grid Europe,
+    E.ON, RWE, KIT, TU München, SAP SE, NTT DATA SE); die 6 geeigneten Reihen `ex-angestellt`
+    sind TecDAX-Unternehmen.
+  - Geeignete Reihen je Status (nachgezählt 2026-10-08, Gesamtbewertung) unverändert:
+    Mitarbeitende alle 15, `angestellt` 15, `ex-angestellt` 6, `unbekannt` 3; Bewerbende alle
+    5, `eingestellt` 1, `unbekannt` 1, übrige 0. `normalize_status` liefert dieselben
+    Schlüssel wie zuvor; geändert sind nur Bezeichnung und Dokumentation.
+- **Status:** Zuordnung der Rohwerte bestätigt (Autor, 2026-10-08). Die Lesart von `deferred`
+  und die fehlende Unterscheidung aktuell/ehemalig bei Zyklus 1 sind in der Arbeit als
+  Einschränkung zu nennen.
 
 ## E14 – Auffällige Einzelmonate
 
@@ -437,7 +503,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     Aktuelle Werte tragen in der Ansicht „aktuell, Stand …“. Fehlende Werte bleiben leer.
   - **Ticker:** aus `companies.ticker`; fehlt die Spalte oder der Wert, aus
     `company_metadata.json` über `company_id`, aber nur bei gleichem Namen. Neues Feld
-    `ticker_scope` in der Metadatei: „eigene Aktie“ oder „Konzernmutter“, ohne Ticker leer.
+    `ticker_scope` in der Metadatei: „eigene Aktie“ oder „Konzernmutter“, ohne Ticker leer
+    (seit 2026-10-08 auch „Konzerngesellschaft“, siehe Sonderfälle).
 - **Sonderfälle:**
   - **Konzernmutter:** Für NTT DATA SE wird der Kurs der NTT, Inc. (9432.T, Tokio, JPY)
     gezeigt (E6), `ticker_scope` „Konzernmutter“. Die Ansicht nennt das in Legende und
@@ -450,6 +517,15 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     zugeordnet; ob sich das Kununu-Profil auf die Meditec oder die nicht notierte Carl Zeiss
     AG bezieht, ist offen (E6). `ticker_scope` bleibt daher leer; die Ansicht nennt das
     Wertpapier („Carl Zeiss Meditec AG (AFX.DE)“).
+    **Entscheidung 2026-10-08 (Autor, D2, Option A):** Die Bewertungen beschreiben den
+    Gesamtkonzern (Belege in `docs/offene-punkte-vor-inkrement-4.md`, D2: Nennungen von SMT,
+    Oberkochen und Stiftung deutlich häufiger als Meditec; Profilpfad `carl-zeiss`). Der Ticker
+    AFX.DE bleibt, `ticker_scope` ist „Konzerngesellschaft“ (dritter erlaubter Wert,
+    `TICKER_SCOPES` in `backend/services/context_service.py`). Die Ansicht nennt in Legende,
+    Untertitel und Hinweis ausdrücklich „Kurs der börsennotierten Konzerngesellschaft Carl Zeiss
+    Meditec AG (AFX.DE), nicht des Gesamtkonzerns Carl Zeiss, den die Bewertungen beschreiben“.
+    Nicht gewählt: Ticker entfernen (hätte zusätzlich einen Schreibzugriff auf
+    `companies.ticker` verlangt) und „eigene Aktie“ (durch die Bewertungen nicht gedeckt).
 - **Begründung:** Der Monatsschluss passt zur Auflösung der Bewertungsreihe (Monatsmittel,
   E3). Bereinigte Kurse vermeiden Sprünge durch Splits, die wie Kursbewegungen aussähen. Der
   Zwischenspeicher macht die Ansicht unabhängig von der Erreichbarkeit von Yahoo Finance,
@@ -463,10 +539,12 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Umsatz reicht nur etwa vier Geschäftsjahre zurück (Stand 2026-10-04: 2022 bis 2025, bei
   NTT bis 03/2026), der Bewertungszeitraum meist weiter. Bereinigte Kurse ändern sich
   rückwirkend mit jeder Dividende; ein neuer Abruf kann ältere Werte leicht verschieben.
-  Ein Konzernkurs bildet ein Tochterunternehmen nur mittelbar ab.
+  Ein Konzernkurs bildet ein Tochterunternehmen nur mittelbar ab; umgekehrt bildet der Kurs
+  einer Konzerngesellschaft (Carl Zeiss Meditec AG) das Profil des Gesamtkonzerns nur zum Teil ab.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance für die Verwendung in der Arbeit (Abbildungen,
-  Weitergabe der Daten); Zuordnung Carl Zeiss; ob für Compugroup historische Kurse aus einer
-  anderen Quelle nachgetragen werden.
+  Weitergabe der Daten; Fundstellen und Fragen in `docs/nutzungsbedingungen.md`); ob für
+  Compugroup historische Kurse aus einer anderen Quelle nachgetragen werden. Die Zuordnung Carl
+  Zeiss ist seit 2026-10-08 entschieden (Sonderfälle).
 - **Nachtrag 2026-10-05 (Kurs auf der Anomalien-Seite):** Der Kurs ist auf der
   Anomalien-Detailseite wieder einblendbar, **Standard aus**. Hat das Unternehmen einen Ticker
   (Firmenliste), steht im Kopf des Abschnitts „Monatsverlauf“ das Kästchen „Aktienkurs“; der
@@ -543,8 +621,15 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance und Google News für die Arbeit (wie E7,
   E15); ob die Seite in der Evaluation (DZ3) gezeigt wird. Nachtrag 2026-10-05: Kurs und
   Kennzahlen gehören zum evaluierten Artefakt, die Zusatzkarten nicht (Rolle in der Arbeit);
-  offen bleibt, ob die Evaluationsinstanz mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut wird.
-- **Status:** vorläufig.
+  Nachtrag 2026-10-08: entschieden, siehe Entscheidung D3.
+- **Entscheidung 2026-10-08 (Autor, D3):** Die Evaluationsinstanz für die Interviews (DZ3) wird
+  mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut (Variante B in `docs/evaluationsinstanz.md`). Die
+  Befragten sehen auf `/aktie` nur Kurs, Kurs mit Bewertungsverlauf und die Kennzahlen aus
+  FA-15 mit dem festen Hinweis; `/finance` und `/news` werden nicht abgerufen. Die Zusatzkarten
+  bleiben im Standardbau außerhalb der Evaluation erhalten. Der Hinweistext des Eintrags „Aktie“
+  in der Seitenleiste richtet sich seit 2026-10-08 nach dem Schalter. Einstellungen und die
+  Prüfliste für den Tag vor einem Interview stehen in `docs/evaluationsinstanz.md`.
+- **Status:** vorläufig (Nutzungsbedingungen offen); Evaluationsinstanz entschieden.
 
 ## E17 – Freier Drill-down und Vergleich mit dem Zeitraum davor
 
