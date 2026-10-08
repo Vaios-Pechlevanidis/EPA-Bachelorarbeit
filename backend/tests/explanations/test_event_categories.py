@@ -42,9 +42,9 @@ class TestRepositoryFile:
         assert [c["id"] for c in other] == [ec.NON_EMPLOYER_ID]
         assert len({c["id"] for c in categories}) == len(categories)
 
-    def test_all_unconfirmed_before_phase_b(self, categories):
-        """Test: Vorschläge des Entwicklers, alle unbestätigt (Bestätigung folgt in B1)."""
-        assert all(c["confirmed"] is False for c in categories)
+    def test_all_confirmed_by_the_author(self, categories):
+        """Test: alle Ereignisarten vom Autor bestätigt (D1, 2026-10-08, Phase B1)."""
+        assert all(c["confirmed"] is True for c in categories)
 
     def test_topics_are_e10_topics(self, raw, categories):
         """Test: jedes zugeordnete Thema ist ein Schlüsselwort-Thema aus E10; nichts geht beim Laden verloren."""

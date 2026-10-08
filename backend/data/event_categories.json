@@ -10,10 +10,10 @@
       "keywords_en": "Englische Schlüsselwörter, gleiche Regeln.",
       "topics": "Zugeordnete Themen aus E10 (Namen wie in keyword_topic_service, Mitarbeitende; bei Bewerbenden nur die dort vorhandenen). category_match ist 1, wenn sich eines dieser Themen im Vorher-Nachher-Vergleich merklich verschoben hat (ohne kleine Basis), sonst 0,5.",
       "eqs_categories": "Nur in der Gruppe ohne Arbeitgeberbezug: EQS-Kategorien, die ohne Blick auf den Titel dieser Gruppe zugeordnet werden.",
-      "confirmed": "false = Vorschlag des Entwicklers; der Autor setzt true, wenn er Ereignisart, Schlüsselwörter und Themen übernimmt (Phase B, B1)."
+      "confirmed": "false = Vorschlag des Entwicklers; true = vom Autor übernommen (Ereignisart, Schlüsselwörter und Themen)."
     },
     "regeln": "Trifft mindestens eine Ereignisart mit Arbeitgeberbezug, gilt die mit den meisten getroffenen Schlüsselwörtern (bei Gleichstand die erste in der Datei). Die Gruppe ohne Arbeitgeberbezug gilt, wenn keine Ereignisart mit Arbeitgeberbezug trifft oder wenn sie mehr Treffer hat als jede Ereignisart mit Arbeitgeberbezug (zum Beispiel ein Spielbericht mit 'Trainer', 'Niederlage' und 'Pokal' gegen ein einzelnes 'muss gehen'); bei Gleichstand hat der Arbeitgeberbezug Vorrang. Die Schlüsselwörter sind Setzungen; deutsche Wörter greifen bei englischen Titeln nicht und umgekehrt, deshalb beide Listen. Mehrdeutige Einzelwörter (etwa 'übernimmt', 'kauft', 'betrug', 'hybrid', 'pleite') wurden nach einer Zählung über den Belegspeicher vom 2026-10-08 durch Wortfolgen ersetzt.",
-    "stand": "Vorschläge vom 2026-10-08 (zwölf Ereignisarten mit Arbeitgeberbezug und eine Gruppe ohne), nach der Zählung über den Belegspeicher nachgeschärft, alle unbestätigt."
+    "stand": "Vorschläge vom 2026-10-08 (zwölf Ereignisarten mit Arbeitgeberbezug und eine Gruppe ohne), nach der Zählung über den Belegspeicher nachgeschärft; am 2026-10-08 vom Autor bestätigt (D1, Inkrement 5). Festgeschrieben für die Auswertung (scripts/report_explanation_validity.py): Änderungen an Ereignisarten, Schlüsselwörtern oder Zuordnungen nur mit dokumentiertem Grund in docs/entscheidungen.md."
   },
   "categories": [
     {
@@ -129,7 +129,7 @@
         "Karriere & Weiterbildung",
         "Image"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "fuehrungswechsel",
@@ -222,7 +222,7 @@
         "Vorgesetztenverhalten",
         "Kommunikation"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "uebernahme_verkauf",
@@ -345,7 +345,7 @@
         "Kommunikation",
         "Arbeitsatmosphäre"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "tarif_streik",
@@ -417,7 +417,7 @@
         "Arbeitsbedingungen",
         "Kommunikation"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "standort",
@@ -505,7 +505,7 @@
         "Arbeitsbedingungen",
         "Arbeitsatmosphäre"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "verguetung",
@@ -581,7 +581,7 @@
       "topics": [
         "Gehalt & Sozialleistungen"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "arbeitsmodell",
@@ -670,7 +670,7 @@
         "Work-Life Balance",
         "Arbeitsbedingungen"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "rechtsstreit_compliance",
@@ -794,7 +794,7 @@
         "Vorgesetztenverhalten",
         "Gleichberechtigung"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "arbeitgeberauszeichnung",
@@ -849,7 +849,7 @@
       "topics": [
         "Image"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "krise_geschaeftslage",
@@ -955,7 +955,7 @@
         "Karriere & Weiterbildung",
         "Kommunikation"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "einstellung_wachstum",
@@ -1065,7 +1065,7 @@
         "Erwartbarkeit des Prozesses",
         "Schnelle Antwort"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "unternehmenskultur",
@@ -1150,7 +1150,7 @@
         "Work-Life Balance",
         "Wertschätzende Behandlung"
       ],
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "ohne_arbeitgeberbezug",
@@ -1375,7 +1375,7 @@
         "Related Party Transactions"
       ],
       "topics": [],
-      "confirmed": false
+      "confirmed": true
     }
   ]
 }

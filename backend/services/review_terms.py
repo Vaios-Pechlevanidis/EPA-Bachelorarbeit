@@ -8,7 +8,8 @@ Bewertungen des Fensters danach deutlich häufiger vorkommen als in denen des
 Fensters davor (Fenster nach E12, für die freie Auswahl nach E17), gezählt je
 Bewertung (eine Bewertung zählt je Begriff einmal, egal wie oft sie ihn nennt).
 
-Regeln (vorläufig, Setzungen; alle Schwellen stehen als Konstanten oben):
+Regeln (Setzungen, vom Autor am 2026-10-08 bestätigt; alle Schwellen stehen als
+Konstanten unten):
 
 - Gezählt werden die Freitexte und der Titel einer Bewertung
   (``TERM_TEXT_FIELDS``), nicht die Jobbezeichnung (sie nennt Positionen wie
@@ -52,6 +53,8 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 
 from services.review_service import clean_html_text
 
+# Schwellen vom Autor am 2026-10-08 bestätigt (D2, Inkrement 5) und für die Auswertung
+# festgeschrieben; tests/explanations/test_frozen_rules.py hält die Werte fest.
 MIN_TERM_LENGTH = 3            # kürzere Wörter zählen nicht
 TERM_MIN_REVIEWS_AFTER = 3     # mindestens so viele Bewertungen mit dem Begriff danach
 TERM_MIN_SHARE_AFTER = 0.03    # mindestens dieser Anteil der Bewertungen danach nennt den Begriff

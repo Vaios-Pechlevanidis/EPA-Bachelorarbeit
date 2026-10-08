@@ -53,7 +53,8 @@ erreicht kein Bündel die Stufe niedrig, ist die Liste leer und der Zustand
 ``offen``. Zusätzlich, ohne Einfluss auf die Stufe: die Stimmung des Titels
 über den ``SentimentAnalyzer`` und ob sie zur Richtung der Veränderung passt.
 
-Alle Schwellen sind Setzungen (vorläufig). Alle Funktionen sind rein; nur
+Alle Schwellen sind Setzungen, vom Autor am 2026-10-08 bestätigt (D2) und für
+die Auswertung festgeschrieben. Alle Funktionen sind rein; nur
 ``title_sentiment`` ruft den übergebenen Analyzer.
 """
 
@@ -71,7 +72,11 @@ from services.review_terms import COMPANY_PREFIX_MIN_LENGTH, match_terms, term_s
 
 _TITLE_WORD_RE = re.compile(r"[a-zäöüß0-9&]+")
 
-# ── Schwellen und Regeln (Setzungen, vorläufig; nur hier) ────────────────────
+# ── Schwellen und Regeln (Setzungen; nur hier) ───────────────────────────────
+# Vom Autor am 2026-10-08 bestätigt (D2, Inkrement 5) und für die Auswertung
+# (scripts/report_explanation_validity.py) festgeschrieben: Änderungen nur mit
+# dokumentiertem Grund in docs/entscheidungen.md; tests/explanations/
+# test_frozen_rules.py hält die Werte fest.
 
 TERM_MATCH_PER_TERM = 0.5        # jeder kennzeichnende Begriff im Titel
 TERM_MATCH_STRONG = 1.0          # ein starker Begriff zählt voll
