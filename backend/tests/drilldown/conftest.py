@@ -15,6 +15,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from _helpers import analytics_client  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def no_evidence_fetch(tmp_path, monkeypatch):
+    """Erklärungsansätze (Inkrement 5) lesen den Belegspeicher: hier ein leerer Speicher in
+    tmp_path, kein Abruf, keine allgemeinen Ereignisse (eigene Tests in tests/explanations)."""
+    import services.evidence_service as ev
+
+    monkeypatch.setenv(ev.LIVE_FETCH_ENV, "0")
+    monkeypatch.setattr(ev, "STORE_DIR", tmp_path / "belege")
+    monkeypatch.setattr(ev, "GLOBAL_EVENTS_PATH", tmp_path / "keine_ereignisse.json")
+
+
 @pytest.fixture(scope="module")
 def api(in_memory_db):
     """TestClient mit Analytics-Router gegen den In-Memory-Store."""

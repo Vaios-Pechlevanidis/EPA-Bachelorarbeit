@@ -53,8 +53,9 @@ class TestCompareRoute:
     def test_shape_and_counts(self, client):
         body = client.get(URL.format(1), params={"from": "2024-03", "to": "2024-08"}).json()
         assert set(body) == {"company_id", "source", "dimension", "status", "dimension_topic", "selection", "windows",
-                             "comparison", "explanations"}
+                             "comparison", "explanations", "explanation_summary"}
         assert body["selection"] == {"from": "2024-03", "to": "2024-08"} and body["explanations"] == []
+        assert body["explanation_summary"]["state"] == "offen"
         rows = store_rows("employee", 1)
         for side in ("before", "after"):
             w = body["windows"][side]

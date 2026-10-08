@@ -40,9 +40,10 @@ class TestShape:
         assert res.status_code == 200
         body = res.json()
         assert set(body) == {"company_id", "source", "dimension", "status", "dimension_topic", "anomaly", "windows",
-                             "comparison", "explanations"}
+                             "comparison", "explanations", "explanation_summary"}
         assert body["dimension_topic"] is None  # Gesamtbewertung
         assert body["explanations"] == [] and body["status"] is None
+        assert body["explanation_summary"]["state"] == "offen", "leerer Belegspeicher, kein Abruf"
         assert body["anomaly"]["id"] == anomaly_id
         assert set(body["windows"]) == {"window_months", "before", "after"}
         assert body["windows"]["before"]["to"] < body["anomaly"]["date"] == body["windows"]["after"]["from"]

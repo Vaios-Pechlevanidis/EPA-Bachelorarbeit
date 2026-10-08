@@ -7,6 +7,7 @@ import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, Outlie
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
 import { EventsToggle, EvidenceSection } from "@/components/dashboard/EvidenceSection"
+import { ExplanationPanel } from "@/components/dashboard/ExplanationPanel"
 import { MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
@@ -52,6 +53,11 @@ import { loadCompany, loadCompanyName } from "@/lib/companies"
    "Allgemeine Ereignisse" (?ereignisse=an, Standard aus) blendet bestätigte
    allgemeine Ereignisse als Flächen in den Monatsverlauf ein, beschriftet als
    "Allgemeines Ereignis, Hypothese".
+   Erklärungsansätze (Inkrement 5): Über der Belegliste steht der Abschnitt
+   "Mögliche Zusammenhänge" (ExplanationPanel) mit den Erklärungsansätzen aus
+   der Antwort des Vergleichs (explanations, explanation_summary); die
+   Belegliste erhält daraus Stufe und Ereignisart je Beleg, eine Umschaltung
+   der Sortierung (Datum, Relevanz) und einen Filter nach Ereignisart.
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -503,14 +509,24 @@ export default function AnomaliesPage() {
                             </div>
                         )}
 
-                        {/* Externe Belege im Ereignisfenster der ausgewählten Veränderung (Inkrement 4) */}
+                        {/* Erklärungsansätze (Inkrement 5) und externe Belege (Inkrement 4) der ausgewählten Veränderung */}
                         {selectedAnomaly && (
-                            <EvidenceSection
-                                companyId={companyId}
-                                anomalyId={selectedAnomaly.id}
-                                group={{ source, dimension, status }}
-                                eyebrow={`EXTERNE BELEGE · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
-                            />
+                            <>
+                                <ExplanationPanel
+                                    data={comparison.data}
+                                    loading={comparison.loading}
+                                    error={comparison.error}
+                                    eyebrow={`ERKLÄRUNGSANSÄTZE · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                />
+                                <EvidenceSection
+                                    companyId={companyId}
+                                    anomalyId={selectedAnomaly.id}
+                                    group={{ source, dimension, status }}
+                                    eyebrow={`EXTERNE BELEGE · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    scores={comparison.data?.explanation_summary?.item_scores ?? null}
+                                    rules={comparison.data?.explanation_summary?.rules ?? null}
+                                />
+                            </>
                         )}
 
                         {/* Freie Auswahl (E17): Vergleich mit dem Zeitraum davor und Bewertungen */}
@@ -572,15 +588,25 @@ export default function AnomaliesPage() {
                             </div>
                         )}
 
-                        {/* Externe Belege zur Auswahl bzw. zum ausgewählten Einzelmonat (Inkrement 4) */}
+                        {/* Erklärungsansätze (Inkrement 5) und externe Belege (Inkrement 4) zur Auswahl bzw. zum Einzelmonat */}
                         {selection && (
-                            <EvidenceSection
-                                companyId={companyId}
-                                anomalyId={selectedOutlier?.id ?? null}
-                                selection={selectedOutlier ? null : selection}
-                                group={{ source, dimension, status }}
-                                eyebrow={`EXTERNE BELEGE · ${selectedOutlier ? "EINZELMONAT" : "AUSWAHL"} ${selectionLabel(selection).toUpperCase()}`}
-                            />
+                            <>
+                                <ExplanationPanel
+                                    data={periodComparison.data}
+                                    loading={periodComparison.loading}
+                                    error={periodComparison.error}
+                                    eyebrow={`ERKLÄRUNGSANSÄTZE · ${selectedOutlier ? "EINZELMONAT" : "AUSWAHL"} ${selectionLabel(selection).toUpperCase()}`}
+                                />
+                                <EvidenceSection
+                                    companyId={companyId}
+                                    anomalyId={selectedOutlier?.id ?? null}
+                                    selection={selectedOutlier ? null : selection}
+                                    group={{ source, dimension, status }}
+                                    eyebrow={`EXTERNE BELEGE · ${selectedOutlier ? "EINZELMONAT" : "AUSWAHL"} ${selectionLabel(selection).toUpperCase()}`}
+                                    scores={periodComparison.data?.explanation_summary?.item_scores ?? null}
+                                    rules={periodComparison.data?.explanation_summary?.rules ?? null}
+                                />
+                            </>
                         )}
                     </>
                 )}

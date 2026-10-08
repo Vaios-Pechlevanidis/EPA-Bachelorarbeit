@@ -836,3 +836,188 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Grenzen:** Ein zeitliches Zusammentreffen ist keine Erklärung; auch sechs Monate treffen
   mehrere Fenster. Die Liste ist eine Auswahl, keine Vollständigkeit.
 - **Status:** vorläufig (Dauergrenze ist eine Setzung); sechs Ereignisse bestätigt (2026-10-08).
+
+## E21 – Erklärungsansätze: Signale und Stufen (Inkrement 5)
+
+- **Kontext:** Inkrement 4 zeigt zu jeder Markierung die zeitlich nahen Meldungen; der Befund aus
+  E18 lautet, dass 28 von 28 Markierungsfenstern und 76 von 76 Vergleichsfenstern Belege haben
+  und die zeitliche Nähe allein nicht unterscheidet. Inkrement 5 soll aus den Belegen
+  **Erklärungsansätze** machen: ein Erklärungsansatz ist ein möglicher Zusammenhang zwischen einer
+  auffälligen Veränderung und einem extern belegten Ereignis, begründet durch zeitliche und
+  thematische Korrespondenz. Er ist nie eine Ursache; die Oberfläche zeigt immer, worauf die
+  Einstufung beruht. Es liegen nur Titel vor, keine Volltexte (E7).
+- **Entscheidung (Autor, 2026-10-08, D2):** Je Beleg drei Signale von 0 bis 1, alle aus dem
+  Titel und den Bewertungen berechnet (`backend/services/explanation_ranking.py`,
+  `backend/services/review_terms.py`; alle Schwellen stehen dort als benannte Konstanten):
+  - `term_match`: kennzeichnende Begriffe der Bewertungen, die im Titel stehen. Ein Begriff ist
+    kennzeichnend, wenn ihn mindestens 3 Bewertungen und mindestens 3 % der Bewertungen des
+    Fensters danach (E12, für die freie Auswahl E17) nennen und sein Anteil danach mindestens
+    doppelt so groß ist wie davor; gezählt werden Freitexte und Titel der Bewertungen (nicht die
+    Jobbezeichnung), ohne Stoppwörter, allgemeine Bewertungswörter und die Wortteile des
+    Unternehmensnamens (auch als Wortanfang ab 5 Zeichen); bei kleiner Basis (ein Fenster unter
+    10 Bewertungen) gibt es keine Begriffe; höchstens 50 je Vergleich. Ein Titel nennt einen
+    Begriff bei gleichem Wort oder gleichem Wortanfang ab 6 Zeichen. Jeder Begriff zählt 0,5, ein
+    starker Begriff (mindestens 5 Bewertungen danach, Anteil mindestens dreifach und mindestens
+    5 Prozentpunkte über davor) 1; Summe höchstens 1. Zu jedem Treffer werden Begriff und Anzahl
+    der Bewertungen davor und danach festgehalten.
+  - `category_match`: Ereignisart mit Arbeitgeberbezug aus dem Titel (E22). 1, wenn sich ein
+    zugeordnetes Thema im Vorher-Nachher-Vergleich um mindestens 5 Prozentpunkte verschoben hat
+    und keine kleine Basis vorliegt; 0,5, wenn nur die Ereignisart erkannt wird; sonst 0.
+  - `time_match`: 1 im Monat vor dem Übergang und im Übergang bis zum markierten Monat, davor
+    linear abnehmend zum Rand des Fensters (bei 3 Monaten davor: 0,67 und 0,33), im Monat nach dem
+    markierten Monat 0,5 und weiter abnehmend. Für Einzelmonat und freie Auswahl gilt dasselbe um
+    den Monat bzw. die Auswahl; für ein Vergleichsfenster (E18) gilt der Vergleichsanker wie ein
+    markierter Monat.
+  - `topic_match` ist das Maximum aus `term_match` und `category_match`.
+  - **Stufen** nach festen Regeln, nicht aus einer gewichteten Summe: **hoch** bei
+    `topic_match ≥ 1` und `time_match ≥ 1`; **mittel** bei `topic_match ≥ 1` und
+    `time_match ≥ 0,5` oder bei `topic_match ≥ 0,5` und `time_match ≥ 1`; **niedrig** bei
+    `topic_match ≥ 0,5` und `time_match ≥ 0,3`; sonst **keine**. Zeitliche Nähe allein genügt nie.
+    Die Gruppe ohne Arbeitgeberbezug (E22) stuft eine Stufe zurück.
+  - **Bündelung:** Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens 3 Tage Abstand
+    zur frühesten Meldung, Jaccard-Ähnlichkeit der Begriffe zweier Titel mindestens 0,5) werden
+    ein Eintrag mit Anzahl der Meldungen und Herausgebern; Stellvertreter ist die
+    Ad-hoc-Mitteilung, sonst die früheste Meldung; für das Bündel gelten die höchsten Signale
+    seiner Meldungen.
+  - **Sortierung:** Stufe, dann Quellenart (Ad-hoc vor Meldung; die Quellenart ordnet nur
+    innerhalb einer Stufe), dann `topic_match`, `time_match`, Anzahl der Meldungen, Datum.
+    Höchstens fünf Einträge; erreicht kein Bündel die Stufe niedrig, ist die Liste leer und der
+    Zustand „offen“ mit dem Hinweis, dass interne Auslöser von außen nicht sichtbar sind.
+  - **Stimmung des Titels** über den vorhandenen `SentimentAnalyzer` (E11) nur für die obersten
+    fünf Einträge, mit dem Vermerk, ob sie zur Richtung der Veränderung passt (bei einer freien
+    Auswahl folgt die Richtung aus `rating_shift`); ohne Einfluss auf die Stufe. Die
+    Stimmungsanalyse der Bewertungen wird nicht erneut berechnet. Allgemeine Ereignisse (E20)
+    bleiben außen vor (Hypothese).
+  - **Textbausteine** der Begründung nennen Anzahl der Meldungen, Ereignisart, Lage im Fenster,
+    Begriffe mit Zählungen und Themenverschiebung; ein Test sichert, dass kein Baustein Ursache,
+    Auslöser, Grund, weil oder führte enthält. Fester Hinweis in der Oberfläche: „Die Einstufung
+    beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine Ursachen.“
+  - **Schnittstelle:** `GET …/anomalies/{id}/explanations` und `GET …/compare` (Veränderung,
+    Einzelmonat als Auswahl von = bis, freie Auswahl) füllen `explanations` und
+    `explanation_summary` (Zustand, Fenster, Stand je Quelle, Begriffe, Signale je Beleg für die
+    Belegliste, Regeln). Ein Fehler in diesem Teil ergibt den Zustand offen mit Fehlertext, nie
+    einen Fehler der Route; eine Sperre je Monat verhindert, dass Belegliste und
+    Erklärungsansätze denselben Monat zugleich abrufen. Zusätzlich je Beleg das Kennzeichen, ob der
+    Titel das Unternehmen nennt (Hinweis auf fremde Treffer, ohne Einfluss auf die Stufe).
+- **Begründung:** Feste Regeln sind nachvollziehbar und in der Oberfläche begründbar; eine
+  gewichtete Summe würde die Gewichte zur Aussage machen. Die Begriffe kommen aus den Bewertungen
+  selbst, nicht aus einer Wortliste; so bleibt der Bezug zum Text der Bewertenden sichtbar. Ein
+  Lauf über die 19 Niveauwechsel vor dem Festschreiben (2026-10-08) ergab, dass Begriffe aus der
+  Jobbezeichnung („student“, „product“), Namensvorsilben („deutschen“ bei Deutsche Telekom) und
+  generische Wörter („neue“, „top“) `term_match` 1 erreichten; daraus folgen Mindestanteil,
+  kleine Basis, Namensteile als Wortanfang und die erweiterte Wortliste. Die Zeitfunktion folgt
+  E18: der Monat vor dem Übergang und der Übergang sind der Kern des Fensters. Die Quellenart
+  ordnet nur innerhalb einer Stufe, damit eine Ad-hoc-Mitteilung ohne Wortbezug nicht über eine
+  Meldung mit Wortbezug steigt (E19).
+- **Grenzen:** Es liegen nur Titel vor; eine Meldung mit passendem Inhalt und unpassendem Titel
+  bleibt unerkannt. Deutsche Begriffe greifen bei englischen Titeln nicht und umgekehrt
+  (Begriffe aus deutschen Bewertungen treffen englische EQS-Titel kaum). Das Stimmungsmodell ist
+  an Bewertungen geprüft, nicht an Schlagzeilen (E11); seine Stimmung ist deshalb nur ein Vermerk.
+  Alle Schwellen sind Setzungen; eine Verschiebung von 5 Prozentpunkten ist in großen Fenstern
+  häufig, deshalb erreichen dort viele Belege `category_match` 1 (SAP SE, Anstieg ab 2024-07:
+  33 Bündel der Stufe hoch unter 362 Belegen). Die Bündelung mit Jaccard 0,5 fasst Meldungen
+  selten zusammen (362 Belege, 353 Bündel), weil Schlagzeilen zum selben Ereignis verschieden
+  formuliert sind. Fremde Treffer des Suchbegriffs (E18) können hoch eingestuft werden; das
+  Kennzeichen „Unternehmen im Titel nicht genannt“ macht das sichtbar, entscheidet aber nicht.
+- **Status:** Schwellen und Regeln vom Autor am 2026-10-08 bestätigt (D2) und für die Auswertung
+  (E23) festgeschrieben (`backend/tests/explanations/test_frozen_rules.py`); Änderungen nur mit
+  dokumentiertem Grund.
+
+## E22 – Ereignisarten mit Arbeitgeberbezug und Zuordnung zu Themen (Inkrement 5)
+
+- **Kontext:** Für `category_match` (E21) braucht jede Meldung eine Ereignisart aus dem Titel,
+  und jede Ereignisart eine Verbindung zu den Themen des Vorher-Nachher-Vergleichs (E10).
+- **Entscheidung (Autor, 2026-10-08, D1):** `backend/data/event_categories.json` führt zwölf
+  Ereignisarten mit Arbeitgeberbezug und eine Gruppe ohne, je mit Kennung, Bezeichnung,
+  Schlüsselwörtern deutsch und englisch, zugeordneten Themen aus E10 und `confirmed`:
+  Personalabbau und Restrukturierung (Arbeitsatmosphäre, Kommunikation, Karriere & Weiterbildung,
+  Image); Führungswechsel (Vorgesetztenverhalten, Kommunikation); Übernahme, Fusion und Verkauf
+  (Image, Kommunikation, Arbeitsatmosphäre); Tarifverhandlung und Streik (Gehalt &
+  Sozialleistungen, Arbeitsbedingungen, Kommunikation); Standort (Arbeitsbedingungen,
+  Arbeitsatmosphäre); Vergütung und Sozialleistungen (Gehalt & Sozialleistungen); Arbeitsmodell
+  (Work-Life Balance, Arbeitsbedingungen); Rechtsstreit, Compliance und Skandal (Image, Umwelt- &
+  Sozialbewusstsein, Vorgesetztenverhalten, Gleichberechtigung); Arbeitgeberauszeichnung und
+  Ranking (Image); Krise und Geschäftslage (Arbeitsatmosphäre, Image, Karriere & Weiterbildung,
+  Kommunikation); Einstellungen und Ausbildung (Karriere & Weiterbildung, Image, Interessante
+  Aufgaben; Bewerbende: Erwartbarkeit des Prozesses, Schnelle Antwort); Unternehmenskultur,
+  Gleichstellung und Diversität (Gleichberechtigung, Arbeitsatmosphäre, Vorgesetztenverhalten,
+  Work-Life Balance; Bewerbende: Wertschätzende Behandlung). Die Gruppe **ohne Arbeitgeberbezug**
+  (Börsenbericht, Kursziel, Sport, Produkt; dazu die EQS-Kategorien Directors' Dealings,
+  Stimmrechte, sonstige Kapitalmarktinformationen, Related Party Transactions) hat keine Themen und
+  stuft Belege eine Stufe zurück.
+  - Schlüsselwörter sind klein geschrieben und werden als Wortanfang gesucht („streik“ trifft
+    „Streikwelle“); mehrere Wörter mit Leerzeichen, `*` steht für bis zu drei Wörter dazwischen
+    („streicht * stellen“); Bindestriche im Titel gelten als Leerzeichen.
+  - Trifft mehr als eine Ereignisart, gilt die mit den meisten Schlüsselwörtern (bei Gleichstand
+    die erste in der Datei). Die Gruppe ohne Arbeitgeberbezug gilt, wenn keine Ereignisart trifft
+    oder wenn sie mehr Treffer hat als jede Ereignisart (Spielbericht mit „Trainer“, „Niederlage“,
+    „Pokal“ gegen ein einzelnes „muss gehen“); bei Gleichstand hat der Arbeitgeberbezug Vorrang.
+  - Umsetzung: `backend/services/event_categories.py` (Laden mit Prüfung der Themen gegen E10,
+    Zuordnung eines Titels).
+- **Begründung:** Die Ereignisarten decken die Ereignisse ab, die die Literatur zu
+  Arbeitgeberbewertungen und die Belege aus Inkrement 4 nahelegen; die Themenzuordnung stellt
+  die Meldung neben die Verschiebung derselben Kategorie, die das Dashboard schon zeigt (E10).
+  Eine Zählung über alle 18 936 gespeicherten Titel (2026-10-08, nur Zahlen) zeigte, dass
+  mehrdeutige Einzelwörter („übernimmt“, „kauft“, „verkauft“, „betrug“ als Verb, „hybrid“ bei
+  Cloud, „pleite“ und „Abgang“ im Sport, „plan“, das „plant“ trifft) massenhaft trafen; sie
+  wurden durch Wortfolgen ersetzt, und die Gruppe ohne Arbeitgeberbezug erhielt
+  Fußballvokabular. Umwelt und Energiewende wurden bewusst nicht als Ereignisart aufgenommen,
+  weil sie bei E.ON und RWE fast jede Meldung träfen.
+- **Grenzen:** Die Schlüsselwörter sind Setzungen; deutsche Wörter greifen bei englischen Titeln
+  nicht und umgekehrt, deshalb beide Listen. Die Zuordnung sieht nur den Titel; ein Titel ohne
+  Schlüsselwort hat keine Ereignisart. Die Themenzuordnung ist breit (bis zu vier Themen je
+  Ereignisart), damit erreicht eine erkannte Ereignisart in großen Fenstern oft
+  `category_match` 1. Fremde Treffer des Suchbegriffs (Rot-Weiss Essen im RWE-Speicher, eine
+  Telekom-Meldung bei Compugroup) tragen eine Ereignisart wie jede andere Meldung; ein
+  Ausschlussbegriff in `company_metadata.json` wäre eine Entscheidung nach E18.
+- **Status:** vom Autor am 2026-10-08 bestätigt (D1) und festgeschrieben; Änderungen nur mit
+  dokumentiertem Grund.
+
+## E23 – Auswertung der Erklärungsansätze: Markierungs- gegen Vergleichsfenster (Inkrement 5)
+
+- **Kontext:** Nach E18 hat fast jedes Fenster Belege; ob die thematische Korrespondenz (E21)
+  Markierungsfenster von verschobenen Vergleichsfenstern desselben Unternehmens unterscheidet,
+  war offen. NFA-05 (Anforderungstext nicht im Repository) wird für diese Auswertung als
+  **Abdeckungsquote** gelesen: Anteil der vollständig im Speicher liegenden Markierungsfenster
+  mit mindestens einem Erklärungsansatz der Stufe niedrig oder höher (Autor, 2026-10-08).
+- **Entscheidung (2026-10-08):** `backend/scripts/report_explanation_validity.py` rechnet für
+  jedes Markierungsfenster (Niveauwechsel und Einzelmonate, Mitarbeitende, Gesamtbewertung,
+  Standardparameter) und jedes Vergleichsfenster aus E18 dieselbe Rangfolge wie die Oberfläche:
+  Belege allein aus dem Speicher, Begriffe und Themenverschiebung aus den Bewertungen der
+  Vergleichsfenster nach E12 (Einzelmonat und sein Vergleichsfenster nach E17, Auswahl = der
+  Monat), ohne Stimmung der Titel; für ein Vergleichsfenster gilt der Vergleichsanker wie ein
+  markierter Monat. Die Auswertung lief **genau einmal** mit den bestätigten Ereignisarten und
+  Schwellen (D1, D2); Zahlen in
+  `backend/data/calibration/explanation_validity_2026-10-08.json`, Tabellen in
+  `docs/feature-doku/08-erklaerungsansaetze.md`. Nur Zahlen, beschreibend, keine
+  Signifikanzaussage.
+- **Befund (2026-10-08):** 28 von 28 Markierungs- und 76 von 76 Vergleichsfenstern liegen
+  vollständig im Speicher. Mindestens einen Erklärungsansatz haben 23 von 28 Markierungsfenstern
+  (82 %) und 58 von 76 Vergleichsfenstern (76 %); mindestens ein Bündel der Stufe hoch 6 von 28
+  (21 %) gegen 16 von 76 (21 %), der Stufe mittel 18 von 28 (64 %) gegen 47 von 76 (62 %), der
+  Stufe niedrig 18 von 28 (64 %) gegen 42 von 76 (55 %). Oberste Stufe je Fenster: Markierungen
+  hoch 6, mittel 14, niedrig 3, offen 5; Vergleich hoch 16, mittel 35, niedrig 7, offen 18.
+  Niveauwechsel 14 von 19 (74 %) gegen 38 von 51 (75 %), Einzelmonate 9 von 9 gegen 20 von 25
+  (80 %). Kennzeichnende Begriffe gibt es in 16 von 28 Markierungs- und 43 von 76
+  Vergleichsfenstern (je 57 %), Median 1,5 gegen 1 Begriff; Median der Belege 45 gegen 47,5.
+  **Abdeckungsquote nach NFA-05: 23 von 28 (82 %)**, Niveauwechsel 14 von 19, Einzelmonate 9 von
+  9; offen bleiben drei Niveauwechsel von NTT DATA SE (1 bis 2 Belege im Fenster) und zwei von
+  Freenet (2015-10, 2022-02). **Die Rangfolge unterscheidet Markierungsfenster nicht erkennbar
+  von Vergleichsfenstern:** die Anteile liegen in derselben Größenordnung, je Unternehmen mal
+  über, mal unter dem Vergleich (Bechtle 1 von 1 gegen 0 von 3, Cancom 2 von 2 gegen 1 von 6,
+  NTT DATA 1 von 4 gegen 6 von 10).
+- **Lesart:** Ein Vergleichsfenster ist kein ereignisfreier Zeitraum; es enthält Meldungen
+  desselben Unternehmens ein oder zwei Jahre vor oder nach der Markierung, und auch dort gibt es
+  Führungswechsel, Übernahmen und Verschiebungen in den Bewertungen. Dass die Anteile gleich
+  sind, heißt, dass die Signale aus Titeln und Wortbezügen in diesem Datenbestand nicht
+  anzeigen, ob ein Fenster eine Markierung trägt; es heißt nicht, dass ein einzelner
+  Erklärungsansatz falsch ist. Die Ansicht bleibt deshalb bei „möglicher Zusammenhang“, und die
+  Stufe ist immer mit ihren Signalen zu lesen.
+- **Grenzen:** 7 der 9 Einzelmonate haben weniger als 10 Bewertungen im Monat (kleine Basis);
+  dort gibt es keine Begriffe, die Ansätze beruhen allein auf der Ereignisart. Nur Titel, nur
+  Mitarbeitende und Gesamtbewertung, 11 Unternehmen mit Markierungen, kleine Zahlen je
+  Unternehmen. Die Stimmung der Titel wurde nicht berechnet. Ein Unterschied oder dessen Fehlen
+  sagt nichts über Ursachen.
+- **Status:** Auswertung einmal gelaufen (2026-10-08); Ereignisarten und Schwellen danach
+  festgeschrieben (E21, E22). Eine Änderung der Schwellen nach diesem Lauf braucht einen
+  dokumentierten Grund und einen neuen, getrennt abgelegten Lauf.

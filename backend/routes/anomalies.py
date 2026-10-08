@@ -141,8 +141,27 @@ def get_anomaly_explanations(
                                      "after": {...}, "share_shift_pp", "polarity_shift",
                                      "low_basis"}, ...],
                          "low_basis", "low_basis_rule", "sentiment_mode", "sentiment_sample"},
-          "explanations": []                      # folgt in Inkrement 5
+          "explanations": [{"rank", "confidence",  # hoch | mittel | niedrig (Inkrement 5, höchstens fünf)
+                            "event", "date", "source", "url", "source_type", "reliability", "language", "issuer",
+                            "n_items", "publishers", "items": [...],          # gebündelte Meldungen
+                            "time_match", "topic_match", "term_match",
+                            "terms": [{"term", "word", "before", "after", "strong"}, ...],
+                            "category": {"id", "label", "employer_related", "keywords", "topics", "match",
+                                         "shifted_topics"} | null,
+                            "time_phrase", "sentiment": {"label", "polarity", "fits_direction"} | null,
+                            "text"}, ...],
+          "explanation_summary": {"state": "ansaetze" | "offen", "kind", "window", "n_items", "n_bundles",
+                                  "n_by_stage", "terms", "item_scores", "sources", "coverage", "reason",
+                                  "error", "note", "open_note", "rules", "direction"}
         }
+
+    **Erklärungsansätze (Inkrement 5):** Die Belege des Ereignisfensters (E18) werden
+    nach zeitlicher Nähe und thematischer Korrespondenz (kennzeichnende Begriffe der
+    Bewertungen im Titel, Ereignisart mit Themenverschiebung) in Stufen eingeteilt;
+    Meldungen zum selben Ereignis sind gebündelt. Erreicht kein Beleg die Stufe
+    niedrig, ist ``explanations`` leer und ``explanation_summary.state`` ``offen``.
+    ``item_scores`` nennt je Beleg Stufe, Signale, Ereignisart und Rang für die
+    Belegliste. Ein Erklärungsansatz ist ein möglicher Zusammenhang, keine Ursache.
 
     Der Vergleich beschreibt Veränderungen in den Bewertungen, keine Ursachen.
     Unbekannte ``anomaly_id``: 404; ungültige Quelle, Dimension oder Status: 400.
@@ -174,8 +193,10 @@ def get_period_comparison(
     unabhängig von erkannten Veränderungen (Drill-down auch ohne Anomalie).
 
     ``windows.after`` ist die Auswahl ``from`` bis ``to``, ``windows.before`` der gleich
-    lange Zeitraum direkt davor, mindestens 6 Monate (``MIN_BASELINE_MONTHS``). ``comparison``
-    wie bei ``/anomalies/{id}/explanations``. Ungültige Angaben: 400.
+    lange Zeitraum direkt davor, mindestens 6 Monate (``MIN_BASELINE_MONTHS``). ``comparison``,
+    ``explanations`` und ``explanation_summary`` wie bei ``/anomalies/{id}/explanations``; das
+    Ereignisfenster der Erklärungsansätze liegt um die Auswahl (E18), die Richtung für die
+    Stimmung folgt aus ``rating_shift``. Ungültige Angaben: 400.
     """
     try:
         return compare_period(company_id, from_, to, source=source, dimension=dimension, status=status)

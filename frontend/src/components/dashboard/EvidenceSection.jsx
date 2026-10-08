@@ -1,5 +1,7 @@
+import { useEffect, useMemo, useState } from "react"
 import { ExternalLink, Newspaper } from "lucide-react"
 import { PageSection } from "./PageSection"
+import { StageBadge } from "./ExplanationPanel"
 import { fmtPeriod } from "@/lib/anomalySeries"
 import { useEvidence } from "@/hooks/useEvidence"
 
@@ -11,9 +13,20 @@ import { useEvidence } from "@/hooks/useEvidence"
    Badge bei englischen Meldungen; neueste zuerst, lange Listen werden
    nachgeladen. Dauert die erste Seite länger als zwei Sekunden, nennt ein
    Hinweis den Grund: Die Monate werden zum ersten Mal von den Quellen geladen.
-   Wortwahl: "Beleg" = zeitlich nahe Meldung; keine Aussage über
-   Ursachen, keine Bewertung und keine Rangfolge der Meldungen.
+   Wortwahl: "Beleg" = zeitlich nahe Meldung; keine Aussage über Ursachen.
+   Inkrement 5: Mit `scores` (item_scores aus explanation_summary des
+   Vergleichs) lässt sich die Liste nach Relevanz (Rang der Erklärungsansätze)
+   statt nach Datum sortieren und nach Ereignisart filtern; dafür werden alle
+   Belege des Fensters geladen. Je Beleg stehen dann Stufe und Ereignisart.
    ============================================================================ */
+
+const SORTS = [
+    { key: "date", label: "Datum" },
+    { key: "relevance", label: "Relevanz" },
+]
+const NO_CATEGORY = "__none__"
+const selectClass =
+    "h-7 rounded-md border border-slate-300 bg-white px-2 text-[12px] text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:opacity-50 max-w-[260px]"
 
 const TYPE_LABELS = {
     news: { label: "Meldung", className: "bg-slate-100 text-slate-600", title: "Nachrichtenmeldung (Google News RSS), Verlässlichkeit mittel" },
@@ -77,7 +90,8 @@ function TypeBadge({ type }) {
     )
 }
 
-function EvidenceRow({ item }) {
+/* score = item_scores[item.id] aus den Erklärungsansätzen (Stufe, Rang, Ereignisart), optional. */
+function EvidenceRow({ item, score = null, rules = null }) {
     return (
         <li className="border-t border-slate-100 first:border-t-0 py-2 flex items-start gap-3">
             <span className="w-[76px] flex-none text-[11px] text-slate-500 tnum pt-0.5">{fmtDay(item.date)}</span>
@@ -99,14 +113,53 @@ function EvidenceRow({ item }) {
                             EN
                         </span>
                     )}
+                    {score && score.stage !== "keine" && <StageBadge stage={score.stage} rule={rules?.stages?.[score.stage]} small />}
                 </span>
                 <span className="block mt-0.5 text-[11px] text-slate-500">
                     {item.event
                         ? `${fmtPeriod(item.event.from)} – ${fmtPeriod(item.event.to)}${item.event.scope ? ` · ${item.event.scope}` : ""}${item.event.note ? ` · ${item.event.note}` : ""}`
                         : `${item.publisher || (item.source === "eqs" ? "EQS News" : "Herausgeber unbekannt")}${item.issuer ? ` · Mitteilung von ${item.issuer}` : ""}${item.category ? ` · ${item.category}` : ""}`}
+                    {score?.category_label ? ` · Ereignisart: ${score.category_label}` : ""}
+                    {score?.terms?.length ? ` · Begriff: ${score.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
+                    {score?.company_in_title === false ? " · Unternehmen im Titel nicht genannt" : ""}
                 </span>
             </span>
         </li>
+    )
+}
+
+/* Umschaltung der Sortierung und Filter nach Ereignisart (Kopf des Abschnitts). */
+function ListControls({ sort, onSort, category, onCategory, categories, enabled }) {
+    const hint = enabled ? "" : "Relevanz und Ereignisart folgen aus den Erklärungsansätzen oben; sie werden geladen…"
+    return (
+        <>
+            <div className="ds-time-filter" role="group" aria-label="Sortierung der Belege" title={hint || "Sortierung: Datum (neueste zuerst) oder Relevanz (Rang der Erklärungsansätze)"}>
+                {SORTS.map((s) => (
+                    <button
+                        key={s.key}
+                        type="button"
+                        aria-pressed={sort === s.key}
+                        className={`ds-time-btn${sort === s.key ? " active" : ""}`}
+                        disabled={!enabled && s.key === "relevance"}
+                        onClick={() => onSort(s.key)}
+                    >
+                        {s.label}
+                    </button>
+                ))}
+            </div>
+            <select
+                className={selectClass}
+                value={category}
+                onChange={(e) => onCategory(e.target.value)}
+                disabled={!enabled}
+                aria-label="Filter nach Ereignisart"
+                title={hint || "Nur Belege dieser Ereignisart (aus Schlüsselwörtern im Titel)"}
+            >
+                <option value="">Alle Ereignisarten</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                <option value={NO_CATEGORY}>ohne Ereignisart</option>
+            </select>
+        </>
     )
 }
 
@@ -125,19 +178,62 @@ function SourcesLine({ sources }) {
 }
 
 /* Abschnitt auf der Detailseite. anomalyId für Veränderung oder Einzelmonat,
-   sonst selection {from, to}; group = {source, dimension, status} wie die Erkennung. */
-export function EvidenceSection({ companyId, anomalyId = null, selection = null, group = {}, eyebrow = "EXTERNE BELEGE", className = "" }) {
+   sonst selection {from, to}; group = {source, dimension, status} wie die Erkennung.
+   scores = item_scores aus explanation_summary des Vergleichs (null, solange er lädt),
+   rules = explanation_summary.rules (Tooltips der Stufen). */
+export function EvidenceSection({ companyId, anomalyId = null, selection = null, group = {}, eyebrow = "EXTERNE BELEGE", className = "", scores = null, rules = null }) {
     const evidence = useEvidence(companyId, { anomalyId, selection, ...group })
     const data = evidence.data
+    const [sort, setSort] = useState("date")
+    const [category, setCategory] = useState("")
+    const hasScores = Boolean(scores)
+    const needAll = sort === "relevance" || category !== ""
+    // Für Sortierung und Filter müssen alle Belege des Fensters geladen sein.
+    useEffect(() => {
+        if (needAll && evidence.hasMore && !evidence.loadingMore) evidence.loadAll()
+    }, [needAll, evidence])
+    const categories = useMemo(() => {
+        const found = new Map()
+        Object.values(scores ?? {}).forEach((s) => {
+            if (s.category && !found.has(s.category)) found.set(s.category, s.category_label ?? s.category)
+        })
+        return [...found.entries()].map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label, "de"))
+    }, [scores])
+    const items = useMemo(() => {
+        let list = evidence.items
+        if (category) {
+            list = list.filter((item) => {
+                const cat = scores?.[item.id]?.category ?? null
+                return category === NO_CATEGORY ? cat == null : cat === category
+            })
+        }
+        if (sort === "relevance" && scores) {
+            list = [...list].sort((a, b) => (scores[a.id]?.rank ?? Infinity) - (scores[b.id]?.rank ?? Infinity) || String(b.date ?? "").localeCompare(String(a.date ?? "")))
+        }
+        return list
+    }, [evidence.items, category, sort, scores])
+    const listNote = [
+        sort === "relevance" ? "sortiert nach Relevanz" : null,
+        category ? `Ereignisart: ${category === NO_CATEGORY ? "ohne" : categories.find((c) => c.id === category)?.label ?? category} (${items.length} von ${evidence.items.length})` : null,
+    ].filter(Boolean).join(" · ")
     const subtitle = evidence.loading
         ? "Lade Belege…"
         : evidence.error
             ? "Belege konnten nicht geladen werden"
             : data
-                ? `Ereignisfenster ${windowText(data.window)} · ${countsText(data.total, data.counts)}`
+                ? `Ereignisfenster ${windowText(data.window)} · ${countsText(data.total, data.counts)}${listNote ? ` · ${listNote}` : ""}`
                 : ""
     return (
-        <PageSection className={className} icon={<Newspaper />} eyebrow={eyebrow} title="Externe Belege im Ereignisfenster" subtitle={subtitle}>
+        <PageSection
+            className={className}
+            icon={<Newspaper />}
+            eyebrow={eyebrow}
+            title="Externe Belege im Ereignisfenster"
+            subtitle={subtitle}
+            actions={!evidence.loading && !evidence.error && evidence.total > 0 && (
+                <ListControls sort={sort} onSort={setSort} category={category} onCategory={setCategory} categories={categories} enabled={hasScores} />
+            )}
+        >
             {evidence.loading ? (
                 <div className="space-y-1">
                     <p className="m-0 text-[12px] text-slate-500">Lade Belege…</p>
@@ -165,10 +261,17 @@ export function EvidenceSection({ companyId, anomalyId = null, selection = null,
                 </div>
             ) : (
                 <>
-                    <ul className="m-0 p-0 list-none">
-                        {evidence.items.map((item) => <EvidenceRow key={item.id} item={item} />)}
-                    </ul>
-                    {evidence.hasMore && (
+                    {needAll && evidence.loadingAll && (
+                        <p className="m-0 mb-2 text-[12px] text-slate-500" role="status">Lade alle {evidence.total} Belege für Sortierung und Filter…</p>
+                    )}
+                    {items.length === 0 && category ? (
+                        <p className="m-0 text-[12px] text-slate-500">Kein Beleg dieser Ereignisart im Fenster.</p>
+                    ) : (
+                        <ul className="m-0 p-0 list-none">
+                            {items.map((item) => <EvidenceRow key={item.id} item={item} score={scores?.[item.id] ?? null} rules={rules} />)}
+                        </ul>
+                    )}
+                    {evidence.hasMore && !needAll && (
                         <button
                             type="button"
                             className="mt-2 text-[12px] underline underline-offset-2 text-slate-700 hover:text-slate-900 disabled:opacity-50"

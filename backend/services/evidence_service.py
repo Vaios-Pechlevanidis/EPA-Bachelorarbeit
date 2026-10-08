@@ -248,6 +248,7 @@ import json  # noqa: E402
 import logging  # noqa: E402
 import os  # noqa: E402
 import tempfile  # noqa: E402
+import threading  # noqa: E402
 import time  # noqa: E402
 from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 from datetime import datetime, timedelta, timezone  # noqa: E402
@@ -277,6 +278,19 @@ EVIDENCE_NOTE = ("Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie 
 
 # Fehlgeschlagene Abrufe je (Quelle, Unternehmen, Monat): (Zeitpunkt, Begründung).
 _failed_fetches: Dict[Tuple[str, int, str], Tuple[float, str]] = {}
+# Eine Sperre je (Quelle, Unternehmen, Monat): Fragen zwei Anfragen zugleich denselben
+# Monat an (Belegliste und Erklärungsansätze, Inkrement 5), ruft nur die erste ab, die
+# zweite liest danach den gespeicherten Monat.
+_month_locks: Dict[Tuple[str, int, str], threading.Lock] = {}
+_month_locks_guard = threading.Lock()
+
+
+def month_lock(key: Tuple[str, int, str]) -> threading.Lock:
+    with _month_locks_guard:
+        lock = _month_locks.get(key)
+        if lock is None:
+            lock = _month_locks[key] = threading.Lock()
+        return lock
 
 
 def live_fetch_enabled() -> bool:
@@ -464,6 +478,11 @@ def month_record(
     sleep = sleep or time.sleep
     clock = clock or time.monotonic
     company_id = int(info["company_id"])
+    with month_lock((source, company_id, month)):
+        return _month_record_locked(info, source, month, company_id, fetcher, store_dir, now, live, sleep, clock)
+
+
+def _month_record_locked(info, source, month, company_id, fetcher, store_dir, now, live, sleep, clock) -> Dict[str, Any]:
     query = expected_query(info, source, month)
     record = load_record(company_id, source, month, store_dir)
     if record is not None and record_is_current(record, month, now, query):
@@ -672,7 +691,7 @@ __all__ += [
     "STORE_DIR", "LIVE_FETCH_ENV", "GDELT_ENV", "CURRENT_MONTH_MAX_AGE", "FAILED_FETCH_TTL", "EVIDENCE_NOTE",
     "live_fetch_enabled", "gdelt_enabled", "company_context_info", "available_sources",
     "record_path", "load_record", "save_record", "is_month_complete", "build_record", "record_is_current",
-    "expected_query", "fetch_source_month", "month_record", "with_language", "evidence_for_window",
+    "expected_query", "fetch_source_month", "month_lock", "month_record", "with_language", "evidence_for_window",
     "GLOBAL_EVENTS_PATH", "MAX_GLOBAL_EVENT_MONTHS", "event_months", "load_global_events", "global_event_items",
 ]
 
