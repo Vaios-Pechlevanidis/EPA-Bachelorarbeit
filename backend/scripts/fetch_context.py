@@ -85,6 +85,7 @@ def company_anchors(company_id: int) -> Dict[str, Any]:
         "outliers": result.get("outlier_months") or [],
         "series_from": series[0]["period"] if series else None,   # erster und letzter bewerteter Monat
         "series_to": series[-1]["period"] if series else None,     # (Grenzen der Vergleichsfenster)
+        "evaluated_months": [m["period"] for m in series if m.get("evaluated")],   # für den Abgleich mit E5 (Regel 6)
     }
 
 

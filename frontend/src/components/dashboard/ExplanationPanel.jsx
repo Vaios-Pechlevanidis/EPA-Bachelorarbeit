@@ -13,16 +13,31 @@ import { PageSection } from "./PageSection"
    Ereignisart und Thema, zeitliche Nähe, Quellenart; Stimmung des Titels ohne
    Einfluss auf die Stufe), Link, aufklappbar die gebündelten Meldungen.
    Zustand "offen", wenn kein Beleg die Stufe niedrig erreicht.
+   Iteration 2 (Befund 1 der Bewertung vom 2026-10-08): Die Stufe beschreibt,
+   was gefunden wurde ("Wortbezug und Ereignisart", "Wortbezug oder
+   Themenbezug", "nur Ereignisart"), und bewertet nicht; alle Badges in
+   derselben neutralen Farbe, keine Ampel. Die Schlüssel der Schnittstelle
+   (hoch, mittel, niedrig) bleiben; die Bezeichnung kommt als stage_label bzw.
+   rules.stage_labels aus der Antwort. Befund 3: In der obersten Liste steht
+   höchstens ein Eintrag je Ereignisart (ohne Ereignisart je Begriff); die
+   übrigen Bündel der Gruppe (entry.group.others) sind aufklappbar, mit Anzahl
+   und Herausgebern. Beides ändert keine Stufe und keine Zahl der Auswertung.
    ============================================================================ */
 
 export const EXPLANATION_NOTE = "Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine Ursachen."
 
-const STAGES = {
-    hoch: { label: "hoch", className: "bg-emerald-100 text-slate-800" },
-    mittel: { label: "mittel", className: "bg-amber-100 text-slate-800" },
-    niedrig: { label: "niedrig", className: "bg-slate-100 text-slate-700 border border-slate-300" },
-    keine: { label: "keine", className: "bg-slate-50 text-slate-500 border border-slate-200" },
+/* Bezeichnung je Stufe (Rückfall, wenn die Antwort keine rules.stage_labels trägt). */
+const STAGE_LABELS = {
+    hoch: "Wortbezug und Ereignisart",
+    mittel: "Wortbezug oder Themenbezug",
+    niedrig: "nur Ereignisart",
+    keine: "kein Bezug",
 }
+const STAGE_ORDER = ["hoch", "mittel", "niedrig"]
+/* Eine neutrale Farbe für alle Stufen: die Bezeichnung trägt die Aussage, nicht die Farbe. */
+const STAGE_CLASS = "bg-slate-100 text-slate-700 border border-slate-300"
+
+const stageLabel = (stage, rules = null) => rules?.stage_labels?.[stage] ?? STAGE_LABELS[stage] ?? stage
 
 const TYPE_LABELS = { news: "Meldung", adhoc: "Ad-hoc", global: "Allgemeines Ereignis" }
 const SENTIMENT_LABELS = { positive: "positiv", neutral: "neutral", negative: "negativ" }
@@ -37,15 +52,17 @@ const fmtDay = (value) => {
     return Number.isNaN(d.getTime()) ? "ohne Datum" : d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
-/* Stufe als Badge; rule = Regel der Stufe als Tooltip (aus explanation_summary.rules). */
-export function StageBadge({ stage, rule = null, small = false }) {
-    const s = STAGES[stage] ?? STAGES.keine
+/* Stufe als Badge mit ihrer Bezeichnung; rules = explanation_summary.rules (Bezeichnungen
+   und Regeln für den Tooltip). Der Schlüssel der Stufe steht nur im Tooltip. */
+export function StageBadge({ stage, rules = null, small = false }) {
+    const label = stageLabel(stage, rules)
+    const rule = rules?.stages?.[stage]
     return (
         <span
-            className={`flex-none inline-flex items-center rounded-full font-medium uppercase tracking-wider ${small ? "px-1.5 py-0.5 text-[9.5px]" : "px-2 py-0.5 text-[10px]"} ${s.className}`}
-            title={rule ? `Stufe ${s.label}: ${rule}` : `Stufe ${s.label}`}
+            className={`flex-none inline-flex items-center rounded-full font-medium tracking-wide ${small ? "px-1.5 py-0.5 text-[9.5px]" : "px-2 py-0.5 text-[10px]"} ${STAGE_CLASS}`}
+            title={`${label} (Schlüssel: ${stage})${rule ? `; Regel: ${rule}` : ""}`}
         >
-            {s.label}
+            {label}
         </span>
     )
 }
@@ -132,7 +149,34 @@ function BundledItems({ items, rules }) {
                             {item.issuer ? ` · Mitteilung von ${item.issuer}` : ""} · Zeit {num(item.time_match, 2)}, Thema {num(item.topic_match, 2)}
                         </span>
                     </span>
-                    <StageBadge stage={item.stage} rule={rules?.stages?.[item.stage]} small />
+                    <StageBadge stage={item.stage} rules={rules} small />
+                </li>
+            ))}
+        </ul>
+    )
+}
+
+/* Weitere Bündel derselben Gruppe (Ereignisart oder Begriff), aufklappbar unter dem Stellvertreter. */
+function GroupMembers({ others, rules }) {
+    return (
+        <ul className="m-0 mt-2 p-0 list-none border-l-2 border-slate-200 pl-3 space-y-1.5">
+            {others.map((o) => (
+                <li key={o.id} className="flex items-start gap-2 text-[11.5px]">
+                    <span className="w-[70px] flex-none text-slate-500 tnum">{fmtDay(o.date)}</span>
+                    <span className="min-w-0 flex-1">
+                        <a href={o.url} target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:underline underline-offset-2 inline-flex items-center gap-1 min-w-0">
+                            <span className="truncate">{o.event}</span>
+                            <ExternalLink className="w-3 h-3 flex-none text-slate-400" aria-hidden="true" />
+                        </a>
+                        <span className="block text-[10.5px] text-slate-500">
+                            {o.source || "Herausgeber unbekannt"} · {TYPE_LABELS[o.source_type] ?? o.source_type}
+                            {o.issuer ? ` · Mitteilung von ${o.issuer}` : ""}
+                            {o.n_items > 1 ? ` · ${o.n_items} Meldungen (${(o.publishers ?? []).join(", ")})` : ""}
+                            {" "}· {o.time_phrase} · Zeit {num(o.time_match, 2)}, Thema {num(o.topic_match, 2)}
+                            {o.terms?.length ? ` · Begriff: ${o.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
+                        </span>
+                    </span>
+                    <StageBadge stage={o.confidence} rules={rules} small />
                 </li>
             ))}
         </ul>
@@ -141,11 +185,15 @@ function BundledItems({ items, rules }) {
 
 function ExplanationEntry({ entry, rules }) {
     const [open, setOpen] = useState(false)
+    const [groupOpen, setGroupOpen] = useState(false)
     const bundled = entry.n_items > 1
+    const group = entry.group ?? null
+    const others = group?.others ?? []
+    const groupLabel = group ? (group.kind === "ereignisart" ? `Ereignisart ${group.label}` : group.label) : ""
     return (
         <li className="border-t border-slate-100 first:border-t-0 py-3 flex items-start gap-3">
-            <div className="flex-none pt-0.5 w-[62px]">
-                <StageBadge stage={entry.confidence} rule={rules?.stages?.[entry.confidence]} />
+            <div className="flex-none pt-0.5 w-[118px]">
+                <StageBadge stage={entry.confidence} rules={rules} />
             </div>
             <div className="min-w-0 flex-1">
                 <p className="m-0 text-[12.5px] text-slate-800 leading-5">{entry.text}</p>
@@ -179,14 +227,34 @@ function ExplanationEntry({ entry, rules }) {
                     </button>
                 )}
                 {bundled && open && <BundledItems items={entry.items ?? []} rules={rules} />}
+                {others.length > 0 && (
+                    <div className="mt-1.5">
+                        <p className="m-0 text-[11px] text-slate-600 flex flex-wrap items-center gap-x-1.5">
+                            <button
+                                type="button"
+                                className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline"
+                                onClick={() => setGroupOpen((v) => !v)}
+                                aria-expanded={groupOpen}
+                                title={`In der obersten Liste steht je ${group.kind === "ereignisart" ? "Ereignisart" : "Begriff"} ein Eintrag; die übrigen Bündel der Gruppe stehen hier.`}
+                            >
+                                {groupOpen ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />}
+                                {groupOpen ? `Weitere Einträge zu ${groupLabel} ausblenden` : `${others.length} ${others.length === 1 ? "weiterer Eintrag" : "weitere Einträge"} zu ${groupLabel} anzeigen`}
+                            </button>
+                            <span className="text-slate-400">
+                                · Gruppe: {group.n_bundles} Bündel, {group.n_items} {group.n_items === 1 ? "Meldung" : "Meldungen"} ({(group.publishers ?? []).join(", ")})
+                            </span>
+                        </p>
+                        {groupOpen && <GroupMembers others={others} rules={rules} />}
+                    </div>
+                )}
             </div>
         </li>
     )
 }
 
-function stageCounts(n) {
+function stageCounts(n, rules) {
     if (!n) return ""
-    return ["hoch", "mittel", "niedrig"].filter((s) => n[s]).map((s) => `${s} ${n[s]}`).join(", ")
+    return STAGE_ORDER.filter((s) => n[s]).map((s) => `${stageLabel(s, rules)} ${n[s]}`).join(", ")
 }
 
 /* Abschnitt über der Belegliste. data = Antwort des Vergleichs (explanations, explanation_summary). */
@@ -194,6 +262,7 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
     const [showRules, setShowRules] = useState(false)
     const summary = data?.explanation_summary ?? null
     const entries = data?.explanations ?? []
+    const rules = summary?.rules ?? null
     const open = summary?.state === "offen"
     const subtitle = loading
         ? "Erklärungsansätze werden berechnet…"
@@ -202,9 +271,8 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
             : summary
                 ? open
                     ? `offen · ${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"} im Ereignisfenster, keiner erreicht die Stufe niedrig`
-                    : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel)${stageCounts(summary.n_by_stage) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage)}` : ""}`
+                    : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel${summary.n_groups != null ? `, ${summary.n_groups} ${summary.n_groups === 1 ? "Gruppe" : "Gruppen"} nach Ereignisart` : ""})${stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
                 : ""
-    const rules = summary?.rules ?? null
     return (
         <PageSection className={className} icon={<Lightbulb />} eyebrow={eyebrow} title="Mögliche Zusammenhänge" subtitle={subtitle}>
             {loading ? (
@@ -247,13 +315,20 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
                                 {" "}<span className="font-medium">Ereignisart</span> (aus Schlüsselwörtern im Titel; {num(rules.category_match_with_shift, 1)}, wenn sich ein
                                 zugeordnetes Thema im Vergleich um mindestens {num(rules.topic_shift_min_pp, 0)} Prozentpunkte verschoben hat, sonst
                                 {" "}{num(rules.category_match_only, 1)}) und <span className="font-medium">zeitliche Nähe</span> (1 im Monat vor dem Übergang und im Übergang,
-                                abnehmend zum Rand des Fensters, danach {num(rules.time_after_factor, 1)}). Thema = Maximum aus Begriff und Ereignisart.
+                                abnehmend zum Rand des Fensters, danach {num(rules.time_after_factor, 1)}). Thema = Maximum aus Begriff und Ereignisart
+                                (ordnet nur innerhalb einer Stufe).
                             </p>
                             <p className="m-0">
-                                Stufen nach festen Regeln: hoch = {rules.stages?.hoch}; mittel = {rules.stages?.mittel}; niedrig = {rules.stages?.niedrig};
-                                sonst keine. Meldungen ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt) eine Stufe tiefer. Die Quellenart ordnet
+                                Stufen nach festen Regeln{rules.version ? ` (Fassung ${rules.version}${rules.version_date ? `, ${rules.version_date}` : ""})` : ""}: <span className="font-medium">{stageLabel("hoch", rules)}</span> (Schlüssel hoch) = {rules.stages?.hoch};
+                                {" "}<span className="font-medium">{stageLabel("mittel", rules)}</span> (Schlüssel mittel) = {rules.stages?.mittel};
+                                {" "}<span className="font-medium">{stageLabel("niedrig", rules)}</span> (Schlüssel niedrig) = {rules.stages?.niedrig};
+                                sonst kein Bezug. Meldungen ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt) eine Stufe tiefer. Die Quellenart ordnet
                                 nur innerhalb einer Stufe. Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens {rules.bundle_max_days} Tage Abstand,
-                                ähnlicher Titel) sind gebündelt. Höchstens {rules.max_explanations} Einträge. Alle Schwellen sind vorläufige Setzungen.
+                                ähnlicher Titel) sind gebündelt. In der obersten Liste steht höchstens ein Eintrag je Ereignisart (ohne Ereignisart je Begriff),
+                                die übrigen Bündel der Gruppe sind darunter aufklappbar. Höchstens {rules.max_explanations} Einträge. Alle Schwellen sind vorläufige Setzungen.
+                            </p>
+                            <p className="m-0">
+                                {rules.finding_note ?? "In der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung ähnlich häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung."}
                             </p>
                         </div>
                     )}

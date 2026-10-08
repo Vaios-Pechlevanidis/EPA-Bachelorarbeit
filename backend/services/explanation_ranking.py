@@ -27,17 +27,31 @@ Signale je Beleg (0 bis 1, aus Titel und Bewertungen):
   (``1 − Abstand / window_before``), nach dem markierten Monat
   ``TIME_AFTER_FACTOR`` (0,5) und weiter abnehmend.
 
-``topic_match`` ist das Maximum aus ``term_match`` und ``category_match``.
+``topic_match`` ist das Maximum aus ``term_match`` und ``category_match``
+(ordnet innerhalb einer Stufe).
 
-Stufen (feste Regeln, keine gewichtete Summe):
+Stufen (feste Regeln, keine gewichtete Summe), **zweite Fassung**
+(``RULES_VERSION`` 2, vom Autor am 2026-10-08 festgelegt, Iteration 2,
+Befunde 1 und 2 der Bewertung: ``hoch`` war ohne Wortbezug erreichbar):
 
-- **hoch**: ``topic_match ≥ TOPIC_STRONG`` und ``time_match ≥ TIME_NEAR``
-- **mittel**: ``topic_match ≥ TOPIC_STRONG`` und ``time_match ≥ TIME_MID``,
-  oder ``topic_match ≥ TOPIC_WEAK`` und ``time_match ≥ TIME_NEAR``
-- **niedrig**: ``topic_match ≥ TOPIC_WEAK`` und ``time_match ≥ TIME_MIN``
+- **hoch**: ``term_match ≥ TOPIC_WEAK`` und Ereignisart erkannt
+  (``category_match ≥ CATEGORY_MATCH_ONLY``) und ``time_match ≥ TIME_NEAR``
+- **mittel**: (``term_match ≥ TOPIC_WEAK`` oder ``category_match ≥ TOPIC_STRONG``)
+  und ``time_match ≥ TIME_MID``
+- **niedrig**: (Ereignisart erkannt oder ``term_match ≥ TOPIC_WEAK``) und
+  ``time_match ≥ TIME_MIN``
 - **keine**: sonst (insbesondere ohne thematische Korrespondenz)
 - Gruppe ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt):
   eine Stufe tiefer.
+
+Erste Fassung (``RULES_VERSION`` 1, D2, Lauf in
+``data/calibration/explanation_validity_2026-10-08.json``, reproduzierbar mit
+Commit 59f5d82): hoch bei ``topic_match ≥ 1`` und ``time_match ≥ 1``; mittel
+bei ``topic_match ≥ 1`` und ``time_match ≥ 0,5`` oder ``topic_match ≥ 0,5``
+und ``time_match ≥ 1``; niedrig bei ``topic_match ≥ 0,5`` und
+``time_match ≥ 0,3``. Die Signale, ihre Schwellen, die Ereignisarten und die
+Zuordnungen sind in beiden Fassungen gleich; es ändert sich nur die Zuordnung
+zu den Stufen.
 
 Bündelung: Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens
 ``BUNDLE_MAX_DAYS`` Tage Abstand, Titelähnlichkeit mindestens
@@ -53,8 +67,18 @@ erreicht kein Bündel die Stufe niedrig, ist die Liste leer und der Zustand
 ``offen``. Zusätzlich, ohne Einfluss auf die Stufe: die Stimmung des Titels
 über den ``SentimentAnalyzer`` und ob sie zur Richtung der Veränderung passt.
 
+Oberste Liste nach Ereignisart (Iteration 2, Befund 3, nur Darstellung): In
+der obersten Liste steht höchstens ein Eintrag je Ereignisart; ohne
+Ereignisart gilt der getroffene Begriff als Gruppe. Stellvertreter ist der
+beste Eintrag der Gruppe nach der Sortierung oben; die übrigen Bündel der
+Gruppe stehen im Eintrag unter ``group`` mit Anzahl und Herausgebern. Die
+Stufe je Fenster (oberster Eintrag), ``n_by_stage``, ``n_bundles`` und
+``item_scores`` ändern sich dadurch nicht (``group_by_category=False`` gibt
+die ungruppierte Liste, Test in ``tests/explanations``).
+
 Alle Schwellen sind Setzungen, vom Autor am 2026-10-08 bestätigt (D2) und für
-die Auswertung festgeschrieben. Alle Funktionen sind rein; nur
+die Auswertung festgeschrieben; die Stufenregeln in der zweiten Fassung
+(``tests/explanations/test_frozen_rules.py``). Alle Funktionen sind rein; nur
 ``title_sentiment`` ruft den übergebenen Analyzer.
 """
 
@@ -91,14 +115,32 @@ CATEGORY_MATCH_ONLY = 0.5        # nur Ereignisart erkannt
 TIME_NEAR = 1.0                  # Monat vor dem Übergang und Übergang bis zum markierten Monat
 TIME_AFTER_FACTOR = 0.5          # erster Monat nach dem markierten Monat
 
-TOPIC_STRONG = 1.0               # Stufenregeln: thematische Korrespondenz stark
-TOPIC_WEAK = 0.5                 # thematische Korrespondenz vorhanden
+TOPIC_STRONG = 1.0               # Stufenregeln: thematische Korrespondenz stark (category_match mit Themenverschiebung)
+TOPIC_WEAK = 0.5                 # thematische Korrespondenz vorhanden (term_match mindestens ein Begriff)
 TIME_MID = 0.5                   # zeitliche Nähe mittel
 TIME_MIN = 0.3                   # zeitliche Nähe mindestens (Rand eines Fensters von 3 Monaten: 0,33)
+
+# Fassung der Stufenregeln (Iteration 2). 1 = D2 (Auswertung 2026-10-08, Commit 59f5d82);
+# 2 = vom Autor am 2026-10-08 festgelegt: hoch nur mit Wortbezug und Ereignisart.
+RULES_VERSION = 2
+RULES_VERSION_DATE = "2026-10-08"
 
 STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE = "hoch", "mittel", "niedrig", "keine"
 STAGES = (STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE)
 _STAGE_RANK = {s: i for i, s in enumerate(STAGES)}
+
+# Bezeichnung je Stufe für die Oberfläche (Iteration 2, 2026-10-08, Befund 1): Die Stufe
+# beschreibt, was gefunden wurde, und bewertet nicht. Die Schlüssel (hoch, mittel, niedrig,
+# keine) bleiben in der Schnittstelle; die Bezeichnung ist ein zusätzliches Feld.
+STAGE_LABELS = {
+    STAGE_HIGH: "Wortbezug und Ereignisart",
+    STAGE_MEDIUM: "Wortbezug oder Themenbezug",
+    STAGE_LOW: "nur Ereignisart",
+    STAGE_NONE: "kein Bezug",
+}
+# Hinweis für den Abschnitt "Wie wird eingestuft?" (Ergebnis der Auswertung E23, 2026-10-08).
+STAGE_FINDING_NOTE = ("In der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung "
+                      "ähnlich häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung.")
 
 BUNDLE_MAX_DAYS = 3              # Meldungen zum selben Ereignis liegen höchstens so viele Tage auseinander
 BUNDLE_TITLE_SIMILARITY = 0.5    # Jaccard-Ähnlichkeit der Begriffe zweier Titel
@@ -126,10 +168,13 @@ def rules() -> Dict[str, Any]:
         "topic_strong": TOPIC_STRONG, "topic_weak": TOPIC_WEAK, "time_mid": TIME_MID, "time_min": TIME_MIN,
         "bundle_max_days": BUNDLE_MAX_DAYS, "bundle_title_similarity": BUNDLE_TITLE_SIMILARITY,
         "max_explanations": MAX_EXPLANATIONS,
+        "version": RULES_VERSION, "version_date": RULES_VERSION_DATE,
+        "stage_labels": dict(STAGE_LABELS),
+        "finding_note": STAGE_FINDING_NOTE,
         "stages": {
-            STAGE_HIGH: f"topic_match >= {TOPIC_STRONG} und time_match >= {TIME_NEAR}",
-            STAGE_MEDIUM: f"topic_match >= {TOPIC_STRONG} und time_match >= {TIME_MID}, oder topic_match >= {TOPIC_WEAK} und time_match >= {TIME_NEAR}",
-            STAGE_LOW: f"topic_match >= {TOPIC_WEAK} und time_match >= {TIME_MIN}",
+            STAGE_HIGH: f"term_match >= {TOPIC_WEAK} und Ereignisart erkannt (category_match >= {CATEGORY_MATCH_ONLY}) und time_match >= {TIME_NEAR}",
+            STAGE_MEDIUM: f"term_match >= {TOPIC_WEAK} oder category_match >= {TOPIC_STRONG}, und time_match >= {TIME_MID}",
+            STAGE_LOW: f"Ereignisart erkannt (category_match >= {CATEGORY_MATCH_ONLY}) oder term_match >= {TOPIC_WEAK}, und time_match >= {TIME_MIN}",
             STAGE_NONE: "sonst; Gruppe ohne Arbeitgeberbezug eine Stufe tiefer",
         },
     }
@@ -204,14 +249,19 @@ def category_match(primary: Optional[Dict[str, Any]], shifts: Dict[str, Dict[str
     return (CATEGORY_MATCH_WITH_SHIFT, shifted) if shifted else (CATEGORY_MATCH_ONLY, [])
 
 
-def stage_for(topic: float, time: float, employer_related: Optional[bool] = None) -> str:
-    """Stufe aus ``topic_match`` und ``time_match`` nach festen Regeln; ``employer_related``
-    False (Gruppe ohne Arbeitgeberbezug) eine Stufe tiefer."""
-    if topic >= TOPIC_STRONG and time >= TIME_NEAR:
+def stage_for(term: float, category: float, time: float, employer_related: Optional[bool] = None) -> str:
+    """Stufe aus ``term_match``, ``category_match`` und ``time_match`` nach den festen Regeln
+    der zweiten Fassung (``RULES_VERSION`` 2): hoch nur mit Wortbezug, erkannter Ereignisart
+    und zeitlicher Nähe 1; ``employer_related`` False (Gruppe ohne Arbeitgeberbezug) eine
+    Stufe tiefer. Reine Funktion."""
+    has_term = term >= TOPIC_WEAK
+    has_category = category >= CATEGORY_MATCH_ONLY
+    has_shift = category >= TOPIC_STRONG
+    if has_term and has_category and time >= TIME_NEAR:
         stage = STAGE_HIGH
-    elif (topic >= TOPIC_STRONG and time >= TIME_MID) or (topic >= TOPIC_WEAK and time >= TIME_NEAR):
+    elif (has_term or has_shift) and time >= TIME_MID:
         stage = STAGE_MEDIUM
-    elif topic >= TOPIC_WEAK and time >= TIME_MIN:
+    elif (has_category or has_term) and time >= TIME_MIN:
         stage = STAGE_LOW
     else:
         stage = STAGE_NONE
@@ -245,6 +295,7 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
     t_match, tm = term_match(matched), time_match(item.get("date"), window)
     topic = max(t_match, cat_match)
     employer = primary["employer_related"] if primary else None
+    stage = stage_for(t_match, cat_match, tm, employer)
     category = None
     if primary:
         category = {"id": primary["id"], "label": primary["label"], "employer_related": primary["employer_related"],
@@ -260,7 +311,8 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
         "category": category,
         "employer_related": employer,
         "company_in_title": company_in_title(title, company_words),
-        "stage": stage_for(topic, tm, employer),
+        "stage": stage,
+        "stage_label": STAGE_LABELS[stage],
     }
 
 
@@ -337,6 +389,7 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
     if category:
         category = {**category, "match": cat_match}
     publishers = list(dict.fromkeys(i.get("publisher") for i in items if i.get("publisher")))
+    stage = stage_for(t_match, cat_match, tm, employer)
     return {
         "representative": representative,
         "items": items,
@@ -347,7 +400,8 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
         "terms": list(terms.values()),
         "category": category,
         "employer_related": employer,
-        "stage": stage_for(topic, tm, employer),
+        "stage": stage,
+        "stage_label": STAGE_LABELS[stage],
         "source_type": representative.get("source_type"),
         "has_adhoc": any(i.get("source_type") == TYPE_ADHOC for i in items),
         "company_in_title": representative.get("company_in_title"),
@@ -475,16 +529,65 @@ def title_sentiment(title: str, analyzer, direction: Optional[str], cache: Optio
     return {**raw, "fits_direction": fits}
 
 
+# ── Gruppen der obersten Liste (nur Darstellung) ─────────────────────────────
+
+GROUP_BY_CATEGORY, GROUP_BY_TERM = "ereignisart", "begriff"
+
+
+def group_key(bundle: Dict[str, Any]) -> Tuple[str, str, str]:
+    """``(Art, Schlüssel, Bezeichnung)`` der Gruppe eines Bündels: die Ereignisart, sonst die
+    getroffenen Begriffe. Reine Funktion."""
+    category = bundle.get("category")
+    if category:
+        return (GROUP_BY_CATEGORY, str(category["id"]), str(category["label"]))
+    terms = sorted({t["term"] for t in bundle.get("terms") or []})
+    label = "Begriff " + ", ".join(f"'{t}'" for t in terms) if terms else "ohne Ereignisart und Begriff"
+    return (GROUP_BY_TERM, "+".join(terms), label)
+
+
+def group_bundles(bundles: List[Dict[str, Any]]) -> List[Tuple[Tuple[str, str, str], List[Dict[str, Any]]]]:
+    """Bündel (bereits sortiert) nach ``group_key`` in der Reihenfolge ihres ersten Auftretens;
+    das erste Bündel jeder Gruppe ist ihr Stellvertreter. Reine Funktion."""
+    groups: Dict[Tuple[str, str, str], List[Dict[str, Any]]] = {}
+    for b in bundles:
+        groups.setdefault(group_key(b), []).append(b)
+    return list(groups.items())
+
+
+def _group_member(bundle: Dict[str, Any], window: Dict[str, Any], kind: str) -> Dict[str, Any]:
+    """Ein weiteres Bündel derselben Gruppe für die aufklappbare Liste (ohne Stimmung)."""
+    rep = bundle["representative"]
+    return {
+        "id": rep.get("id"), "confidence": bundle["stage"], "stage_label": bundle["stage_label"],
+        "event": rep.get("title"), "date": rep.get("date"), "source": rep.get("publisher"), "url": rep.get("url"),
+        "source_type": rep.get("source_type"), "language": rep.get("language"), "issuer": rep.get("issuer"),
+        "n_items": bundle["n_items"], "publishers": bundle["publishers"],
+        "time_match": bundle["time_match"], "topic_match": bundle["topic_match"], "term_match": bundle["term_match"],
+        "terms": [t["term"] for t in bundle["terms"]], "time_phrase": time_phrase(rep.get("date"), window, kind),
+        "company_in_title": bundle.get("company_in_title"), "text": explanation_text(bundle, window, kind),
+    }
+
+
+def _group_info(key: Tuple[str, str, str], members: List[Dict[str, Any]], window: Dict[str, Any], kind: str) -> Dict[str, Any]:
+    publishers = list(dict.fromkeys(p for m in members for p in m["publishers"]))
+    return {
+        "kind": key[0], "key": key[1], "label": key[2],
+        "n_bundles": len(members), "n_items": sum(m["n_items"] for m in members), "publishers": publishers,
+        "others": [_group_member(m, window, kind) for m in members[1:]],
+    }
+
+
 # ── Rangfolge ────────────────────────────────────────────────────────────────
 
 def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, direction: Optional[str],
            cache: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     rep = bundle["representative"]
     item_fields = ("id", "date", "title", "publisher", "url", "source", "source_type", "reliability", "language", "issuer",
-                   "time_match", "term_match", "category_match", "topic_match", "stage", "company_in_title")
+                   "time_match", "term_match", "category_match", "topic_match", "stage", "stage_label", "company_in_title")
     return {
         "id": rep.get("id"),
         "confidence": bundle["stage"],
+        "stage_label": bundle["stage_label"],
         "event": rep.get("title"),
         "date": rep.get("date"),
         "source": rep.get("publisher"),
@@ -520,6 +623,7 @@ def rank_evidence(
     analyzer=None,
     kind: Optional[str] = None,
     max_explanations: int = MAX_EXPLANATIONS,
+    group_by_category: bool = True,
 ) -> Dict[str, Any]:
     """Rangfolge der Belege eines Fensters als Erklärungsansätze.
 
@@ -530,11 +634,15 @@ def rank_evidence(
     Stimmung. ``exclude``: Wortteile des Unternehmensnamens (Titelähnlichkeit).
     ``analyzer``: ``SentimentAnalyzer`` oder None (dann keine Stimmung).
 
-    Rückgabe ``{"state", "explanations", "n_items", "n_bundles", "n_by_stage",
-    "item_scores", "terms", "note", "rules"}``: höchstens ``max_explanations`` Bündel mit
-    Stufe mindestens niedrig; ``state`` ``offen`` ohne solches Bündel. ``item_scores``
-    nennt je Beleg Stufe, Signale, Ereignisart und Rang (1 = oberster Beleg) für die
-    Sortierung der Belegliste. Reine Funktion bis auf den Analyzer.
+    Rückgabe ``{"state", "explanations", "n_items", "n_bundles", "n_groups", "n_by_stage",
+    "item_scores", "terms", "note", "rules"}``: höchstens ``max_explanations`` Einträge mit
+    Stufe mindestens niedrig, mit ``group_by_category`` (Standard) je Gruppe nach
+    ``group_key`` der beste Eintrag mit den übrigen Bündeln der Gruppe unter ``group``;
+    ``state`` ``offen`` ohne Bündel der Stufe niedrig. ``n_groups`` zählt die Gruppen mit
+    Stufe mindestens niedrig. ``item_scores`` nennt je Beleg Stufe, Signale, Ereignisart und
+    Rang (1 = oberster Beleg) für die Sortierung der Belegliste; die Gruppierung ändert
+    weder ``item_scores`` noch ``n_by_stage`` noch die Stufe des obersten Eintrags. Reine
+    Funktion bis auf den Analyzer.
     """
     cats = load_event_categories() if categories is None else categories
     kind = kind or window.get("kind") or KIND_CHANGE
@@ -545,8 +653,18 @@ def rank_evidence(
     for b in bundles:
         n_by_stage[b["stage"]] += 1
     cache: Dict[str, Dict[str, Any]] = {}
-    top = [b for b in bundles if b["stage"] != STAGE_NONE][:max_explanations]
-    explanations = [_entry(b, window, kind, analyzer, direction, cache) for b in top]
+    eligible = [b for b in bundles if b["stage"] != STAGE_NONE]
+    groups = group_bundles(eligible)
+    if group_by_category:
+        explanations = []
+        for key, members in groups[:max_explanations]:
+            e = _entry(members[0], window, kind, analyzer, direction, cache)
+            e["group"] = _group_info(key, members, window, kind)
+            explanations.append(e)
+    else:
+        explanations = [_entry(b, window, kind, analyzer, direction, cache) for b in eligible[:max_explanations]]
+        for e in explanations:
+            e["group"] = None
     for rank, e in enumerate(explanations, start=1):
         e["rank"] = rank
     item_scores: Dict[str, Dict[str, Any]] = {}
@@ -555,7 +673,7 @@ def rank_evidence(
         for i in b["items"]:
             rank += 1
             item_scores[str(i.get("id"))] = {
-                "rank": rank, "stage": b["stage"], "bundle": b_index, "bundle_size": b["n_items"],
+                "rank": rank, "stage": b["stage"], "stage_label": b["stage_label"], "bundle": b_index, "bundle_size": b["n_items"],
                 "time_match": i["time_match"], "term_match": i["term_match"], "category_match": i["category_match"],
                 "topic_match": i["topic_match"], "item_stage": i["stage"],
                 "category": i["category"]["id"] if i.get("category") else None,
@@ -570,6 +688,7 @@ def rank_evidence(
         "explanations": explanations,
         "n_items": len(scored),
         "n_bundles": len(bundles),
+        "n_groups": len(groups),
         "n_by_stage": n_by_stage,
         "item_scores": item_scores,
         "terms": terms,
@@ -612,9 +731,9 @@ __all__ = [
     "TERM_MATCH_PER_TERM", "TERM_MATCH_STRONG", "TERM_STRONG_MIN_AFTER", "TERM_STRONG_MIN_RATIO", "TERM_STRONG_MIN_SHIFT",
     "TOPIC_SHIFT_MIN_PP",
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
-    "TIME_MID", "TIME_MIN", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "BUNDLE_MAX_DAYS",
+    "TIME_MID", "TIME_MIN", "RULES_VERSION", "RULES_VERSION_DATE", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
     "OPEN_NOTE", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
-    "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "fmt_month", "time_phrase", "explanation_text",
+    "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "group_key", "group_bundles", "fmt_month", "time_phrase", "explanation_text",
     "title_sentiment", "rank_evidence", "topic_shift_table",
 ]

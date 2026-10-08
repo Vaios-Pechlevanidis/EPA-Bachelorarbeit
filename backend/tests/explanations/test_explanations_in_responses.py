@@ -35,10 +35,10 @@ EXPLAIN = "/api/analytics/company/{}/anomalies/{}/explanations"
 COMPARE = "/api/analytics/company/{}/compare"
 FALL_ID = "employee:durchschnittsbewertung:2023-01"
 NOW = datetime(2026, 1, 15, 12, 0, tzinfo=timezone.utc)
-ENTRY_FIELDS = {"id", "rank", "confidence", "event", "date", "source", "url", "source_type", "reliability", "language",
+ENTRY_FIELDS = {"id", "rank", "confidence", "stage_label", "event", "date", "source", "url", "source_type", "reliability", "language",
                 "issuer", "n_items", "publishers", "time_match", "topic_match", "term_match", "terms", "category",
-                "time_phrase", "sentiment", "text", "items"}
-SUMMARY_FIELDS = {"state", "kind", "window", "n_items", "n_bundles", "n_by_stage", "terms", "item_scores", "sources",
+                "time_phrase", "sentiment", "text", "items", "group"}
+SUMMARY_FIELDS = {"state", "kind", "window", "n_items", "n_bundles", "n_groups", "n_by_stage", "terms", "item_scores", "sources",
                   "coverage", "reason", "error", "note", "open_note", "rules"}
 
 
@@ -83,7 +83,7 @@ class TestAnomalyExplanations:
         assert SUMMARY_FIELDS <= set(s) and s["kind"] == "niveauwechsel"
         assert s["coverage"] is False and "Live-Abruf" in (s["reason"] or "") and s["open_note"]
         assert s["window"]["from"] == ev.shift_month(s["window"]["transition_from"], -3)
-        assert s["rules"]["stages"]["hoch"].startswith("topic_match")
+        assert s["rules"]["stages"]["hoch"].startswith("term_match") and s["rules"]["version"] == 2
 
     def test_entries_from_store(self, client, store):
         anomaly = _fall(client)

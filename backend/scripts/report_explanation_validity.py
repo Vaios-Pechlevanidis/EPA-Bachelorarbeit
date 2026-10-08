@@ -24,12 +24,23 @@ Fenster mit fehlenden Monaten im Speicher werden ausgewiesen und nicht als „oh
 Ansatz“ gezählt. Nur Zahlen, keine Titel, beschreibend; es gibt keinen Test und
 keine Signifikanzaussage, und ein Unterschied sagt nichts über Ursachen.
 
+**Zusatzauswertung nach Referenzzeiträumen (E5, Iteration 2, festgelegt am
+2026-10-08):** dieselbe Tabelle getrennt für Markierungen, die einen
+Referenzzeitraum der Annotationsdatei (``--annotations``, Standard
+``data/annotations.json``; Quelle Mitarbeitende, Gesamtbewertung) treffen, und
+für die übrigen. Treffer nach E5, Regel 6 (``evaluate_detection.match_window``):
+Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem
+Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft.
+Solange die Annotationsdatei keine Einträge hat, meldet der Bericht „nicht
+verfügbar“; die Festlegung steht, der Lauf kommt nach der Annotation.
+
 Verwendung
 ----------
     cd backend
     uv run python scripts/report_explanation_validity.py                     # Tabellen (Markdown) auf der Konsole
     uv run python scripts/report_explanation_validity.py --json data/calibration/explanation_validity.json
     uv run python scripts/report_explanation_validity.py --md ../docs/feature-doku/bilder/erklaerungsansaetze.md
+    uv run python scripts/report_explanation_validity.py --annotations data/annotations.json
 """
 
 from __future__ import annotations
@@ -46,6 +57,8 @@ BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BACKEND_DIR)
 sys.path.insert(0, os.path.join(BACKEND_DIR, "scripts"))
 
+import validate_annotations as va  # noqa: E402
+from evaluate_detection import match_window  # noqa: E402
 from fetch_context import company_anchors, list_companies  # noqa: E402
 from services import evidence_service as ev  # noqa: E402
 from services import explanation_service as es  # noqa: E402
@@ -55,11 +68,54 @@ from services.review_service import fetch_review_rows_in_range, parse_day  # noq
 from services.review_terms import company_terms, distinctive_terms  # noqa: E402
 
 SOURCE = "employee"
+DIMENSION = "durchschnittsbewertung"
+DEFAULT_ANNOTATIONS = os.path.join(BACKEND_DIR, "data", "annotations.json")
+REFERENCE_NOT_AVAILABLE = "nicht verfügbar"
+REFERENCE_DEFINITION = ("Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im "
+                        "Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche "
+                        "Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.")
 GROUP_MARKER = "markierung"
 GROUP_COMPARISON = "vergleich"
 GROUPS = (GROUP_MARKER, GROUP_COMPARISON)
 KINDS = (ev.KIND_CHANGE, ev.KIND_OUTLIER)
 STAGES_WITH_ANY = [s for s in STAGES if s != STAGE_NONE]
+
+
+# ── Referenzzeiträume (E5) ───────────────────────────────────────────────────
+
+def load_reference(path: Optional[str]) -> Dict[str, Any]:
+    """Annotationsdatei für die Zusatzauswertung: ``{"available", "reason", "by_company"}``;
+    ``by_company`` ordnet dem normalisierten Namen die Einträge (Quelle Mitarbeitende,
+    Gesamtbewertung) zu. Nicht verfügbar ohne Datei oder ohne Einträge."""
+    if not path:
+        return {"available": False, "reason": "keine Annotationsdatei angegeben", "by_company": {}}
+    doc, err = va._load_json(path, "Annotationsdatei")
+    if err:
+        return {"available": False, "reason": err, "by_company": {}}
+    entries = doc.get("annotations") if isinstance(doc, dict) else None
+    if not isinstance(entries, list) or not entries:
+        return {"available": False, "reason": f"Annotationsdatei ohne Einträge ({os.path.relpath(path, BACKEND_DIR)})", "by_company": {}}
+    by_company: Dict[str, List[Dict[str, Any]]] = {}
+    for ann in entries:
+        if not isinstance(ann, dict) or ann.get("source") != SOURCE or ann.get("dimension") != DIMENSION:
+            continue
+        by_company.setdefault(va.normalize_company_name(str(ann.get("company", ""))), []).append(ann)
+    return {"available": True, "reason": None, "by_company": by_company, "n_annotations": len(entries),
+            "version": doc.get("version"), "path": os.path.relpath(path, BACKEND_DIR)}
+
+
+def reference_hit(company: str, date: str, direction: Optional[str], evaluated: Any, reference: Optional[Dict[str, Any]]) -> Optional[bool]:
+    """Trifft die Markierung (Monat ``date``, Richtung) einen Referenzzeitraum des Unternehmens
+    nach E5, Regel 6? None, wenn die Referenz nicht verfügbar ist. Reine Funktion."""
+    if not reference or not reference.get("available"):
+        return None
+    for ann in reference["by_company"].get(va.normalize_company_name(company), []):
+        if ann.get("direction") != direction:
+            continue
+        lo, hi = match_window(ann["period_from"], ann["period_to"], evaluated or ())
+        if lo <= date[:7] <= hi:
+            return True
+    return False
 
 
 # ── Fenster ──────────────────────────────────────────────────────────────────
@@ -102,9 +158,11 @@ def _rows_for(company_id: int, windows: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def window_records(window_before: int = ev.DEFAULT_WINDOW_BEFORE, window_after: int = ev.DEFAULT_WINDOW_AFTER,
-                   companies: Optional[List[Dict[str, Any]]] = None, verbose: bool = True) -> List[Dict[str, Any]]:
+                   companies: Optional[List[Dict[str, Any]]] = None, verbose: bool = True,
+                   reference: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """Je Markierungsfenster und je Vergleichsfenster ein Datensatz mit den Zahlen der
-    Rangfolge (nur lesend: Datenbank und Belegspeicher)."""
+    Rangfolge (nur lesend: Datenbank und Belegspeicher). ``reference`` (``load_reference``)
+    setzt je Markierung ``reference_hit`` (True/False; None ohne Referenz)."""
     records: List[Dict[str, Any]] = []
     categories = load_event_categories()
     for company in companies if companies is not None else list_companies():
@@ -123,6 +181,8 @@ def window_records(window_before: int = ev.DEFAULT_WINDOW_BEFORE, window_after: 
             records.append({
                 "company_id": company["id"], "company": company["name"], "group": GROUP_MARKER, "kind": kind,
                 "date": anchor["date"], "direction": anchor.get("direction"), "offset_months": 0,
+                "reference_hit": reference_hit(company["name"], anchor["date"], anchor.get("direction"),
+                                               anchors.get("evaluated_months"), reference),
                 **_window_record(info, window, windows, _rows_for(company["id"], windows), categories, exclude),
             })
             for comp in ev.comparison_windows(window, marker_windows, anchors.get("series_from"), anchors.get("series_to")):
@@ -130,6 +190,7 @@ def window_records(window_before: int = ev.DEFAULT_WINDOW_BEFORE, window_after: 
                 records.append({
                     "company_id": company["id"], "company": company["name"], "group": GROUP_COMPARISON, "kind": kind,
                     "date": anchor["date"], "direction": anchor.get("direction"), "offset_months": comp["offset_months"],
+                    "reference_hit": None,
                     **_window_record(info, comp, cw, _rows_for(company["id"], cw), categories, exclude),
                 })
         if verbose:
@@ -182,17 +243,30 @@ def group_stats(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     return out
 
 
-def aggregate(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+def aggregate(records: List[Dict[str, Any]], reference: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Je Unternehmen und gesamt: ``group_stats`` für Markierungs- und Vergleichsfenster, je
     Art der Markierung; Abdeckungsquote nach NFA-05 (Markierungsfenster mit mindestens einem
-    Ansatz unter den vollständigen Fenstern), gesamt und je Art."""
+    Ansatz unter den vollständigen Fenstern), gesamt und je Art. Dazu ``referenz``: dieselben
+    Zahlen getrennt für Markierungen mit und ohne Referenzzeitraum (E5), sofern verfügbar."""
+    available = bool(reference and reference.get("available")) and any(r.get("reference_hit") is not None for r in records)
+    reason = None if available else ((reference or {}).get("reason") or REFERENCE_NOT_AVAILABLE)
+
     def block(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         markers = [r for r in rows if r["group"] == GROUP_MARKER]
         comparisons = [r for r in rows if r["group"] == GROUP_COMPARISON]
         m = group_stats(markers)
+        if available:
+            referenz: Dict[str, Any] = {
+                "available": True, "definition": REFERENCE_DEFINITION,
+                "treffer": group_stats([r for r in markers if r.get("reference_hit") is True]),
+                "uebrige": group_stats([r for r in markers if r.get("reference_hit") is False]),
+            }
+        else:
+            referenz = {"available": False, "status": REFERENCE_NOT_AVAILABLE, "reason": reason, "definition": REFERENCE_DEFINITION}
         return {
             "n_markers": len(markers), "n_comparison_windows": len(comparisons),
             GROUP_MARKER: m, GROUP_COMPARISON: group_stats(comparisons),
+            "referenz": referenz,
             "kinds": {kind: {GROUP_MARKER: group_stats([r for r in markers if r["kind"] == kind]),
                              GROUP_COMPARISON: group_stats([r for r in comparisons if r["kind"] == kind])} for kind in KINDS},
             "coverage_nfa05": {
@@ -213,11 +287,13 @@ def aggregate(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source": SOURCE, "offsets": list(ev.COMPARISON_OFFSETS), "max_per_marker": ev.COMPARISON_MAX,
         "rules": rules(),
+        "reference": {"available": available, "reason": reason, "definition": REFERENCE_DEFINITION,
+                      **({k: reference[k] for k in ("path", "version", "n_annotations") if k in reference} if available and reference else {})},
         "companies": per_company,
         "total": block(records),
-        "windows": [{k: r[k] for k in ("company", "group", "kind", "date", "offset_months", "window_from", "window_to", "n_items",
-                                       "n_bundles", "n_by_stage", "state", "top_stage", "n_terms", "n_shifted_topics", "missing_months",
-                                       "review_before", "review_after")} for r in records],
+        "windows": [{k: r.get(k) for k in ("company", "group", "kind", "date", "offset_months", "window_from", "window_to", "n_items",
+                                           "n_bundles", "n_by_stage", "state", "top_stage", "n_terms", "n_shifted_topics", "missing_months",
+                                           "review_before", "review_after", "reference_hit")} for r in records],
         "note": ("Beschreibende Zahlen ohne Signifikanzaussage. Ein Erklärungsansatz ist ein möglicher Zusammenhang, keine "
                  "Ursache; die Einstufung beruht auf Titeln und Wortbezügen. Fenster mit fehlenden Monaten im Speicher "
                  "zählen nicht als 'ohne Ansatz'. Die Stimmung der Titel wurde nicht berechnet (ohne Einfluss auf die Stufe)."),
@@ -269,6 +345,23 @@ def markdown_tables(summary: Dict[str, Any]) -> str:
                      f"{_cell(cov['by_kind'][ev.KIND_OUTLIER]['covered'], cov['by_kind'][ev.KIND_OUTLIER]['n'])} | "
                      f"{_cell(c[GROUP_COMPARISON]['with_any'], c[GROUP_COMPARISON]['complete'])} |")
     lines.append("")
+    ref = summary.get("reference") or {}
+    lines.append("**Nach Referenzzeiträumen (E5)**")
+    lines.append("")
+    if ref.get("available"):
+        for part, title in (("treffer", "Markierungsfenster mit Referenzzeitraum"), ("uebrige", "Markierungsfenster ohne Referenzzeitraum")):
+            lines.append(f"*{title}*")
+            lines.append("")
+            lines.append(head)
+            lines.append("|---|---|---|---|---|---|---|")
+            for c in rows:
+                lines.append(f"| {c['company']} | " + " | ".join(_group_cells(c["referenz"][part])) + " |")
+            lines.append("")
+        lines.append(f"{ref.get('definition', REFERENCE_DEFINITION)} Annotationsdatei: {ref.get('path', '–')} (version {ref.get('version', '–')}, "
+                     f"{ref.get('n_annotations', 0)} Einträge).")
+    else:
+        lines.append(f"{REFERENCE_NOT_AVAILABLE}: {ref.get('reason') or 'keine Referenz'}. {ref.get('definition', REFERENCE_DEFINITION)}")
+    lines.append("")
     t = summary["total"]
     lines.append("| Oberste Stufe je Fenster (gesamt) | hoch | mittel | niedrig | offen |")
     lines.append("|---|---|---|---|---|")
@@ -292,10 +385,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--window-after", type=int, default=ev.DEFAULT_WINDOW_AFTER)
     parser.add_argument("--md", help="Markdown-Tabellen in diese Datei schreiben")
     parser.add_argument("--json", dest="json_out", help="Zusammenfassung als JSON-Datei")
+    parser.add_argument("--annotations", default=DEFAULT_ANNOTATIONS,
+                        help="Annotationsdatei für die Zusatzauswertung nach Referenzzeiträumen (Default: data/annotations.json)")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
-    records = window_records(args.window_before, args.window_after, verbose=not args.quiet)
-    summary = aggregate(records)
+    reference = load_reference(args.annotations)
+    if not reference["available"] and not args.quiet:
+        print(f"Zusatzauswertung nach Referenzzeiträumen: {REFERENCE_NOT_AVAILABLE} ({reference['reason']}).")
+    records = window_records(args.window_before, args.window_after, verbose=not args.quiet, reference=reference)
+    summary = aggregate(records, reference)
     summary["window_before"], summary["window_after"] = args.window_before, args.window_after
     text = markdown_tables(summary)
     print(text)
