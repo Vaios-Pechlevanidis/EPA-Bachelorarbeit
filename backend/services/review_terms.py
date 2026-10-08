@@ -18,8 +18,8 @@ Regeln (vorläufig, Setzungen; alle Schwellen stehen als Konstanten oben):
 - Nicht gezählt werden Stoppwörter (deutsch und englisch), allgemeine
   Bewertungswörter (``REVIEW_WORDS``: Arbeitgeber, Mitarbeiter, gut, schlecht …)
   und die Wortteile des Unternehmensnamens (``company_terms``).
-- Normalisierung: Kleinschreibung, Wörter aus Buchstaben (Umlaute bleiben,
-  damit Begriff und Titel gleich geschrieben sind), mindestens
+- Normalisierung: Kleinschreibung (``lower``, damit ``ß`` bleibt), Wörter aus
+  Buchstaben (Umlaute bleiben, damit Begriff und Titel gleich geschrieben sind), mindestens
   ``MIN_TERM_LENGTH`` Zeichen. Zahlen und Satzzeichen entfallen.
 - Ein Titel nennt einen Begriff, wenn ein Wort des Titels dem Begriff gleicht
   oder (ab ``TERM_PREFIX_MIN_LENGTH`` Zeichen des kürzeren Worts) eines das
@@ -108,7 +108,7 @@ def tokens(text: Any) -> List[str]:
     in Textreihenfolge, Doppelte bleiben."""
     if not text or not isinstance(text, str):
         return []
-    return [t for t in _TOKEN_RE.findall(text.casefold()) if len(t) >= MIN_TERM_LENGTH and t not in STOPWORDS]
+    return [t for t in _TOKEN_RE.findall(text.lower()) if len(t) >= MIN_TERM_LENGTH and t not in STOPWORDS]
 
 
 def term_set(text: Any, exclude: Iterable[str] = ()) -> Set[str]:
@@ -143,7 +143,7 @@ def company_terms(name: Optional[str], search_term: Optional[str] = None) -> Set
     out: Set[str] = set()
     for part in parts:
         for piece in part.split():
-            words = _TOKEN_RE.findall(piece.casefold())
+            words = _TOKEN_RE.findall(piece.lower())
             out.update(w for w in words if len(w) >= MIN_TERM_LENGTH)
             joined = "".join(words)
             if len(joined) >= MIN_TERM_LENGTH:
@@ -224,7 +224,7 @@ def match_terms(title: Any, terms: List[Dict[str, Any]]) -> List[Dict[str, Any]]
     Komposita)."""
     if not title or not isinstance(title, str) or not terms:
         return []
-    words = [w for w in _TOKEN_RE.findall(title.casefold()) if len(w) >= MIN_TERM_LENGTH]
+    words = [w for w in _TOKEN_RE.findall(title.lower()) if len(w) >= MIN_TERM_LENGTH]
     if not words:
         return []
     matched: List[Dict[str, Any]] = []

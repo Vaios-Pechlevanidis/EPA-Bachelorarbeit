@@ -36,6 +36,10 @@ class TestTokens:
     def test_empty_and_non_string(self):
         assert rt.tokens("") == [] and rt.tokens(None) == [] and rt.tokens(42) == []
 
+    def test_sharp_s_is_kept(self):
+        """Test: ß bleibt erhalten (kein casefold), damit Begriff und Titel gleich geschrieben sind."""
+        assert rt.tokens("Große Veränderung") == ["große", "veränderung"]
+
     def test_review_terms_over_topic_fields_with_html(self):
         """Test: Freitexte und Titel über die Themenfelder, HTML bereinigt, je Begriff einmal."""
         row = {"titel": "Stellenabbau angekündigt", "gut_am_arbeitgeber_finde_ich": "Homeoffice<br/>Homeoffice",
