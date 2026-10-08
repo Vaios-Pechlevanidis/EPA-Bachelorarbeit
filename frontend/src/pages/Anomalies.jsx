@@ -6,6 +6,7 @@ import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
+import { EvidenceSection } from "@/components/dashboard/EvidenceSection"
 import { MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/components/dashboard/PeriodReviews"
@@ -43,6 +44,10 @@ import { loadCompany, loadCompanyName } from "@/lib/companies"
    /market geladen; unter dem Diagramm stehen dann der feste Hinweis und bei
    der Konzernmutter der Vermerk. Der Link zum Aktien-Dashboard (/aktie, E16)
    bleibt in jedem Fall.
+   Externe Belege (Inkrement 4, E18): Unter dem Vergleich steht für die
+   ausgewählte Veränderung, den Einzelmonat oder die freie Auswahl der Abschnitt
+   "Externe Belege im Ereignisfenster" (EvidenceSection): zeitlich nahe
+   Meldungen aus externen Quellen, keine Aussage über Ursachen.
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -478,6 +483,16 @@ export default function AnomaliesPage() {
                             </div>
                         )}
 
+                        {/* Externe Belege im Ereignisfenster der ausgewählten Veränderung (Inkrement 4) */}
+                        {selectedAnomaly && (
+                            <EvidenceSection
+                                companyId={companyId}
+                                anomalyId={selectedAnomaly.id}
+                                group={{ source, dimension, status }}
+                                eyebrow={`EXTERNE BELEGE · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                            />
+                        )}
+
                         {/* Freie Auswahl (E17): Vergleich mit dem Zeitraum davor und Bewertungen */}
                         {selection && selectionWindows && (
                             <div className="grid gap-3 xl:grid-cols-5">
@@ -535,6 +550,17 @@ export default function AnomaliesPage() {
                                     </PageSection>
                                 )}
                             </div>
+                        )}
+
+                        {/* Externe Belege zur Auswahl bzw. zum ausgewählten Einzelmonat (Inkrement 4) */}
+                        {selection && (
+                            <EvidenceSection
+                                companyId={companyId}
+                                anomalyId={selectedOutlier?.id ?? null}
+                                selection={selectedOutlier ? null : selection}
+                                group={{ source, dimension, status }}
+                                eyebrow={`EXTERNE BELEGE · ${selectedOutlier ? "EINZELMONAT" : "AUSWAHL"} ${selectionLabel(selection).toUpperCase()}`}
+                            />
                         )}
                     </>
                 )}

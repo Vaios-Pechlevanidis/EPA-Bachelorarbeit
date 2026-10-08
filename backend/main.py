@@ -6,6 +6,7 @@ from routes.companies import router as companies_router
 from routes.analytics import router as analytics_router
 from routes.anomalies import router as anomalies_router
 from routes.market import router as market_router
+from routes.context import router as context_router
 
 app = FastAPI()
 
@@ -27,6 +28,7 @@ app.include_router(companies_router)
 app.include_router(analytics_router)
 app.include_router(anomalies_router)
 app.include_router(market_router)
+app.include_router(context_router)
 
 
 @app.get("/api/hello")

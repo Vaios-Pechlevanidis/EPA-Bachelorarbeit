@@ -61,10 +61,13 @@ _last_request: Dict[str, float] = {}
 
 # ── Drosselung ───────────────────────────────────────────────────────────────
 
-def throttle(source: str, sleep: Callable[[float], None] = time.sleep,
-             clock: Callable[[], float] = time.monotonic, interval: float = MIN_FETCH_INTERVAL_S) -> float:
+def throttle(source: str, sleep: Optional[Callable[[float], None]] = None,
+             clock: Optional[Callable[[], float]] = None, interval: float = MIN_FETCH_INTERVAL_S) -> float:
     """Wartet, bis seit dem letzten Abruf derselben Quelle ``interval`` Sekunden
-    vergangen sind; liefert die gewartete Zeit."""
+    vergangen sind; liefert die gewartete Zeit. ``sleep`` und ``clock`` werden erst
+    beim Aufruf aufgelöst (Tests ersetzen ``time.sleep``)."""
+    sleep = sleep or time.sleep
+    clock = clock or time.monotonic
     last = _last_request.get(source)
     now = clock()
     waited = 0.0

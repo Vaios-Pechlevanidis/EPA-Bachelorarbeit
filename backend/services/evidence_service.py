@@ -375,8 +375,8 @@ def month_record(
     store_dir: Optional[Path] = None,
     now: Optional[datetime] = None,
     live: bool = True,
-    sleep: Callable[[float], None] = time.sleep,
-    clock: Callable[[], float] = time.monotonic,
+    sleep: Optional[Callable[[float], None]] = None,
+    clock: Optional[Callable[[], float]] = None,
 ) -> Dict[str, Any]:
     """Gespeicherter Monat, sonst (wenn erlaubt) ein Abruf mit Speichern.
 
@@ -386,6 +386,8 @@ def month_record(
     wenn ein Abruf nötig war und nicht möglich war. Wirft nicht.
     """
     now = now or utc_now()
+    sleep = sleep or time.sleep
+    clock = clock or time.monotonic
     company_id = int(info["company_id"])
     query = expected_query(info, source, month)
     record = load_record(company_id, source, month, store_dir)
@@ -435,8 +437,8 @@ def evidence_for_window(
     store_dir: Optional[Path] = None,
     now: Optional[datetime] = None,
     live: bool = True,
-    sleep: Callable[[float], None] = time.sleep,
-    clock: Callable[[], float] = time.monotonic,
+    sleep: Optional[Callable[[float], None]] = None,
+    clock: Optional[Callable[[], float]] = None,
     events: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Alle Belege eines Fensters, neueste zuerst, mit Anzahl je Typ, Stand je Quelle und
@@ -508,3 +510,112 @@ __all__ += [
     "record_path", "load_record", "save_record", "is_month_complete", "build_record", "record_is_current",
     "expected_query", "fetch_source_month", "month_record", "evidence_for_window",
 ]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Belege zu einer Veränderung, einem Einzelmonat oder einer Auswahl (Schritt 3)
+# ═════════════════════════════════════════════════════════════════════════════
+
+OUTLIER_SUFFIX = "einzelmonat"
+
+
+def resolve_anchor(company_id: int, anomaly_id: str, source: Optional[str] = None, dimension: Optional[str] = None,
+                   status: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Veränderung (``"{source}:{dimension}:{YYYY-MM}"``) oder Einzelmonat
+    (``"…:{YYYY-MM}:einzelmonat"``) zur Kennung, mit den Standardparametern der Erkennung
+    neu berechnet (nur lesend). None, wenn die Kennung nicht unter den erkannten
+    Markierungen ist; ValueError bei ungültiger Quelle, Dimension oder ungültigem Status."""
+    from services.anomaly_service import company_anomalies  # lazy: Tests ohne DB
+
+    parts = anomaly_id.split(":")
+    if len(parts) == 4 and parts[3] == OUTLIER_SUFFIX and all(parts[:3]):
+        kind = KIND_OUTLIER
+    elif len(parts) == 3 and all(parts):
+        kind = KIND_CHANGE
+    else:
+        return None
+    if not is_period(parts[2]):
+        return None
+    source = source or parts[0]
+    dimension = dimension or parts[1]
+    detected = company_anomalies(company_id, source=source, dimension=dimension, status=status)
+    if kind == KIND_CHANGE:
+        anomaly = next((a for a in detected["anomalies"] if a["id"] == anomaly_id), None)
+        if anomaly is None:
+            return None
+        return {"kind": kind, "id": anomaly_id, "source": source, "dimension": dimension, "status": status,
+                "date": anomaly["date"], "direction": anomaly["direction"], "previous_period": anomaly.get("previous_period"),
+                "gap_months": anomaly.get("gap_months"), "delta": anomaly.get("delta")}
+    outlier = next((o for o in detected.get("outlier_months") or [] if o["id"] == anomaly_id), None)
+    if outlier is None:
+        return None
+    return {"kind": kind, "id": anomaly_id, "source": source, "dimension": dimension, "status": status,
+            "date": outlier["date"], "direction": outlier["direction"], "previous_period": None, "gap_months": None,
+            "deviation": outlier.get("deviation")}
+
+
+def _context_response(info: Dict[str, Any], anchor: Dict[str, Any], window: Dict[str, Any], evidence: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "company_id": info["company_id"],
+        "company": info["name"],
+        "search_term": info["search_term"],
+        "anchor": anchor,
+        **evidence,
+    }
+
+
+def context_for_anchor(
+    company_id: int,
+    anomaly_id: str,
+    *,
+    source: Optional[str] = None,
+    dimension: Optional[str] = None,
+    status: Optional[str] = None,
+    window_before: int = DEFAULT_WINDOW_BEFORE,
+    window_after: int = DEFAULT_WINDOW_AFTER,
+    **evidence_kwargs: Any,
+) -> Optional[Dict[str, Any]]:
+    """Belege zu einer Veränderung oder einem Einzelmonat. Rückgabe None, wenn es das
+    Unternehmen nicht gibt; ``{"anchor": None}``, wenn die Kennung unbekannt ist;
+    ValueError bei ungültigen Angaben. ``evidence_kwargs`` gehen an ``evidence_for_window``."""
+    info = company_context_info(company_id)
+    if info is None:
+        return None
+    anchor = resolve_anchor(company_id, anomaly_id, source, dimension, status)
+    if anchor is None:
+        return {"anchor": None}
+    if anchor["kind"] == KIND_CHANGE:
+        window = window_for_change(anchor["date"], anchor["previous_period"], anchor["gap_months"], window_before, window_after)
+    else:
+        window = window_for_outlier(anchor["date"], window_before, window_after)
+    evidence = evidence_for_window(info, window, **evidence_kwargs)
+    return _context_response(info, anchor, window, evidence)
+
+
+def context_for_selection(
+    company_id: int,
+    from_month: str,
+    to_month: str,
+    *,
+    window_before: int = DEFAULT_WINDOW_BEFORE,
+    window_after: int = DEFAULT_WINDOW_AFTER,
+    **evidence_kwargs: Any,
+) -> Optional[Dict[str, Any]]:
+    """Belege zu einer frei gewählten Auswahl (E17). None bei unbekanntem Unternehmen;
+    ValueError bei ungültigen Monaten oder Fenstergrößen."""
+    info = company_context_info(company_id)
+    if info is None:
+        return None
+    window = window_for_selection(from_month, to_month, window_before, window_after)
+    anchor = {"kind": KIND_SELECTION, "id": None, "from": from_month, "to": to_month}
+    evidence = evidence_for_window(info, window, **evidence_kwargs)
+    return _context_response(info, anchor, window, evidence)
+
+
+def paginate(result: Dict[str, Any], offset: int = 0, limit: int = 25) -> Dict[str, Any]:
+    """Seite der Belegliste: ``items`` ab ``offset``, höchstens ``limit``; ``total`` bleibt."""
+    items = result.get("items") or []
+    return {**result, "items": items[offset:offset + limit], "offset": offset, "limit": limit, "total": len(items)}
+
+
+__all__ += ["OUTLIER_SUFFIX", "resolve_anchor", "context_for_anchor", "context_for_selection", "paginate"]
