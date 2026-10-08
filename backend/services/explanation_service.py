@@ -36,6 +36,16 @@ mit Freitext je Fenster gehen in die Stimmungsanalyse, bei mehr die jüngsten.
 Ergebnisse werden je Quelle, Bewertungs-ID und Modus im Prozess
 zwischengespeichert. Die Antwort nennt ``sentiment_mode`` und
 ``sentiment_sample``.
+
+Erklärungsansätze (Inkrement 5, A4): ``explanations_for`` holt die Belege des
+Ereignisfensters (E18, ``evidence_service``), rechnet die kennzeichnenden
+Begriffe der beiden Vergleichsfenster (``review_terms``) und die Rangfolge
+(``explanation_ranking``) und füllt ``explanations`` (höchstens fünf Einträge)
+sowie ``explanation_summary`` (Zustand ``ansaetze`` oder ``offen``, Fenster,
+Stand je Quelle, Begriffe, Signale je Beleg für die Belegliste, Regeln). Die
+Stimmungsanalyse der Bewertungen wird dafür nicht erneut berechnet; die
+Themenverschiebung kommt aus ``comparison``. Ein Fehler in diesem Teil ergibt
+den Zustand ``offen`` mit Fehlertext, nie einen Fehler der Route.
 """
 
 from __future__ import annotations
@@ -332,6 +342,71 @@ def compare_windows(
     return result
 
 
+# ── Erklärungsansätze (Inkrement 5) ─────────────────────────────────────────
+
+import logging  # noqa: E402
+
+logger = logging.getLogger(__name__)
+
+
+def _direction_from_shift(shift: Optional[float]) -> Optional[str]:
+    if shift is None or shift == 0:
+        return None
+    return "fall" if shift < 0 else "rise"
+
+
+def explanations_for(
+    company_id: int,
+    window: Dict[str, Any],
+    before_rows: List[Dict[str, Any]],
+    after_rows: List[Dict[str, Any]],
+    comparison: Dict[str, Any],
+    *,
+    direction: Optional[str] = None,
+    analyzer=None,
+    info: Optional[Dict[str, Any]] = None,
+    evidence: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Erklärungsansätze zu einem Ereignisfenster (E18) aus den Belegen des Speichers
+    (bzw. Abruf, wenn erlaubt), den Bewertungen der Vergleichsfenster und der
+    Themenliste des Vergleichs. Rückgabe ``{"explanations": [...], "summary": {...}}``;
+    ``summary["state"]`` ist ``ansaetze`` oder ``offen``. ``info`` und ``evidence``
+    ersetzen Unternehmensdaten und Belege (Tests, Auswertung). Wirft nicht."""
+    from services import evidence_service as ev
+    from services.explanation_ranking import OPEN_NOTE, STATE_OPEN, rank_evidence, rules
+    from services.review_terms import company_terms, distinctive_terms
+
+    base: Dict[str, Any] = {
+        "state": STATE_OPEN, "kind": window.get("kind"), "window": {k: window.get(k) for k in (
+            "kind", "from", "to", "months", "transition_from", "anchor_from", "anchor_to", "window_before", "window_after")},
+        "n_items": 0, "n_bundles": 0, "n_by_stage": None, "terms": [], "item_scores": {}, "sources": {},
+        "coverage": False, "reason": None, "error": None, "note": None, "open_note": OPEN_NOTE, "rules": rules(),
+    }
+    try:
+        info = info if info is not None else ev.company_context_info(company_id)
+        if info is None:
+            return {"explanations": [], "summary": {**base, "reason": f"Unternehmen {company_id} nicht gefunden."}}
+        evidence = evidence if evidence is not None else ev.evidence_for_window(info, window)
+        exclude = company_terms(info.get("name"), info.get("search_term"))
+        terms = distinctive_terms(before_rows, after_rows, exclude=exclude)
+        ranked = rank_evidence(
+            evidence["items"], window, terms=terms, topics=comparison.get("topics"), direction=direction,
+            exclude=exclude, analyzer=analyzer, kind=window.get("kind"),
+        )
+    except Exception as exc:  # noqa: BLE001 – Belege oder Rangfolge: der Vergleich bleibt nutzbar
+        logger.warning("Erklärungsansätze für Unternehmen %s nicht berechenbar: %s", company_id, exc)
+        return {"explanations": [], "summary": {**base, "error": f"{type(exc).__name__}: {exc}"}}
+    summary = {
+        **base,
+        "state": ranked["state"], "n_items": ranked["n_items"], "n_bundles": ranked["n_bundles"],
+        "n_by_stage": ranked["n_by_stage"], "terms": ranked["terms"], "item_scores": ranked["item_scores"],
+        "sources": evidence.get("sources", {}), "coverage": evidence.get("coverage", False), "reason": evidence.get("reason"),
+        "note": ranked["note"], "open_note": ranked["open_note"], "search_term": info.get("search_term"),
+        "direction": direction,
+    }
+    return {"explanations": ranked["explanations"], "summary": summary}
+
+
 # ── Veränderung aus der Datenbank ───────────────────────────────────────────
 
 
@@ -391,6 +466,12 @@ def explain_anomaly(
     comparison = compare_windows(
         by_window["before"], by_window["after"], source, analyzer=analyzer, value_column=column,
     )
+    from services.evidence_service import window_for_anomaly  # Ereignisfenster (E18)
+
+    explained = explanations_for(
+        company_id, window_for_anomaly(anomaly), by_window["before"], by_window["after"], comparison,
+        direction=anomaly.get("direction"), analyzer=analyzer if analyzer is not None else get_sentiment_analyzer(),
+    )
     return {
         "company_id": company_id,
         "source": source,
@@ -400,7 +481,8 @@ def explain_anomaly(
         "anomaly": anomaly,
         "windows": windows,
         "comparison": comparison,
-        "explanations": [],  # Kontext und Erklärungen folgen in Inkrement 5
+        "explanations": explained["explanations"],          # Erklärungsansätze (Inkrement 5), höchstens fünf
+        "explanation_summary": explained["summary"],
     }
 
 
@@ -462,6 +544,16 @@ def compare_period(
     by_window = split_rows_by_window(filter_by_status(rows, source, status), windows)
     for side in ("before", "after"):
         windows[side]["n_reviews"] = len(by_window[side])
+    comparison = compare_windows(
+        by_window["before"], by_window["after"], source, analyzer=analyzer, value_column=column,
+    )
+    from services.evidence_service import window_for_selection  # Ereignisfenster um die Auswahl (E18)
+
+    explained = explanations_for(
+        company_id, window_for_selection(from_month, to_month), by_window["before"], by_window["after"], comparison,
+        direction=_direction_from_shift(comparison.get("rating_shift")),
+        analyzer=analyzer if analyzer is not None else get_sentiment_analyzer(),
+    )
     return {
         "company_id": company_id,
         "source": source,
@@ -470,15 +562,14 @@ def compare_period(
         "dimension_topic": topic_for_dimension(source, dimension),
         "selection": {"from": from_month, "to": to_month},
         "windows": windows,
-        "comparison": compare_windows(
-            by_window["before"], by_window["after"], source, analyzer=analyzer, value_column=column,
-        ),
-        "explanations": [],
+        "comparison": comparison,
+        "explanations": explained["explanations"],
+        "explanation_summary": explained["summary"],
     }
 
 
 __all__ = [
-    "MIN_BASELINE_MONTHS", "period_windows", "compare_period",
+    "MIN_BASELINE_MONTHS", "period_windows", "compare_period", "explanations_for",
     "parse_anomaly_id", "explain_anomaly",
     "DEFAULT_WINDOW_MONTHS", "SENTIMENT_SAMPLE_LIMIT", "LOW_BASIS_MIN_REVIEWS", "LOW_BASIS_MIN_MENTIONS",
     "comparison_windows", "split_rows_by_window", "get_sentiment_analyzer", "set_sentiment_analyzer",
