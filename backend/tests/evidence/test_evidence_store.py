@@ -13,47 +13,21 @@ Ausführen:
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from email.utils import format_datetime
 
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import services.evidence_service as ev  # noqa: E402
 import services.evidence_sources as src  # noqa: E402
 from services import context_service  # noqa: E402
+from _evidence_helpers import FakeRss  # noqa: E402
 
 NOW = datetime(2024, 3, 15, 12, 0, tzinfo=timezone.utc)
 INFO = {"company_id": 7, "name": "E.ON", "search_term": "E.ON", "exclude": [], "term_confirmed": False,
         "ticker": "EOAN.DE", "ticker_scope": "eigene Aktie", "eqs_uuid": None, "eqs_name": None}
 FAST = {"sleep": lambda s: None, "clock": lambda: 1000.0}
-
-
-def rss(entries):
-    """RSS-Antwort wie Google News: Titel mit angehängter Quelle, Link, pubDate, source."""
-    items = []
-    for title, url, day, publisher in entries:
-        pub = format_datetime(datetime.fromisoformat(day + "T10:00:00+00:00"))
-        items.append(f"<item><title>{title} - {publisher}</title><link>{url}</link><pubDate>{pub}</pubDate>"
-                     f"<source url=\"https://{publisher.lower()}.example\">{publisher}</source></item>")
-    return ("<?xml version=\"1.0\"?><rss version=\"2.0\"><channel><title>t</title><language>de</language>"
-            + "".join(items) + "</channel></rss>").encode("utf-8")
-
-
-class FakeRss:
-    """Abruf je Monat: Einträge aus ``by_month``; Monate in ``fail`` werfen; zählt Abfragen."""
-
-    def __init__(self, by_month=None, fail=()):
-        self.by_month = by_month or {}
-        self.fail = set(fail)
-        self.queries = []
-
-    def __call__(self, query):
-        self.queries.append(query)
-        month = query.split("after:")[1][:7]
-        if month in self.fail:
-            raise OSError("Netz weg")
-        return rss(self.by_month.get(month, []))
 
 
 @pytest.fixture(autouse=True)

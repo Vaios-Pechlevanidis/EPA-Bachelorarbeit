@@ -11,20 +11,20 @@ Ausführen:
 
 import os
 import sys
-from datetime import datetime
-from email.utils import format_datetime
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import services.evidence_service as ev  # noqa: E402
 import services.evidence_sources as src  # noqa: E402
 from services import news_service  # noqa: E402
 from routes.anomalies import router as anomalies_router  # noqa: E402
 from routes.context import router as context_router  # noqa: E402
+from _evidence_helpers import FakeRss  # noqa: E402
 
 DEMO_3 = 3
 ANOMALIES = "/api/analytics/company/{}/anomalies"
@@ -35,29 +35,6 @@ INFO = {"company_id": DEMO_3, "name": "Demo 3", "search_term": '"Demo 3"', "excl
         "ticker": None, "ticker_scope": None, "eqs_uuid": None, "eqs_name": None}
 FIELDS = {"company_id", "company", "search_term", "anchor", "window", "items", "total", "offset", "limit", "counts",
           "sources", "coverage", "reason", "note"}
-
-
-def rss(entries):
-    items = []
-    for title, url, day in entries:
-        pub = format_datetime(datetime.fromisoformat(day + "T09:00:00+00:00"))
-        items.append(f"<item><title>{title} - Blatt</title><link>{url}</link><pubDate>{pub}</pubDate>"
-                     f"<source url=\"https://blatt.example\">Blatt</source></item>")
-    return ("<?xml version=\"1.0\"?><rss version=\"2.0\"><channel><title>t</title>" + "".join(items) + "</channel></rss>").encode()
-
-
-class FakeRss:
-    def __init__(self, per_month=None, fail=()):
-        self.per_month = per_month or {}
-        self.fail = set(fail)
-        self.queries = []
-
-    def __call__(self, query):
-        self.queries.append(query)
-        month = query.split("after:")[1][:7]
-        if month in self.fail:
-            raise OSError("Netz weg")
-        return rss(self.per_month.get(month, []))
 
 
 @pytest.fixture(scope="module")
@@ -95,7 +72,7 @@ class TestAnomalyContext:
 
     def test_shape_and_window(self, client, store):
         anomaly = _anchor(client, "change")
-        store.per_month["2022-12"] = [("Meldung im Fenster", "https://x/1", "2022-12-20")]
+        store.by_month["2022-12"] = [("Meldung im Fenster", "https://x/1", "2022-12-20", "Blatt")]
         res = client.get(CONTEXT.format(DEMO_3, FALL_ID))
         assert res.status_code == 200
         body = res.json()
@@ -149,7 +126,7 @@ class TestAnomalyContext:
 
     def test_source_failure_is_not_500(self, client, store):
         store.fail = {ev.shift_month("2023-01", -1)}
-        store.per_month["2023-01"] = [("Januar", "https://x/2", "2023-01-05")]
+        store.by_month["2023-01"] = [("Januar", "https://x/2", "2023-01-05", "Blatt")]
         res = client.get(CONTEXT.format(DEMO_3, FALL_ID))
         assert res.status_code == 200
         body = res.json()
@@ -157,7 +134,7 @@ class TestAnomalyContext:
         assert body["sources"]["gnews"]["status"] == "teilweise" and len(body["sources"]["gnews"]["errors"]) == 1
 
     def test_pagination_newest_first(self, client, store):
-        store.per_month["2023-01"] = [(f"Meldung {i:02d}", f"https://x/{i}", f"2023-01-{i:02d}") for i in range(1, 31)]
+        store.by_month["2023-01"] = [(f"Meldung {i:02d}", f"https://x/{i}", f"2023-01-{i:02d}", "Blatt") for i in range(1, 31)]
         first = client.get(CONTEXT.format(DEMO_3, FALL_ID), params={"limit": 10}).json()
         assert first["total"] == 30 and len(first["items"]) == 10 and first["items"][0]["title"] == "Meldung 30"
         second = client.get(CONTEXT.format(DEMO_3, FALL_ID), params={"limit": 10, "offset": 10}).json()
@@ -168,7 +145,7 @@ class TestAnomalyContext:
 class TestSelectionContext:
 
     def test_shape(self, client, store):
-        store.per_month["2022-05"] = [("Mai", "https://x/5", "2022-05-15")]
+        store.by_month["2022-05"] = [("Mai", "https://x/5", "2022-05-15", "Blatt")]
         res = client.get(SELECTION.format(DEMO_3), params={"from": "2022-05", "to": "2022-06"})
         assert res.status_code == 200
         body = res.json()

@@ -46,7 +46,7 @@ EXPECTED_IDS = {3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
                 26, 27, 28, 29, 30, 31, 32, 33}
 REQUIRED_FIELDS = {
     "company_id", "name", "name_normalized", "ticker", "ticker_scope", "isin", "sector",
-    "peer_group", "news_term", "news_exclude", "news_term_confirmed", "listed", "verification", "note",
+    "peer_group", "news_term", "news_exclude", "news_term_confirmed", "eqs", "listed", "verification", "note",
 }
 VERIFICATION_FIELDS = {"ticker_checked_with", "rows", "isin_source", "checked_at"}
 
@@ -393,3 +393,22 @@ def test_news_search_fields(entries):
     assert by_id[28]["news_term"] == '"Deutsche Telekom"'
     assert all(not e["news_term_confirmed"] for e in entries if e["news_term"] or e["news_exclude"]), \
         "Vorschläge gelten erst nach Bestätigung durch den Autor"
+
+
+def test_eqs_issuer_fields(entries):
+    """EQS-companyUUID je Emittent (Inkrement 4, Schritt 5): für alle Unternehmen mit Ticker
+    außer NTT DATA SE (nicht bei EQS) und für Compugroup (ehemals notiert); unbestätigt, bis
+    der Autor sie prüft."""
+    for e in entries:
+        eqs = e["eqs"]
+        assert eqs is None or (
+            set(eqs) == {"uuid", "company_name", "isin", "found_at", "confirmed", "note"}
+            and re.fullmatch(r"[0-9a-f-]{36}", eqs["uuid"]) and eqs["company_name"] and isinstance(eqs["confirmed"], bool)
+        )
+    by_id = {e["company_id"]: e for e in entries}
+    assert by_id[20]["eqs"] is None, "NTT DATA: kein Emittent bei EQS"
+    assert by_id[26]["eqs"]["company_name"] == "Carl Zeiss Meditec AG"
+    assert by_id[27]["eqs"] and "ehemals" in by_id[27]["eqs"]["note"]
+    with_ticker = [e for e in entries if e["ticker"] and e["company_id"] != 20]
+    assert all(e["eqs"] for e in with_ticker)
+    assert all(not e["eqs"]["confirmed"] for e in entries if e["eqs"]), "UUIDs gelten erst nach Bestätigung"
