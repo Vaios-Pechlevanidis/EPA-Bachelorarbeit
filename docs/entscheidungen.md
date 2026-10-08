@@ -464,7 +464,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     Aktuelle Werte tragen in der Ansicht „aktuell, Stand …“. Fehlende Werte bleiben leer.
   - **Ticker:** aus `companies.ticker`; fehlt die Spalte oder der Wert, aus
     `company_metadata.json` über `company_id`, aber nur bei gleichem Namen. Neues Feld
-    `ticker_scope` in der Metadatei: „eigene Aktie“ oder „Konzernmutter“, ohne Ticker leer.
+    `ticker_scope` in der Metadatei: „eigene Aktie“ oder „Konzernmutter“, ohne Ticker leer
+    (seit 2026-10-08 auch „Konzerngesellschaft“, siehe Sonderfälle).
 - **Sonderfälle:**
   - **Konzernmutter:** Für NTT DATA SE wird der Kurs der NTT, Inc. (9432.T, Tokio, JPY)
     gezeigt (E6), `ticker_scope` „Konzernmutter“. Die Ansicht nennt das in Legende und
@@ -477,6 +478,15 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     zugeordnet; ob sich das Kununu-Profil auf die Meditec oder die nicht notierte Carl Zeiss
     AG bezieht, ist offen (E6). `ticker_scope` bleibt daher leer; die Ansicht nennt das
     Wertpapier („Carl Zeiss Meditec AG (AFX.DE)“).
+    **Entscheidung 2026-10-08 (Autor, D2, Option A):** Die Bewertungen beschreiben den
+    Gesamtkonzern (Belege in `docs/offene-punkte-vor-inkrement-4.md`, D2: Nennungen von SMT,
+    Oberkochen und Stiftung deutlich häufiger als Meditec; Profilpfad `carl-zeiss`). Der Ticker
+    AFX.DE bleibt, `ticker_scope` ist „Konzerngesellschaft“ (dritter erlaubter Wert,
+    `TICKER_SCOPES` in `backend/services/context_service.py`). Die Ansicht nennt in Legende,
+    Untertitel und Hinweis ausdrücklich „Kurs der börsennotierten Konzerngesellschaft Carl Zeiss
+    Meditec AG (AFX.DE), nicht des Gesamtkonzerns Carl Zeiss, den die Bewertungen beschreiben“.
+    Nicht gewählt: Ticker entfernen (hätte zusätzlich einen Schreibzugriff auf
+    `companies.ticker` verlangt) und „eigene Aktie“ (durch die Bewertungen nicht gedeckt).
 - **Begründung:** Der Monatsschluss passt zur Auflösung der Bewertungsreihe (Monatsmittel,
   E3). Bereinigte Kurse vermeiden Sprünge durch Splits, die wie Kursbewegungen aussähen. Der
   Zwischenspeicher macht die Ansicht unabhängig von der Erreichbarkeit von Yahoo Finance,
@@ -490,10 +500,12 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Umsatz reicht nur etwa vier Geschäftsjahre zurück (Stand 2026-10-04: 2022 bis 2025, bei
   NTT bis 03/2026), der Bewertungszeitraum meist weiter. Bereinigte Kurse ändern sich
   rückwirkend mit jeder Dividende; ein neuer Abruf kann ältere Werte leicht verschieben.
-  Ein Konzernkurs bildet ein Tochterunternehmen nur mittelbar ab.
+  Ein Konzernkurs bildet ein Tochterunternehmen nur mittelbar ab; umgekehrt bildet der Kurs
+  einer Konzerngesellschaft (Carl Zeiss Meditec AG) das Profil des Gesamtkonzerns nur zum Teil ab.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance für die Verwendung in der Arbeit (Abbildungen,
-  Weitergabe der Daten); Zuordnung Carl Zeiss; ob für Compugroup historische Kurse aus einer
-  anderen Quelle nachgetragen werden.
+  Weitergabe der Daten; Fundstellen und Fragen in `docs/nutzungsbedingungen.md`); ob für
+  Compugroup historische Kurse aus einer anderen Quelle nachgetragen werden. Die Zuordnung Carl
+  Zeiss ist seit 2026-10-08 entschieden (Sonderfälle).
 - **Nachtrag 2026-10-05 (Kurs auf der Anomalien-Seite):** Der Kurs ist auf der
   Anomalien-Detailseite wieder einblendbar, **Standard aus**. Hat das Unternehmen einen Ticker
   (Firmenliste), steht im Kopf des Abschnitts „Monatsverlauf“ das Kästchen „Aktienkurs“; der

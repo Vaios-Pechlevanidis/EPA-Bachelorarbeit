@@ -23,7 +23,7 @@ from _market_helpers import FETCHED_AT, raw_data  # noqa: E402
 METADATA = {
     19: {"company_id": 19, "name": "SAP SE", "ticker": "SAP.DE", "ticker_scope": "eigene Aktie"},
     20: {"company_id": 20, "name": "NTT DATA SE", "ticker": "9432.T", "ticker_scope": "Konzernmutter"},
-    26: {"company_id": 26, "name": "Carl Zeiss", "ticker": "AFX.DE", "ticker_scope": None},
+    26: {"company_id": 26, "name": "Carl Zeiss", "ticker": "AFX.DE", "ticker_scope": "Konzerngesellschaft"},
     4: {"company_id": 4, "name": "Open Grid Europe", "ticker": None, "ticker_scope": None},
 }
 
@@ -71,7 +71,7 @@ def test_missing_cache_and_file_without_metadata(cache):
     rows = script.summary_rows()
     assert [r["Ticker"] for r in rows] == ["SAP.DE", "9432.T", "AFX.DE", "OLD.DE"]
     zeiss = rows[2]
-    assert (zeiss["ticker_scope"], zeiss["Erster Monat"], zeiss["Monate"]) == ("–", "kein Zwischenspeicher", "0")
+    assert (zeiss["ticker_scope"], zeiss["Erster Monat"], zeiss["Monate"]) == ("Konzerngesellschaft", "kein Zwischenspeicher", "0")
     assert zeiss["has_prices"] is False
     assert (rows[3]["Unternehmen (id)"], rows[3]["in_metadata"]) == ("nicht in der Metadatei", False)
 

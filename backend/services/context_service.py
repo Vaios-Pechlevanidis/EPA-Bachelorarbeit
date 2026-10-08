@@ -70,6 +70,11 @@ METADATA_PATH = BACKEND_DIR / "data" / "company_metadata.json"
 CACHE_DIR = BACKEND_DIR / "data" / "market"
 
 SOURCE = "Yahoo Finance über yfinance"
+# Erlaubte Werte von ``ticker_scope`` in der Metadatei (E15): eigene Aktie des
+# Unternehmens, Kurs der Konzernmutter (NTT DATA SE) oder Kurs einer
+# börsennotierten Gesellschaft des Konzerns, den das Profil beschreibt (Carl Zeiss,
+# Entscheidung D2 vom 2026-10-08).
+TICKER_SCOPES = ("eigene Aktie", "Konzernmutter", "Konzerngesellschaft")
 ADJUSTMENT = "Monatsschluss, um Splits und Dividenden bereinigt"
 LIVE_FETCH_ENV = "MARKET_LIVE_FETCH"
 FAILED_FETCH_TTL = 15 * 60  # Sekunden ohne neuen Live-Versuch nach einem Fehlschlag
@@ -123,8 +128,9 @@ def company_ticker_info(company_id: int, metadata: Optional[Dict[int, Dict[str, 
 
     Rückgabe: ``{"company_id", "name", "ticker", "ticker_scope", "peer_group",
     "ticker_source"}`` mit ``ticker_source`` ``"db"``, ``"metadata"`` oder None.
-    ``ticker_scope`` (``"eigene Aktie"`` oder ``"Konzernmutter"``) steht nur in
-    der Metadatei; ohne passenden Eintrag bleibt er None.
+    ``ticker_scope`` (``"eigene Aktie"``, ``"Konzernmutter"`` oder
+    ``"Konzerngesellschaft"``, siehe ``TICKER_SCOPES``) steht nur in der
+    Metadatei; ohne passenden Eintrag bleibt er None.
     """
     row = _company_row(company_id)
     if row is None:

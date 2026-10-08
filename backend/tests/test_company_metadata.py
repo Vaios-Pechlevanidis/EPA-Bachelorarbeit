@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import routes.companies as companies_module  # noqa: E402
 from database import in_memory_store  # noqa: E402
 from database.in_memory_store import get_in_memory_client  # noqa: E402
+from services.context_service import TICKER_SCOPES  # noqa: E402
 from routes.companies import (  # noqa: E402
     COMPANY_META_COLUMNS,
     PEER_GROUPS,
@@ -90,10 +91,12 @@ def test_metadata_json_structure_and_types(entries):
         assert isinstance(e["note"], str)
         for key in ("ticker", "isin"):
             assert e[key] is None or (isinstance(e[key], str) and e[key].strip())
-        # ticker_scope (Inkrement 3, E15): None ohne Ticker; bei Carl Zeiss offen (None)
-        assert e["ticker_scope"] in ("eigene Aktie", "Konzernmutter", None)
+        # ticker_scope (Inkrement 3, E15): einer der erlaubten Werte; None nur ohne Ticker
+        assert e["ticker_scope"] in TICKER_SCOPES + (None,)
         if e["ticker"] is None:
             assert e["ticker_scope"] is None
+        else:
+            assert e["ticker_scope"] in TICKER_SCOPES, f"{e['name']}: ticker_scope fehlt"
         assert set(e["verification"]) == VERIFICATION_FIELDS
         v = e["verification"]
         assert v["ticker_checked_with"] in ("yfinance history 2y", None)
@@ -366,3 +369,13 @@ def test_in_memory_update_metadata_columns():
         assert untouched["sector"] == "Demo"
     finally:
         client.table("companies").update({"sector": "Demo", "ticker": None}).eq("id", 2).execute()
+
+
+def test_ticker_scope_decisions(entries):
+    """Sonderfälle der Metadatei: NTT DATA SE zeigt die Konzernmutter (E6/E15), Carl Zeiss die
+    börsennotierte Konzerngesellschaft Carl Zeiss Meditec AG (Entscheidung D2, 2026-10-08)."""
+    by_id = {e["company_id"]: e for e in entries}
+    assert (by_id[20]["ticker"], by_id[20]["ticker_scope"]) == ("9432.T", "Konzernmutter")
+    assert (by_id[26]["ticker"], by_id[26]["ticker_scope"]) == ("AFX.DE", "Konzerngesellschaft")
+    assert "Gesamtkonzern" in by_id[26]["note"]
+    assert sum(1 for e in entries if e["ticker_scope"] == "eigene Aktie") == 15

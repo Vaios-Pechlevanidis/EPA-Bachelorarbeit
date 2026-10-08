@@ -147,6 +147,10 @@ die Bewertungslisten und der Vergleich der Gruppe `abgelehnt` enthalten dann zus
 
 ## D2 – Zuordnung Carl Zeiss (E15)
 
+> **Entscheidung des Autors (2026-10-08): Option A.** Umgesetzt in Phase B (B2): `ticker_scope`
+> „Konzerngesellschaft“ in der Metadatei, ausdrücklicher Vermerk in der Ansicht, Tests, E15
+> und Feature-Doku 04.
+
 ### 1. Ausgangslage
 
 - Datenbank: `companies` id 26, Name „Carl Zeiss“, `ticker` AFX.DE, `sector` „Optik/Medizintechnik“,

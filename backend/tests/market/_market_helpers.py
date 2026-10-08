@@ -14,6 +14,7 @@ COMPANIES = [
     {"id": 10, "name": "Demo 1", "ticker": None, "peer_group": "Demo"},
     {"id": 19, "name": "SAP SE", "ticker": None, "peer_group": None},
     {"id": 20, "name": "NTT DATA SE", "ticker": "9432.T", "peer_group": "Börsennotiert Ausland"},
+    {"id": 26, "name": "Carl Zeiss", "ticker": "AFX.DE", "peer_group": "Börsennotiert DE"},
 ]
 
 

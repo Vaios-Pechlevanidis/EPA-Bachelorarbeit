@@ -6,7 +6,7 @@
 | Anforderungen | Kurs und Kennzahlen als Einordnung neben dem Bewertungsverlauf (Auftrag Inkrement 3); FA-15 (Kurs und zwei bis drei Kennzahlen); integrierte Darstellung laut Exposé (TF4) |
 | Entscheidungen | E15 in `docs/entscheidungen.md`; E6 (Ticker, Sonderfälle) und E8 (yfinance als Abhängigkeit) unverändert |
 | Status | umgesetzt; **vorläufig** (Nutzungsbedingungen von Yahoo Finance offen) |
-| Stand | 2026-10-05 |
+| Stand | 2026-10-08 |
 
 ## 1. Vorstellung
 
@@ -125,8 +125,10 @@ Ticker steht in Abschnitt 5 („Bestand des Zwischenspeichers“).
   Ersatz.
 - **NTT DATA SE** zeigt Kurs und Kennzahlen der Konzernmutter NTT, Inc. (9432.T, JPY); sie
   bilden die deutsche Landesgesellschaft nur mittelbar ab. Die Ansicht sagt das ausdrücklich.
-- **Carl Zeiss** zeigt die Carl Zeiss Meditec AG (AFX.DE); ob das Kununu-Profil die Meditec
-  oder die nicht notierte Carl Zeiss AG meint, ist offen.
+- **Carl Zeiss** zeigt die Carl Zeiss Meditec AG (AFX.DE), eine börsennotierte Gesellschaft des
+  Konzerns, während die Bewertungen den Gesamtkonzern beschreiben (Entscheidung D2 vom
+  2026-10-08, E15). `ticker_scope` ist „Konzerngesellschaft“; Legende, Untertitel und Hinweis
+  sagen ausdrücklich, dass der Kurs nicht der des Gesamtkonzerns ist.
 - **Compugroup Medical** war bis 2025 notiert, yfinance liefert nach dem Delisting keine
   Kurse mehr; die Ansicht zeigt „nicht börsennotiert“, obwohl es für frühere Jahre einen Kurs
   gab.
@@ -194,13 +196,14 @@ entspricht der Spanne vom ersten bis zum letzten Monat.
 | Formycon (32) | FYB.DE | eigene Aktie | 2011-01 | 2026-09 | 189 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
 | Freenet (33) | FNTN.DE | eigene Aktie | 2000-01 | 2026-09 | 321 | EUR | Stand 2026-10-02 | Stand 2026-10-04 | 4 GJ, Ende 2022-12 bis 2025-12 | 2026-10-04 |
 
-`ticker_scope` „–“ bei Carl Zeiss: Die Zuordnung zur Carl Zeiss Meditec AG ist offen (E15).
+`ticker_scope` „–“ bei Carl Zeiss in dieser Tabelle vom 2026-10-05: Die Zuordnung war damals
+offen; seit 2026-10-08 steht dort „Konzerngesellschaft“ (E15, Entscheidung D2).
 Nicht in der Tabelle, weil ohne Ticker: die 9 nicht notierten Unternehmen (darunter
 Compugroup Medical, E6) und die Demo-Unternehmen.
 
 ## 6. Offene Punkte
 
 - Nutzungsbedingungen von Yahoo Finance für die Verwendung in der Arbeit (E15).
-- Zuordnung Carl Zeiss (Meditec oder Carl Zeiss AG).
+- Zuordnung Carl Zeiss (behoben 2026-10-08): Konzerngesellschaft, siehe Grenzen und E15.
 - Historische Kurse für Compugroup aus einer anderen Quelle?
 - Wie oft der Zwischenspeicher vor der Auswertung erneuert wird (Stand festhalten).

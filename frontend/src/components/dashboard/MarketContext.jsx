@@ -7,7 +7,7 @@
    nicht berechnet.
    ============================================================================ */
 import {
-    MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE,
+    MARKET_DISCLAIMER_LEAD, MARKET_DISCLAIMER_TEXT, PARENT_SCOPE, GROUP_COMPANY_SCOPE,
     fiscalYearLabel, fmtAmount, fmtDay, fmtMonth, fmtPercent, fmtPrice,
 } from "@/lib/market"
 import { KpiTile as Tile } from "./KpiTile"
@@ -82,11 +82,14 @@ export function FinanceKpis({ market, last, first, change, extras = true }) {
     )
 }
 
-/* Wessen Kurs gezeigt wird: Wertpapier und Ticker; bei der Konzernmutter ausdrücklich. */
+/* Wessen Kurs gezeigt wird: Wertpapier und Ticker; bei Konzernmutter und Konzerngesellschaft ausdrücklich. */
 function securityText(market, companyName, subject) {
     const security = market.ticker_name ? `${market.ticker_name} (${market.ticker})` : market.ticker
     if (market.ticker_scope === PARENT_SCOPE) {
         return `${subject} der Konzernmutter ${security}, nicht${companyName ? ` von ${companyName}` : " des Unternehmens"} selbst.`
+    }
+    if (market.ticker_scope === GROUP_COMPANY_SCOPE) {
+        return `${subject} der börsennotierten Konzerngesellschaft ${security}, nicht des Gesamtkonzerns${companyName ? ` ${companyName}` : ""}, den die Bewertungen beschreiben.`
     }
     return `${subject}: ${security}.`
 }

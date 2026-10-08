@@ -328,7 +328,7 @@
     "name": "Carl Zeiss",
     "name_normalized": "Carl Zeiss",
     "ticker": "AFX.DE",
-    "ticker_scope": null,
+    "ticker_scope": "Konzerngesellschaft",
     "isin": null,
     "sector": "Optik/Medizintechnik",
     "peer_group": "Börsennotiert DE",
@@ -339,7 +339,7 @@
       "isin_source": "unverified",
       "checked_at": "2026-10-02"
     },
-    "note": "TecDAX-Mitglied ist die Carl Zeiss Meditec AG (AFX.DE). Das Kununu-Profil 'Carl Zeiss' bezieht sich möglicherweise auf die nicht börsennotierte Carl Zeiss AG (Stiftungsunternehmen, Konzernmutter) – Zuordnung vor der Analyse prüfen."
+    "note": "TecDAX-Mitglied ist die Carl Zeiss Meditec AG (AFX.DE), eine börsennotierte Gesellschaft des ZEISS-Konzerns. Das Kununu-Profil 'Carl Zeiss' beschreibt den Gesamtkonzern (Belege: docs/offene-punkte-vor-inkrement-4.md, D2). Entscheidung des Autors 2026-10-08 (Option A): Ticker bleibt, ticker_scope 'Konzerngesellschaft'; die Ansicht nennt das Wertpapier und die Konzerngesellschaft ausdrücklich."
   },
   {
     "company_id": 27,
