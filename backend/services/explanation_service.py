@@ -366,6 +366,7 @@ def explanations_for(
     analyzer=None,
     info: Optional[Dict[str, Any]] = None,
     evidence: Optional[Dict[str, Any]] = None,
+    source: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Erklärungsansätze zu einem Ereignisfenster (E18) aus den Belegen des Speichers
     (bzw. Abruf, wenn erlaubt), den Bewertungen der Vergleichsfenster und der
@@ -388,7 +389,7 @@ def explanations_for(
             return {"explanations": [], "summary": {**base, "reason": f"Unternehmen {company_id} nicht gefunden."}}
         evidence = evidence if evidence is not None else ev.evidence_for_window(info, window)
         exclude = company_terms(info.get("name"), info.get("search_term"))
-        terms = distinctive_terms(before_rows, after_rows, exclude=exclude)
+        terms = distinctive_terms(before_rows, after_rows, source=source, exclude=exclude)
         ranked = rank_evidence(
             evidence["items"], window, terms=terms, topics=comparison.get("topics"), direction=direction,
             exclude=exclude, analyzer=analyzer, kind=window.get("kind"),
@@ -471,6 +472,7 @@ def explain_anomaly(
     explained = explanations_for(
         company_id, window_for_anomaly(anomaly), by_window["before"], by_window["after"], comparison,
         direction=anomaly.get("direction"), analyzer=analyzer if analyzer is not None else get_sentiment_analyzer(),
+        source=source,
     )
     return {
         "company_id": company_id,
@@ -552,7 +554,7 @@ def compare_period(
     explained = explanations_for(
         company_id, window_for_selection(from_month, to_month), by_window["before"], by_window["after"], comparison,
         direction=_direction_from_shift(comparison.get("rating_shift")),
-        analyzer=analyzer if analyzer is not None else get_sentiment_analyzer(),
+        analyzer=analyzer if analyzer is not None else get_sentiment_analyzer(), source=source,
     )
     return {
         "company_id": company_id,

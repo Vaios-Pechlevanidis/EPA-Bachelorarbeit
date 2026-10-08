@@ -20,9 +20,11 @@ Schlüsselwörter deutsch und englisch, Themen, ``confirmed``). Regeln:
   Schrägstriche im Titel gelten als Leerzeichen.
 - Trifft mindestens eine Ereignisart mit Arbeitgeberbezug, gilt die mit den
   meisten getroffenen Schlüsselwörtern (bei Gleichstand die erste in der
-  Datei). Die Gruppe ohne Arbeitgeberbezug gilt nur, wenn keine Ereignisart
-  mit Arbeitgeberbezug trifft; EQS-Mitteilungen ihrer ``eqs_categories``
-  (Directors' Dealings, Stimmrechte, …) gehören ohne Blick auf den Titel dazu.
+  Datei). Die Gruppe ohne Arbeitgeberbezug gilt, wenn keine Ereignisart mit
+  Arbeitgeberbezug trifft oder wenn sie mehr Treffer hat als jede Ereignisart
+  (Spielbericht, Börsenbericht); bei Gleichstand hat der Arbeitgeberbezug
+  Vorrang. EQS-Mitteilungen ihrer ``eqs_categories`` (Directors' Dealings,
+  Stimmrechte, …) gehören ohne Blick auf den Titel dazu.
 - Deutsche Wörter greifen bei englischen Titeln nicht und umgekehrt; deshalb
   beide Listen. Die Schlüsselwörter sind Setzungen (vorläufig, bis der Autor
   sie bestätigt).
@@ -170,9 +172,10 @@ def classify_title(title: Any, categories: Optional[List[Dict[str, Any]]] = None
     Rückgabe ``{"primary": {...} | None, "matches": [...]}``; je Treffer ``id``, ``label``,
     ``employer_related``, ``topics`` und ``keywords`` (getroffene Wortfolgen des Titels, bei
     einer EQS-Kategorie ``"EQS: <Kategorie>"``). ``primary`` ist die Ereignisart mit
-    Arbeitgeberbezug mit den meisten Treffern (Gleichstand: Dateireihenfolge); ohne solche
-    die Gruppe ohne Arbeitgeberbezug, wenn sie trifft oder ``eqs_category`` zu ihr gehört;
-    sonst None. Reine Funktion."""
+    Arbeitgeberbezug mit den meisten Treffern (Gleichstand: Dateireihenfolge), es sei denn,
+    die Gruppe ohne Arbeitgeberbezug hat mehr Treffer; ohne Ereignisart die Gruppe ohne
+    Arbeitgeberbezug, wenn sie trifft oder ``eqs_category`` zu ihr gehört; sonst None.
+    Reine Funktion."""
     cats = load_event_categories() if categories is None else categories
     text = normalize_title(title)
     matches: List[Dict[str, Any]] = []
@@ -184,10 +187,14 @@ def classify_title(title: Any, categories: Optional[List[Dict[str, Any]]] = None
             matches.append({"id": c["id"], "label": c["label"], "employer_related": c["employer_related"],
                             "topics": list(c["topics"]), "keywords": hits})
     employer = [m for m in matches if m["employer_related"]]
+    other = next((m for m in matches if not m["employer_related"]), None)
     if employer:
         primary = max(employer, key=lambda m: len(m["keywords"]))   # max liefert bei Gleichstand den ersten
+        # Ein Spielbericht oder Börsenbericht mit mehr Treffern als jede Ereignisart gilt als ohne Arbeitgeberbezug.
+        if other is not None and len(other["keywords"]) > len(primary["keywords"]):
+            primary = other
     else:
-        primary = next((m for m in matches if not m["employer_related"]), None)
+        primary = other
     return {"primary": primary, "matches": matches}
 
 

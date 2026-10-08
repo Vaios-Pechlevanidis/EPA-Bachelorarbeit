@@ -12,8 +12,9 @@ Signale je Beleg (0 bis 1, aus Titel und Bewertungen):
 
 - ``term_match``: kennzeichnende Begriffe der Bewertungen (``review_terms``,
   A1), die im Titel stehen. Jeder Begriff zählt ``TERM_MATCH_PER_TERM``, ein
-  starker Begriff (mindestens ``TERM_STRONG_MIN_AFTER`` Bewertungen danach und
-  Anteil mindestens ``TERM_STRONG_MIN_RATIO``-fach) ``TERM_MATCH_STRONG``;
+  starker Begriff (mindestens ``TERM_STRONG_MIN_AFTER`` Bewertungen danach,
+  Anteil mindestens ``TERM_STRONG_MIN_RATIO``-fach und mindestens
+  ``TERM_STRONG_MIN_SHIFT`` über dem Anteil davor) ``TERM_MATCH_STRONG``;
   Summe höchstens 1.
 - ``category_match``: Ereignisart mit Arbeitgeberbezug aus dem Titel
   (``event_categories``, A2). ``CATEGORY_MATCH_WITH_SHIFT`` (1), wenn sich ein
@@ -72,7 +73,8 @@ from services.review_terms import match_terms, term_set
 TERM_MATCH_PER_TERM = 0.5        # jeder kennzeichnende Begriff im Titel
 TERM_MATCH_STRONG = 1.0          # ein starker Begriff zählt voll
 TERM_STRONG_MIN_AFTER = 5        # starker Begriff: mindestens so viele Bewertungen danach ...
-TERM_STRONG_MIN_RATIO = 3.0      # ... und Anteil mindestens so vielfach wie davor (ohne Nennung davor: erfüllt)
+TERM_STRONG_MIN_RATIO = 3.0      # ... Anteil mindestens so vielfach wie davor (ohne Nennung davor: erfüllt) ...
+TERM_STRONG_MIN_SHIFT = 0.05     # ... und Anteil danach mindestens so viel über dem Anteil davor (5 Prozentpunkte)
 
 TOPIC_SHIFT_MIN_PP = 5.0         # merkliche Verschiebung eines Themas (Prozentpunkte, Betrag)
 CATEGORY_MATCH_WITH_SHIFT = 1.0  # Ereignisart erkannt und zugeordnetes Thema verschoben
@@ -110,6 +112,7 @@ def rules() -> Dict[str, Any]:
     return {
         "term_match_per_term": TERM_MATCH_PER_TERM, "term_match_strong": TERM_MATCH_STRONG,
         "term_strong_min_after": TERM_STRONG_MIN_AFTER, "term_strong_min_ratio": TERM_STRONG_MIN_RATIO,
+        "term_strong_min_shift": TERM_STRONG_MIN_SHIFT,
         "topic_shift_min_pp": TOPIC_SHIFT_MIN_PP, "category_match_with_shift": CATEGORY_MATCH_WITH_SHIFT,
         "category_match_only": CATEGORY_MATCH_ONLY, "time_near": TIME_NEAR, "time_after_factor": TIME_AFTER_FACTOR,
         "topic_strong": TOPIC_STRONG, "topic_weak": TOPIC_WEAK, "time_mid": TIME_MID, "time_min": TIME_MIN,
@@ -155,7 +158,9 @@ def time_match(month: Optional[str], window: Dict[str, Any]) -> float:
 
 def is_strong_term(term: Dict[str, Any]) -> bool:
     ratio = term.get("ratio")
-    return int(term.get("after") or 0) >= TERM_STRONG_MIN_AFTER and (ratio is None or float(ratio) >= TERM_STRONG_MIN_RATIO)
+    shift = float(term.get("after_share") or 0.0) - float(term.get("before_share") or 0.0)
+    return (int(term.get("after") or 0) >= TERM_STRONG_MIN_AFTER and (ratio is None or float(ratio) >= TERM_STRONG_MIN_RATIO)
+            and shift >= TERM_STRONG_MIN_SHIFT)
 
 
 def term_match(matched_terms: List[Dict[str, Any]]) -> float:
@@ -578,7 +583,8 @@ def topic_shift_table(before_rows: List[Dict[str, Any]], after_rows: List[Dict[s
 
 
 __all__ = [
-    "TERM_MATCH_PER_TERM", "TERM_MATCH_STRONG", "TERM_STRONG_MIN_AFTER", "TERM_STRONG_MIN_RATIO", "TOPIC_SHIFT_MIN_PP",
+    "TERM_MATCH_PER_TERM", "TERM_MATCH_STRONG", "TERM_STRONG_MIN_AFTER", "TERM_STRONG_MIN_RATIO", "TERM_STRONG_MIN_SHIFT",
+    "TOPIC_SHIFT_MIN_PP",
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
     "TIME_MID", "TIME_MIN", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",

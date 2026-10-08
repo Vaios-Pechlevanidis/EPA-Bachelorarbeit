@@ -31,21 +31,27 @@ class TestTokens:
 
     def test_stopwords_and_review_words_removed(self):
         """Test: Stoppwörter (de, en) und allgemeine Bewertungswörter zählen nicht."""
-        assert rt.tokens("Der Arbeitgeber ist sehr gut und the team is nice") == ["nice"]
+        assert rt.tokens("Der Arbeitgeber ist sehr gut und the team is nice, the strike is over") == ["strike"]
 
     def test_empty_and_non_string(self):
         assert rt.tokens("") == [] and rt.tokens(None) == [] and rt.tokens(42) == []
 
     def test_sharp_s_is_kept(self):
         """Test: ß bleibt erhalten (kein casefold), damit Begriff und Titel gleich geschrieben sind."""
-        assert rt.tokens("Große Veränderung") == ["große", "veränderung"]
+        assert rt.tokens("Außenstelle geschlossen") == ["außenstelle", "geschlossen"]
 
-    def test_review_terms_over_topic_fields_with_html(self):
-        """Test: Freitexte und Titel über die Themenfelder, HTML bereinigt, je Begriff einmal."""
+    def test_review_terms_over_text_fields_with_html(self):
+        """Test: Freitexte und Titel, nicht die Jobbezeichnung; HTML bereinigt, je Begriff einmal."""
         row = {"titel": "Stellenabbau angekündigt", "gut_am_arbeitgeber_finde_ich": "Homeoffice<br/>Homeoffice",
-               "schlecht_am_arbeitgeber_finde_ich": None, "status": "Angestellt"}
+               "schlecht_am_arbeitgeber_finde_ich": None, "jobbeschreibung": "Werkstudent Vertrieb", "status": "Angestellt"}
         assert rt.review_terms(row) == {"stellenabbau", "angekündigt", "homeoffice"}
         assert rt.review_terms(row, exclude={"homeoffice"}) == {"stellenabbau", "angekündigt"}
+        assert rt.review_terms(row, source="candidates") == {"stellenabbau", "angekündigt"}, "Bewerbende: Vorschläge und Titel"
+
+    def test_company_prefix_excluded(self):
+        """Test: Wortteile des Unternehmensnamens schließen ab 5 Zeichen auch Wortanfänge aus."""
+        row = {"titel": "Die deutschen Standorte der Telekoms", "gut_am_arbeitgeber_finde_ich": ""}
+        assert rt.review_terms(row, exclude=rt.company_terms("Telekom", '"Deutsche Telekom"')) == {"standorte"}
 
 
 class TestCompanyTerms:
@@ -100,14 +106,28 @@ class TestDistinctiveTerms:
         assert [t["term"] for t in rt.distinctive_terms(_rows(10, "Alles ruhig"), after, max_terms=2)] == ["kündigung", "abfindung"]
 
     def test_company_name_and_stopwords_excluded(self):
-        """Test: Unternehmensname und Stoppwörter werden nie kennzeichnend."""
-        after = _rows(5, "Bei Beispielwerk ist der Chef neu", start_id=100)
-        terms = rt.distinctive_terms(_rows(5, "Alles ruhig"), after, exclude=rt.company_terms("Beispielwerk GmbH"))
-        assert [t["term"] for t in terms] == ["chef", "neu"]
+        """Test: Unternehmensname, Stoppwörter und allgemeine Wörter werden nie kennzeichnend."""
+        after = _rows(10, "Bei Beispielwerk ist der Chef neu", start_id=100)
+        terms = rt.distinctive_terms(_rows(10, "Alles ruhig"), after, exclude=rt.company_terms("Beispielwerk GmbH"))
+        assert [t["term"] for t in terms] == ["chef"]
+
+    def test_small_basis_gives_no_terms(self):
+        """Test: ein Fenster mit weniger als 10 Bewertungen (kleine Basis, E12) ergibt keine Begriffe."""
+        after = _rows(9, "Streik im Werk", start_id=100)
+        assert rt.distinctive_terms(_rows(10, "Alles ruhig"), after) == []
+        assert rt.distinctive_terms(_rows(9, "Alles ruhig"), _rows(10, "Streik im Werk", start_id=100)) == []
+        assert rt.distinctive_terms(_rows(10, "Alles ruhig"), _rows(10, "Streik im Werk", start_id=100))
+
+    def test_minimum_share_after(self):
+        """Test: 3 von 200 Bewertungen (1,5 %) sind kein kennzeichnender Begriff, 6 von 200 (3 %) schon."""
+        quiet = _rows(10, "Alles ruhig")
+        assert rt.distinctive_terms(quiet, _rows(3, "Streik", start_id=100) + _rows(197, "Alles ruhig", start_id=200)) == []
+        terms = rt.distinctive_terms(quiet, _rows(6, "Streik", start_id=100) + _rows(194, "Alles ruhig", start_id=200))
+        assert [t["term"] for t in terms] == ["streik"]
 
     def test_empty_windows(self):
         assert rt.distinctive_terms([], []) == []
-        assert rt.distinctive_terms([], _rows(3, "Streik im Werk")) and rt.distinctive_terms(_rows(3, "Streik"), []) == []
+        assert rt.distinctive_terms([], _rows(12, "Streik im Werk")) == [] and rt.distinctive_terms(_rows(12, "Streik"), []) == []
 
     def test_each_review_counts_once(self):
         """Test: eine Bewertung zählt je Begriff einmal, auch bei mehrfacher Nennung."""

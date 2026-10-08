@@ -103,6 +103,21 @@ class TestClassifyTitle:
         tie = ec.classify_title("Streik und neuer Chef", categories)
         assert tie["primary"]["id"] == "fuehrungswechsel"   # steht vor tarif_streik in der Datei
 
+    def test_group_without_employer_relation_wins_with_more_hits(self, categories):
+        """Test: Spielbericht mit drei Sporttreffern gegen ein 'muss gehen': ohne Arbeitgeberbezug."""
+        result = ec.classify_title("Trainer muss gehen nach Niederlage im Pokal", categories)
+        assert result["primary"]["id"] == ec.NON_EMPLOYER_ID and {m["id"] for m in result["matches"]} == {ec.NON_EMPLOYER_ID, "fuehrungswechsel"}
+        assert ec.classify_title("Chef muss gehen", categories)["primary"]["id"] == "fuehrungswechsel"
+
+    def test_ambiguous_single_words_do_not_match(self, categories):
+        """Test: 'übernimmt Verantwortung', 'Umsatz betrug', 'Hybrid-Cloud' treffen keine Ereignisart."""
+        for title in ("Vorstand übernimmt Verantwortung für das Projekt", "Der Umsatz betrug im Quartal mehr als zuvor",
+                      "Neues Angebot für die Hybrid-Cloud vorgestellt", "Verein kassiert Pleite im Derby"):
+            primary = ec.classify_title(title, categories)["primary"]
+            assert primary is None or primary["id"] == ec.NON_EMPLOYER_ID, title
+        assert ec.classify_title("Konzern übernimmt Mehrheit an Wettbewerber", categories)["primary"]["id"] == "uebernahme_verkauf"
+        assert ec.classify_title("Ermittler prüfen Betrugsverdacht gegen Manager", categories)["primary"]["id"] == "rechtsstreit_compliance"
+
     def test_no_match(self, categories):
         result = ec.classify_title("Heute scheint die Sonne über dem Werk", categories)
         assert result == {"primary": None, "matches": []}
