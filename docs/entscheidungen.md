@@ -141,8 +141,38 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     das Ergebnis in einem weiteren Commit ablegen; (6) E9 und E14 mit dem Beleg aktualisieren.
     Die Auswertung darf vor Schritt 4 nicht auf echten Reihen laufen, weil ihre Ausgabe alle
     erkannten Veränderungen der Reihe nennt.
-- **Status (2026-10-08):** Protokoll, Validierung, Bogen und Abgleich vorhanden; Einträge offen
-  (Handarbeit des Autors). Die Referenzzeiträume bleiben außerhalb des Dashboards.
+- **Aktualisierung 2026-10-08 (Iteration 2) – zweite, unabhängige Person:** Die Bewertung von
+  Inkrement 5 (Befund 4) hält fest, dass die Markierungen nicht gegen Referenzzeiträume geprüft
+  sind (DZ1 offen). Vorbereitung ohne Annotation:
+  - `docs/annotation-anleitung.md`: Anleitung für eine Person, die das Dashboard nie gesehen hat
+    (Zweck in zwei Sätzen, das Protokoll in einfachen Worten, Ablauf mit Bogen, Datei und
+    Prüfung, ein erfundenes Beispiel; kein Hinweis auf Erkennungsergebnisse).
+  - `backend/data/annotations_zweitperson.json`: zweite, leere Annotationsdatei mit demselben
+    Schema (`hinweise.annotierende_person` nennt den Zweck). `validate_annotations.py --file`
+    und `evaluate_detection.py --file` nehmen die Datei als Parameter; der Bogen ist für beide
+    Personen derselbe.
+  - `backend/scripts/compare_annotations.py`: Übereinstimmung zweier Annotationsdateien mit der
+    Zuordnungsregel aus Regel 6 (Toleranz ±1 Monat, bei nicht bewertetem Nachbarmonat bis zu 3
+    Monate, gleiche Richtung, Eins-zu-eins: Zeiträume aus A in zeitlicher Reihenfolge, frühester
+    passender Zeitraum aus B). Ausgabe je Reihe und gesamt: übereinstimmende Zeiträume, nur bei
+    A, nur bei B, Anteil der Reihen, in denen beide keinen Zeitraum sehen; die Reihen sind die
+    nach E4 geeigneten Reihen aus den Serien-CSVs (15 am 2026-10-08) und jede Reihe mit
+    Einträgen. Tests mit konstruierten Dateien in `backend/tests/test_compare_annotations.py`.
+    Keine Aussage, welche Datei richtig liegt.
+  - `backend/scripts/report_explanation_validity.py --annotations`: Zusatzauswertung der
+    Erklärungsansätze getrennt für Markierungen, die einen Referenzzeitraum treffen, und für
+    die übrigen (E23); solange die Annotationsdatei leer ist, meldet der Bericht „nicht
+    verfügbar“. Die Festlegung steht, der Lauf kommt nach der Annotation.
+  - **Ablauf für die zweite Person:** (1) Bogen erzeugen; (2) Anleitung und Bogen übergeben,
+    ohne Dashboard, ohne `annotations.json` des Autors; (3) Datei zurücknehmen und mit
+    `validate_annotations.py --file data/annotations_zweitperson.json` prüfen; (4) beide
+    Dateien in je einem eigenen Commit ablegen; (5) `compare_annotations.py` und je Datei
+    `evaluate_detection.py --file …`; (6) `report_explanation_validity.py --annotations …`.
+  - Beide Annotationsdateien bleiben leer; der Autor hat in Iteration 2 keine Zeiträume
+    eingetragen oder vorgeschlagen.
+- **Status (2026-10-08):** Protokoll, Validierung, Bogen, Abgleich, Anleitung, zweite Datei und
+  Abgleichsskript vorhanden; Einträge offen (Handarbeit des Autors und der zweiten Person). Die
+  Referenzzeiträume bleiben außerhalb des Dashboards.
 
 ## E6 – Unternehmens-Metadaten
 
@@ -921,7 +951,64 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Kennzeichen „Unternehmen im Titel nicht genannt“ macht das sichtbar, entscheidet aber nicht.
 - **Status:** Schwellen und Regeln vom Autor am 2026-10-08 bestätigt (D2) und für die Auswertung
   (E23) festgeschrieben (`backend/tests/explanations/test_frozen_rules.py`); Änderungen nur mit
-  dokumentiertem Grund.
+  dokumentiertem Grund. Die Stufenregeln liegen seit Iteration 2 in der zweiten Fassung vor
+  (Abschnitt unten); die Regeln oben sind die erste Fassung.
+
+### E21 – Iteration 2 (2026-10-08): zweite Fassung der Stufenregeln, Darstellung und Bündelung
+
+- **Anlass:** Bewertung von Inkrement 5 vom 2026-10-08, Befunde 1 und 2. (1) Die Stufe „hoch“
+  trat in Vergleichsfenstern so oft auf wie bei Markierungen (je 21 %, E23), das grüne Badge las
+  sich aber wie eine Bestätigung. (2) „hoch“ war ohne Wortbezug erreichbar: Eine erkannte
+  Ereignisart genügte, wenn sich eines der zugeordneten Themen um 5 Prozentpunkte verschoben
+  hatte (`category_match` 1 ergab `topic_match` 1).
+- **Entscheidung (Autor, 2026-10-08) – Regel, Fassung 2:** Die Signale, die Schwellen der
+  Signale, die Ereignisarten (E22) und die Zuordnungen bleiben unverändert; es ändert sich nur
+  die Zuordnung zu den Stufen (`RULES_VERSION = 2`, `RULES_VERSION_DATE = "2026-10-08"` in
+  `backend/services/explanation_ranking.py`; `rules()` nennt `version`):
+  - **hoch:** `term_match ≥ 0,5` und Ereignisart erkannt (`category_match ≥ 0,5`) und
+    `time_match ≥ 1`;
+  - **mittel:** `term_match ≥ 0,5` oder `category_match ≥ 1`, und `time_match ≥ 0,5`;
+  - **niedrig:** Ereignisart erkannt oder `term_match ≥ 0,5`, und `time_match ≥ 0,3`;
+  - die Gruppe ohne Arbeitgeberbezug stuft weiter eine Stufe zurück.
+  `topic_match` bleibt als Maximum aus `term_match` und `category_match` erhalten und ordnet nur
+  noch innerhalb einer Stufe. Die Menge der Bündel mit Stufe mindestens niedrig ist in beiden
+  Fassungen dieselbe; die Fassungen unterscheiden sich nur darin, welche Bündel hoch oder mittel
+  erreichen.
+- **Darstellung (nur Darstellung, keine Regel):** Die Oberfläche zeigt statt hoch, mittel und
+  niedrig, was gefunden wurde: „Wortbezug und Ereignisart“, „Wortbezug oder Themenbezug“, „nur
+  Ereignisart“ (Setzung des Autors; `stage_label` je Eintrag, Meldung und Beleg,
+  `rules.stage_labels`). Alle Badges tragen dieselbe neutrale Farbe, keine Ampel. Die Schlüssel
+  der Schnittstelle (`confidence`, `stage`: hoch, mittel, niedrig, keine) bleiben. Der
+  aufklappbare Abschnitt „Wie wird eingestuft?“ nennt die Regeln mit Fassung und den Satz: „In
+  der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung ähnlich
+  häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung.“
+  (`rules.finding_note`). Die Überschrift bleibt „Mögliche Zusammenhänge“.
+- **Bündelung der obersten Liste nach Ereignisart (nur Darstellung; Befund 3):** Die Bündelung
+  nach Titelähnlichkeit fasste kaum zusammen (362 Belege, 353 Bündel), oben standen mehrere
+  Einträge zum selben Ereignis. In der obersten Liste steht jetzt höchstens ein Eintrag je
+  Ereignisart; ohne Ereignisart gilt der getroffene Begriff als Gruppe. Stellvertreter ist der
+  beste Eintrag der Gruppe nach der bestehenden Sortierung; die übrigen Bündel der Gruppe stehen
+  im Feld `group` (Anzahl der Bündel und Meldungen, Herausgeber, Einträge) und sind in der
+  Oberfläche aufklappbar; `n_groups` zählt die Gruppen mit Stufe mindestens niedrig. Beispiel
+  (2026-10-08): Compugroup Medical, Abfall ab 2022-08: 5 Einträge vorher (dreimal
+  Führungswechsel), 3 nachher; SAP SE, Anstieg ab 2024-07: 5 vorher (zweimal Standort), 5
+  nachher, die Gruppe Personalabbau führt 25 Bündel.
+- **Unveränderte Zahlen:** Darstellung und Bündelung ändern die Stufe je Fenster (oberster
+  Eintrag), die Bündel je Stufe (`n_by_stage`) und die Signale je Beleg (`item_scores`) nicht;
+  `rank_evidence(group_by_category=False)` liefert die ungruppierte Liste, und
+  `TestGroupByCategory` in `backend/tests/explanations/test_explanation_ranking.py` sichert die
+  Gleichheit. Die Zahlen aus E23 (erste Fassung) sind davon unberührt.
+- **Festschreibung:** `test_frozen_rules.py` friert die zweite Fassung ein
+  (`STAGE_CASES_V2`, Regeltexte) und hält die erste als Datensatz fest (`STAGE_RULES_V1`:
+  Regeltexte, Commit 59f5d82, Datei des ersten Laufs); ein Test prüft, dass die Datei des ersten
+  Laufs diese Regeln trägt. Die Auswertung lief genau einmal mit der zweiten Fassung (E23,
+  Nachtrag); danach keine weitere Änderung der Regeln in Iteration 2.
+- **Grenzen:** Die Bezeichnungen sind Kurzformen der Regeln: „nur Ereignisart“ (niedrig) erreicht
+  auch ein Wortbezug am Rand des Fensters (`time_match` 0,3 bis unter 0,5), und „Wortbezug oder
+  Themenbezug“ (mittel) umfasst auch Wortbezug mit Ereignisart bei `time_match` unter 1; der
+  Tooltip nennt die Regel. Die Gruppe nach Begriff fasst nur gleiche Begriffsmengen zusammen.
+- **Status:** umgesetzt am 2026-10-08 (Branch `feature/inkrement-5-iteration-2`); Regel, Fassung
+  2, festgeschrieben.
 
 ## E22 – Ereignisarten mit Arbeitgeberbezug und Zuordnung zu Themen (Inkrement 5)
 
@@ -1021,4 +1108,41 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   sagt nichts über Ursachen.
 - **Status:** Auswertung einmal gelaufen (2026-10-08); Ereignisarten und Schwellen danach
   festgeschrieben (E21, E22). Eine Änderung der Schwellen nach diesem Lauf braucht einen
-  dokumentierten Grund und einen neuen, getrennt abgelegten Lauf.
+  dokumentierten Grund und einen neuen, getrennt abgelegten Lauf. Der Lauf der ersten Fassung
+  ist mit Commit 59f5d82 (main vor Iteration 2) reproduzierbar; die Zahlen oben bleiben stehen.
+- **Nachtrag (Iteration 2, 2026-10-08) – zweite Fassung der Stufenregeln:** Nach E21 (Iteration
+  2) lief die Auswertung genau einmal mit der zweiten Fassung (`RULES_VERSION` 2; gleicher
+  Speicher, gleiche Bewertungen, gleiche Fenster, ohne Stimmung der Titel):
+  `uv run python scripts/report_explanation_validity.py --json data/calibration/explanation_validity_v2_2026-10-08.json`
+  (Commit b0efc18). Die Datei der ersten Fassung bleibt unverändert. Zahlen der zweiten Fassung
+  neben denen der ersten, in derselben Form (Anteile der vollständig im Speicher liegenden
+  Fenster: 28 Markierungs-, 76 Vergleichsfenster):
+
+  | Kennzahl | 1. Fassung, Markierung | 1. Fassung, Vergleich | 2. Fassung, Markierung | 2. Fassung, Vergleich |
+  |---|---|---|---|---|
+  | mindestens ein Ansatz (Stufe mindestens niedrig) | 23/28 (82 %) | 58/76 (76 %) | 23/28 (82 %) | 58/76 (76 %) |
+  | mindestens ein Bündel hoch | 6/28 (21 %) | 16/76 (21 %) | 2/28 (7 %) | 3/76 (4 %) |
+  | mindestens ein Bündel mittel | 18/28 (64 %) | 47/76 (62 %) | 9/28 (32 %) | 22/76 (29 %) |
+  | mindestens ein Bündel niedrig | 18/28 (64 %) | 42/76 (55 %) | 21/28 (75 %) | 56/76 (74 %) |
+  | oberste Stufe hoch / mittel / niedrig / offen | 6 / 14 / 3 / 5 | 16 / 35 / 7 / 18 | 2 / 7 / 14 / 5 | 3 / 20 / 35 / 18 |
+  | Niveauwechsel mit Ansatz | 14/19 (74 %) | 38/51 (75 %) | 14/19 (74 %) | 38/51 (75 %) |
+  | Einzelmonate mit Ansatz | 9/9 (100 %) | 20/25 (80 %) | 9/9 (100 %) | 20/25 (80 %) |
+  | **Abdeckungsquote nach NFA-05** | **23/28 (82 %)** | – | **23/28 (82 %)** | – |
+
+  Je Unternehmen in der zweiten Fassung: mindestens ein Bündel hoch bei SAP SE (2 von 2
+  Markierungen) und in je einem Vergleichsfenster von 1&1 AG, Compugroup Medical und Telekom;
+  mittel bei 9 von 28 Markierungen gegen 22 von 76 Vergleichsfenstern (Telekom 2 von 7 gegen
+  10 von 16, Freenet 1 von 5 gegen 4 von 15, Carl Zeiss 0 von 2 gegen 1 von 5). Die
+  vollständigen Tabellen je Unternehmen stehen in `docs/feature-doku/08-erklaerungsansaetze.md`.
+- **Lesart des Nachtrags (dieselbe wie oben):** Die Abdeckungsquote und die Anteile mit
+  mindestens einem Ansatz sind in beiden Fassungen gleich, weil die Menge der Bündel mit Stufe
+  mindestens niedrig gleich bleibt (E21, Iteration 2). Die Anteile mit hoch und mittel sind in
+  der zweiten Fassung in beiden Gruppen niedriger und liegen weiter in derselben Größenordnung
+  (hoch 7 % gegen 4 %, mittel 32 % gegen 29 %, niedrig 75 % gegen 74 %); bei 2 gegen 3 Fenstern
+  mit Stufe hoch trägt der Unterschied keine Aussage. Auch mit der zweiten Fassung zeigen die
+  Signale aus Titeln und Wortbezügen in diesem Datenbestand nicht an, ob ein Fenster eine
+  Markierung trägt. Es wird nicht bewertet, welche Fassung „besser“ ist; beide Läufe sind
+  beschreibend und bleiben nebeneinander stehen.
+- **Grenzen des Nachtrags:** wie oben; zusätzlich: Die Zusatzauswertung nach Referenzzeiträumen
+  (E5, `--annotations`) war bei diesem Lauf nicht verfügbar, weil die Annotationsdatei leer ist;
+  sie wird nach der Annotation nachgeholt, ohne die Regeln zu ändern.
