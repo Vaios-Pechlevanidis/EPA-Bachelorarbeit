@@ -17,7 +17,8 @@ import { useEvidence } from "@/hooks/useEvidence"
    Inkrement 5: Mit `scores` (item_scores aus explanation_summary des
    Vergleichs) lässt sich die Liste nach Relevanz (Rang der Erklärungsansätze)
    statt nach Datum sortieren und nach Ereignisart filtern; dafür werden alle
-   Belege des Fensters geladen. Je Beleg stehen dann Stufe und Ereignisart.
+   Belege des Fensters geladen. Je Beleg stehen dann Stufe (mit ihrer
+   Bezeichnung aus rules.stage_labels, neutrale Farbe) und Ereignisart.
    ============================================================================ */
 
 const SORTS = [
@@ -113,7 +114,7 @@ function EvidenceRow({ item, score = null, rules = null }) {
                             EN
                         </span>
                     )}
-                    {score && score.stage !== "keine" && <StageBadge stage={score.stage} rule={rules?.stages?.[score.stage]} small />}
+                    {score && score.stage !== "keine" && <StageBadge stage={score.stage} rules={rules} small />}
                 </span>
                 <span className="block mt-0.5 text-[11px] text-slate-500">
                     {item.event

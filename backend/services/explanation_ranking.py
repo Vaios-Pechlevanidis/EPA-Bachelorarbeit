@@ -100,6 +100,19 @@ STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE = "hoch", "mittel", "niedrig", "
 STAGES = (STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE)
 _STAGE_RANK = {s: i for i, s in enumerate(STAGES)}
 
+# Bezeichnung je Stufe für die Oberfläche (Iteration 2, 2026-10-08, Befund 1): Die Stufe
+# beschreibt, was gefunden wurde, und bewertet nicht. Die Schlüssel (hoch, mittel, niedrig,
+# keine) bleiben in der Schnittstelle; die Bezeichnung ist ein zusätzliches Feld.
+STAGE_LABELS = {
+    STAGE_HIGH: "Wortbezug und Ereignisart",
+    STAGE_MEDIUM: "Wortbezug oder Themenbezug",
+    STAGE_LOW: "nur Ereignisart",
+    STAGE_NONE: "kein Bezug",
+}
+# Hinweis für den Abschnitt "Wie wird eingestuft?" (Ergebnis der Auswertung E23, 2026-10-08).
+STAGE_FINDING_NOTE = ("In der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung "
+                      "ähnlich häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung.")
+
 BUNDLE_MAX_DAYS = 3              # Meldungen zum selben Ereignis liegen höchstens so viele Tage auseinander
 BUNDLE_TITLE_SIMILARITY = 0.5    # Jaccard-Ähnlichkeit der Begriffe zweier Titel
 
@@ -126,6 +139,8 @@ def rules() -> Dict[str, Any]:
         "topic_strong": TOPIC_STRONG, "topic_weak": TOPIC_WEAK, "time_mid": TIME_MID, "time_min": TIME_MIN,
         "bundle_max_days": BUNDLE_MAX_DAYS, "bundle_title_similarity": BUNDLE_TITLE_SIMILARITY,
         "max_explanations": MAX_EXPLANATIONS,
+        "stage_labels": dict(STAGE_LABELS),
+        "finding_note": STAGE_FINDING_NOTE,
         "stages": {
             STAGE_HIGH: f"topic_match >= {TOPIC_STRONG} und time_match >= {TIME_NEAR}",
             STAGE_MEDIUM: f"topic_match >= {TOPIC_STRONG} und time_match >= {TIME_MID}, oder topic_match >= {TOPIC_WEAK} und time_match >= {TIME_NEAR}",
@@ -245,6 +260,7 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
     t_match, tm = term_match(matched), time_match(item.get("date"), window)
     topic = max(t_match, cat_match)
     employer = primary["employer_related"] if primary else None
+    stage = stage_for(topic, tm, employer)
     category = None
     if primary:
         category = {"id": primary["id"], "label": primary["label"], "employer_related": primary["employer_related"],
@@ -260,7 +276,8 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
         "category": category,
         "employer_related": employer,
         "company_in_title": company_in_title(title, company_words),
-        "stage": stage_for(topic, tm, employer),
+        "stage": stage,
+        "stage_label": STAGE_LABELS[stage],
     }
 
 
@@ -337,6 +354,7 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
     if category:
         category = {**category, "match": cat_match}
     publishers = list(dict.fromkeys(i.get("publisher") for i in items if i.get("publisher")))
+    stage = stage_for(topic, tm, employer)
     return {
         "representative": representative,
         "items": items,
@@ -347,7 +365,8 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
         "terms": list(terms.values()),
         "category": category,
         "employer_related": employer,
-        "stage": stage_for(topic, tm, employer),
+        "stage": stage,
+        "stage_label": STAGE_LABELS[stage],
         "source_type": representative.get("source_type"),
         "has_adhoc": any(i.get("source_type") == TYPE_ADHOC for i in items),
         "company_in_title": representative.get("company_in_title"),
@@ -481,10 +500,11 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
            cache: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     rep = bundle["representative"]
     item_fields = ("id", "date", "title", "publisher", "url", "source", "source_type", "reliability", "language", "issuer",
-                   "time_match", "term_match", "category_match", "topic_match", "stage", "company_in_title")
+                   "time_match", "term_match", "category_match", "topic_match", "stage", "stage_label", "company_in_title")
     return {
         "id": rep.get("id"),
         "confidence": bundle["stage"],
+        "stage_label": bundle["stage_label"],
         "event": rep.get("title"),
         "date": rep.get("date"),
         "source": rep.get("publisher"),
@@ -555,7 +575,7 @@ def rank_evidence(
         for i in b["items"]:
             rank += 1
             item_scores[str(i.get("id"))] = {
-                "rank": rank, "stage": b["stage"], "bundle": b_index, "bundle_size": b["n_items"],
+                "rank": rank, "stage": b["stage"], "stage_label": b["stage_label"], "bundle": b_index, "bundle_size": b["n_items"],
                 "time_match": i["time_match"], "term_match": i["term_match"], "category_match": i["category_match"],
                 "topic_match": i["topic_match"], "item_stage": i["stage"],
                 "category": i["category"]["id"] if i.get("category") else None,
@@ -612,7 +632,7 @@ __all__ = [
     "TERM_MATCH_PER_TERM", "TERM_MATCH_STRONG", "TERM_STRONG_MIN_AFTER", "TERM_STRONG_MIN_RATIO", "TERM_STRONG_MIN_SHIFT",
     "TOPIC_SHIFT_MIN_PP",
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
-    "TIME_MID", "TIME_MIN", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "BUNDLE_MAX_DAYS",
+    "TIME_MID", "TIME_MIN", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
     "OPEN_NOTE", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
     "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "fmt_month", "time_phrase", "explanation_text",

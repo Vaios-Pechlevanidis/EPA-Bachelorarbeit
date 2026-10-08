@@ -140,6 +140,20 @@ class TestStages:
         assert er.stage_for(0.0, 1.0, employer_related=False) == "keine"
         assert er.stage_for(1.0, 1.0, employer_related=True) == "hoch" and er.stage_for(1.0, 1.0, None) == "hoch"
 
+    def test_stage_labels_describe_not_judge(self):
+        """Iteration 2 (Befund 1): Je Stufe eine Bezeichnung, die nennt, was gefunden wurde; die Schlüssel
+        bleiben. Bezeichnungen und Hinweis stehen in rules(), die Bezeichnung je Beleg und Bündel."""
+        labels = er.rules()["stage_labels"]
+        assert set(labels) == set(er.STAGES)
+        assert labels == {"hoch": "Wortbezug und Ereignisart", "mittel": "Wortbezug oder Themenbezug",
+                          "niedrig": "nur Ereignisart", "keine": "kein Bezug"}
+        assert "08.10.2026" in er.rules()["finding_note"] and "Kandidaten für die eigene Einordnung" in er.rules()["finding_note"]
+        for text in list(labels.values()) + [er.rules()["finding_note"]]:
+            assert not re.search(r"ursache|auslöser|grund|weil|führte|bestätigt", text, re.IGNORECASE), text
+        shifts = er.topic_shift_index(SHIFTED)
+        scored = er.score_item(item("Konzern kündigt Stellenabbau an", "2023-02-10"), WINDOW, [TERM_WEAK], shifts, CATS)
+        assert scored["stage_label"] == labels[scored["stage"]]
+
     def test_score_item_combines_signals(self):
         shifts = er.topic_shift_index(SHIFTED)
         scored = er.score_item(item("Konzern kündigt Stellenabbau an", "2023-02-10"), WINDOW, [TERM_WEAK], shifts, CATS)
@@ -395,6 +409,8 @@ class TestRankEvidence:
         assert len(result["item_scores"]) == 7 and result["item_scores"][top["id"]]["rank"] == 1
         assert result["item_scores"][top["id"]]["category"] == "personalabbau"
         assert result["open_note"] is None
+        assert top["stage_label"] == er.STAGE_LABELS[top["confidence"]] and top["items"][0]["stage_label"] == er.STAGE_LABELS[top["items"][0]["stage"]]
+        assert result["item_scores"][top["id"]]["stage_label"] == er.STAGE_LABELS[top["confidence"]]
 
     def test_sentiment_does_not_change_stage(self, context):
         a = er.rank_evidence(context["items"], WINDOW, terms=context["terms"], topics=context["topics"], direction="fall",
