@@ -46,7 +46,7 @@ EXPECTED_IDS = {3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
                 26, 27, 28, 29, 30, 31, 32, 33}
 REQUIRED_FIELDS = {
     "company_id", "name", "name_normalized", "ticker", "ticker_scope", "isin", "sector",
-    "peer_group", "listed", "verification", "note",
+    "peer_group", "news_term", "news_exclude", "news_term_confirmed", "listed", "verification", "note",
 }
 VERIFICATION_FIELDS = {"ticker_checked_with", "rows", "isin_source", "checked_at"}
 
@@ -379,3 +379,17 @@ def test_ticker_scope_decisions(entries):
     assert (by_id[26]["ticker"], by_id[26]["ticker_scope"]) == ("AFX.DE", "Konzerngesellschaft")
     assert "Gesamtkonzern" in by_id[26]["note"]
     assert sum(1 for e in entries if e["ticker_scope"] == "eigene Aktie") == 15
+
+
+def test_news_search_fields(entries):
+    """Suchbegriff und Ausschlussbegriffe für die Belege (Inkrement 4): optional, Vorschläge
+    sind als unbestätigt gekennzeichnet (news_term_confirmed false), bis der Autor sie prüft."""
+    for e in entries:
+        assert e["news_term"] is None or (isinstance(e["news_term"], str) and e["news_term"].strip())
+        assert isinstance(e["news_exclude"], list) and all(isinstance(x, str) and x.strip() for x in e["news_exclude"])
+        assert isinstance(e["news_term_confirmed"], bool)
+    by_id = {e["company_id"]: e for e in entries}
+    assert by_id[26]["news_term"] and by_id[26]["news_exclude"], "Carl Zeiss: mehrdeutiger Name braucht Vorschlag"
+    assert by_id[28]["news_term"] == '"Deutsche Telekom"'
+    assert all(not e["news_term_confirmed"] for e in entries if e["news_term"] or e["news_exclude"]), \
+        "Vorschläge gelten erst nach Bestätigung durch den Autor"

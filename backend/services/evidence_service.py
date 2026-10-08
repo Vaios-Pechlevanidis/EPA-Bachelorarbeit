@@ -156,3 +156,355 @@ __all__ = [
     "is_period", "month_index", "period_from_index", "shift_month", "month_range",
     "window_for_change", "window_for_anomaly", "window_for_outlier", "window_for_selection", "window_months",
 ]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Belegspeicher und Belege eines Fensters (Inkrement 4, Schritt 2)
+# ═════════════════════════════════════════════════════════════════════════════
+#
+# Meldungen werden je Unternehmen, Quelle und Kalendermonat abgelegt, nicht je
+# Veränderung: ``backend/data/context/<company_id>/<source>/<YYYY-MM>.json``
+# (in ``.gitignore``). Die Belege eines Fensters sind alle gespeicherten
+# Meldungen, deren Datum im Fenster liegt. So bleibt der Speicher gültig, wenn
+# sich die Erkennung ändert. Abgeschlossene Monate werden nicht erneut
+# abgerufen, der laufende Monat frühestens nach ``CURRENT_MONTH_MAX_AGE``; ein
+# anderer Suchbegriff macht einen gespeicherten Monat ungültig.
+# ``CONTEXT_LIVE_FETCH=0`` unterbindet jeden Abruf; dann gilt nur der Speicher.
+# Jede Quelle läuft getrennt: Fällt eine aus, liefern die anderen weiter.
+
+import json  # noqa: E402
+import logging  # noqa: E402
+import os  # noqa: E402
+import tempfile  # noqa: E402
+import time  # noqa: E402
+from datetime import datetime, timedelta, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import Callable, Tuple  # noqa: E402
+
+from services import news_service  # noqa: E402
+from services.evidence_sources import (  # noqa: E402
+    SOURCE_EQS, SOURCE_GDELT, SOURCE_GNEWS, SOURCE_LABELS, TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS,
+    dedupe, fetch_gnews_month, gnews_month_query, throttle, utc_now,
+)
+
+logger = logging.getLogger(__name__)
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+STORE_DIR = BACKEND_DIR / "data" / "context"
+LIVE_FETCH_ENV = "CONTEXT_LIVE_FETCH"
+GDELT_ENV = "CONTEXT_GDELT"
+CURRENT_MONTH_MAX_AGE = timedelta(hours=12)
+FAILED_FETCH_TTL = 15 * 60      # Sekunden ohne neuen Versuch nach einem fehlgeschlagenen Abruf
+STORE_VERSION = 1
+
+EVIDENCE_NOTE = ("Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie sind keine Aussage über "
+                 "Ursachen; interne Auslöser sind von außen nicht sichtbar.")
+
+# Fehlgeschlagene Abrufe je (Quelle, Unternehmen, Monat): (Zeitpunkt, Begründung).
+_failed_fetches: Dict[Tuple[str, int, str], Tuple[float, str]] = {}
+
+
+def live_fetch_enabled() -> bool:
+    return os.getenv(LIVE_FETCH_ENV, "1").strip() != "0"
+
+
+def gdelt_enabled() -> bool:
+    return os.getenv(GDELT_ENV, "0").strip() == "1"
+
+
+# ── Unternehmen ──────────────────────────────────────────────────────────────
+
+def _normalize_name(raw: Any) -> str:
+    return " ".join(str(raw or "").split()).casefold()
+
+
+def company_context_info(company_id: int, metadata: Optional[Dict[int, Dict[str, Any]]] = None) -> Optional[Dict[str, Any]]:
+    """Suchbegriff, Ausschlussbegriffe und Quellenangaben eines Unternehmens oder None,
+    wenn es die ID nicht gibt. Name und Ticker kommen aus ``companies`` (nur lesend), der
+    Rest aus ``company_metadata.json`` (``news_term``, ``news_exclude``,
+    ``news_term_confirmed``, ``eqs``), nur bei gleichem Namen."""
+    from services.context_service import company_ticker_info, load_metadata  # lazy: Tests ohne DB
+
+    info = company_ticker_info(company_id)
+    if info is None:
+        return None
+    meta_all = load_metadata() if metadata is None else metadata
+    meta = meta_all.get(int(company_id)) or {}
+    if meta and _normalize_name(meta.get("name")) != _normalize_name(info.get("name")):
+        meta = {}
+    name = info.get("name") or ""
+    eqs = meta.get("eqs") or {}
+    return {
+        "company_id": int(company_id),
+        "name": name,
+        "search_term": (meta.get("news_term") or "").strip() or news_service.search_term(name),
+        "exclude": [str(e) for e in (meta.get("news_exclude") or []) if str(e).strip()],
+        "term_confirmed": bool(meta.get("news_term_confirmed")),
+        "ticker": info.get("ticker"),
+        "ticker_scope": info.get("ticker_scope"),
+        "eqs_uuid": eqs.get("uuid") or None,
+        "eqs_name": eqs.get("company_name") or None,
+    }
+
+
+def available_sources(info: Dict[str, Any]) -> List[str]:
+    """Quellen eines Unternehmens: Google News immer, EQS mit companyUUID, GDELT nur mit Schalter."""
+    sources = [SOURCE_GNEWS]
+    if info.get("eqs_uuid"):
+        sources.append(SOURCE_EQS)
+    if gdelt_enabled():
+        sources.append(SOURCE_GDELT)
+    return sources
+
+
+# ── Speicher ─────────────────────────────────────────────────────────────────
+
+def record_path(company_id: int, source: str, month: str, store_dir: Optional[Path] = None) -> Path:
+    if not is_period(month):
+        raise ValueError(f"Monat muss das Format YYYY-MM haben, nicht {month!r}.")
+    if not re.fullmatch(r"[a-z]+", source):
+        raise ValueError(f"Quelle '{source}' ungültig.")
+    return Path(store_dir or STORE_DIR) / str(int(company_id)) / source / f"{month}.json"
+
+
+def load_record(company_id: int, source: str, month: str, store_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    """Gespeicherter Monat oder None (fehlt, unlesbar oder gehört nicht zu diesem Schlüssel)."""
+    path = record_path(company_id, source, month, store_dir)
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            record = json.load(fh)
+    except (OSError, ValueError) as exc:
+        logger.warning("Belegspeicher %s nicht lesbar: %s", path, exc)
+        return None
+    if not isinstance(record, dict):
+        return None
+    if (record.get("company_id"), record.get("source"), record.get("month")) != (int(company_id), source, month):
+        return None
+    return record
+
+
+def save_record(record: Dict[str, Any], store_dir: Optional[Path] = None) -> Path:
+    """Schreibt einen Monat atomar (temporäre Datei, dann umbenennen)."""
+    path = record_path(record["company_id"], record["source"], record["month"], store_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(record, fh, ensure_ascii=False, indent=1)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    return path
+
+
+def is_month_complete(month: str, now: datetime) -> bool:
+    return month < now.strftime("%Y-%m")
+
+
+def build_record(company_id: int, source: str, month: str, query: Optional[str], items: List[Dict[str, Any]],
+                 now: datetime) -> Dict[str, Any]:
+    return {
+        "version": STORE_VERSION,
+        "company_id": int(company_id),
+        "source": source,
+        "month": month,
+        "query": query,
+        "fetched_at": now.replace(microsecond=0).isoformat(),
+        "complete_month": is_month_complete(month, now),
+        "status": "ok",
+        "items": list(items),
+    }
+
+
+def record_is_current(record: Optional[Dict[str, Any]], month: str, now: datetime, query: Optional[str] = None) -> bool:
+    """Ein gespeicherter Monat gilt, wenn er erfolgreich abgerufen wurde, zum erwarteten
+    Suchbegriff passt und entweder abgeschlossen ist oder (laufender Monat) jünger als
+    ``CURRENT_MONTH_MAX_AGE``."""
+    if not isinstance(record, dict) or record.get("status") != "ok":
+        return False
+    if query is not None and record.get("query") != query:
+        return False
+    if is_month_complete(month, now):
+        return True
+    try:
+        fetched = datetime.fromisoformat(str(record.get("fetched_at")))
+    except (TypeError, ValueError):
+        return False
+    if fetched.tzinfo is None:
+        fetched = fetched.replace(tzinfo=timezone.utc)
+    return now - fetched < CURRENT_MONTH_MAX_AGE
+
+
+# ── Abruf je Quelle ──────────────────────────────────────────────────────────
+
+Fetcher = Callable[[str], bytes]
+
+
+def expected_query(info: Dict[str, Any], source: str, month: str) -> Optional[str]:
+    """Suchbegriff, mit dem ein gespeicherter Monat übereinstimmen muss; None, wenn die
+    Quelle keinen Suchbegriff hat."""
+    if source == SOURCE_GNEWS:
+        return gnews_month_query(info["search_term"], month, info.get("exclude") or [])
+    return None
+
+
+def fetch_source_month(info: Dict[str, Any], source: str, month: str,
+                       fetcher: Optional[Fetcher] = None) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    """Ein Monat einer Quelle (Netz oder ``fetcher``); liefert ``(items, query)``."""
+    if source == SOURCE_GNEWS:
+        return fetch_gnews_month(info["search_term"], month, info.get("exclude") or [], fetcher)
+    if source == SOURCE_EQS:
+        from services.evidence_sources import fetch_eqs_month  # Schritt 5
+        return fetch_eqs_month(info, month, fetcher)
+    if source == SOURCE_GDELT:
+        from services.evidence_sources import fetch_gdelt_month  # Schalter CONTEXT_GDELT
+        return fetch_gdelt_month(info, month, fetcher)
+    raise ValueError(f"Quelle '{source}' unbekannt.")
+
+
+def month_record(
+    info: Dict[str, Any],
+    source: str,
+    month: str,
+    *,
+    fetcher: Optional[Fetcher] = None,
+    store_dir: Optional[Path] = None,
+    now: Optional[datetime] = None,
+    live: bool = True,
+    sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
+) -> Dict[str, Any]:
+    """Gespeicherter Monat, sonst (wenn erlaubt) ein Abruf mit Speichern.
+
+    Rückgabe ``{"record", "fetched_now", "error", "stale"}``: ``record`` ist None,
+    wenn weder Speicher noch Abruf etwas liefern; ``stale`` heißt, dass ein
+    älterer Stand des laufenden Monats gezeigt wird; ``error`` nennt den Grund,
+    wenn ein Abruf nötig war und nicht möglich war. Wirft nicht.
+    """
+    now = now or utc_now()
+    company_id = int(info["company_id"])
+    query = expected_query(info, source, month)
+    record = load_record(company_id, source, month, store_dir)
+    if record is not None and record_is_current(record, month, now, query):
+        return {"record": record, "fetched_now": False, "error": None, "stale": False}
+    stale = record if (record and record.get("status") == "ok" and (query is None or record.get("query") == query)) else None
+    if not live or not live_fetch_enabled():
+        error = None if stale is not None else (
+            f"Kein gespeicherter Beleg für {month}; der Live-Abruf ist abgeschaltet ({LIVE_FETCH_ENV}=0)."
+        )
+        return {"record": stale, "fetched_now": False, "error": error, "stale": stale is not None}
+    key = (source, company_id, month)
+    failed = _failed_fetches.get(key)
+    if failed and clock() - failed[0] < FAILED_FETCH_TTL:
+        return {"record": stale, "fetched_now": False, "error": failed[1], "stale": stale is not None}
+    throttle(source, sleep=sleep, clock=clock)
+    try:
+        items, used_query = fetch_source_month(info, source, month, fetcher)
+    except Exception as exc:  # noqa: BLE001 – Netz, XML/JSON, Dateisystem: Quelle fällt aus, Rest läuft weiter
+        reason = f"{SOURCE_LABELS.get(source, source)} für {month} nicht abrufbar ({type(exc).__name__}: {exc})."
+        logger.warning("Belegabruf %s/%s/%s fehlgeschlagen: %s", source, company_id, month, exc)
+        _failed_fetches[key] = (clock(), reason)
+        return {"record": stale, "fetched_now": False, "error": reason, "stale": stale is not None}
+    new = build_record(company_id, source, month, used_query, items, now)
+    save_record(new, store_dir)
+    _failed_fetches.pop(key, None)
+    return {"record": new, "fetched_now": True, "error": None, "stale": False}
+
+
+# ── Belege eines Fensters ────────────────────────────────────────────────────
+
+def _in_window(item: Dict[str, Any], window: Dict[str, Any]) -> bool:
+    date = item.get("date") or ""
+    return bool(date) and window["from"] <= date[:7] <= window["to"]
+
+
+def _sort_key(item: Dict[str, Any]) -> str:
+    return str(item.get("datetime") or item.get("date") or "")
+
+
+def evidence_for_window(
+    info: Dict[str, Any],
+    window: Dict[str, Any],
+    *,
+    sources: Optional[List[str]] = None,
+    fetchers: Optional[Dict[str, Fetcher]] = None,
+    store_dir: Optional[Path] = None,
+    now: Optional[datetime] = None,
+    live: bool = True,
+    sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
+    events: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Alle Belege eines Fensters, neueste zuerst, mit Anzahl je Typ, Stand je Quelle und
+    ``coverage`` (mindestens ein Beleg). Monate kommen aus dem Speicher oder werden
+    (wenn erlaubt) abgerufen; ``fetchers`` ordnet Quellen Abruffunktionen zu (Tests).
+    ``events`` sind bestätigte allgemeine Ereignisse (Schritt 7)."""
+    now = now or utc_now()
+    months = window_months(window)
+    used_sources = list(sources) if sources else available_sources(info)
+    items: List[Dict[str, Any]] = []
+    summary: Dict[str, Dict[str, Any]] = {}
+    for source in used_sources:
+        fetcher = (fetchers or {}).get(source)
+        s: Dict[str, Any] = {"label": SOURCE_LABELS.get(source, source), "months": len(months), "from_store": 0,
+                             "fetched_now": 0, "missing": 0, "stale": 0, "errors": [], "fetched_at": None}
+        for month in months:
+            result = month_record(info, source, month, fetcher=fetcher, store_dir=store_dir, now=now, live=live,
+                                  sleep=sleep, clock=clock)
+            record = result["record"]
+            if record is None:
+                s["missing"] += 1
+            else:
+                s["fetched_now" if result["fetched_now"] else "from_store"] += 1
+                if result["stale"]:
+                    s["stale"] += 1
+                fetched_at = record.get("fetched_at")
+                if fetched_at and (s["fetched_at"] is None or fetched_at > s["fetched_at"]):
+                    s["fetched_at"] = fetched_at
+                items.extend(it for it in record.get("items") or [] if _in_window(it, window))
+            if result["error"]:
+                s["errors"].append({"month": month, "error": result["error"]})
+        if not s["errors"] and s["missing"] == 0:
+            s["status"] = "ok"
+        elif s["missing"] == len(months):
+            s["status"] = "fehlgeschlagen"
+        else:
+            s["status"] = "teilweise"
+        summary[source] = s
+    if events:
+        from services.evidence_service import global_event_items  # Schritt 7
+        items.extend(global_event_items(events, window))
+    items = dedupe(items)
+    items.sort(key=_sort_key, reverse=True)
+    counts = {TYPE_NEWS: 0, TYPE_ADHOC: 0, TYPE_GLOBAL: 0}
+    for item in items:
+        counts[item["source_type"]] = counts.get(item["source_type"], 0) + 1
+    reason = None
+    if not items:
+        if summary and all(s["missing"] == s["months"] for s in summary.values()):
+            errors = [e["error"] for s in summary.values() for e in s["errors"]]
+            reason = errors[0] if errors else "Keine gespeicherten Belege für dieses Fenster."
+        else:
+            reason = "Kein Beleg im Fenster gefunden."
+    return {
+        "window": window,
+        "items": items,
+        "total": len(items),
+        "counts": counts,
+        "sources": summary,
+        "coverage": bool(items),
+        "reason": reason,
+        "note": EVIDENCE_NOTE,
+    }
+
+
+__all__ += [
+    "STORE_DIR", "LIVE_FETCH_ENV", "GDELT_ENV", "CURRENT_MONTH_MAX_AGE", "FAILED_FETCH_TTL", "EVIDENCE_NOTE",
+    "live_fetch_enabled", "gdelt_enabled", "company_context_info", "available_sources",
+    "record_path", "load_record", "save_record", "is_month_complete", "build_record", "record_is_current",
+    "expected_query", "fetch_source_month", "month_record", "evidence_for_window",
+]
