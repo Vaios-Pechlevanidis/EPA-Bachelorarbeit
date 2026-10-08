@@ -62,12 +62,15 @@ def list_companies() -> List[Dict[str, Any]]:
 
 def company_anchors(company_id: int) -> Dict[str, Any]:
     """Niveauwechsel und Einzelmonate eines Unternehmens (Standardparameter) oder
-    ``eligible: False``; nur lesend."""
+    ``eligible: False``, dazu der erste und letzte Monat der bewerteten Reihe; nur lesend."""
     result = company_anomalies(company_id, source=SOURCE, dimension=DIMENSION)
+    series = result.get("series") or []
     return {
         "eligible": bool(result["eligibility"]["eligible"]),
         "anomalies": result["anomalies"],
         "outliers": result.get("outlier_months") or [],
+        "series_from": series[0]["period"] if series else None,   # erster und letzter bewerteter Monat
+        "series_to": series[-1]["period"] if series else None,     # (Grenzen der Vergleichsfenster)
     }
 
 

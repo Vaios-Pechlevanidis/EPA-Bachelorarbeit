@@ -26,7 +26,7 @@ sind rein (kein Datei-, DB- oder Netzzugriff).
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_WINDOW_BEFORE = 3   # Monate vor dem Beginn des Übergangs (vorläufig, E18)
 DEFAULT_WINDOW_AFTER = 1    # Monate nach dem markierten Monat bzw. dem Ende der Auswahl (vorläufig, E18)
@@ -35,6 +35,13 @@ MAX_WINDOW_MONTHS = 24      # Obergrenze je Seite für die API
 KIND_CHANGE = "niveauwechsel"
 KIND_OUTLIER = "einzelmonat"
 KIND_SELECTION = "auswahl"
+KIND_COMPARISON = "vergleich"
+
+# Vergleichsfenster (Nachschärfung Inkrement 4): zu jeder Markierung bis zu
+# COMPARISON_MAX Fenster desselben Unternehmens, um diese Monatsabstände
+# verschoben und in dieser Reihenfolge geprüft.
+COMPARISON_OFFSETS = (-12, 12, -24, 24)
+COMPARISON_MAX = 3
 
 _PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
@@ -150,11 +157,74 @@ def window_months(window: Dict[str, Any]) -> List[str]:
     return month_range(window["from"], window["to"])
 
 
+# ── Vergleichsfenster ────────────────────────────────────────────────────────
+# Die Abdeckung der Markierungen allein sagt wenig, wenn ein Unternehmen in fast
+# jedem Monat Meldungen hat. Deshalb bekommt jede Markierung Vergleichsfenster
+# desselben Unternehmens: das Fenster der Markierung, um 12 bzw. 24 Monate nach
+# hinten oder vorn verschoben (gleiche Länge, gleiche Lage zum Anker). Ein
+# Vergleichsfenster ist nur ein Vergleich der Zahlen; es sagt nichts über
+# Ursachen und nichts darüber, ob eine Markierung Meldungen "auslöst".
+
+def windows_overlap(a: Dict[str, Any], b: Dict[str, Any]) -> bool:
+    """Zwei Fenster (``from``..``to``) überschneiden sich in mindestens einem Monat."""
+    return a["from"] <= b["to"] and b["from"] <= a["to"]
+
+
+def shift_window(window: Dict[str, Any], months: int) -> Dict[str, Any]:
+    """Das Fenster um ``months`` Kalendermonate verschoben, gleiche Länge, als Fenster der
+    Art ``vergleich``; ``reference`` nennt das Fenster der Markierung."""
+    return {
+        "kind": KIND_COMPARISON,
+        "from": shift_month(window["from"], months),
+        "to": shift_month(window["to"], months),
+        "months": window["months"],
+        "transition_from": shift_month(window["transition_from"], months),
+        "anchor_from": shift_month(window["anchor_from"], months),
+        "anchor_to": shift_month(window["anchor_to"], months),
+        "window_before": window["window_before"],
+        "window_after": window["window_after"],
+        "offset_months": months,
+        "reference": {"kind": window["kind"], "from": window["from"], "to": window["to"],
+                      "anchor_from": window["anchor_from"], "anchor_to": window["anchor_to"]},
+    }
+
+
+def comparison_windows(
+    window: Dict[str, Any],
+    marker_windows: List[Dict[str, Any]],
+    series_from: Optional[str] = None,
+    series_to: Optional[str] = None,
+    offsets: Tuple[int, ...] = COMPARISON_OFFSETS,
+    max_count: int = COMPARISON_MAX,
+) -> List[Dict[str, Any]]:
+    """Bis zu ``max_count`` Vergleichsfenster zu einem Markierungsfenster, in der Reihenfolge
+    der ``offsets`` (Standard: −12, +12, −24, +24 Monate) geprüft. Ein verschobenes Fenster
+    entfällt, wenn es ein Fenster aus ``marker_windows`` (alle Markierungen des Unternehmens,
+    das eigene eingeschlossen) überschneidet oder nicht vollständig in der bewerteten Reihe
+    ``series_from``..``series_to`` liegt (None = keine Grenze). Reine Funktion."""
+    if series_from is not None and series_to is not None and month_index(series_from) > month_index(series_to):
+        raise ValueError("series_from liegt nach series_to.")
+    out: List[Dict[str, Any]] = []
+    for offset in offsets:
+        if len(out) >= max_count:
+            break
+        candidate = shift_window(window, offset)
+        if series_from is not None and candidate["from"] < series_from:
+            continue
+        if series_to is not None and candidate["to"] > series_to:
+            continue
+        if any(windows_overlap(candidate, m) for m in marker_windows):
+            continue
+        out.append(candidate)
+    return out
+
+
 __all__ = [
     "DEFAULT_WINDOW_BEFORE", "DEFAULT_WINDOW_AFTER", "MAX_WINDOW_MONTHS",
-    "KIND_CHANGE", "KIND_OUTLIER", "KIND_SELECTION",
+    "KIND_CHANGE", "KIND_OUTLIER", "KIND_SELECTION", "KIND_COMPARISON", "COMPARISON_OFFSETS", "COMPARISON_MAX",
     "is_period", "month_index", "period_from_index", "shift_month", "month_range",
     "window_for_change", "window_for_anomaly", "window_for_outlier", "window_for_selection", "window_months",
+    "windows_overlap", "shift_window", "comparison_windows",
 ]
 
 
@@ -179,7 +249,7 @@ import tempfile  # noqa: E402
 import time  # noqa: E402
 from datetime import datetime, timedelta, timezone  # noqa: E402
 from pathlib import Path  # noqa: E402
-from typing import Callable, Tuple  # noqa: E402
+from typing import Callable  # noqa: E402
 
 from services import news_service  # noqa: E402
 from services.evidence_sources import (  # noqa: E402
