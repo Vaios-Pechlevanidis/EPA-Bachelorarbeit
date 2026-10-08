@@ -127,6 +127,13 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
    Monate werden übersprungen. Danach `CONTEXT_LIVE_FETCH=0` für den Interviewprozess setzen,
    damit im Gespräch keine Abrufe laufen; für Zeiträume, die nicht im Speicher liegen, gibt es
    dann keine Belege, die Ansicht nennt den Grund.
+4b. **Erklärungsansätze** (Inkrement 5): Sie entstehen aus demselben Belegspeicher und den
+   Bewertungen; ein eigener Vorabruf ist nicht nötig. Mit `CONTEXT_LIVE_FETCH=0` zeigt der
+   Abschnitt „Mögliche Zusammenhänge“ für Zeiträume ohne gespeicherte Monate den Zustand „offen“
+   mit dem Grund. Der erste Aufruf eines Vergleichs braucht wegen der Stimmungsanalyse der
+   Bewertungen einige Sekunden (SAP SE: rund 12 s, danach unter 1 s); die Markierungen, die im
+   Interview gezeigt werden sollen, am Tag vorher einmal anklicken, damit der Zwischenspeicher
+   des Prozesses gefüllt ist (gilt je Prozess, also nach jedem Neustart erneut).
 5. **Entfällt bei Variante B** (nur Variante A: Meldungen füllen mit
    `uv run python scripts/fetch_market_data.py --news`).
 6. **Frontend bauen** mit `VITE_SHOW_FINANCE_EXTRAS=false` (Variante B, Abschnitt 2.2) und
