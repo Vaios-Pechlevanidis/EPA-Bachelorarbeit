@@ -954,8 +954,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     „Pokal“ gegen ein einzelnes „muss gehen“); bei Gleichstand hat der Arbeitgeberbezug Vorrang.
   - Umsetzung: `backend/services/event_categories.py` (Laden mit Prüfung der Themen gegen E10,
     Zuordnung eines Titels).
-- **Begründung:** Die Ereignisarten decken die Ereignisse ab, die die Literatur zu
-  Arbeitgeberbewertungen und die Belege aus Inkrement 4 nahelegen; die Themenzuordnung stellt
+- **Begründung:** Die Auswahl der Ereignisarten ist eine Setzung des Autors; Beleg offen
+  (Iteration 2, 2026-10-08: der frühere Verweis auf „die Literatur“ nannte keine Quelle). Sie
+  decken die Ereignisse ab, die die Belege aus Inkrement 4 nahelegen; die Themenzuordnung stellt
   die Meldung neben die Verschiebung derselben Kategorie, die das Dashboard schon zeigt (E10).
   Eine Zählung über alle 18 936 gespeicherten Titel (2026-10-08, nur Zahlen) zeigte, dass
   mehrdeutige Einzelwörter („übernimmt“, „kauft“, „verkauft“, „betrug“ als Verb, „hybrid“ bei
