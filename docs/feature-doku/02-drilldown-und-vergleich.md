@@ -5,8 +5,8 @@
 | Inkrement | 2 (Zyklus 2) |
 | Anforderungen | Drill-down und Vorher-Nachher-Vergleich zu den auffälligen Veränderungen aus [01](01-anomalien-im-verlauf.md); Anforderungstexte liegen nicht im Repository |
 | Entscheidungen | E10 (Themenweg), E11 (Stimmung), E12 (Vergleichsfenster), E13 (Statusfilter) in `docs/entscheidungen.md`; E3, E4, E9 unverändert |
-| Status | Inkrement 2 umgesetzt (Branch `feature/inkrement-2-drilldown`); Fensterlänge, Stichprobe und Schwellen der kleinen Basis **vorläufig** |
-| Stand | 2026-10-04 |
+| Status | Inkrement 2 umgesetzt (Branch `feature/inkrement-2-drilldown`); Fensterlänge, Stichprobe und Schwellen der kleinen Basis **vorläufig**; Zuordnung der Statuswerte bestätigt (E13, 2026-10-08) |
+| Stand | 2026-10-08 |
 
 ## 1. Vorstellung
 
@@ -113,6 +113,14 @@ Die Statuswerte der Datenbank sind uneinheitlich (`1.0`, `0.0`, `True`, `hired`,
 Strafterm und Erkennung nur auf dieser Gruppe; jede Kombination aus Quelle, Dimension und
 Status ist eine eigene Reihe mit eigenem Strafterm.
 
+Herkunft der Rohwerte (vom Autor bestätigt am 2026-10-08, E13): `1.0` und `True` stehen für
+aktuell Angestellte, `0.0` und `False` für ehemalige (Formycon exportierte denselben Wert als
+Wahrheitswert). Die Gruppe `zurueckgestellt` heißt in der Auswahl „Zurückgestellt oder
+Absage“, weil der Rohwert `deferred` bei den Unternehmen aus Zyklus 1 (id 3–20) auch die
+Absagen enthält (Zuordnung des Scrapers); `rejected` kommt dort nicht vor. Leere Werte
+(„ohne Angabe“) sind bei Mitarbeitenden vor allem ein Alterseffekt: Bewertungen bis 2013
+tragen fast nie einen Status.
+
 ### 2.7 Endpunkt des Vergleichs
 
 `GET /api/analytics/company/{id}/anomalies/{anomaly_id}/explanations?source=&dimension=&status=&window_months=`
@@ -202,6 +210,11 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
   Satzzeichen nicht (E11).
 - **Bewerberquelle:** Die meisten Statusgruppen sind für die automatische Erkennung zu dünn
   (E13); die Seite zeigt dann den Eignungshinweis.
+- **Status bei den Unternehmen aus Zyklus 1:** Für Thyssenkrupp, Open Grid Europe, PLEdoc,
+  E.ON Digital Technology, E.ON, RWE, Thyssengas, die vier Hochschulen, SAP SE und NTT DATA
+  SE gibt es keinen Wert für ehemalige Mitarbeitende. „Angestellt“ heißt dort nur „mit
+  Typangabe“ und entspricht bis auf die Bewertungen ohne Angabe der Gruppe „Alle“ (E13,
+  Aktualisierung 2026-10-08).
 
 ## 5. Prüfung und Belege
 
@@ -232,7 +245,9 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
   Monatsmittel je Fenster zeigen?
 - Fensterlänge 6 Monate, Stichprobe 300 und Schwellen der kleinen Basis (10 / 5) sind
   vorläufig.
-- Zuordnung der Statuswerte (`True`/`False`, `deferred`, „Bewerber“) vom Autor zu bestätigen.
+- Zuordnung der Statuswerte (behoben 2026-10-08): vom Autor bestätigt; Belege, Bezeichnung
+  „Zurückgestellt oder Absage“ und Einschränkungen in E13 und
+  `docs/offene-punkte-vor-inkrement-4.md`, Abschnitt D1.
 - Der Vergleich für Einzeldimensionen nutzt dieselben Themen wie die Gesamtbewertung; ob
   je Dimension nur das zugehörige Thema gezeigt werden soll, ist offen.
 - Gemeinsamer Supabase-Client (behoben 2026-10-04): Der Fix aus

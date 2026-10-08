@@ -368,7 +368,34 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Grenzen:** Die meisten Gruppen der Bewerberquelle sind für die automatische Erkennung
   zu dünn; die Detailseite zeigt dann den Hinweis zur Eignung. Die Bedeutung von
   `deferred` ist aus den Daten nicht eindeutig („zurückgestellt“ ist eine Übersetzung).
-- **Status:** vorläufig (Zuordnung der Rohwerte vom Autor zu bestätigen).
+- **Aktualisierung 2026-10-08 – Zuordnung bestätigt (Entscheidung D1):** Belege in
+  `docs/offene-punkte-vor-inkrement-4.md`, Abschnitt D1 (nur lesend erhoben: Datenbank,
+  Rohexporte und Scraper des Autors). Der Autor hat den Vorschlag angenommen:
+  - `True`/`False` (nur Formycon, 15 Bewertungen) sind derselbe Kununu-Wert wie `1.0`/`0.0`,
+    im Export als Wahrheitswert statt als Zahl; die Zuordnung `True` → `angestellt`, `False`
+    → `ex-angestellt` ist damit belegt (mittlere Gesamtnote 4,55 bzw. 2,15 wie 4,31 bzw.
+    2,36 bei `1.0`/`0.0`). Formycon ist für die Erkennung nicht geeignet.
+  - `deferred` behält den Schlüssel `zurueckgestellt`; die Bezeichnung lautet jetzt
+    „Zurückgestellt oder Absage“. Grund: Die 13 Unternehmen aus Zyklus 1 (id 3–20) haben
+    keinen Wert `rejected`, weil ihr Scraper-Stand „Absage“ und `rejected` auf `deferred`
+    abbildet; 453 der 514 Zeilen mit `deferred` liegen dort, und 20 % ihrer Texte nennen eine
+    Absage. Bei den TecDAX-Exporten ist `deferred` der unveränderte Rohwert von Kununu.
+  - Leere Werte bleiben `unbekannt` („ohne Angabe“). Bei Mitarbeitenden fehlt das Feld vor
+    allem bei alten Bewertungen (bis 2013 bei 93–100 %, ab 2016 bei unter 6 %). `Bewerber`
+    (nur Demo) bleibt `unbekannt`.
+  - Einschränkung: Für die Unternehmen aus Zyklus 1 liegt keine Unterscheidung
+    aktuell/ehemalig vor (kein Wert `0.0`, 3 758 Zeilen `1.0`, 360 leer); `angestellt` heißt
+    dort „Bewertung mit Typangabe“ und entspricht bis auf die leeren Zeilen der Gruppe „alle“.
+    Das betrifft 8 der 15 geeigneten Mitarbeiter-Reihen (Thyssenkrupp, Open Grid Europe,
+    E.ON, RWE, KIT, TU München, SAP SE, NTT DATA SE); die 6 geeigneten Reihen `ex-angestellt`
+    sind TecDAX-Unternehmen.
+  - Geeignete Reihen je Status (nachgezählt 2026-10-08, Gesamtbewertung) unverändert:
+    Mitarbeitende alle 15, `angestellt` 15, `ex-angestellt` 6, `unbekannt` 3; Bewerbende alle
+    5, `eingestellt` 1, `unbekannt` 1, übrige 0. `normalize_status` liefert dieselben
+    Schlüssel wie zuvor; geändert sind nur Bezeichnung und Dokumentation.
+- **Status:** Zuordnung der Rohwerte bestätigt (Autor, 2026-10-08). Die Lesart von `deferred`
+  und die fehlende Unterscheidung aktuell/ehemalig bei Zyklus 1 sind in der Arbeit als
+  Einschränkung zu nennen.
 
 ## E14 – Auffällige Einzelmonate
 

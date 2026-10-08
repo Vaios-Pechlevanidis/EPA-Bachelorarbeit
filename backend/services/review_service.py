@@ -11,6 +11,14 @@ Einzelbewertungen eines Unternehmens für den Drill-down (Zyklus 2, Inkrement 2)
   ``rejected``, ``deferred``, ``Bewerber`` (nur Demo) und leer.
   ``normalize_status`` führt sie auf feste Schlüssel zurück (Vorbild:
   ``formatStatus`` in ``ReviewDetailModal.jsx``).
+  Herkunft und Lesart der Rohwerte (vom Autor bestätigt am 2026-10-08, E13 und
+  ``docs/offene-punkte-vor-inkrement-4.md``, D1): ``1.0``/``True`` = aktuell,
+  ``0.0``/``False`` = ehemalig (``True``/``False`` nur Formycon, derselbe
+  Kununu-Wert als Wahrheitswert exportiert); leere Werte fehlen vor allem bei
+  Bewertungen vor 2014; bei den Unternehmen aus Zyklus 1 (id 3–20) gibt es
+  keinen Wert ``0.0``, ``angestellt`` heißt dort „mit Typangabe“. ``deferred``
+  enthält bei diesen Unternehmen auch die Absagen (Zuordnung des Scrapers),
+  daher die Bezeichnung „Zurückgestellt oder Absage“; die Schlüssel bleiben.
 - ``fetch_reviews``: Bewertungen eines Zeitraums, vollständig paginiert,
   gefiltert nach Status, sortiert nach Datum absteigend.
 
@@ -141,13 +149,15 @@ STATUS_LABELS: Dict[str, Dict[str, str]] = {
         "eingestellt": "Eingestellt",
         "angebot-abgelehnt": "Angebot abgelehnt",
         "abgelehnt": "Abgelehnt",
-        "zurueckgestellt": "Zurückgestellt",
+        "zurueckgestellt": "Zurückgestellt oder Absage",
         UNKNOWN_STATUS: "ohne Angabe",
     },
 }
 
 # Rohwert (klein, ohne Leerraum) → Schlüssel. "1.0"/"0.0" wie formatStatus im
-# Frontend; "true"/"false" (nur Formycon) analog zu 1/0. "Bewerber" (nur
+# Frontend; "true"/"false" (nur Formycon) analog zu 1/0, bestätigt 2026-10-08
+# (E13). "deferred" bleibt ein eigener Schlüssel, obwohl er bei Zyklus 1 auch
+# Absagen enthält (Bezeichnung „Zurückgestellt oder Absage“). "Bewerber" (nur
 # Demo-Daten) sagt nichts über den Ausgang und zählt als "ohne Angabe".
 _RAW_STATUS: Dict[str, Dict[str, str]] = {
     "employee": {

@@ -9,6 +9,10 @@ danach werden E13, E15 und E16 in `docs/entscheidungen.md` fortgeschrieben (Phas
 
 ## D1 – Statuszuordnung (E13)
 
+> **Entscheidung des Autors (2026-10-08): Vorschlag angenommen.** Umgesetzt in Phase B (B1):
+> Bezeichnung „Zurückgestellt oder Absage“, Vermerke in E13 und Feature-Doku 02, Tests;
+> Schlüssel und Zahl der geeigneten Reihen unverändert.
+
 ### 1. Bestand je Quelle und Rohwert
 
 Spalte `status` der Tabellen `employee` und `candidates`, alle Zeilen (26 reale Unternehmen und
