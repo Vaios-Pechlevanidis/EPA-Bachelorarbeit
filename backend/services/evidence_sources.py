@@ -84,6 +84,37 @@ def throttle(source: str, sleep: Optional[Callable[[float], None]] = None,
     return waited
 
 
+# ── Sprache ──────────────────────────────────────────────────────────────────
+# Grobe Stoppwort-Heuristik über den Titel (wie im Spike, docs/quellen-spike.md):
+# "de", "en" oder None (kein oder gleich viele Treffer). Keine neue Abhängigkeit.
+
+DE_WORDS = frozenset({
+    "und", "der", "die", "das", "für", "mit", "von", "im", "am", "bei", "nach", "über", "zum", "zur", "ist",
+    "wird", "sich", "nicht", "auf", "den", "dem", "des", "ein", "eine", "einen", "neue", "neuer", "neues",
+    "gegen", "bis", "aus", "wie", "noch", "mehr", "als", "auch", "um", "beim", "vom", "ins",
+})
+EN_WORDS = frozenset({
+    "the", "and", "of", "for", "with", "to", "in", "on", "at", "is", "are", "by", "from", "as", "that",
+    "this", "its", "new", "will", "has", "after", "says", "over", "into", "than", "more", "about",
+})
+_WORD_RE = re.compile(r"[a-zäöüß]+")
+
+
+def guess_language(title: str) -> Optional[str]:
+    """Sprache eines Titels nach Stoppwörtern: ``"de"``, ``"en"`` oder None."""
+    de = en = 0
+    for token in _WORD_RE.findall((title or "").lower()):
+        if token in DE_WORDS:
+            de += 1
+        elif token in EN_WORDS:
+            en += 1
+    if de > en:
+        return "de"
+    if en > de:
+        return "en"
+    return None
+
+
 # ── Einträge ─────────────────────────────────────────────────────────────────
 
 _WS_RE = re.compile(r"\s+")
@@ -119,7 +150,7 @@ def make_item(*, title: str, url: str, published_at: Optional[str], publisher: O
         "source": source,
         "source_type": source_type,
         "reliability": RELIABILITY[source_type],
-        "language": language,
+        "language": language or guess_language(title),
         "issuer": issuer,
         "category": category,
     }
@@ -332,7 +363,7 @@ def fetch_gdelt_month(info: Dict[str, Any], month: str, fetcher: Optional[Fetche
 __all__ = [
     "SOURCE_GNEWS", "SOURCE_EQS", "SOURCE_GDELT", "SOURCE_GLOBAL",
     "TYPE_NEWS", "TYPE_ADHOC", "TYPE_GLOBAL", "TYPE_MARKET", "SOURCE_TYPES", "RELIABILITY", "SOURCE_LABELS",
-    "MIN_FETCH_INTERVAL_S", "throttle", "normalize_title", "item_id", "make_item", "dedupe",
+    "MIN_FETCH_INTERVAL_S", "throttle", "guess_language", "normalize_title", "item_id", "make_item", "dedupe",
     "gnews_month_query", "fetch_gnews_month", "utc_now", "http_get",
     "EQS_URL", "EQS_COMPANIES_URL", "slugify", "eqs_news_url", "eqs_month_url", "fetch_eqs_month", "eqs_search_companies",
     "GDELT_URL", "gdelt_month_url", "fetch_gdelt_month",

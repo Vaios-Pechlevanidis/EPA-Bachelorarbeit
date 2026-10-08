@@ -184,7 +184,7 @@ from typing import Callable, Tuple  # noqa: E402
 from services import news_service  # noqa: E402
 from services.evidence_sources import (  # noqa: E402
     SOURCE_EQS, SOURCE_GDELT, SOURCE_GNEWS, SOURCE_LABELS, TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS,
-    dedupe, fetch_gnews_month, gnews_month_query, throttle, utc_now,
+    dedupe, fetch_gnews_month, gnews_month_query, guess_language, throttle, utc_now,
 )
 
 logger = logging.getLogger(__name__)
@@ -424,6 +424,14 @@ def _in_window(item: Dict[str, Any], window: Dict[str, Any]) -> bool:
     return bool(date) and window["from"] <= date[:7] <= window["to"]
 
 
+def with_language(item: Dict[str, Any]) -> Dict[str, Any]:
+    """Beleg mit Sprache: gespeicherte Einträge ohne ``language`` (ältere Stände) werden
+    beim Lesen über die Titel-Heuristik ergänzt, ohne erneuten Abruf."""
+    if item.get("language"):
+        return item
+    return {**item, "language": guess_language(item.get("title") or "")}
+
+
 def _sort_key(item: Dict[str, Any]) -> str:
     return str(item.get("datetime") or item.get("date") or "")
 
@@ -467,7 +475,7 @@ def evidence_for_window(
                 fetched_at = record.get("fetched_at")
                 if fetched_at and (s["fetched_at"] is None or fetched_at > s["fetched_at"]):
                     s["fetched_at"] = fetched_at
-                items.extend(it for it in record.get("items") or [] if _in_window(it, window))
+                items.extend(with_language(it) for it in record.get("items") or [] if _in_window(it, window))
             if result["error"]:
                 s["errors"].append({"month": month, "error": result["error"]})
         if not s["errors"] and s["missing"] == 0:
@@ -508,7 +516,7 @@ __all__ += [
     "STORE_DIR", "LIVE_FETCH_ENV", "GDELT_ENV", "CURRENT_MONTH_MAX_AGE", "FAILED_FETCH_TTL", "EVIDENCE_NOTE",
     "live_fetch_enabled", "gdelt_enabled", "company_context_info", "available_sources",
     "record_path", "load_record", "save_record", "is_month_complete", "build_record", "record_is_current",
-    "expected_query", "fetch_source_month", "month_record", "evidence_for_window",
+    "expected_query", "fetch_source_month", "month_record", "with_language", "evidence_for_window",
 ]
 
 
