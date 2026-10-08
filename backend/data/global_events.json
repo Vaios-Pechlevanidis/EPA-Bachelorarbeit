@@ -12,7 +12,7 @@
       "url": "Belegende Adresse (abgerufen am 2026-10-08, HTTP 200).",
       "confirmed": "false = Vorschlag des Entwicklers; der Autor setzt true, wenn er das Ereignis übernimmt. Nur bestätigte Ereignisse werden angezeigt."
     },
-    "stand": "Vorschläge vom 2026-10-08, überarbeitet am 2026-10-08 nach der Dauerregel (höchstens 6 Monate): Finanzkrise, zweiter Lockdown und Energiepreiskrise auf ein datierbares Ereignis verkürzt, die Konjunkturschwäche 2023/24 (24 Monate, kein datierbares Ereignis) gestrichen. Alle unbestätigt. Höchstens zehn Einträge; Ereignisse ohne Bezug zu Arbeitgeberbewertungen wurden nicht aufgenommen."
+    "stand": "Vorschläge vom 2026-10-08, überarbeitet nach der Dauerregel (höchstens 6 Monate): Finanzkrise, zweiter Lockdown und Energiepreiskrise auf ein datierbares Ereignis verkürzt, die Konjunkturschwäche 2023/24 (24 Monate, kein datierbares Ereignis) gestrichen. Am 2026-10-08 vom Autor bestätigt (D3): sechs Einträge; die Homeoffice-Pflicht 2021 bleibt unbestätigt, weil sie den zweiten Lockdown überschneidet. Höchstens zehn Einträge; Ereignisse ohne Bezug zu Arbeitgeberbewertungen wurden nicht aufgenommen."
   },
   "events": [
     {
@@ -23,7 +23,7 @@
       "scope": "weltweit; Deutschland",
       "note": "Insolvenz von Lehman Brothers am 15.09.2008; Einbruch der deutschen Wirtschaft im Winter 2008/09 mit Kurzarbeit in großem Umfang (vorher: bis 2009-06, verkürzt nach der Dauerregel).",
       "url": "https://de.wikipedia.org/wiki/Finanzkrise_ab_2007",
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "atom-moratorium-2011",
@@ -33,7 +33,7 @@
       "scope": "Deutschland; Energiewirtschaft",
       "note": "Moratorium ab 14.03.2011 mit Abschaltung von acht Kernkraftwerken; Beschluss zum Ausstieg bis 2022 am 30.06.2011. Betrifft vor allem E.ON und RWE.",
       "url": "https://de.wikipedia.org/wiki/Atom-Moratorium",
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "corona-lockdown-1",
@@ -43,7 +43,7 @@
       "scope": "Deutschland; alle Branchen",
       "note": "Kontaktbeschränkungen ab 22.03.2020, Schließungen, Kurzarbeit auf Rekordniveau im April 2020, Umstellung auf Homeoffice.",
       "url": "https://de.wikipedia.org/wiki/COVID-19-Pandemie_in_Deutschland",
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "corona-lockdown-2",
@@ -53,7 +53,7 @@
       "scope": "Deutschland; alle Branchen",
       "note": "Teil-Lockdown ab 02.11.2020, verschärft ab 16.12.2020, mehrfach bis März 2021 verlängert (vorher: bis 2021-05 mit Bundesnotbremse, verkürzt nach der Dauerregel).",
       "url": "https://de.wikipedia.org/wiki/COVID-19-Pandemie_in_Deutschland",
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "homeoffice-pflicht-2021",
@@ -73,7 +73,7 @@
       "scope": "weltweit; Europa",
       "note": "Kriegsbeginn am 24.02.2022; Sanktionen und sprunghafter Anstieg der Energiepreise.",
       "url": "https://de.wikipedia.org/wiki/Russischer_%C3%9Cberfall_auf_die_Ukraine_2022",
-      "confirmed": false
+      "confirmed": true
     },
     {
       "id": "energiepreise-inflation-2022",
@@ -83,7 +83,7 @@
       "scope": "Deutschland; Europa",
       "note": "Höchststand der Gaspreise im August 2022, Inflationsrate 2022 bei +7,9 % (Destatis) mit Höchstwerten von 8,8 % im Oktober und November 2022; Gas- und Strompreisbremse beschlossen im Dezember 2022 (vorher: 2022-06 bis 2023-03, verkürzt nach der Dauerregel).",
       "url": "https://www.destatis.de/DE/Presse/Pressemitteilungen/2023/01/PD23_022_611.html",
-      "confirmed": false
+      "confirmed": true
     }
   ]
 }

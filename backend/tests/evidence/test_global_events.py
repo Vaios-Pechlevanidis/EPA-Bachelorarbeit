@@ -51,11 +51,16 @@ class TestLoad:
         (tmp_path / "bad.json").write_text("{kaputt", encoding="utf-8")
         assert ev.load_global_events(tmp_path / "bad.json") == []
 
-    def test_repository_file_has_only_unconfirmed_proposals(self):
+    def test_repository_file_confirmed_by_author(self):
+        """D3 (Autor, 2026-10-08): sechs Ereignisse bestätigt, die Homeoffice-Pflicht 2021 bleibt
+        unbestätigt (überschneidet den zweiten Lockdown)."""
         proposals = ev.load_global_events(confirmed_only=False)
         assert 1 <= len(proposals) <= 10
         assert all(e["url"].startswith("https://") for e in proposals)
-        assert ev.load_global_events() == [], "Vorschläge gelten erst nach Bestätigung durch den Autor"
+        confirmed = [e["id"] for e in ev.load_global_events()]
+        assert confirmed == ["finanzkrise-2008", "atom-moratorium-2011", "corona-lockdown-1", "corona-lockdown-2",
+                             "ukraine-krieg-2022", "energiepreise-inflation-2022"]
+        assert [e["id"] for e in proposals if not e["confirmed"]] == ["homeoffice-pflicht-2021"]
 
     def test_repository_file_respects_the_duration_rule(self):
         path = ev.GLOBAL_EVENTS_PATH

@@ -37,6 +37,13 @@ FIELDS = {"company_id", "company", "search_term", "anchor", "window", "items", "
           "sources", "coverage", "reason", "note"}
 
 
+@pytest.fixture(autouse=True)
+def no_repository_events(tmp_path, monkeypatch):
+    """Die Routen-Tests prüfen Form und Abruf; die vom Autor bestätigten allgemeinen Ereignisse
+    der Repository-Datei (D3) bleiben außen vor (eigene Tests in test_global_events.py)."""
+    monkeypatch.setattr(ev, "GLOBAL_EVENTS_PATH", tmp_path / "keine_ereignisse.json")
+
+
 @pytest.fixture(scope="module")
 def client(in_memory_db):
     app = FastAPI()
