@@ -2,7 +2,8 @@
 Tests für scripts/report_explanation_validity.py (Inkrement 5, A6): Rangfolge je Markierungs-
 und Vergleichsfenster aus einem nachgebildeten Speicher ohne Abruf, Unternehmen,
 Markierungen und Bewertungen nachgebildet (kein Netz, keine Datenbank); Anteile je Stufe,
-Abdeckungsquote nach NFA-05, Markdown ohne Titel.
+Abdeckungsquote nach NFA-05, Markdown ohne Titel; Zusatzauswertung nach Referenzzeiträumen (E5,
+Iteration 2) mit konstruierter Annotationsdatei und „nicht verfügbar“ ohne Einträge.
 
 Ausführung:
     cd backend
@@ -168,12 +169,89 @@ class TestAggregate:
             assert forbidden not in text
         assert "keine Ursache" in text
 
-    def test_json_roundtrip(self, env, tmp_path):
+    def test_json_roundtrip(self, env, tmp_path, monkeypatch):
         records = script.window_records(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False)
         path = tmp_path / "out" / "validity.json"
-        import report_explanation_validity as sc
-        sc.window_records = lambda *a, **k: records
-        assert sc.main(["--quiet", "--json", str(path)]) == 0
+        monkeypatch.setattr(script, "window_records", lambda *a, **k: records)
+        assert script.main(["--quiet", "--json", str(path)]) == 0
         data = json.loads(path.read_text(encoding="utf-8"))
         assert data["total"]["coverage_nfa05"]["share"] == 0.5 and data["window_before"] == 3
         assert all("title" not in w for w in data["windows"])
+
+
+# ── Zusatzauswertung nach Referenzzeiträumen (E5, Iteration 2) ───────────────
+
+def _annotation(period_from, period_to, direction, company="Beispielwerk"):
+    return {"company": company, "source": "employee", "dimension": "durchschnittsbewertung", "period_from": period_from,
+            "period_to": period_to, "direction": direction, "note": "konstruiert"}
+
+
+def _reference(tmp_path, *entries):
+    path = tmp_path / "annotations_test.json"
+    path.write_text(json.dumps({"version": 1, "hinweise": {}, "annotations": list(entries)}), encoding="utf-8")
+    return script.load_reference(str(path)), path
+
+
+class TestReferenceSplit:
+
+    def test_not_available_without_entries(self, env, tmp_path):
+        reference, _ = _reference(tmp_path)
+        assert reference["available"] is False and "ohne Einträge" in reference["reason"]
+        records = script.window_records(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False, reference=reference)
+        assert all(r["reference_hit"] is None for r in records)
+        s = script.aggregate(records, reference)
+        assert s["reference"]["available"] is False and s["total"]["referenz"]["status"] == "nicht verfügbar"
+        text = script.markdown_tables(s)
+        assert "**Nach Referenzzeiträumen (E5)**" in text and "nicht verfügbar: Annotationsdatei ohne Einträge" in text
+        assert "mit Referenzzeitraum" not in text
+        # ohne Referenz (None) ebenso
+        assert script.aggregate(records)["reference"]["available"] is False
+        assert script.load_reference(None)["available"] is False and script.load_reference(str(tmp_path / "fehlt.json"))["available"] is False
+
+    def test_reference_hit_rule_6(self):
+        reference = {"available": True, "by_company": {"beispielwerk": [_annotation("2023-03", "2023-04", "fall")]}}
+        assert script.reference_hit("Beispielwerk", "2023-04", "fall", (), reference) is True
+        assert script.reference_hit("Beispielwerk", "2023-05", "fall", (), reference) is True, "Toleranz +1"
+        assert script.reference_hit("Beispielwerk", "2023-06", "fall", (), reference) is False
+        assert script.reference_hit("Beispielwerk", "2023-04", "rise", (), reference) is False, "Richtung"
+        assert script.reference_hit("Anderswerk", "2023-04", "fall", (), reference) is False
+        evaluated = {"2023-01", "2023-02", "2023-03", "2023-04", "2023-07"}   # 2023-05/06 nicht bewertet: Grenze rückt auf 2023-07
+        assert script.reference_hit("Beispielwerk", "2023-07", "fall", evaluated, reference) is True
+        assert script.reference_hit("Beispielwerk", "2023-04", "fall", (), None) is None
+        assert script.reference_hit("Beispielwerk", "2023-04", "fall", (), {"available": False, "by_company": {}}) is None
+
+    def test_split_tables(self, env, tmp_path):
+        reference, path = _reference(tmp_path, _annotation("2023-03", "2023-04", "fall"), _annotation("2019-02", "2019-02", "rise", company="Anderswerk"))
+        assert reference["available"] is True and reference["n_annotations"] == 2
+        records = script.window_records(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False, reference=reference)
+        markers = {r["date"]: r for r in records if r["group"] == "markierung"}
+        assert markers["2023-04"]["reference_hit"] is True and markers["2021-06"]["reference_hit"] is False
+        assert all(r["reference_hit"] is None for r in records if r["group"] == "vergleich")
+        s = script.aggregate(records, reference)
+        assert s["reference"]["available"] is True and s["reference"]["n_annotations"] == 2
+        ref = s["total"]["referenz"]
+        assert ref["available"] is True
+        assert (ref["treffer"]["complete"], ref["treffer"]["with_any"], ref["treffer"]["top_stage"]["hoch"]) == (1, 1, 1)
+        assert (ref["uebrige"]["complete"], ref["uebrige"]["with_any"], ref["uebrige"]["top_stage"]["offen"]) == (1, 0, 1)
+        # die übrigen Zahlen bleiben gleich
+        assert s["total"]["coverage_nfa05"]["share"] == 0.5 and s["total"]["markierung"]["with_any"] == 1
+        text = script.markdown_tables(s)
+        assert "*Markierungsfenster mit Referenzzeitraum*" in text and "*Markierungsfenster ohne Referenzzeitraum*" in text
+        assert "| Beispielwerk | 1 (1) | 1/1 (100 %) | 1/1 (100 %) |" in text
+        assert "| Beispielwerk | 1 (1) | 0/1 (0 %) | 0/1 (0 %) |" in text
+        assert "nicht verfügbar" not in text and "konstruiert" not in text
+
+    def test_cli_with_annotations(self, env, tmp_path, monkeypatch):
+        _, path = _reference(tmp_path, _annotation("2023-03", "2023-04", "fall"))
+        out = tmp_path / "out" / "validity.json"
+        monkeypatch.setattr(script, "list_companies", lambda: [{"id": 5, "name": "Beispielwerk"}])
+        sc = script
+        assert sc.main(["--quiet", "--annotations", str(path), "--json", str(out)]) == 0
+        data = json.loads(out.read_text(encoding="utf-8"))
+        assert data["reference"]["available"] is True and data["total"]["referenz"]["treffer"]["with_any"] == 1
+        assert [w["reference_hit"] for w in data["windows"] if w["group"] == "markierung"] == [True, False]
+        empty = tmp_path / "leer.json"
+        empty.write_text(json.dumps({"version": 1, "hinweise": {}, "annotations": []}), encoding="utf-8")
+        assert sc.main(["--quiet", "--annotations", str(empty), "--json", str(out)]) == 0
+        data = json.loads(out.read_text(encoding="utf-8"))
+        assert data["reference"]["available"] is False and data["total"]["referenz"]["status"] == "nicht verfügbar"
