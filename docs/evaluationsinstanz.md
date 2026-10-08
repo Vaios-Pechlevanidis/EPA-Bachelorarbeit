@@ -2,11 +2,15 @@
 
 Stand: 2026-10-08. Die Evaluationsinstanz ist die Ausgabe des Dashboards, die in den
 Experteninterviews (DZ3) gezeigt wird: Backend und Frontend aus diesem Repository auf dem
-Rechner des Autors gegen die gehostete Datenbank (nur lesend). Offen ist nach E16, ob die
-Zusatzkarten des Aktien-Dashboards dabei sichtbar sind (Entscheidung D3). Dieses Dokument legt
-die beiden Varianten mit ihren Folgen vor, nennt die nötigen Einstellungen und enthält eine
-Prüfliste für den Tag vor einem Interview. Beispielwerte stehen in
-`docs/evaluationsinstanz.env.example` (ohne Zugangsdaten).
+Rechner des Autors gegen die gehostete Datenbank (nur lesend). Dieses Dokument legt die beiden
+Varianten mit ihren Folgen vor, nennt die nötigen Einstellungen und enthält eine Prüfliste für
+den Tag vor einem Interview. Beispielwerte stehen in `docs/evaluationsinstanz.env.example`
+(ohne Zugangsdaten).
+
+> **Entscheidung des Autors (2026-10-08, D3): Variante B.** Die Evaluationsinstanz wird mit
+> `VITE_SHOW_FINANCE_EXTRAS=false` gebaut; die Zusatzkarten des Aktien-Dashboards sind in den
+> Interviews nicht sichtbar (E16). Variante A bleibt als Standardbau außerhalb der Evaluation
+> beschrieben.
 
 ## 1. Die beiden Varianten (Entscheidung D3)
 
@@ -20,7 +24,7 @@ Prüfliste für den Tag vor einem Interview. Beispielwerte stehen in
 | Folgen für die Interviews | Die Befragten sehen mehr Marktinformationen und können sie kommentieren; Rückfragen zu Empfehlungen („Anlageempfehlung?“) und zu fremden Nachrichtentreffern (z. B. Sportverein bei „Carl Zeiss“) sind wahrscheinlich; die Meldungskarte braucht Netz oder einen frischen Zwischenspeicher (12 Stunden); mehr mögliche Fehlerquellen im Gespräch | Die Seite ist auf Kurs und Kennzahlen reduziert; weniger Erklärungsbedarf; keine Abrufe bei Google News während des Interviews; das Gespräch bleibt bei den Anforderungen |
 | Folgen für die Arbeit | Das gezeigte Artefakt enthält Zusätze, die E16 ausdrücklich nicht zum evaluierten Artefakt zählt; der Interviewleitfaden müsste sie ausklammern oder die Auswertung sie trennen | deckungsgleich mit E16: evaluiert wird das Artefakt aus den Anforderungen; die Zusatzkarten bleiben außerhalb der Evaluation nutzbar |
 | Nutzungsbedingungen | Google News RSS und Yahoo Finance werden vor Dritten gezeigt (`docs/nutzungsbedingungen.md`, Fragen 3 bis 5) | nur Yahoo Finance (Fragen 1 bis 3) |
-| Bekannte Lücke | – | Der Tooltip „Aktie“ in der Seitenleiste des Dashboards (`frontend/src/pages/Dashboard.jsx`) nennt weiterhin „Empfehlungen, Umsatz und Nachrichten“; vor einem Einsatz von Variante B anzupassen (Frontend-Änderung, `npm run build`) |
+| Tooltip „Aktie“ in der Seitenleiste | „Aktienkurs, Empfehlungen, Umsatz und Nachrichten“ | „Aktienkurs und Kennzahlen“ (seit 2026-10-08 nach dem Schalter, `frontend/src/pages/Dashboard.jsx`) |
 
 In beiden Varianten gilt: Der Kurs auf der Anomalien-Seite ist Standard aus und nur per
 Kästchen einblendbar (E15, Nachtrag 2026-10-05); Dashboard-Karte und PDF-Export bleiben ohne
@@ -46,7 +50,7 @@ Aktienkurs“ mit dem Grund.
 | Variable | Bedeutung | Empfehlung |
 |---|---|---|
 | `VITE_API_URL` | Adresse des Backends, `/api` wird angehängt (`frontend/src/config.js`) | `http://localhost:8000` |
-| `VITE_SHOW_FINANCE_EXTRAS` | `false` oder `0` blendet die Zusatzkarten aus (Variante B); jeder andere Wert oder keine Angabe: Variante A | nach Entscheidung D3 |
+| `VITE_SHOW_FINANCE_EXTRAS` | `false` oder `0` blendet die Zusatzkarten aus (Variante B); jeder andere Wert oder keine Angabe: Variante A | `false` (Variante B, Entscheidung D3 vom 2026-10-08) |
 
 Bauen und starten (Beispiele):
 
@@ -108,11 +112,12 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
    `cd backend && uv run python scripts/fetch_market_data.py` und danach
    `uv run python scripts/fetch_market_data.py --summary` mit Exit-Code 0 (alle 17 Ticker mit
    Kursreihe); `fetched_at` notieren.
-5. **Nur Variante A:** Meldungen füllen: `uv run python scripts/fetch_market_data.py --news`;
-   die Karte zeigt sonst nach 12 Stunden den älteren Stand mit Hinweis oder ruft live ab.
-6. **Frontend bauen** mit dem Wert aus D3 (Abschnitt 2.2) und starten; im Browser prüfen: `/aktie`
-   zeigt vier (B) bzw. sechs (A) Kacheln; der Link unter dem Diagramm der Anomalien-Seite lautet
-   „Aktienkurs und Kennzahlen“ (B) bzw. „Aktienkurs, Kennzahlen und Nachrichten“ (A).
+5. **Entfällt bei Variante B** (nur Variante A: Meldungen füllen mit
+   `uv run python scripts/fetch_market_data.py --news`).
+6. **Frontend bauen** mit `VITE_SHOW_FINANCE_EXTRAS=false` (Variante B, Abschnitt 2.2) und
+   starten; im Browser prüfen: `/aktie` zeigt vier Kacheln und die Kurskarte über die ganze
+   Fläche, der Link unter dem Diagramm der Anomalien-Seite lautet „Aktienkurs und Kennzahlen“,
+   der Tooltip „Aktie“ in der Seitenleiste ebenso.
 7. **Backend starten** und Antworten prüfen: `GET /api/analytics/company/19/market` liefert
    `available: true` aus dem Zwischenspeicher; ein Unternehmen ohne Ticker (z. B. id 4) liefert
    `available: false` mit Grund; keine Live-Abrufe im Backend-Log.

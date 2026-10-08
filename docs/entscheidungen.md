@@ -582,8 +582,15 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Offen:** Nutzungsbedingungen von Yahoo Finance und Google News für die Arbeit (wie E7,
   E15); ob die Seite in der Evaluation (DZ3) gezeigt wird. Nachtrag 2026-10-05: Kurs und
   Kennzahlen gehören zum evaluierten Artefakt, die Zusatzkarten nicht (Rolle in der Arbeit);
-  offen bleibt, ob die Evaluationsinstanz mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut wird.
-- **Status:** vorläufig.
+  Nachtrag 2026-10-08: entschieden, siehe Entscheidung D3.
+- **Entscheidung 2026-10-08 (Autor, D3):** Die Evaluationsinstanz für die Interviews (DZ3) wird
+  mit `VITE_SHOW_FINANCE_EXTRAS=false` gebaut (Variante B in `docs/evaluationsinstanz.md`). Die
+  Befragten sehen auf `/aktie` nur Kurs, Kurs mit Bewertungsverlauf und die Kennzahlen aus
+  FA-15 mit dem festen Hinweis; `/finance` und `/news` werden nicht abgerufen. Die Zusatzkarten
+  bleiben im Standardbau außerhalb der Evaluation erhalten. Der Hinweistext des Eintrags „Aktie“
+  in der Seitenleiste richtet sich seit 2026-10-08 nach dem Schalter. Einstellungen und die
+  Prüfliste für den Tag vor einem Interview stehen in `docs/evaluationsinstanz.md`.
+- **Status:** vorläufig (Nutzungsbedingungen offen); Evaluationsinstanz entschieden.
 
 ## E17 – Freier Drill-down und Vergleich mit dem Zeitraum davor
 

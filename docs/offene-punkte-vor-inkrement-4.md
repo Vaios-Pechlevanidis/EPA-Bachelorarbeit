@@ -218,3 +218,10 @@ Zuordnung „eigene Aktie“ lässt sich aus den Bewertungen nicht begründen.
 Nicht vorgeschlagen: `ticker_scope` „eigene Aktie“ für AFX.DE, weil die Bewertungen das nicht
 stützen. In beiden Optionen nennt die Ansicht das Wertpapier weiterhin ausdrücklich (Option B:
 gar kein Wertpapier, dafür der Hinweis „nicht börsennotiert“).
+
+## D3 – Evaluationsinstanz (E16)
+
+> **Entscheidung des Autors (2026-10-08): Variante B**, Bau mit `VITE_SHOW_FINANCE_EXTRAS=false`.
+> Varianten, Folgen, Einstellungen und Prüfliste stehen in `docs/evaluationsinstanz.md`;
+> umgesetzt in Phase B (B3): E16, Evaluationsdokument, Feature-Doku 05 und der Tooltip „Aktie“
+> in der Seitenleiste.

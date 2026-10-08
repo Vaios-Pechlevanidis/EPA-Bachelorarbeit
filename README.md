@@ -247,7 +247,7 @@ The frontend reads `VITE_*` variables when Vite starts or builds (shell environm
 | Variable | Default | Meaning |
 |---|---|---|
 | `VITE_API_URL` | `http://localhost:8000` | Backend URL (`/api` is appended) |
-| `VITE_SHOW_FINANCE_EXTRAS` | on | `false` (or `0`) hides the extras of the stock dashboard: the cards analyst recommendations, revenue and net income, recent news and the tiles net income and analysts. The page then shows the price (with and without rating history), the figures of FA-15 (market cap, employees, revenue) and the fixed note, and does not call `/finance` or `/news`. Meant for hiding the extras in the evaluation instance (decision E16) |
+| `VITE_SHOW_FINANCE_EXTRAS` | on | `false` (or `0`) hides the extras of the stock dashboard: the cards analyst recommendations, revenue and net income, recent news and the tiles net income and analysts. The page then shows the price (with and without rating history), the figures of FA-15 (market cap, employees, revenue) and the fixed note, and does not call `/finance` or `/news`. Meant for hiding the extras in the evaluation instance (decision E16). Decision D3 of 2026-10-08: the evaluation instance for the interviews is built with `false`, see `docs/evaluationsinstanz.md` |
 
 ```bash
 # Frontend without the stock dashboard extras
