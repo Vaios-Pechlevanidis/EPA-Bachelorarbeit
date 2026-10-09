@@ -1,5 +1,5 @@
 """
-Tests für scripts/compare_annotations.py (DZ1, E5, Iteration 2): Übereinstimmung zweier
+Tests für scripts/compare_annotations.py (DZ1, E5): Übereinstimmung zweier beliebiger
 Annotationsdateien mit der Zuordnungsregel aus E5 (Toleranz ±1 Monat, Lücken bis 3 Monate,
 gleiche Richtung, Eins-zu-eins). Konstruierte Dateien und Reihen, ohne DB und ohne Netz.
 
@@ -11,6 +11,8 @@ Ausführen:
 import json
 import os
 import sys
+
+import pytest
 
 BACKEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 sys.path.insert(0, BACKEND_DIR)
@@ -193,6 +195,14 @@ class TestSeriesAndCli:
         assert ca.main(["--a", str(a), "--b", str(b), "--series-dir", str(tmp_path / "fehlt"), "--density", str(tmp_path / "fehlt.json")]) == 0
         out = capsys.readouterr().out
         assert "beide Dateien enthalten keine Einträge" in out
+
+    def test_cli_b_is_required(self, tmp_path, capsys):
+        a = tmp_path / "a.json"
+        a.write_text(json.dumps(doc()), encoding="utf-8")
+        with pytest.raises(SystemExit) as exc:
+            ca.main(["--a", str(a), "--series-dir", str(tmp_path / "fehlt"), "--density", str(tmp_path / "fehlt.json")])
+        assert exc.value.code == 2 and "--b" in capsys.readouterr().err
+        assert not hasattr(ca, "DEFAULT_B")
 
     def test_cli_wrong_schema(self, tmp_path, capsys):
         a, b = tmp_path / "a.json", tmp_path / "b.json"

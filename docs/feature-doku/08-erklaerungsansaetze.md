@@ -348,7 +348,8 @@ erkennbar von Vergleichsfenstern, und keine der beiden Fassungen wird als „bes
 - Eigene Wortangaben für Einzelmonate („im auffälligen Monat“) statt „Auswahl“ in der Antwort
   von `/compare`.
 - Prüfung der Ansätze gegen die Referenzzeiträume (E5): Die Zusatzauswertung in
-  `report_explanation_validity.py --annotations` ist festgelegt und läuft, sobald die
-  Annotationsdateien (Autor und zweite Person, `docs/annotation-anleitung.md`) gefüllt sind.
+  `report_explanation_validity.py --annotations` ist festgelegt; sie läuft mit dem DZ1-Abgleich
+  auf der geprüften Annotationsdatei des Autors (eine zweite Person stand nicht zur Verfügung,
+  E5, Aktualisierung 2026-10-09).
 - Ob die Bezeichnungen der Stufen (Kurzformen der Regeln) in den Interviews (DZ3) verständlich
   sind, oder ob die Regel selbst im Badge stehen sollte.
