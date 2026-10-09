@@ -65,3 +65,15 @@ export function groupLabel(source, status) {
   const option = status ? statusOptions(source).find((o) => o.key === status) : null
   return option ? `${sourceLabel(source)} · ${option.label}` : sourceLabel(source)
 }
+
+/* Hinweis am Statusfilter (Inkrement 6, A4; E13): Für die Unternehmen aus
+ * Zyklus 1 enthält der Export keinen Wert für ehemalige Mitarbeitende.
+ * sourceStatus = sources.employee aus GET /companies/{id}/data-status
+ * (status_counts, status_distinction). Liefert den Text oder null. */
+export const STATUS_NO_DISTINCTION_HINT =
+  "Für dieses Unternehmen liegt keine Unterscheidung zwischen aktuellen und ehemaligen Mitarbeitenden vor (Export ohne diesen Wert, E13). „Angestellt“ heißt hier „Bewertung mit Typangabe“ und entspricht bis auf die Bewertungen ohne Angabe der Gruppe „Alle“."
+
+export function statusDistinctionHint(source, sourceStatus) {
+  if (source !== "employee" || !sourceStatus || sourceStatus.n_reviews === 0) return null
+  return sourceStatus.status_distinction === false ? STATUS_NO_DISTINCTION_HINT : null
+}

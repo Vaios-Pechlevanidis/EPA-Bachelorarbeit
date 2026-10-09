@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Building2, Diamond, GitCompareArrows, ListOrdered, MessageSquareText, MousePointerClick } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusHint, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
@@ -15,10 +15,11 @@ import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/component
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isPeriod, isTimeRangeKey, outlierCountText, periodIndex, periodWindows, selectionLabel, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
 import { PRICE_ON, PRICE_PARAM, noPriceText } from "@/lib/market"
-import { groupLabel, validStatus } from "@/lib/reviewerStatus"
+import { groupLabel, statusDistinctionHint, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison, usePeriodComparison } from "@/hooks/useAnomalyComparison"
 import { useCompanyResource } from "@/hooks/useCompanyResource"
+import { useDataStatus } from "@/hooks/useDataStatus"
 import { useGlobalEvents } from "@/hooks/useEvidence"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
@@ -137,6 +138,10 @@ export default function AnomaliesPage() {
     const globalEvents = useGlobalEvents(showEvents)
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
+    // Datenstand: n je Statusgruppe und Hinweis, wenn aktuell/ehemalig nicht unterschieden wird (A4, E13)
+    const dataStatus = useDataStatus(companyId)
+    const sourceStatus = dataStatus.data?.sources?.[source] ?? null
+    const statusHint = statusDistinctionHint(source, sourceStatus)
     const selectedId = searchParams.get("anomaly")
     const selectedAnomaly = useMemo(() => anomalies.find((a) => a.id === selectedId) ?? null, [anomalies, selectedId])
     const windows = useMemo(() => comparisonWindows(selectedAnomaly), [selectedAnomaly])
@@ -261,6 +266,8 @@ export default function AnomaliesPage() {
                         source={source}
                         value={status}
                         onChange={(key) => updateParams({ status: key, anomaly: null })}
+                        counts={sourceStatus?.status_counts ?? null}
+                        hint={statusHint}
                     />
                 )}
                 {companyId && (
@@ -344,6 +351,7 @@ export default function AnomaliesPage() {
                                     events={showEvents ? globalEvents.events : null}
                                 />
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                                    <StatusHint hint={statusHint} />
                                     {showEvents && !globalEvents.loading && !globalEvents.error && globalEvents.events.length === 0 && (
                                         <p className="m-0 text-[11px] text-slate-500">
                                             Keine bestätigten allgemeinen Ereignisse hinterlegt (backend/data/global_events.json).
