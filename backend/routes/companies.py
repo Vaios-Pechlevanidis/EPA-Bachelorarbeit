@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, field_validator
 from database.supabase_client import get_supabase_client
+from services.data_status_service import company_data_status
 from services.rolling_average_service import company_rolling_averages
 from services.topic_average_rating_service import _fetch_all_rows
 from datetime import datetime, timedelta, timezone
@@ -202,6 +203,46 @@ def get_companies():
             row["review_count"] = counts[cid]
             row["id"] = str(cid)
     return data
+
+
+@router.get("/companies/{company_id}/data-status")
+def get_company_data_status(company_id: int):
+    """
+    Datenstand eines Unternehmens (FA-37, Inkrement 6), nur lesend::
+
+        {
+          "company_id", "name", "generated_at",
+          "sources": {"employee": {"label", "n_reviews", "n_dated", "n_undated", "first_review",
+                                   "last_review", "first_month", "last_month", "months_in_span",
+                                   "evaluated_months", "eligible", "timestamps": {"datum", "update_datum",
+                                   "created_at": {"min", "max", "n"}}, "last_import", "status_counts",
+                                   "status_distinction"},
+                      "candidates": {...}},
+          "n_reviews_total",
+          "last_import": {"value", "field": "created_at", "meaning"},
+          "timestamp_fields": {...},                 # Bedeutung von datum, update_datum, created_at
+          "thresholds": {"min_reviews_per_month": 5, "min_evaluated_months": 12},   # E4
+          "market_cache": {"ticker", "ticker_scope", "available", "fetched_at", "first_month",
+                           "last_month", "months", "source"} | null,                # E15, nur Zwischenspeicher
+          "evidence_store": {"search_term", "term_confirmed", "sources": {"gnews": {...}, "eqs": {...}},
+                             "months", "first_month", "last_month", "fetched_at"} | null,   # E18, nur Speicher
+          "platform": {"available", "review_count", "count_date", "dataset_count", "coverage_share", "note"},
+          "note"
+        }
+
+    ``platform`` kommt aus den optionalen Feldern ``platform_review_count`` und
+    ``platform_count_date`` in ``backend/data/company_metadata.json`` (nur der
+    Autor füllt sie); fehlen sie, steht in ``note`` „Vergleich mit der Plattform
+    nicht hinterlegt“. Kein Abruf bei Kununu, Yahoo Finance oder den
+    Belegquellen. Unbekanntes Unternehmen: 404.
+    """
+    try:
+        result = company_data_status(company_id)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Error loading data status: {str(e)}")
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Unternehmen {company_id} nicht gefunden.")
+    return result
 
 
 @router.get("/companies/{company_id}/ratings/avg")
