@@ -11,6 +11,7 @@ import {
     fiscalYearLabel, fmtAmount, fmtDay, fmtMonth, fmtPercent, fmtPrice,
 } from "@/lib/market"
 import { KpiTile as Tile } from "./KpiTile"
+import { DataBasisTags } from "./DataBasis"
 
 /* Umschalter "Aktienkurs" (Kurs im Bewertungsverlauf ein/aus). */
 export function PriceToggle({ checked, onChange }) {
@@ -43,6 +44,11 @@ export function FinanceKpis({ market, last, first, change, extras = true }) {
     const latestAnalysts = analysts[analysts.length - 1]
     const currency = market?.earnings?.currency ?? latestRevenue?.unit ?? ""
     return (
+        <div className="space-y-1.5">
+        <p className="m-0 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span>Kennzahlen · Yahoo Finance</span>
+            <DataBasisTags basis="market" small />
+        </p>
         <div className={`grid gap-3 grid-cols-2 ${extras ? "md:grid-cols-3 xl:grid-cols-6" : "md:grid-cols-4"}`}>
             <Tile
                 label={last ? `Kurs · ${fmtMonth(last.period)}` : "Kurs"}
@@ -78,6 +84,7 @@ export function FinanceKpis({ market, last, first, change, extras = true }) {
                     />
                 </>
             )}
+        </div>
         </div>
     )
 }

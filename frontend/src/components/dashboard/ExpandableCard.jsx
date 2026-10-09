@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Maximize2 } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { DataBasisTags } from "./DataBasis"
 
 /* ============================================================================
    ExpandableCard — Karte, die sich per Klick vergrößert, wie die Karten im
@@ -59,6 +60,7 @@ function useModalHeight(open) {
 export function ExpandableCard({
     icon, eyebrow, title, subtitle, actions = null, children,
     cardHeight = 220, fill = false, accent = "bg-violet-500", className = "",
+    basis = null,   // Datenbasis (DataBasis-Schlüssel oder Liste), Inkrement 6, FA-25
 }) {
     const [open, setOpen] = useState(false)
     const modalHeight = useModalHeight(open)
@@ -80,7 +82,10 @@ export function ExpandableCard({
                             {icon}
                         </span>
                         <div className="min-w-0 flex-1">
-                            <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none truncate">{eyebrow}</p>
+                            <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <span className="truncate">{eyebrow}</span>
+                                <DataBasisTags basis={basis} small />
+                            </p>
                             <h3 className="m-0 text-[14px] leading-5 font-semibold tracking-tight text-slate-900 flex items-center gap-1.5 min-w-0">
                                 <span className="truncate">{title}</span>
                                 <Maximize2 aria-hidden="true" className="h-3 w-3 flex-none text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -118,7 +123,10 @@ export function ExpandableCard({
                                 {icon}
                             </span>
                             <div className="min-w-0">
-                                <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">{eyebrow}</p>
+                                <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none flex flex-wrap items-center gap-x-2 gap-y-1">
+                                    <span>{eyebrow}</span>
+                                    <DataBasisTags basis={basis} small />
+                                </p>
                                 <DialogTitle className="m-0 text-[18px] leading-6 font-semibold tracking-tight text-slate-900">{title}</DialogTitle>
                                 {subtitle && <p className="m-0 mt-0.5 text-[11px] text-slate-500">{subtitle}</p>}
                             </div>

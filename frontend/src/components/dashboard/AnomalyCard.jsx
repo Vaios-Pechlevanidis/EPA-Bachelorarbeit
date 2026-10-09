@@ -908,6 +908,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 title="Anomalien im Verlauf"
                 subtitle={subtitle}
                 expandable
+                basis="stars"
                 actions={
                     <>
                         <AnomalySourceToggle value={source} onChange={changeSource} compact />

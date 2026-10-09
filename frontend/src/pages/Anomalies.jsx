@@ -301,6 +301,11 @@ export default function AnomaliesPage() {
                                 eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
                                 title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
                                 subtitle={chartSubtitle}
+                                basis={[
+                                    "stars",
+                                    ...(showPrice && marketData ? ["market"] : []),
+                                    ...(showEvents && globalEvents.events.length ? ["external"] : []),
+                                ]}
                                 actions={
                                     <>
                                         <EventsToggle
@@ -375,6 +380,7 @@ export default function AnomaliesPage() {
                                 className="flex flex-col"
                                 icon={markerTab === "outliers" ? <Diamond /> : <ListOrdered />}
                                 eyebrow={range ? `MARKIERUNGEN · ${fmtPeriod(range.from).toUpperCase()} – ${fmtPeriod(range.to).toUpperCase()}` : "MARKIERUNGEN"}
+                                basis="stars"
                                 title={markerTab === "outliers" ? "Auffällige Einzelmonate" : "Auffällige Veränderungen"}
                                 subtitle={markerTab === "outliers"
                                     ? "Starke Abweichung von den Nachbarmonaten, kein neues Niveau (E14); größte zuerst"
@@ -484,6 +490,7 @@ export default function AnomaliesPage() {
                                     className="xl:col-span-3"
                                     icon={<GitCompareArrows />}
                                     eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    basis={["stars", "text"]}
                                     title="Vorher-Nachher-Vergleich"
                                     subtitle={comparison.data
                                         ? `${group} · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
@@ -496,6 +503,7 @@ export default function AnomaliesPage() {
                                     bodyClassName="px-4 py-4 flex-1 min-h-0 flex flex-col"
                                     icon={<MessageSquareText />}
                                     eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    basis={["stars", "text"]}
                                     title="Bewertungen des Zeitraums"
                                     subtitle={`${group} · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
                                         reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
@@ -540,6 +548,7 @@ export default function AnomaliesPage() {
                                     className="xl:col-span-3"
                                     icon={<GitCompareArrows />}
                                     eyebrow={`DRILL-DOWN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
+                                    basis={["stars", "text"]}
                                     title="Vergleich mit dem Zeitraum davor"
                                     subtitle={periodComparison.data
                                         ? `${group} · Zeitraum davor ${selectionLabel(periodComparison.data.windows.before)}: ${periodComparison.data.windows.before.n_reviews} · Auswahl ${selectionLabel(periodComparison.data.windows.after)}: ${periodComparison.data.windows.after.n_reviews} Bewertungen`
@@ -564,6 +573,7 @@ export default function AnomaliesPage() {
                                         bodyClassName="px-4 py-4 flex-1 min-h-0 flex flex-col"
                                         icon={<MessageSquareText />}
                                         eyebrow={`EINZELBEWERTUNGEN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
+                                        basis={["stars", "text"]}
                                         title="Bewertungen der Auswahl"
                                         subtitle={`${group} · ${periodSide === "before" ? "Zeitraum davor" : "Auswahl"} · ${selectionLabel(reviewSpan)}${
                                             reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}

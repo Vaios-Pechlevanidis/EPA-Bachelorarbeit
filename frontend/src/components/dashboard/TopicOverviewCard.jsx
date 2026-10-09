@@ -182,8 +182,9 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
           icon={<Tag />}
           eyebrow="TOPIC-ÜBERSICHT"
           title="Themenbereiche"
-          subtitle={`${SOURCE_LABEL[sourceFilter] ?? "Alle Quellen"}${stats ? ` · ${stats.total} Topics` : ""}`}
+          subtitle={`${SOURCE_LABEL[sourceFilter] ?? "Alle Quellen"}${stats ? ` · ${stats.total} Topics` : ""}${totalReviews != null ? ` · n = ${Number(totalReviews).toLocaleString("de-DE")} Bewertungen` : ""}`}
           expandable
+          basis="text"
           actions={
             <div onClick={(e) => e.stopPropagation()}>
               <SourceToggle

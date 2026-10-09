@@ -160,7 +160,7 @@ export default function Dashboard() {
         if (!Number.isFinite(delta)) continue
         const rounded = Math.round(delta * 10) / 10
         const sign = rounded > 0.05 ? "up" : rounded < -0.05 ? "down" : "flat"
-        setTrendData({ avgDelta: rounded.toFixed(1), sign, windowMonths: json.months ?? null })
+        setTrendData({ avgDelta: rounded.toFixed(1), sign, windowMonths: json.months ?? null, nReviews: json.n_reviews ?? null })
         return
       } catch {}
     }
@@ -209,7 +209,19 @@ export default function Dashboard() {
         .filter((x) => Number.isFinite(x.score))
       if (!entries.length) { setMostCriticalData(null); return }
       const min = entries.reduce((b, c) => (c.score < b.score ? c : b), entries[0])
-      setMostCriticalData({ topicName: min.title, score: min.score.toFixed(2) })
+      // n der Kategorie (FA-26): Zähler je Kategorie über alle Mitarbeitenden-Bewertungen;
+      // mit Zeitfilter nicht je Zeitraum verfügbar, dann ohne n.
+      let n = null
+      if (!startDate) {
+        try {
+          const countsRes = await fetch(`${API_URL}/companies/${companyId}/ratings/category-counts`)
+          if (countsRes.ok) {
+            const counts = await countsRes.json()
+            n = Number.isFinite(Number(counts?.[min.key])) ? Number(counts[min.key]) : null
+          }
+        } catch { /* n bleibt leer */ }
+      }
+      setMostCriticalData({ topicName: min.title, score: min.score.toFixed(2), n })
     } catch { setMostCriticalData(null) }
   }
 
@@ -634,7 +646,7 @@ export default function Dashboard() {
               <KPIGrid
                 companyId={effectiveCompanyId}
                 avgScore={data?.avg_overall}
-                avgCount={null}
+                avgCount={data?.n_reviews ?? null}
                 trendData={trendData}
                 rollingData={rollingData}
                 mostCriticalData={mostCriticalData}
