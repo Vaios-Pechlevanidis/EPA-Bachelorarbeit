@@ -25,6 +25,7 @@ import { exportCompareAsPDF } from "@/utils/pdfExport"
 import { Compare as CompareIcon, Star as StarIcon, Tag, TrendUp as TrendUpIcon } from "../icons"
 import { API_URL } from "../config"
 import { SCORE_HINT } from "@/lib/scoreText"
+import { CRITICAL_LABEL, NEGATIVE_TOPIC_LABEL } from "@/lib/labels"
 
 /* ─── Design-System Section component ─── */
 function DSSection({ icon, eyebrow, title, action, children, className = "" }) {
@@ -989,11 +990,11 @@ const ComparePage = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Most Critical comparison */}
+                            {/* Kritischste Kategorie comparison */}
                             <Card className="rounded-lg border border-slate-200 bg-white shadow-xs overflow-hidden">
                                 <CardHeader className="px-4 py-3 border-b border-slate-200">
                                     <CardTitle className="text-[14px] font-semibold text-slate-900 tracking-tight">
-                                        Most Critical
+                                        {CRITICAL_LABEL}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
@@ -1032,11 +1033,11 @@ const ComparePage = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Negative Topic comparison */}
+                            {/* Negativstes Topic comparison */}
                             <Card className="rounded-lg border border-slate-200 bg-white shadow-xs overflow-hidden">
                                 <CardHeader className="px-4 py-3 border-b border-slate-200">
                                     <CardTitle className="text-[14px] font-semibold text-slate-900 tracking-tight">
-                                        Negative Topic
+                                        {NEGATIVE_TOPIC_LABEL}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">

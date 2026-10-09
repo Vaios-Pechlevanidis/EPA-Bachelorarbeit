@@ -16,8 +16,8 @@ export const CATEGORY_MEAN_NOTE =
   "Gesamtnote abweichen: Die Gesamtnote ist eine eigene Angabe je Bewertung, und nicht jede Bewertung enthält " +
   "jede Kategorie."
 
-/* Beschriftung der Kachel mit der niedrigsten Kategorie (kategorienbasiert). */
-export const CRITICAL_LABEL = "Kritischste Kategorie"
+/* Beschriftung der Kachel mit der niedrigsten Kategorie (kategorienbasiert), aus lib/labels.js. */
+export { CRITICAL_LABEL } from "./labels"
 export const CRITICAL_NOTE = "niedrigstes Kategorienmittel, Mitarbeitende"
 
 const fmtN = (n) => (n == null ? "–" : Number(n).toLocaleString("de-DE"))

@@ -4,6 +4,7 @@ import { Star, TrendUp, TrendDown, Alert, Tag } from "../../icons";
 import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from "@/lib/rollingAverage";
 import { DataBasisTags, SmallBasisWarning } from "./DataBasis";
 import { MIN_REVIEWS_PER_WINDOW } from "@/lib/dataBasis";
+import { NEGATIVE_TOPIC_LABEL } from "@/lib/labels";
 import { CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from "@/lib/scoreText";
 
 const fmt = (n, d = 1) => (isNaN(Number(n)) ? "—" : Number(n).toFixed(d).replace(".", ","));
@@ -303,9 +304,9 @@ export default function KPIGrid({
         onClick={onOpenCritical}
       />
 
-      {/* Negative Topic */}
+      {/* Negativstes Topic */}
       <KPITile
-        label="Negative Topic"
+        label={NEGATIVE_TOPIC_LABEL}
         icon={<Tag />}
         tone={negativeT}
         value={negName !== "-" ? negName : "—"}

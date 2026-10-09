@@ -31,6 +31,7 @@ import {
 import { useState, useEffect, useMemo, useRef, memo } from "react"
 import { API_URL, SHOW_FORECAST } from "@/config"
 import { MIN_REVIEWS_PER_MONTH } from "@/lib/dataBasis"
+import { TIMELINE_LABEL } from "@/lib/labels"
 import { ChartCardHeader, SourceToggle, DropdownPicker } from "./ChartHeader"
 import { TrendUp as TrendUpIcon } from "../../icons"
 
@@ -878,7 +879,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
         : null
 
     const showOverlay = loading || refreshing
-    const overlayLabel = loading ? "Lade Timeline-Daten…" : "Daten werden aktualisiert…"
+    const overlayLabel = loading ? "Lade Daten des Zeitverlaufs…" : "Daten werden aktualisiert…"
 
     return (
         <>
@@ -890,7 +891,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 <ChartCardHeader
                     icon={<TrendUpIcon />}
                     eyebrow={TIMELINE_EYEBROW}
-                    title="Timeline"
+                    title={TIMELINE_LABEL}
                     subtitle={`${SOURCE_LABEL[source]} · ${metric}`}
                     expandable
                     actions={<FilterDropdowns compact />}
@@ -959,7 +960,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                     {TIMELINE_EYEBROW}
                                 </p>
                                 <DialogTitle className="m-0 text-[18px] leading-6 font-semibold tracking-tight text-slate-900">
-                                    Timeline
+                                    {TIMELINE_LABEL}
                                 </DialogTitle>
                                 <p className="m-0 mt-0.5 text-[11px] text-slate-500">
                                     {SOURCE_LABEL[source]} · {metric}

@@ -19,6 +19,7 @@ import MostCriticalModal from "../components/dashboard/modals/MostCriticalModal"
 import NegativTopicModal from "../components/dashboard/modals/NegativTopicModal"
 import ImportModal from "../components/dashboard/modals/ImportModal"
 import { getImportHistory } from "@/lib/importHistory"
+import { NEGATIVE_TOPIC_LABEL } from "@/lib/labels"
 
 import {
   Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon, TrendUp,
@@ -252,7 +253,7 @@ export default function Dashboard() {
         if (Number.isFinite(br) && Number.isFinite(cr)) { if (cr < br) return cur; if (cr > br) return best }
         return freqOf(cur) > freqOf(best) ? cur : best
       }, base[0])
-      return { ...chosen, title: "Negative Topic", topic_label: chosen?.topic, categories: chosen?.topic ? [chosen.topic] : chosen?.categories }
+      return { ...chosen, title: NEGATIVE_TOPIC_LABEL, topic_label: chosen?.topic, categories: chosen?.topic ? [chosen.topic] : chosen?.categories }
     }
 
     try {
@@ -275,7 +276,7 @@ export default function Dashboard() {
             }, list[0])
             setNegativeTopicItem({
               ...chosen,
-              title: "Negative Topic",
+              title: NEGATIVE_TOPIC_LABEL,
               topic_label: chosen?.topic_label || chosen?.topic || chosen?.topic_text,
               categories: Array.isArray(chosen?.categories) ? chosen.categories : (chosen?.topic_label ? [chosen.topic_label] : []),
             })
@@ -311,7 +312,7 @@ export default function Dashboard() {
 
   /* ---- PDF export ---- */
   // Übernimmt alle Elemente des Dashboards: Datenstand, fünf Kennzahlen mit n und
-  // Datenbasis, Timeline, Topics im Detail, Anomalien im Verlauf, Topic-Übersicht.
+  // Datenbasis, Zeitverlauf, Topics im Detail, Anomalien im Verlauf, Topic-Übersicht.
   const handleExportPDF = async () => {
     if (!selectedCompanyName) { setError("Bitte wählen Sie zuerst eine Firma aus."); return }
     try {

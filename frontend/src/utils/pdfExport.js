@@ -5,7 +5,7 @@
  *   01 Cover                       — Brand-Bar, Hero (Firmenname + Datum), Meta-Band, Inhalt
  *   02 Datenstand + Kennzahlen     — Datenstand-Karte (FA-37) und die fünf Kacheln mit n,
  *                                    Warnung bei kleiner Basis und Datenbasis (FA-25, FA-26)
- *   03 Timeline + Topics im Detail — zwei Diagramm-Karten mit Legende und Kennzahlen
+ *   03 Zeitverlauf + Topics im Detail — zwei Diagramm-Karten mit Legende und Kennzahlen
  *   04 Anomalien im Verlauf        — Diagramm-Karte, Eignung, markierte Veränderungen und Einzelmonate
  *   05 Topic-Übersicht             — Stats-Strip, Sentiment-Tabs, Tabelle aller Topics (mehrseitig)
  *
@@ -23,6 +23,7 @@ import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from '.
 import { evidenceText, fmtN, lastImportText, marketText, platformText, sourceLine, thresholdsNote, timestampCell } from '../lib/dataStatusText';
 import { fmtPeriod } from '../lib/anomalySeries';
 import { SHOW_FORECAST } from '../config';
+import { NEGATIVE_TOPIC_LABEL, TIMELINE_LABEL } from '../lib/labels';
 import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from '../lib/scoreText';
 // ═══════════════════════════════════════════════════════════════════════════
 // COLORS — gleiche Tokens wie das Frontend (colors_and_type.css)
@@ -371,8 +372,8 @@ const sourceName = (key) => SOURCE_NAME[key] || 'Alle Quellen';
 // Globaler Zeitfilter des Dashboards (Topbar)
 const TIME_RANGE_LABEL = {
     all:  { value: 'Standard', sub: 'gesamter Zeitraum' },
-    '1y': { value: '1 Jahr',   sub: 'Kennzahlen, Timeline, Topics' },
-    '3y': { value: '3 Jahre',  sub: 'Kennzahlen, Timeline, Topics' },
+    '1y': { value: '1 Jahr',   sub: 'Kennzahlen, Zeitverlauf, Topics' },
+    '3y': { value: '3 Jahre',  sub: 'Kennzahlen, Zeitverlauf, Topics' },
 };
 
 // Mehrzeiliger Text in der aktuellen Schrift; gibt die nächste freie Grundlinie zurück.
@@ -1399,11 +1400,11 @@ const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negat
         warning: mc?.n != null ? smallBasisText(mc.n, MIN_REVIEWS_PER_WINDOW) : null,
     });
 
-    // Negative Topic: höchste Negativrate in den Freitexten
+    // Negativstes Topic: höchste Negativrate in den Freitexten
     const hasNeg = Boolean(negativeTopic) && negativeTopic !== '-';
     const mentions = negativeTopicItem?.mention_count;
     cards.push({
-        label: 'Negative Topic',
+        label: NEGATIVE_TOPIC_LABEL,
         value: hasNeg ? negativeTopic : '–',
         badge: hasNeg && mentions ? `n = ${fmtInt(mentions)}` : null,
         tone: hasNeg ? 'bad' : 'neutral',
@@ -1663,15 +1664,15 @@ export const exportKPIsAsPDF = async (kpiData) => {
     doc.setTextColor(...C.s500);
     y = drawWrapped(
         doc,
-        `Zeitfilter „${range.value}“ gilt für Ø Score, Trend, Most Critical, Negative Topic, Timeline, Topics im Detail und Topic-Übersicht. Der 12- vs. 24-Monats-Schnitt und die Anomalien beziehen sich immer auf die ganze Reihe. Kennzeichen: Sternebewertung = Sterne der Kununu-Bewertungen, Freitextanalyse = Freitexte der Bewertungen.`,
+        `Zeitfilter „${range.value}“ gilt für Ø Score, Trend, ${CRITICAL_LABEL}, ${NEGATIVE_TOPIC_LABEL}, ${TIMELINE_LABEL}, Topics im Detail und Topic-Übersicht. Der 12- vs. 24-Monats-Schnitt und die Anomalien beziehen sich immer auf die ganze Reihe. Kennzeichen: Sternebewertung = Sterne der Kununu-Bewertungen, Freitextanalyse = Freitexte der Bewertungen.`,
         PAGE.mx, y + 5, PAGE.cw, { lineH: 3.1 },
     );
 
     // ───────────────────────────────────────────────────────────────────────
-    // SEITE 3 — TIMELINE + TOPICS IM DETAIL (Diagrammzeile des Dashboards)
+    // SEITE 3 — ZEITVERLAUF + TOPICS IM DETAIL (Diagrammzeile des Dashboards)
     // ───────────────────────────────────────────────────────────────────────
-    y = startSection('Timeline & Topics im Detail', 'Bewertungsverlauf und Bewertungen je Topic über Zeit');
-    y = drawSectionTitle(doc, y, 3, 'Timeline', tlEyebrow);
+    y = startSection(`${TIMELINE_LABEL} & Topics im Detail`, 'Bewertungsverlauf und Bewertungen je Topic über Zeit');
+    y = drawSectionTitle(doc, y, 3, TIMELINE_LABEL, tlEyebrow);
 
     const tlSource = sourceName(timelineFilters?.source);
     const tlMetric = timelineFilters?.metric || 'Ø Score';
@@ -1685,7 +1686,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
     y = drawDashboardCard(doc, y, {
         header: {
             eyebrow: tlEyebrow,
-            title: 'Timeline',
+            title: TIMELINE_LABEL,
             subtitle: `${tlSource} · ${tlMetric}${timelineFilters?.granularity === 'year' && timelineFilters?.selectedYear ? ` · ${timelineFilters.selectedYear}` : ''}`,
             iconTone: 'info',
             controlsText: tlSource,
@@ -2285,12 +2286,12 @@ export const exportCompareAsPDF = async (compareData) => {
         };
     });
 
-    y = drawKPIBlock('Most Critical', y, (comp) => {
+    y = drawKPIBlock(CRITICAL_LABEL, y, (comp) => {
         if (!comp.mostCritical) return { value: '–', valueColor: C.s300 };
         return { value: `${comp.mostCritical.topicName} (${comp.mostCritical.score})`, valueColor: C.rose500 };
     });
 
-    drawKPIBlock('Negative Topic', y, (comp) => {
+    drawKPIBlock(NEGATIVE_TOPIC_LABEL, y, (comp) => {
         const nt = comp.negativeTopic;
         if (!nt) return { value: '–', valueColor: C.s300 };
         const lbl = (nt.topic_label || nt.topic_text || nt.topic || '–');
