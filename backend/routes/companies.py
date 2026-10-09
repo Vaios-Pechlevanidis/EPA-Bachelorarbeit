@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, field_validator
 from database.supabase_client import get_supabase_client
 from services.rolling_average_service import company_rolling_averages
+from services.topic_average_rating_service import _fetch_all_rows
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -211,8 +212,11 @@ def get_company_ratings_avg(
     supabase = get_supabase_client()
     if start_date:
         columns = list(CATEGORY_COLUMN_MAP.values())
-        q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id).gte("datum", start_date)
-        rows = q.execute().data or []
+        # Seitenweise (PostgREST liefert höchstens 1000 Zeilen je Abfrage; bis
+        # 2026-10-09 fehlten bei Unternehmen mit mehr Bewertungen ab dem
+        # Startdatum die übrigen Zeilen, Inkrement 6).
+        q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id).gte("datum", start_date).order("id")
+        rows = _fetch_all_rows(q, page_size=1000)
         result = {}
         for avg_key, col in CATEGORY_COLUMN_MAP.items():
             vals = [float(r[col]) for r in rows if r.get(col) is not None]
@@ -224,6 +228,11 @@ def get_company_ratings_avg(
         raise HTTPException(status_code=500, detail="No data returned from RPC")
     return res.data[0] if len(res.data) > 0 else {}
 
+
+# Wortlaut der Score-Definition der Kachel „Ø Score“ (Inkrement 6, FA-38); die
+# Erkennungsreihe und der Zeitverlauf mitteln dagegen die Spalte
+# durchschnittsbewertung je Bewertung (E3).
+AVG_OVERALL_DEFINITION = "Mittel der 13 Kategorienmittel (ungewichtet), nur Mitarbeitende"
 
 # Mapping used for category counts (same keys as frontend CATEGORY_LABELS)
 CATEGORY_COLUMN_MAP = {
@@ -249,13 +258,9 @@ def get_company_category_counts(company_id: int):
     supabase = get_supabase_client()
     try:
         columns = list(CATEGORY_COLUMN_MAP.values())
-        res = (
-            supabase.table("employee")
-            .select(",".join(columns))
-            .eq("company_id", company_id)
-            .execute()
-        )
-        rows = res.data or []
+        # Seitenweise, sonst höchstens 1000 Zeilen (Korrektur 2026-10-09, Inkrement 6).
+        query = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id).order("id")
+        rows = _fetch_all_rows(query, page_size=1000)
         counts = {}
         for avg_key, col in CATEGORY_COLUMN_MAP.items():
             n = sum(1 for r in rows if r.get(col) is not None)
@@ -265,26 +270,48 @@ def get_company_category_counts(company_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _compute_avg_overall(company_id: int, start_date: Optional[str] = None) -> Optional[float]:
-    """Query employee table directly and compute avg_overall, optionally filtered by start_date."""
-    supabase = get_supabase_client()
+def avg_overall_from_rows(rows: list[dict]) -> dict[str, Any]:
+    """Mittel der Kategorienmittel (``avg_overall``) aus Zeilen der Tabelle
+    ``employee``; reine Funktion. Jede Kategorie wird über ihre nicht-leeren
+    Werte gemittelt, das Ergebnis ist das arithmetische Mittel dieser bis zu
+    13 Kategorienmittel (ungewichtet). ``n_reviews`` zählt die Zeilen,
+    ``n_rated`` die Zeilen mit mindestens einem Kategorienwert."""
     columns = list(CATEGORY_COLUMN_MAP.values())
-    q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id)
-    if start_date:
-        q = q.gte("datum", start_date)
-    rows = q.execute().data or []
     totals: dict[str, list[float]] = {col: [] for col in columns}
+    n_rated = 0
     for row in rows:
+        rated = False
         for col in columns:
             v = row.get(col)
             if v is None:
                 continue
             try:
                 totals[col].append(float(v))
+                rated = True
             except (TypeError, ValueError):
                 pass
+        n_rated += 1 if rated else 0
     cat_avgs = [sum(vals) / len(vals) for vals in totals.values() if vals]
-    return round(sum(cat_avgs) / len(cat_avgs), 2) if cat_avgs else None
+    return {
+        "avg_overall": round(sum(cat_avgs) / len(cat_avgs), 2) if cat_avgs else None,
+        "n_reviews": len(rows),
+        "n_rated": n_rated,
+        "n_categories": len(cat_avgs),
+    }
+
+
+def _compute_avg_overall(company_id: int, start_date: Optional[str] = None) -> dict[str, Any]:
+    """Liest die Tabelle ``employee`` seitenweise (optional ab ``start_date``)
+    und liefert ``avg_overall_from_rows``. Bis 2026-10-09 las die Funktion nur
+    eine Abfrage und damit höchstens 1000 Zeilen (PostgREST-Grenze); bei
+    Unternehmen mit mehr Bewertungen war der Wert unvollständig (Inkrement 6)."""
+    supabase = get_supabase_client()
+    columns = list(CATEGORY_COLUMN_MAP.values())
+    q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id)
+    if start_date:
+        q = q.gte("datum", start_date)
+    rows = _fetch_all_rows(q.order("id"), page_size=1000)
+    return avg_overall_from_rows(rows)
 
 
 @router.get("/companies/{company_id}/ratings")
@@ -292,10 +319,26 @@ def get_company_ratings_overall(
     company_id: int,
     start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
 ):
+    """Kachel „Ø Score“: Mittel der Kategorienmittel der Mitarbeitenden.
+
+    Antwort (seit 2026-10-09 mit zusätzlichen Feldern, ``avg_overall`` unverändert)::
+
+        {"avg_overall": 3.9, "n_reviews": 6899, "n_rated": 6880, "n_categories": 13,
+         "source": "employee", "basis": "sternebewertung",
+         "definition": "Mittel der 13 Kategorienmittel (ungewichtet), nur Mitarbeitende"}
+
+    Ohne ``start_date`` kommt der Wert aus der SQL-Funktion
+    ``get_employee_ratings_avg`` (alle Zeilen), ``n_reviews`` aus einer
+    Zählabfrage; mit ``start_date`` werden die Zeilen seitenweise gelesen.
+    """
     supabase = get_supabase_client()
+    meta = {
+        "source": "employee",
+        "basis": "sternebewertung",
+        "definition": AVG_OVERALL_DEFINITION,
+    }
     if start_date:
-        avg_overall = _compute_avg_overall(company_id, start_date)
-        return {"avg_overall": avg_overall}
+        return {**_compute_avg_overall(company_id, start_date), **meta}
 
     res = supabase.rpc("get_employee_ratings_avg", {"p_company_id": company_id}).execute()
     if res.data is None:
@@ -310,7 +353,13 @@ def get_company_ratings_overall(
         except (TypeError, ValueError):
             continue
     avg_overall = round(sum(values) / len(values), 2) if values else None
-    return {"avg_overall": avg_overall}
+    return {
+        "avg_overall": avg_overall,
+        "n_reviews": _count_reviews("employee", company_id),
+        "n_rated": None,
+        "n_categories": len(values),
+        **meta,
+    }
     
 @router.get("/companies/{company_id}/ratings/trend")
 def get_company_ratings_trend(
@@ -487,6 +536,8 @@ def get_company_ratings_trend(
 
         # month_key -> metric_key -> list[float]
         monthly_values: dict[tuple[int, int], dict[str, list[float]]] = {}
+        # Bewertungen je Kalendermonat (n je Fenster, Inkrement 6, FA-26)
+        monthly_reviews: dict[tuple[int, int], int] = {}
         for r in rows:
             d = r.get("datum")
             if not d:
@@ -497,6 +548,7 @@ def get_company_ratings_trend(
                 continue
 
             month_key = (dt.year, dt.month)
+            monthly_reviews[month_key] = monthly_reviews.get(month_key, 0) + 1
             if month_key not in monthly_values:
                 monthly_values[month_key] = {k: [] for k in metric_to_column.keys()}
 
@@ -599,6 +651,13 @@ def get_company_ratings_trend(
             "previous_range": {"from": add_months(end_exclusive, -2 * months).isoformat(), "to": add_months(end_exclusive, -months).isoformat()},
             "overall": {"deltaPoints": overall_points, "deltaPercent": overall_percent},
             "metrics": result,
+            # Bewertungen je Fenster (alle Zeilen der Monate, Inkrement 6, FA-26)
+            "n_reviews": {
+                "current": sum(monthly_reviews.get(mk, 0) for mk in cur_month_keys),
+                "previous": sum(monthly_reviews.get(mk, 0) for mk in prev_month_keys),
+            },
+            "source": "employee",
+            "basis": "sternebewertung",
         }
 
     # Default: legacy "rate" mode (days-based, normalized to 30 days)
