@@ -173,6 +173,58 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Status (2026-10-08):** Protokoll, Validierung, Bogen, Abgleich, Anleitung, zweite Datei und
   Abgleichsskript vorhanden; Einträge offen (Handarbeit des Autors und der zweiten Person). Die
   Referenzzeiträume bleiben außerhalb des Dashboards.
+- **Aktualisierung 2026-10-09 – Einträge, Prüfung und Festlegungen vor dem ersten Lauf:**
+  - **Entstehung:** `backend/data/annotations.json` enthält seit Commit `f50b727` 20
+    Referenzzeiträume in 8 der 15 Reihen (Mitarbeitende, Gesamtbewertung); die übrigen 7 Reihen
+    haben keinen Eintrag, was nach Regel 5 (0–3 Zeiträume je Reihe) zulässig ist. Die Einträge
+    hat ein Agent nach dem Protokoll (`docs/referenzzeitraeume-literatur.md`, Abschnitt 3,
+    Regeln 1–11) allein aus den Serien-CSVs vorgeschlagen: zuerst die Beurteilung aus der Reihe,
+    danach die Suche nach einem Ereignisanker (Regel 7). Der Autor hat die Vorschläge am
+    2026-10-09 geprüft und freigegeben. Änderungen bei der Prüfung: [vom Autor zu ergänzen].
+  - **Version 2 (Commit `9703403`):** nur `note` geändert. In den 11 Einträgen mit Ereignisanker
+    ist die nahezu wörtliche Schlagzeile durch eine eigene Kurzbeschreibung ersetzt; Datum,
+    Quelle und Link bleiben. Die sechs Google-News-Links bleiben, weil sich ihr Originalziel
+    nicht sicher bestimmen lässt. Unternehmen, Quelle, Dimension, Monate und Richtung aller
+    Einträge sind unverändert; `backend/tests/test_annotations_file.py` friert sie auf dem Stand
+    von `f50b727` ein und validiert die Datei offline. Der Validator nimmt seitdem jede ganze
+    Zahl ab 1 als `version` an (Regel 8: spätere Änderungen erhöhen die Version).
+  - **Keine zweite Person:** Eine zweite, unabhängige Person steht nicht zur Verfügung. Es gilt
+    Regel 8: Der Autor ist einziger Annotator. Die Vorbereitung aus Iteration 2 ist
+    zurückgebaut: `backend/data/annotations_zweitperson.json` ist entfernt,
+    `docs/annotation-anleitung.md` trägt den Vermerk „nicht durchgeführt“,
+    `compare_annotations.py` vergleicht zwei beliebige Dateien und verlangt `--b`. Der oben
+    beschriebene „Ablauf für die zweite Person“ entfällt.
+  - **Grenzen für DZ1:** Die Referenz stammt von einem einzigen Annotator, die Einträge sind
+    Vorschläge eines Agenten, die der Autor geprüft hat, und der Autor kennt die Markierungen
+    des Dashboards aus der Entwicklung (siehe „Einschränkung für DZ1“ oben). Die Prüfung der
+    Vorschläge ist deshalb nicht blind gegenüber der Erkennung. Der F1-Wert misst die
+    Übereinstimmung der Erkennung mit der geprüften Referenz des Autors, nicht mit einem
+    unabhängigen Goldstandard; eine Übereinstimmung zwischen Annotatoren lässt sich nicht
+    angeben.
+  - **Teilauswertungen, vor dem ersten Lauf festgelegt:** `evaluate_detection.py --subset`
+    berichtet jede Teilmenge für beide Varianten (Niveauwechsel allein; mit Einzelmonaten):
+    `alle`; `ohne_duenne` (kein Monat im Zeitraum mit weniger als 10 Bewertungen, Zählung aus
+    den Serien-CSVs); `mehrmonatig` (Zeitraum mindestens 2 Kalendermonate); `mit_anker` (`note`
+    endet mit „Reihe + Ereignis“). Ohne Angabe berichtet das Skript alle vier. Die Zuordnung
+    bleibt die der Gesamtmenge nach Regel 6; in einer Teilmenge zählen nur ihre Einträge als
+    Treffer oder verfehlt, eine Erkennung, die einem Eintrag außerhalb der Teilmenge zugeordnet
+    ist, zählt weder als Treffer noch als zusätzliche Markierung („neutral“), und eine Reihe
+    geht nur mit mindestens einem Eintrag der Teilmenge ein. Die Neutralregel ist eine Setzung
+    des Autors. Hauptmaß bleibt F1 nach Regel 6 über `alle`; welche Variante als Hauptwert
+    gilt: [vom Autor vor dem Lauf festzulegen].
+  - **Parameter:** Die Erkennungsparameter (E9, E14) werden nach dem Lauf nicht an die Referenz
+    angepasst. Ergibt der Lauf Anlass zu einer Änderung, wird sie als eigener Befund
+    beschrieben und nicht mit derselben Referenz bewertet.
+  - **Commit-Nachricht von `f50b727`:** Sie nennt die Einträge „to be reviewed by the author“.
+    Das ist durch diesen Eintrag überholt; die Prüfung und Freigabe durch den Autor fand am
+    2026-10-09 statt.
+  - **Ablauf ab hier:** (1) einmal `uv run python scripts/evaluate_detection.py --json
+    data/calibration/dz1_ergebnis.json` (alle vier Teilmengen); (2)
+    `report_explanation_validity.py --annotations data/annotations.json`; (3) beide Ergebnisse
+    in einem eigenen Commit; (4) E9 und E14 mit dem Beleg ergänzen, ohne Parameteränderung.
+    Bis dahin wendet kein Test und kein Skriptlauf die Auswertung auf die echte Datei an.
+- **Status (2026-10-09):** Referenz geprüft und versioniert (version 2), Teilauswertungen
+  festgelegt; der DZ1-Abgleich ist noch nicht gelaufen.
 
 ## E6 – Unternehmens-Metadaten
 
