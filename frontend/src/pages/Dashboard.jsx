@@ -17,7 +17,8 @@ import TrendModal        from "../components/dashboard/modals/TrendModal"
 import RollingModal      from "../components/dashboard/modals/RollingModal"
 import MostCriticalModal from "../components/dashboard/modals/MostCriticalModal"
 import NegativTopicModal from "../components/dashboard/modals/NegativTopicModal"
-import ImportModal, { getImportHistory } from "../components/dashboard/modals/ImportModal"
+import ImportModal from "../components/dashboard/modals/ImportModal"
+import { getImportHistory } from "@/lib/importHistory"
 
 import {
   Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon, TrendUp,
@@ -43,12 +44,9 @@ export default function Dashboard() {
   const [openMostCritical, setOpenMostCritical] = useState(false)
   const [openImport, setOpenImport]   = useState(false)
 
-  /* ---- Import history ---- */
-  const [importHistory, setImportHistory] = useState([])
-
   /* ---- Company state ---- */
   const [companyQuery, setCompanyQuery] = useState(companyNameFromWelcome || "")
-  const [selectedCompany, setSelectedCompany]     = useState("")
+  const [selectedCompany, setSelectedCompany]     = useState(companyFromWelcome || "")
   const [selectedCompanyId, setSelectedCompanyId] = useState(companyFromWelcome || null)
   const [selectedCompanyName, setSelectedCompanyName] = useState(companyNameFromWelcome || "")
   const [companies, setCompanies]   = useState([])
@@ -75,24 +73,31 @@ export default function Dashboard() {
 
   /* ---- Loading ---- */
   const [dashboardLoadingStates, setDashboardLoadingStates] = useState({
-    timelineChart: true, topicRatingChart: true, topicOverview: true, kpiCards: true,
+    timelineChart: true, topicRatingChart: true, topicOverview: true,
   })
-  const loadingStatesRef = useRef(dashboardLoadingStates)
-  useEffect(() => { loadingStatesRef.current = dashboardLoadingStates }, [dashboardLoadingStates])
   const [exportingPDF, setExportingPDF] = useState(false)
 
   const topicOverviewRef = useRef(null)
-  const debounceTimeoutRef = useRef(null)
 
   const effectiveCompanyId = selectedCompany || selectedCompanyId || companyFromWelcome || null
 
+  // Kacheln: geladen, sobald der Schlüssel (Firma, Zeitraum) der letzten Ladung passt
+  // (abgeleitet statt setState im Effekt, Lint-Regel react-hooks/set-state-in-effect).
+  const kpiKey = effectiveCompanyId ? `${effectiveCompanyId}:${globalTimeRange}` : null
+  const [kpiDoneKey, setKpiDoneKey] = useState(null)
+  const kpiLoading = Boolean(kpiKey) && kpiDoneKey !== kpiKey
+  const loadingStatesRef = useRef({ ...dashboardLoadingStates, kpiCards: kpiLoading })
+  useEffect(() => {
+    loadingStatesRef.current = { ...dashboardLoadingStates, kpiCards: kpiLoading }
+  }, [dashboardLoadingStates, kpiLoading])
+  // Import-Verlauf (localStorage) je Firma, beim Rendern gelesen (bis zu 10 Einträge).
+  const importHistory = effectiveCompanyId ? getImportHistory(effectiveCompanyId) : []
+
   /* ---- Company helpers ---- */
-  // Gemeinsame Firmenliste (lib/companies.js), dieselbe wie im Suchfeld.
-  async function getCompanies() {
-    try {
-      setCompanies(await loadCompanies())
-    } catch { /* Firmenliste bleibt leer; die Suche zeigt dann keine Vorschläge */ }
-  }
+  // Ohne Firma: Kennzahlen leeren (in den Ereignisbehandlern, nicht im Effekt).
+  const clearKpis = useCallback(() => {
+    setData(null); setTrendData(null); setRollingData(null); setMostCriticalData(null); setNegativeTopicItem(null)
+  }, [])
 
   const handleCompanySelectFromDropdown = useCallback((company) => {
     if (company) {
@@ -105,16 +110,13 @@ export default function Dashboard() {
       setSelectedCompanyId(null)
       setSelectedCompanyName("")
       setSelectedCompany("")
+      clearKpis()
     }
-  }, [])
+  }, [clearKpis])
 
   const handleCreateNewCompany = (companyName) => {
     const name = companyName?.trim()
     navigate("/welcome", name ? { state: { prefillCompanyName: name } } : undefined)
-  }
-
-  function getCompanyData() {
-    /* intentionally empty — data is loaded reactively via effectiveCompanyId useEffect */
   }
 
   /* ---- KPI fetching ---- */
@@ -128,9 +130,9 @@ export default function Dashboard() {
     return null
   }
 
-  async function getAvg(timeRange = globalTimeRange) {
+  const getAvg = useCallback(async (timeRange = globalTimeRange) => {
     const companyId = effectiveCompanyId
-    if (!companyId) { setData(null); return }
+    if (!companyId) return
     try {
       const startDate = getStartDate(timeRange)
       const url = startDate
@@ -140,11 +142,11 @@ export default function Dashboard() {
       if (!res.ok) throw new Error()
       setData(await res.json())
     } catch { setData(null) }
-  }
+  }, [effectiveCompanyId, globalTimeRange])
 
-  async function getTrend(timeRange = globalTimeRange) {
+  const getTrend = useCallback(async (timeRange = globalTimeRange) => {
     const companyId = effectiveCompanyId
-    if (!companyId) { setTrendData(null); return }
+    if (!companyId) return
     const months = timeRange === "3y" ? 36 : 12
     const urls = [
       `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_all&months=${months}`,
@@ -165,22 +167,22 @@ export default function Dashboard() {
       } catch { /* nächste Adresse versuchen */ }
     }
     setTrendData(null)
-  }
+  }, [effectiveCompanyId, globalTimeRange])
 
   // Rollierende Schnitte (FA-08): unabhängig vom Zeitfilter, Anker ist der letzte volle Monat mit Daten.
-  async function getRolling() {
+  const getRolling = useCallback(async () => {
     const companyId = effectiveCompanyId
-    if (!companyId) { setRollingData(null); return }
+    if (!companyId) return
     try {
       const res = await fetch(`${API_URL}/companies/${companyId}/ratings/trend?mode=rolling`)
       if (!res.ok) throw new Error()
       setRollingData(await res.json())
     } catch { setRollingData(null) }
-  }
+  }, [effectiveCompanyId])
 
-  async function getMostCritical(timeRange = globalTimeRange) {
+  const getMostCritical = useCallback(async (timeRange = globalTimeRange) => {
     const companyId = effectiveCompanyId
-    if (!companyId) { setMostCriticalData(null); return }
+    if (!companyId) return
     try {
       const startDate = getStartDate(timeRange)
       const url = startDate
@@ -223,11 +225,11 @@ export default function Dashboard() {
       }
       setMostCriticalData({ topicName: min.title, score: min.score.toFixed(2), n })
     } catch { setMostCriticalData(null) }
-  }
+  }, [effectiveCompanyId, globalTimeRange])
 
-  async function getNegativeTopic(timeRange = globalTimeRange) {
+  const getNegativeTopic = useCallback(async (timeRange = globalTimeRange) => {
     const companyId = effectiveCompanyId
-    if (!companyId) { setNegativeTopicItem(null); return }
+    if (!companyId) return
     const startDate = getStartDate(timeRange)
 
     const normSent  = (s) => String(s || "").toLowerCase()
@@ -292,7 +294,7 @@ export default function Dashboard() {
       const topics = Array.isArray(fallbackJson?.topics) ? fallbackJson.topics : []
       setNegativeTopicItem(pickFromTopics(topics))
     } catch { setNegativeTopicItem(null) }
-  }
+  }, [effectiveCompanyId, globalTimeRange])
 
   const getNegativeTopicName = (t) => {
     if (!t) return "-"
@@ -360,34 +362,27 @@ export default function Dashboard() {
   }
 
   /* ---- Effects ---- */
+  // Gemeinsame Firmenliste (lib/companies.js), dieselbe wie im Suchfeld.
   useEffect(() => {
-    getCompanies()
-    if (companyFromWelcome) {
-      setSelectedCompany(companyFromWelcome)
-      getCompanyData(companyFromWelcome)
-    }
-    return () => { if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current) }
+    loadCompanies().then(setCompanies).catch(() => { /* Firmenliste bleibt leer; die Suche zeigt dann keine Vorschläge */ })
   }, [])
 
   useEffect(() => {
-    if (!effectiveCompanyId) {
-      setData(null); setTrendData(null); setRollingData(null); setMostCriticalData(null); setNegativeTopicItem(null)
-      setDashboardLoadingStates((p) => ({ ...p, kpiCards: false }))
-      setImportHistory([])
-      return
+    if (!kpiKey) return undefined
+    let active = true
+    const load = async () => {
+      await Promise.allSettled([getAvg(globalTimeRange), getTrend(globalTimeRange), getRolling(), getMostCritical(globalTimeRange), getNegativeTopic(globalTimeRange)])
+      if (active) setKpiDoneKey(kpiKey)
     }
-    setDashboardLoadingStates((p) => ({ ...p, kpiCards: true }))
-    setImportHistory(getImportHistory(effectiveCompanyId))
-    Promise.allSettled([getAvg(globalTimeRange), getTrend(globalTimeRange), getRolling(), getMostCritical(globalTimeRange), getNegativeTopic(globalTimeRange)])
-      .then(() => setDashboardLoadingStates((p) => ({ ...p, kpiCards: false })))
-  }, [effectiveCompanyId, globalTimeRange])
+    load()
+    return () => { active = false }
+  }, [kpiKey, globalTimeRange, getAvg, getTrend, getRolling, getMostCritical, getNegativeTopic])
 
   const handleImportSuccess = useCallback(() => {
-    setImportHistory(getImportHistory(effectiveCompanyId))
     invalidateDataStatus(effectiveCompanyId)
     Promise.allSettled([getAvg(), getTrend(), getRolling(), getMostCritical(), getNegativeTopic()])
-      .then(() => setDashboardLoadingStates((p) => ({ ...p, kpiCards: false })))
-  }, [effectiveCompanyId])
+      .then(() => setKpiDoneKey(kpiKey))
+  }, [effectiveCompanyId, kpiKey, getAvg, getTrend, getRolling, getMostCritical, getNegativeTopic])
 
   const handleTimelineFiltersChange     = useCallback((f) => setTimelineFilters(f), [])
   const handleTimelineLoadingChange     = useCallback((v) => setDashboardLoadingStates((p) => ({ ...p, timelineChart: v })), [])
@@ -549,6 +544,7 @@ export default function Dashboard() {
                     setSelectedCompanyId(null)
                     setSelectedCompanyName("")
                     setSelectedCompany("")
+                    clearKpis()
                   }
                 }}
                 onCompanySelect={handleCompanySelectFromDropdown}

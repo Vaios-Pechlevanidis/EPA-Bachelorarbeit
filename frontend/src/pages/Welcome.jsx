@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { FileSpreadsheet, ArrowRight, Building2, Upload as UploadIcon, Loader2, X } from "lucide-react"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
@@ -28,19 +28,19 @@ export default function Welcome() {
     const navigate = useNavigate()
     const location = useLocation()
 
-    useEffect(() => {
-        const prefillName = location.state?.prefillCompanyName
-        if (!prefillName) return
-
-        const trimmedName = String(prefillName).trim()
-        if (!trimmedName) return
-
+    // Vorbelegter Firmenname aus dem Navigationszustand (Dashboard → Firmen):
+    // wird beim Rendern übernommen, sobald er sich ändert (Muster "Zustand aus
+    // Props", kein setState im Effekt). Gleiches Verhalten wie zuvor.
+    const [prefillApplied, setPrefillApplied] = useState(null)
+    const prefillName = String(location.state?.prefillCompanyName ?? "").trim()
+    if (prefillName && prefillName !== prefillApplied) {
+        setPrefillApplied(prefillName)
         setMode(1)
         setCompanies((prev) => {
             const next = [...prev]
             next[0] = {
                 ...next[0],
-                companyQuery: trimmedName,
+                companyQuery: prefillName,
                 companyId: null,
                 selectedCompany: null,
                 existsInDB: false,
@@ -49,7 +49,7 @@ export default function Welcome() {
             }
             return next
         })
-    }, [location.state])
+    }
 
     const getCompanyName = (company) => {
         return (company.companyQuery || company.selectedCompany?.name || "").trim()

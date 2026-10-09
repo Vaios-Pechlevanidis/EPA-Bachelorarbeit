@@ -252,7 +252,11 @@ const VISIBILITY_DEFAULT = {
 }
 
 export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTable }) {
-  const [currentExampleIndex, setCurrentExampleIndex] = React.useState(3)
+  // Beispielindex je Thema: beim Themenwechsel wieder 3 (abgeleitet, kein setState im Effekt).
+  const [exampleState, setExampleState] = React.useState({ topic: null, index: 3 })
+  const currentExampleIndex = exampleState.topic === topic ? exampleState.index : 3
+  const setCurrentExampleIndex = (update) =>
+    setExampleState((s) => ({ topic, index: typeof update === "function" ? update(s.topic === topic ? s.index : 3) : update }))
   const [timeFilter, setTimeFilter] = React.useState("all")
   const [reviewDetailModalOpen, setReviewDetailModalOpen] = React.useState(false)
   const [selectedReviewDetail, setSelectedReviewDetail] = React.useState(null)
@@ -262,34 +266,26 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
 
   const toggleVisibility = (key) => setVisibility((v) => ({ ...v, [key]: !v[key] }))
 
-  React.useEffect(() => { setCurrentExampleIndex(3) }, [topic])
-
-  if (!topic) return null
-
-  const meta = sentimentMeta(topic.sentiment)
-  const tone = ratingTone(topic.avgRating)
-  const isLimited = topic.statistical_meta?.risk_level === "limited"
-
-  /* ── Timeline filtering ── */
+  /* ── Timeline filtering (Hooks vor dem frühen return, Lint-Regel rules-of-hooks) ── */
+  const timelineData = topic?.timelineData
+  const reviewDetails = topic?.reviewDetails
   const filteredTimelineData = React.useMemo(() => {
-    if (!topic.timelineData?.length) return []
-    if (timeFilter === "all") return topic.timelineData
+    if (!timelineData?.length) return []
+    if (timeFilter === "all") return timelineData
     const map = { "1y": 12, "6m": 6, "3m": 3, "1m": 1 }
     const monthsToShow = map[timeFilter] ?? 12
     const cutoff = new Date()
     cutoff.setMonth(cutoff.getMonth() - monthsToShow)
-    return topic.timelineData.filter((it) => {
+    return timelineData.filter((it) => {
       if (!it.year || !it.monthNum) return false
       return new Date(it.year, it.monthNum - 1, 1) >= cutoff
     })
-  }, [topic.timelineData, timeFilter])
-
-  const { data: processedTimelineData, hasGaps: timelineHasGaps } = processTimelineDataWithGaps(filteredTimelineData)
+  }, [timelineData, timeFilter])
 
   /* ── Reviews / Examples ── */
   // Sort example reviews (index 3+) by comment richness so the most complete ones appear first
   const sortedReviewDetails = React.useMemo(() => {
-    const details = topic.reviewDetails || []
+    const details = reviewDetails || []
     if (details.length <= 3) return details
     const richness = (d) => {
       const fr = d?.fullReview || {}
@@ -305,7 +301,14 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
     const top3 = details.slice(0, 3)
     const rest = details.slice(3).slice().sort((a, b) => richness(b) - richness(a))
     return [...top3, ...rest]
-  }, [topic.reviewDetails])
+  }, [reviewDetails])
+
+  if (!topic) return null
+
+  const meta = sentimentMeta(topic.sentiment)
+  const tone = ratingTone(topic.avgRating)
+  const isLimited = topic.statistical_meta?.risk_level === "limited"
+  const { data: processedTimelineData, hasGaps: timelineHasGaps } = processTimelineDataWithGaps(filteredTimelineData)
 
   const totalExamples = topic.typicalStatements?.length || 0
   const reviewStartIndex = 3

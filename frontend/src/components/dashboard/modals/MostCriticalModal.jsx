@@ -23,33 +23,39 @@ const LABELS = {
 const fmt = (n, d = 2) => Number(n).toFixed(d).replace(".", ",");
 
 export default function MostCriticalModal({ open, onOpenChange, companyId = null }) {
-  const [item, setItem]       = useState(null);
-  const [allEntries, setAll]  = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
+  // Ergebnis je Firma; "loading", solange der Schlüssel nicht passt (kein setState
+  // im Effekt, Lint-Regel react-hooks/set-state-in-effect); Anzeige wie zuvor.
+  const [result, setResult]   = useState({ key: null, item: null, all: [], error: null });
+  const loading = open && Boolean(companyId) && result.key !== companyId;
+  const item = result.key === companyId ? result.item : null;
+  const allEntries = result.key === companyId ? result.all : [];
+  const error = result.key === companyId ? result.error : null;
 
   useEffect(() => {
-    if (!open) return;
-    if (!companyId) { setItem(null); setError("Keine Firma ausgewählt"); return; }
+    if (!open || !companyId) return undefined;   // ohne Firma: Hinweis beim Rendern (shownError)
 
-    setLoading(true); setError(null);
+    let active = true;
     fetch(`${API_URL}/companies/${companyId}/ratings/avg`)
       .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
       .then((data) => {
-        if (!data || typeof data !== "object") { setItem(null); return; }
+        if (!active) return;
+        if (!data || typeof data !== "object") { setResult({ key: companyId, item: null, all: [], error: null }); return; }
         const entries = Object.entries(data)
           .map(([k, v]) => ({ key: k, title: LABELS[k] ?? k, score: Number(v) }))
           .filter((x) => Number.isFinite(x.score));
-        if (!entries.length) { setItem(null); return; }
+        if (!entries.length) { setResult({ key: companyId, item: null, all: [], error: null }); return; }
         const sorted = [...entries].sort((a, b) => a.score - b.score);
         const min = sorted[0];
         const negative_share_percent = Math.max(0, Math.min(100, Math.round(((5 - min.score) / 5) * 100)));
-        setItem({ ...min, negative_share_percent });
-        setAll(sorted);
+        setResult({ key: companyId, item: { ...min, negative_share_percent }, all: sorted, error: null });
       })
-      .catch((err) => { setError(err.message || "Fehler beim Laden"); setItem(null); })
-      .finally(() => setLoading(false));
+      .catch((err) => { if (active) setResult({ key: companyId, item: null, all: [], error: err.message || "Fehler beim Laden" }); });
+    return () => { active = false; };
   }, [open, companyId]);
+
+  // Ohne Firma wie bisher: Hinweis statt Daten (beim Rendern abgeleitet, kein setState im Effekt).
+  const shownError = companyId ? error : "Keine Firma ausgewählt";
+  const shownItem = companyId ? item : null;
 
   const negP = useMemo(() => {
     if (!item) return null;
@@ -81,7 +87,7 @@ export default function MostCriticalModal({ open, onOpenChange, companyId = null
       tone={tone}
       icon={<Alert />}
       eyebrow="KENNZAHL · KRITISCHSTES THEMA"
-      title={loading || error || !item ? "Most Critical" : item.title}
+      title={loading || shownError || !shownItem ? "Most Critical" : shownItem.title}
       subtitle={item ? `Niedrigster Topic-Score: ${fmt(item.score)} / 5` : "Kategorie mit dem niedrigsten Score"}
       size="md"
     >
