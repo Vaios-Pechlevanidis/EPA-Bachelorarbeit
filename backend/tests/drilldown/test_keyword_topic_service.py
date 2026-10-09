@@ -12,7 +12,7 @@ from collections import Counter
 
 import pytest
 
-from _helpers import TOPIC_OVERVIEW_BASE, response_hash, store_rows
+from _helpers import TOPIC_OVERVIEW_BASE, TOPIC_OVERVIEW_CALC_BASE, response_hash, store_rows, without_quotes
 from services.keyword_topic_service import (
     CANDIDATE_TOPIC_DEFINITIONS,
     EMPLOYEE_TOPIC_DEFINITIONS,
@@ -38,9 +38,26 @@ class TestTopicOverviewUnchanged:
 
     @pytest.mark.parametrize("key", sorted(TOPIC_OVERVIEW_BASE, key=str))
     def test_identical_to_base_commit(self, api, key):
-        """Test: topic-overview für Demo 1–3 gleicht der Ausgabe vor dem Umzug (Hash)."""
+        """Test: topic-overview für Demo 1–3 gleicht der Ausgabe vor dem Umzug (Hash).
+        Seit NFA-07 (2026-10-09) ohne die Zitatfelder verglichen: Die Zitate stammen
+        nicht mehr aus jobbeschreibung/stellenbeschreibung, die Berechnung ist gleich."""
         company_id, source, start_date = key
-        assert response_hash(_get(api, company_id, source=source, start_date=start_date)) == TOPIC_OVERVIEW_BASE[key]
+        body = _get(api, company_id, source=source, start_date=start_date)
+        assert response_hash(without_quotes(body)) == TOPIC_OVERVIEW_CALC_BASE[key]
+
+    @pytest.mark.parametrize("key", sorted(TOPIC_OVERVIEW_BASE, key=str))
+    def test_quotes_not_from_description_fields(self, api, key):
+        """Test (NFA-07): kein Zitat stimmt mit einem Satz aus jobbeschreibung oder
+        stellenbeschreibung der zitierten Bewertung überein."""
+        company_id, source, start_date = key
+        for topic in _get(api, company_id, source=source, start_date=start_date)["topics"]:
+            for detail in topic.get("reviewDetails") or []:
+                fr = detail.get("fullReview") or {}
+                preview = (detail.get("preview") or "").strip()
+                own = " ".join(fr.get(k) or "" for k in ("titel", "gut_am_arbeitgeber", "schlecht_am_arbeitgeber", "verbesserungsvorschlaege"))
+                if preview and preview not in own:
+                    for field in ("jobbeschreibung", "stellenbeschreibung"):
+                        assert preview not in (fr.get(field) or ""), (topic["topic"], field)
 
     def test_route_uses_service(self):
         """Test: Die Route nutzt analyze_topic aus dem Dienst (kein zweites Exemplar)."""

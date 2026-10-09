@@ -35,6 +35,14 @@ TOPIC_TEXT_FIELDS: List[str] = [
     'schlecht_am_arbeitgeber_finde_ich', 'titel'
 ]
 
+# NFA-07 (Inkrement 6, 2026-10-09): Aus diesen Feldern stammt nie ein
+# Beispielzitat (``example``, ``typicalStatements``, ``reviewDetails[].preview``
+# für Topic-Tabelle, Topic-Details und PDF). Sie beschreiben Tätigkeit oder
+# Stelle und können Rückschlüsse auf einzelne Personen erlauben. Für die
+# Erkennung eines Themas (Häufigkeit, Bewertung, Stimmung) zählen sie weiter
+# mit; die Topic-Berechnung aus Zyklus 1 bleibt unverändert.
+QUOTE_EXCLUDED_FIELDS: tuple = ('jobbeschreibung', 'stellenbeschreibung')
+
 
 EMPLOYEE_TOPIC_DEFINITIONS: Dict[str, Dict[str, List[str]]] = {
     "Work-Life Balance": {
@@ -349,8 +357,8 @@ def analyze_topic(
                 for keyword_re in keyword_res:
                     if keyword_re.search(text_lower):
                         mentioned = True
-                        # Extract sentence containing keyword
-                        sentences = re.split(r'[.!?]+', text)
+                        # Extract sentence containing keyword (nie aus den Feldern in QUOTE_EXCLUDED_FIELDS, NFA-07)
+                        sentences = re.split(r'[.!?]+', text) if field not in QUOTE_EXCLUDED_FIELDS else []
                         for sentence in sentences:
                             if keyword_re.search(sentence) and len(sentence.strip()) > 20:
                                 mention_texts.append(sentence.strip())
@@ -705,5 +713,5 @@ def topic_spans(text: Any, topic: str, source: Optional[str]) -> List[List[int]]
 __all__ = [
     "topic_for_dimension", "topic_spans",
     "TOPIC_TEXT_FIELDS", "EMPLOYEE_TOPIC_DEFINITIONS", "CANDIDATE_TOPIC_DEFINITIONS",
-    "TOPIC_DEFINITIONS_BY_SOURCE", "topic_definitions_for", "topics_in_review", "analyze_topic",
+    "QUOTE_EXCLUDED_FIELDS", "TOPIC_DEFINITIONS_BY_SOURCE", "topic_definitions_for", "topics_in_review", "analyze_topic",
 ]
