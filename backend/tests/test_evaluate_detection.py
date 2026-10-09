@@ -289,3 +289,128 @@ class TestCli:
         assert "Treffer:    2020-05..2020-06 fall" in text
         saved = json.loads(out.read_text(encoding="utf-8"))
         assert saved["totals"]["niveauwechsel"]["gesamt"]["f1"] == 1.0 and saved["rules"]["tolerance_months"] == 1
+
+
+# ── Teilauswertungen (--subset, vor dem ersten Lauf festgelegt) ──────────────
+
+def ann_note(period_from, period_to, direction, note, company="E.ON"):
+    a = ann(period_from, period_to, direction, company=company)
+    a["note"] = note
+    return a
+
+
+class TestSubsets:
+
+    def test_definitions_fixed(self):
+        assert ed.SUBSETS == ("alle", "ohne_duenne", "mehrmonatig", "mit_anker")
+        assert ed.THIN_MONTH_REVIEWS == 10 and ed.ANCHOR_SUFFIX == "Reihe + Ereignis"
+
+    def test_member_mehrmonatig(self):
+        assert ed.subset_member("mehrmonatig", ann("2020-05", "2020-05", "fall")) is False
+        assert ed.subset_member("mehrmonatig", ann("2020-12", "2021-01", "fall")) is True
+
+    def test_member_mit_anker(self):
+        assert ed.subset_member("mit_anker", ann_note("2020-05", "2020-05", "fall", "x; Anker: y; Reihe + Ereignis.")) is True
+        assert ed.subset_member("mit_anker", ann_note("2020-05", "2020-05", "fall", "x; Reihe + Ereignis")) is True
+        assert ed.subset_member("mit_anker", ann_note("2020-05", "2020-05", "fall", "Reihe + Ereignis; Reihe allein.")) is False
+
+    def test_member_ohne_duenne(self):
+        counts = {"2020-05": 10, "2020-06": 9, "2020-07": 12}
+        assert ed.subset_member("ohne_duenne", ann("2020-05", "2020-05", "fall"), counts) is True
+        assert ed.subset_member("ohne_duenne", ann("2020-05", "2020-06", "fall"), counts) is False
+        assert ed.subset_member("ohne_duenne", ann("2020-07", "2020-08", "fall"), counts) is False, "Monat ohne Zeile = 0"
+        assert ed.subset_member("ohne_duenne", ann("2020-05", "2020-05", "fall"), None) is None
+        assert ed.subset_member("alle", ann("2020-05", "2020-05", "fall")) is True
+
+    def _setup(self, tmp_path=None):
+        companies = va.companies_from_density(DENSITY)
+        counts = {p: 20 for p in ALL_2020}
+        counts["2020-06"] = 7
+        companies["e.on"].counts["employee"] = counts
+        d = doc(ann_note("2020-05", "2020-06", "fall", "dünn; Anker: keiner; Reihe allein."),
+                ann_note("2020-10", "2020-10", "rise", "Anker: Kurzbeschreibung; Reihe + Ereignis."),
+                ann_note("2021-03", "2021-04", "fall", "Anker: Kurzbeschreibung; Reihe + Ereignis."))
+
+        def fetch(cid, src, dim):
+            return make_result(ALL_2020,
+                               anomalies=[{"date": "2020-06", "direction": "fall", "delta": -0.7},
+                                          {"date": "2021-08", "direction": "rise", "delta": 0.5}],
+                               outliers=[{"date": "2020-10", "direction": "rise", "deviation": 1.1}])
+        return d, companies, fetch
+
+    def test_subsets_restrict_counts_neutral_matches(self):
+        d, companies, fetch = self._setup()
+        report = ed.evaluate(d, companies, fetch)
+        subs = ed.evaluate_subsets(d, companies, report)
+        assert list(subs) == list(ed.SUBSETS)
+        # alle entspricht der Gesamtauswertung
+        for variant in ed.VARIANTS:
+            a, g = subs["alle"]["totals"][variant]["gesamt"], report["totals"][variant]["gesamt"]
+            assert (a["tp"], a["fp"], a["fn"], a["f1"]) == (g["tp"], g["fp"], g["fn"], g["f1"])
+        assert subs["ohne_duenne"]["n_annotations"] == 2 and subs["mehrmonatig"]["n_annotations"] == 2
+        assert subs["mit_anker"]["n_annotations"] == 2
+        # ohne_duenne: 2020-05..06 fällt heraus; die Erkennung 2020-06 ist neutral, nicht FP
+        lvl = subs["ohne_duenne"]["series"][0]["variants"]["niveauwechsel"]
+        assert (lvl["tp"], lvl["fp"], lvl["fn"], lvl["neutral"]) == (0, 1, 2, 1)
+        both = subs["ohne_duenne"]["series"][0]["variants"]["niveauwechsel+einzelmonate"]
+        assert (both["tp"], both["fp"], both["fn"], both["neutral"]) == (1, 1, 1, 1)
+        # mehrmonatig: 2020-05..06 (Treffer) und 2021-03..04 (verfehlt); 2020-10 ist außerhalb
+        m = subs["mehrmonatig"]["totals"]["niveauwechsel+einzelmonate"]["gesamt"]
+        assert (m["tp"], m["fp"], m["fn"]) == (1, 1, 1)
+        both_m = subs["mehrmonatig"]["series"][0]["variants"]["niveauwechsel+einzelmonate"]
+        assert both_m["neutral"] == 1
+        # mit_anker: Niveauwechsel allein trifft keinen der beiden Einträge
+        k = subs["mit_anker"]["totals"]["niveauwechsel"]["gesamt"]
+        assert (k["tp"], k["fp"], k["fn"], k["f1"]) == (0, 1, 2, 0.0)
+
+    def test_series_without_subset_entries_left_out(self):
+        companies = va.companies_from_density(DENSITY)
+        d = doc(ann("2020-05", "2020-05", "fall"), ann("2020-05", "2020-06", "fall", company="Telekom"))
+        fetch = lambda cid, src, dim: make_result(ALL_2020, anomalies=[{"date": "2020-09", "direction": "rise", "delta": 0.5}])  # noqa: E731
+        report = ed.evaluate(d, companies, fetch)
+        sub = ed.evaluate_subsets(d, companies, report, ("mehrmonatig",))["mehrmonatig"]
+        assert [s["series"] for s in sub["series"]] == ["Telekom / employee / durchschnittsbewertung"]
+        assert sub["totals"]["niveauwechsel"]["gesamt"]["fp"] == 1, "nur die FP der Telekom-Reihe"
+
+    def test_without_counts_undetermined(self):
+        companies = va.companies_from_density(DENSITY)
+        d = doc(ann("2020-05", "2020-05", "fall"))
+        report = ed.evaluate(d, companies, lambda *a: make_result(ALL_2020))
+        sub = ed.evaluate_subsets(d, companies, report, ("ohne_duenne",))["ohne_duenne"]
+        assert sub["n_undetermined"] == 1 and sub["n_annotations"] == 0 and sub["series"] == []
+
+    def test_report_text_lists_subsets_for_both_variants(self):
+        d, companies, fetch = self._setup()
+        report = ed.evaluate(d, companies, fetch)
+        report["subsets"] = ed.evaluate_subsets(d, companies, report)
+        text = ed.format_report(report, "annotations.json")
+        assert "Teilauswertungen (vor dem ersten Lauf festgelegt, E5)" in text
+        for name in ed.SUBSETS:
+            assert f"Teilmenge {name}: " in text
+        assert text.count("    Variante Niveauwechsel allein") == 4
+        assert text.count("    Variante Niveauwechsel und Einzelmonate") == 4
+        json.dumps(report)
+
+    def test_cli_subset_option_with_constructed_files(self, tmp_path, capsys, monkeypatch):
+        d, _, fetch = self._setup()
+        path = tmp_path / "annotations.json"
+        path.write_text(json.dumps(d), encoding="utf-8")
+        density = tmp_path / "density.json"
+        density.write_text(json.dumps(DENSITY), encoding="utf-8")
+        series_dir = tmp_path / "series"
+        series_dir.mkdir()
+        rows = ["period;mean_durchschnittsbewertung;count;delta_vs_previous"]
+        rows += [f"{p};3.500;{7 if p == '2020-06' else 20};" for p in sorted(ALL_2020)]
+        (series_dir / "7_eon_employee.csv").write_text("\n".join(rows) + "\n", encoding="utf-8")
+        monkeypatch.setattr(ed, "_db_fetch", fetch)
+        out = tmp_path / "ergebnis.json"
+        assert ed.main(["--file", str(path), "--offline", "--density", str(density), "--series-dir", str(series_dir),
+                        "--subset", "ohne_duenne", "--subset", "mit_anker", "--json", str(out)]) == 0
+        saved = json.loads(out.read_text(encoding="utf-8"))
+        assert list(saved["subsets"]) == ["ohne_duenne", "mit_anker"]
+        assert saved["subsets"]["ohne_duenne"]["n_annotations"] == 2
+        assert "Teilmenge mit_anker" in capsys.readouterr().out
+        # ohne --subset: alle vier
+        assert ed.main(["--file", str(path), "--offline", "--density", str(density), "--series-dir", str(series_dir),
+                        "--json", str(out)]) == 0
+        assert list(json.loads(out.read_text(encoding="utf-8"))["subsets"]) == list(ed.SUBSETS)
