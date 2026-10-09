@@ -86,5 +86,186 @@
       "note_beispiel": "Vorniveau 3,9 (2022-10 bis 2023-02, n=7-12); Zeitraum 3,1 (n=9, 11); Δ -0,8; fall; Anker: Vorstandswechsel 2023-04 (EQS, URL); Reihe + Ereignis."
     }
   },
-  "annotations": []
+  "annotations": [
+    {
+      "company": "SAP SE",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2024-07",
+      "period_to": "2024-08",
+      "direction": "rise",
+      "note": "Vorniveau 3,1 (2024-01 bis 2024-06, n=6-174); Zeitraum 3,6 (n=12, 12); Δ +0,54; rise; Vorniveau streut stark (2024-01 2,35 mit n=10, 2024-03 4,16 mit n=174, 2024-04 bis 2024-06 nur 2,85 bis 2,99, darin 2024-05 n=8 und 2024-06 n=6); Anstieg läuft bis 2024-09 (3,95) weiter, Folgemittel 3,69; Anker: SAP baut Vorstand um: Vertriebschef Russell und Marketingchefin White gehen, 2024-07-30 (Spiegel, über Google News, https://news.google.com/rss/articles/CBMi5wFBVV95cUxNX2FzM2sxbFFudlVEbkxrWnhwRTRPVVlxeDBJdUt4UGJ1OHVtM1QxVmpDYnV0Z3czWmtEVnRQNXJHRU9pTlVNaW9XTFdLNi1GdlpIU0drU2lhZjI1NGdTaXE1QlFEeHp1elF6MkV6cTNyaDhWOGROWGtlNGg0SVRLbU1NTlRLVjNMWlJoa3QyRWdzV0VWWW91QTNCdGg5UXFKTHBQY0Q0d3pZMmY5X3FDaWZOZ0JjS3lzUnVjR3p2QU92TG10Y1dwRmxwN3doLTVfZUZIXzRwX3B1S0pwQWRLY1pOR093STQ?oc=5); Reihe + Ereignis."
+    },
+    {
+      "company": "NTT DATA SE",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2020-06",
+      "period_to": "2020-06",
+      "direction": "rise",
+      "note": "Vorniveau 2,8 (2019-05 bis 2020-02, n=5-10); Zeitraum 3,7 (n=5); Δ +0,95; rise; dünner Monat 2020-06 (n=5), gestützt durch 2020-07 (4,05, n=6); Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "1&1 AG",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2016-10",
+      "period_to": "2016-10",
+      "direction": "fall",
+      "note": "Vorniveau 3,9 (2016-04 bis 2016-09, n=5-16); Zeitraum 3,0 (n=6); Δ -0,91; fall; dünn: 2016-10 mit 6 Bewertungen; Reihe schwankt: mehr als drei regelkonforme Kandidaten, nur die drei deutlichsten nach |Δ| eingetragen; Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "1&1 AG",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2018-04",
+      "period_to": "2018-04",
+      "direction": "rise",
+      "note": "Vorniveau 3,0 (2017-07 bis 2018-03, n=5-11); Zeitraum 3,8 (n=12); Δ +0,78; rise; Reihe schwankt: mehr als drei regelkonforme Kandidaten, nur die drei deutlichsten nach |Δ| eingetragen; Anker: Drillisch wird nach Einbringung von 1&1 Telecommunication zu 1&1 Drillisch, 2018-01-12 (EQS News, https://www.eqs-news.com/news/corporate/drillisch-ag-drillisch-turns-into-1-1-drillisch/79a44aa5-a543-448c-81dc-35ed8e62665b); Reihe + Ereignis."
+    },
+    {
+      "company": "1&1 AG",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2018-09",
+      "period_to": "2018-09",
+      "direction": "fall",
+      "note": "Vorniveau 3,5 (2018-03 bis 2018-08, n=6-33); Zeitraum 2,4 (n=8); Δ -1,12; fall; dünn: 2018-09 mit 8 Bewertungen; Reihe schwankt: mehr als drei regelkonforme Kandidaten, nur die drei deutlichsten nach |Δ| eingetragen; Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "Bechtle",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2021-02",
+      "period_to": "2021-02",
+      "direction": "rise",
+      "note": "Vorniveau 3,4 (2020-08 bis 2021-01, n=6-20); Zeitraum 4,0 (n=10); Δ +0,56; rise; Vorniveau streut stark (Monatsmittel 2,50 bis 4,01); Anker: Bechtle beruft Konstantin Ebert zum neuen Bereichsvorstand IT-E-Commerce, 2021-01-28 (FAMILIENUNTERNEHMEN im FOKUS, über Google News, https://news.google.com/rss/articles/CBMiggFBVV95cUxOVjNLRDhkNzlTelFsMVoyUGVBeXlCck1EdURncTJIZjRySzJUXy1ER1hGOWpmNGhoamVzeHMxcXplZWo2NGpMb3R6RHR0TzMtMFByN0NEQUVIc3plaEJPcGdiWjFwdVJjV2hhWlJ4cEdLX1NEY2tpMks2c3l2bHVwVHd3?oc=5); Reihe + Ereignis."
+    },
+    {
+      "company": "Bechtle",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2021-08",
+      "period_to": "2021-09",
+      "direction": "fall",
+      "note": "Vorniveau 4,0 (2021-02 bis 2021-07, n=7-24); Zeitraum 2,9 (n=7, 24); Δ -1,07; fall; 2021-08 dünn (n=7, Mittel 2,47), gestützt durch 2021-09 (3,38, n=24); Anker: Bechtle übernimmt den Anbieter Cadmes, 2021-08-09 (IT Reseller, über Google News, https://news.google.com/rss/articles/CBMiekFVX3lxTE9OVzhWLXc2SFNxckdPLWRBZV85YzRwU3Q2Y2t3aXVGSTAyMF9xQ3VPVXNaVnRMMlFfZzI5YV9LSGtiOFU5WVBDRzlVYnVxLV9aNFNaMUVuaDZoNUt6S19LMnBQNjRnVG5oOElwenl2dWNNS094ejdqX3h3?oc=5); Reihe + Ereignis."
+    },
+    {
+      "company": "Bechtle",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2023-01",
+      "period_to": "2023-01",
+      "direction": "rise",
+      "note": "Vorniveau 3,4 (2022-07 bis 2022-12, n=7-33); Zeitraum 4,1 (n=41); Δ +0,68; rise; Vorniveau streut (Monatsmittel 2,76 bis 4,05); Anker: Oliver Hambrecht wird neuer Bereichsvorstand bei Bechtle, 2022-11-03 (wir - Das Magazin für Unternehmerfamilien, über Google News, https://news.google.com/rss/articles/CBMiqAFBVV95cUxPdjJmclFNQk9DOW4xSnJVSmh0T3E1akhDWjRUTkdRSzA0MWZLaVBMTHJGZHVLdHFuUjJKV3JBSkY1NlZGdUE2YlRwd2ZxZHl6U1ljM21RRm9wbnRhLUdFQUVkTWhNZlZLNGVVYkpTcldRdVVweVNabi1CVVRJbC1LVFZtM1FQc0dfWG13N1ZNenhVWGV0dU5iN0J4YS1nakItb0ZDZFdreHE?oc=5); Reihe + Ereignis."
+    },
+    {
+      "company": "Cancom",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2016-08",
+      "period_to": "2016-08",
+      "direction": "rise",
+      "note": "Vorniveau 3,3 (2015-11 bis 2016-06, n=5-10); Zeitraum 4,3 (n=5); Δ +1,04; rise; Reihe schwankt stark (13 regelkonforme Kandidatengruppen), nur die drei deutlichsten behalten; Vorniveau streut 2,46 bis 4,29; dünn: 2016-08 mit n=5, gestützt durch 2016-10 (4,26, n=5); Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "Cancom",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2021-07",
+      "period_to": "2021-07",
+      "direction": "fall",
+      "note": "Vorniveau 3,8 (2020-11 bis 2021-04, n=5-19); Zeitraum 2,6 (n=8); Δ -1,15; fall; Reihe schwankt stark (13 regelkonforme Kandidatengruppen), nur die drei deutlichsten behalten; dünn: 2021-07 mit n=8, gestützt durch 2021-09 (3,08, n=11); neues Niveau hält bis 2021-10 (2,77), 2021-11 wieder 3,69; Anker: Rüdiger Rath wird als COO in den Vorstand der Cancom SE berufen, 2021-07-07 (EQS News, https://www.eqs-news.com/news/corporate/cancom-rudiger-rath-appointed-member-of-the-executive-board-and-coo/7cbe8d7d-ccfc-4329-a111-c09bdfce316e); Reihe + Ereignis."
+    },
+    {
+      "company": "Cancom",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2023-12",
+      "period_to": "2023-12",
+      "direction": "rise",
+      "note": "Vorniveau 3,0 (2023-06 bis 2023-11, n=6-24); Zeitraum 3,8 (n=7); Δ +0,85; rise; Reihe schwankt stark (13 regelkonforme Kandidatengruppen), nur die drei deutlichsten behalten; Vorniveau enthält Einbruch 2023-06 bis 2023-08 und Zwischenhoch 2023-09/2023-10 (Vortrend +0,86, kein gleichmäßiger Trend); dünn: 2023-12 mit n=7, gestützt durch 2024-01 (3,78, n=5); Anker: Cancom übernimmt wesentliche Teile der DextraData GmbH (ITCS), 2023-11-27 (EQS News, https://www.eqs-news.com/news/corporate/cancom-se-cancom-strengthens-expertise-in-the-area-of-complex-it-infrastructure-and-managed-services-through-the-acquisition-of-significant-parts-of-dextradata-gmbh/cdd0ed78-0d1b-4d98-b044-bbc21f1aa760); Reihe + Ereignis."
+    },
+    {
+      "company": "Compugroup Medical Deutschland",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2019-06",
+      "period_to": "2019-08",
+      "direction": "fall",
+      "note": "Vorniveau 4,2 (2018-06 bis 2019-05, n=5-22); Zeitraum 3,7 (n=6, 6, 6); Δ -0,56; fall; starke Streuung im Zeitraum: 2019-06 2,92, 2019-07 4,62 (über dem Vorniveau), 2019-08 3,47; dünn: 2019-06 (n=6), 2019-07 (n=6), 2019-08 (n=6); nächster bewerteter Monat erst 2020-04 (3,36), Folgemittel 3,94 knapp über der Mindestanforderung; Anker: CompuGroup Medical kündigt Veränderungen im Vorstand an, 2019-04-15 (EQS News, https://www.eqs-news.com/news/corporate/compugroup-medical-se-upcoming-changes-to-the-cgm-management-board/41976a47-8c49-4ddc-a325-1f2701112d5a); Reihe + Ereignis."
+    },
+    {
+      "company": "Compugroup Medical Deutschland",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2021-04",
+      "period_to": "2021-05",
+      "direction": "rise",
+      "note": "Vorniveau 3,6 (2020-05 bis 2021-03, n=6-10); Zeitraum 4,0 (n=10, 7); Δ +0,47; rise; Differenz unter 0,5, Eintrag wegen Ereignisanker (Regel 4); dünn: 2021-05 mit 7 Bewertungen; Anker: CGM baut Campus Koblenz mit Neubau für New-Work-Arbeitsplätze aus, 2021-04-15 (ZWP online, über Google News, https://news.google.com/rss/articles/CBMiwwFBVV95cUxNbHZwdDJuajg1YUJ0b3BpNkhaNHh2dllnVFhlSXNtOU9aVWhBbEI2LTR1NWdRUFR5Ry16RmlGeUROaElqOE42aElaanY1WW1YM2VsQ1cyaWdENWFEcHhkSUR1T3lKUnVUYzdRNzduNkh1UGg2eExJMGFlMlk4LWV1YjNDTDlZVGhfUWNabDNMYks4dTJOdWdyV1d1MGIyVEIwcG9IOVZnQkdjY2gzRXNtNy1tWWFSWHRxaUg0LVllSFpmN0U?oc=5); Reihe + Ereignis."
+    },
+    {
+      "company": "Compugroup Medical Deutschland",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2022-08",
+      "period_to": "2022-11",
+      "direction": "fall",
+      "note": "Vorniveau 3,7 (2021-11 bis 2022-07, n=5-13); Zeitraum 3,1 (n=8, 13, 6, 10); Δ -0,67; fall; Zwischenstufe 2022-09 (3,42) und 2022-10 (3,43) zwischen erstem Abfall 2022-08 (2,93) und Tiefpunkt 2022-11 (2,47); dünn: 2022-08 (n=8), 2022-10 (n=6); Anker: CEO Wössner muss gehen, CFO Michael Rauch wird Sprecher der Geschäftsführung, 2022-06-02 (EQS News, https://www.eqs-news.com/news/ad-hoc/compugroup-medical-se-co-kgaa-appoints-cfo-michael-rauch-as-spokesman-of-the-managing-directors/0f184911-dfbe-47d1-9382-a5da4e1045d5); Reihe + Ereignis."
+    },
+    {
+      "company": "Telekom",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2009-12",
+      "period_to": "2009-12",
+      "direction": "rise",
+      "note": "Vorniveau 3,4 (2008-01 bis 2008-10, n=5-12); Zeitraum 4,2 (n=21); Δ +0,86; rise; Lücke: 2008-11 bis 2009-11 ohne bewerteten Monat zwischen Vorniveau und Zeitraum, Vorniveau dünn (2008-01 n=7, 2008-05 n=5, 2008-06 n=8, 2008-08 n=9); Reihe schwankt: fünf regelkonforme Kandidaten, nur die drei deutlichsten behalten; Anker: Vorstandsmitglied Hamid Akhavan verlässt den Vorstand der Deutschen Telekom, 2009-12-08 (Horizont.net, über Google News, https://news.google.com/rss/articles/CBMimwFBVV95cUxQMWMxRUxaNGZTOWNkeVhnbUJqTzU1cDY2M05rUy1YUWVKQ3U5dThyU1ZfMGQ2YWlabDc5QXlJZXdGSGNmQVdQMFFJcnVHeFF6WmhRYzdFZk42UnRNSnFwT0dDN0pVbzZLZ1RmREM2MzgxRGtTQTBDZGNKS1d6cDQ0ZDNCcTR4N2JFV3pvLVRqZ19tdU9zQ0xNRm55OA?oc=5); Reihe + Ereignis."
+    },
+    {
+      "company": "Telekom",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2010-07",
+      "period_to": "2010-07",
+      "direction": "fall",
+      "note": "Vorniveau 4,1 (2008-08 bis 2010-04, n=6-21); Zeitraum 3,0 (n=7); Δ -1,10; fall; dünn: 2010-07 mit 7 Bewertungen (gestützt durch 2010-08, n=11), Vorniveau lückig über 21 Kalendermonate; Reihe schwankt: fünf regelkonforme Kandidaten, nur die drei deutlichsten behalten; Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "Telekom",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2013-05",
+      "period_to": "2013-05",
+      "direction": "rise",
+      "note": "Vorniveau 3,5 (2010-12 bis 2013-04, n=5-79); Zeitraum 4,1 (n=78); Δ +0,58; rise; Vorniveau lückig über 29 Kalendermonate (2011-03 bis 2012-07 ohne bewerteten Monat); Reihe schwankt: fünf regelkonforme Kandidaten, nur die drei deutlichsten behalten; Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "Freenet",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2016-04",
+      "period_to": "2016-04",
+      "direction": "rise",
+      "note": "Vorniveau 2,5 (2015-10 bis 2016-03, n=6-13); Zeitraum 3,5 (n=12); Δ +1,04; rise; Reihe schwankt stark: fünf regelkonforme Sprungstellen (2015-10, 2016-04, 2018-03 bis 2018-05, 2020-02, 2021-09), nur die drei deutlichsten eingetragen; Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "Freenet",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2020-02",
+      "period_to": "2020-02",
+      "direction": "rise",
+      "note": "Vorniveau 3,7 (2019-05 bis 2019-10, n=5-28); Zeitraum 4,4 (n=6); Δ +0,75; rise; 2020-02 mit nur 6 Bewertungen, gestützt durch 2020-05 (4,33, n=7); davor 2019-11 bis 2020-01 nicht bewertet (je n=3); Reihe schwankt stark: fünf regelkonforme Sprungstellen (2015-10, 2016-04, 2018-03 bis 2018-05, 2020-02, 2021-09), nur die drei deutlichsten eingetragen; Anker: keiner; Reihe allein."
+    },
+    {
+      "company": "Freenet",
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "period_from": "2021-09",
+      "period_to": "2021-09",
+      "direction": "fall",
+      "note": "Vorniveau 4,1 (2020-07 bis 2021-07, n=6-24); Zeitraum 3,4 (n=8); Δ -0,75; fall; 2021-09 mit nur 8 Bewertungen, gestützt durch 2021-10 (3,38, n=8); Reihe schwankt stark: fünf regelkonforme Sprungstellen (2015-10, 2016-04, 2018-03 bis 2018-05, 2020-02, 2021-09), nur die drei deutlichsten eingetragen; Anker: keiner; Reihe allein."
+    }
+  ]
 }
