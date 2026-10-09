@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, field_validator
 from database.supabase_client import get_supabase_client
+from services.rolling_average_service import company_rolling_averages
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -317,7 +318,7 @@ def get_company_ratings_trend(
     days: int = Query(30, ge=1, le=3650),
     mode: str = Query(
         "rate",
-        description="Trend mode. 'rate' compares last N days vs previous N days and normalizes to 30 days. 'stable_months' compares last N full months vs the N months before. 'stable_all' auto-picks a comparable window (up to N months) based on available history.",
+        description="Trend mode. 'rate' compares last N days vs previous N days and normalizes to 30 days. 'stable_months' compares last N full months vs the N months before. 'stable_all' auto-picks a comparable window (up to N months) based on available history. 'rolling' (Inkrement 6, FA-08): rollierende Schnitte der Gesamtbewertung über die letzten 12 und 24 vollen Kalendermonate mit Daten, Anker ist der letzte volle Monat mit Bewertungen.",
     ),
     months: int = Query(12, ge=1, le=120),
 ):
@@ -329,7 +330,26 @@ def get_company_ratings_trend(
     - Delta = current_avg - previous_avg
     
     Uses the 'datum' field (review date) not 'created_at' for time-based filtering.
+
+    **Modus ``rolling`` (Inkrement 6, FA-08):** rollierende Durchschnitte der
+    Gesamtbewertung (Spalte ``durchschnittsbewertung`` der Mitarbeitenden, wie
+    E3) über die letzten 12 und 24 vollen Kalendermonate bis zum Anker, dem
+    letzten vollen Monat mit Bewertungen des Unternehmens (nicht das heutige
+    Datum). Antwort: ``anchor``, ``short`` und ``long`` (je ``from``, ``to``,
+    ``mean``, ``n``, ``months_with_reviews``, ``low_basis``, ``covered``),
+    ``difference`` = 12-Monats-Schnitt minus 24-Monats-Schnitt, ``sign``,
+    ``low_basis`` (ein Fenster unter 10 Bewertungen, vorläufig wie E12),
+    ``history_months`` und ``insufficient_history`` (weniger als 24 Monate
+    Daten bis zum Anker). ``days`` und ``months`` werden in diesem Modus nicht
+    verwendet; die übrigen Modi sind unverändert. Logik in
+    ``services/rolling_average_service.py``.
     """
+    if mode == "rolling":
+        try:
+            return company_rolling_averages(company_id)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
     supabase = get_supabase_client()
     def to_float(x):
         try:
