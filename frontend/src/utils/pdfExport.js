@@ -11,7 +11,7 @@
  *
  * Chart-Extraktion: SVG → PNG (html2canvas als Rückfall), Diagramme aus dem DOM des Dashboards.
  * Texte und Schwellen kommen aus denselben Bibliotheken wie das Dashboard
- * (lib/dataStatusText.js, lib/rollingAverage.js, lib/dataBasis.js).
+ * (lib/dataStatusText.js, lib/rollingAverage.js, lib/dataBasis.js, lib/scoreText.js).
  *
  * Hauptexport: exportKPIsAsPDF(kpiData); Firmenvergleich: exportCompareAsPDF(compareData)
  */
@@ -22,6 +22,7 @@ import { BASIS, MIN_REVIEWS_PER_WINDOW } from '../lib/dataBasis';
 import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from '../lib/rollingAverage';
 import { evidenceText, fmtN, lastImportText, marketText, platformText, sourceLine, thresholdsNote, timestampCell } from '../lib/dataStatusText';
 import { fmtPeriod } from '../lib/anomalySeries';
+import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from '../lib/scoreText';
 // ═══════════════════════════════════════════════════════════════════════════
 // COLORS — gleiche Tokens wie das Frontend (colors_and_type.css)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1323,38 +1324,38 @@ const drawDataStatusCard = (doc, y, status, { lastImportLocal = null } = {}) => 
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KENNZAHLEN — fünf Kacheln wie KPIGrid.jsx (Ø Score, Trend, 12- vs. 24-Monats-Schnitt,
-// Most Critical, Negative Topic), mit n, Warnung bei kleiner Basis und Datenbasis
+// Kritischste Kategorie, Negativstes Topic), mit n, Warnung bei kleiner Basis und Datenbasis
 // ═══════════════════════════════════════════════════════════════════════════
 
 const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negativeTopic, negativeTopicItem }) => {
     const cards = [];
 
-    // Ø Score: Mittel der Kategorienmittel, nur Mitarbeitende (FA-38)
-    const scoreNum = avgScore !== '-' ? Number(avgScore) : NaN;
+    // Ø Score: Mittel der Gesamtnote, Mitarbeitende, ungewichtet (D1, FA-38)
+    const scoreNum = avgScore !== '-' && avgScore != null ? Number(avgScore) : NaN;
     cards.push({
         label: 'Ø Score',
         value: Number.isFinite(scoreNum) ? fmtNum(scoreNum, 1) : '–',
         badge: '/ 5',
         tone: Number.isFinite(scoreNum) ? scoreTone(scoreNum) : 'neutral',
         basis: 'stars',
-        footer: [avgCount != null ? `n = ${fmtInt(avgCount)} Bewertungen, Mitarbeitende` : 'Mitarbeitende'],
+        footer: [scoreCountText(avgCount)],
         warning: smallBasisText(avgCount, MIN_REVIEWS_PER_WINDOW),
     });
 
-    // Trend (Fenster 12 oder 36 Monate je Zeitfilter)
+    // Trend der Gesamtnote (Modus score_months, 12 oder 36 volle Monate je Zeitfilter)
     const tv = trend?.avgDelta != null ? parseFloat(trend.avgDelta) : NaN;
     const months = trend?.windowMonths;
     const trendT = trend?.sign === 'up' ? 'good' : trend?.sign === 'down' ? 'bad' : 'neutral';
     const nCur = trend?.nReviews?.current, nPrev = trend?.nReviews?.previous;
     cards.push({
         label: months ? `Trend ${months}M` : 'Trend',
-        value: Number.isFinite(tv) ? `${tv > 0 ? '+' : ''}${fmtNum(tv, 1)}` : '–',
-        badge: trend ? (trend.sign === 'up' ? 'steigend' : trend.sign === 'down' ? 'sinkend' : 'stabil') : null,
-        tone: trend ? trendT : 'neutral',
+        value: Number.isFinite(tv) ? `${tv > 0 ? '+' : ''}${fmtNum(tv, 2)}` : '–',
+        badge: trend?.sign ? (trend.sign === 'up' ? 'steigend' : trend.sign === 'down' ? 'sinkend' : 'stabil') : null,
+        tone: trend?.sign ? trendT : 'neutral',
         basis: 'stars',
         footer: [
-            months ? `vs. Vorperiode (${months} Mon.)` : 'vs. Vorperiode',
-            ...(trend?.nReviews ? [`n = ${fmtInt(nCur)} / ${fmtInt(nPrev)} Bewertungen (aktuell / Vorperiode)`] : []),
+            months ? `Gesamtnote, ${months} volle Monate vs. ${months} davor` : 'Gesamtnote, Mitarbeitende',
+            ...(trend?.raw ? [scoreTrendWindowsText(trend.raw)] : []),
         ],
         warning: trend?.nReviews
             ? smallBasisText(Math.min(nCur ?? Infinity, nPrev ?? Infinity), MIN_REVIEWS_PER_WINDOW, 'Bewertungen', 'in einem Fenster')
@@ -1381,17 +1382,17 @@ const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negat
         warning: rWarn.length ? rWarn.join(' · ') : null,
     });
 
-    // Most Critical: niedrigster Kategorien-Score
+    // Kritischste Kategorie: niedrigstes Kategorienmittel (kategorienbasiert)
     const mc = mostCritical?.topicName && mostCritical.topicName !== '-' ? mostCritical : null;
     const mcScore = mc ? Number(mc.score) : NaN;
     cards.push({
-        label: 'Most Critical',
+        label: CRITICAL_LABEL,
         value: mc ? mc.topicName : '–',
         badge: mc ? `${fmtNum(mcScore, 1)} / 5` : null,
         tone: mc ? scoreTone(mcScore) : 'neutral',
         basis: 'stars',
         footer: [
-            'niedrigster Kategorien-Score, Mitarbeitende',
+            CRITICAL_NOTE,
             ...(mc?.n != null ? [`n = ${fmtInt(mc.n)} Bewertungen in dieser Kategorie`] : []),
         ],
         warning: mc?.n != null ? smallBasisText(mc.n, MIN_REVIEWS_PER_WINDOW) : null,
@@ -1539,8 +1540,9 @@ export const exportKPIsAsPDF = async (kpiData) => {
         timeRange = 'all',             // globaler Zeitfilter (all | 1y | 3y)
         lastImportLocal = null,        // letzter Import über die App (localStorage), ISO-Zeit
         dataStatus = null,             // GET /companies/{id}/data-status
-        avgScore = '-',
-        avgCount = null,
+        avgScore = '-',                // Ø Score: Mittel der Gesamtnote (score, D1)
+        avgCount = null,               // score_n
+        categoryMean = null,           // avg_overall: Mittel der Kategorienmittel
         trend = null,
         rolling = null,                // GET /companies/{id}/ratings/trend?mode=rolling
         mostCritical = null,
@@ -1635,6 +1637,19 @@ export const exportKPIsAsPDF = async (kpiData) => {
     y = ensureSpace(y + 8, 8 + kpiGridHeight(doc, kpis) + 12);
     y = drawSectionTitle(doc, y, 2, 'Kennzahlen', `Skala 1 – 5 · Zeitfilter ${range.value}`);
     y = drawKPIGrid(doc, y, kpis, { perRow: 3 });
+
+    // Berechnungshinweis (FA-38), wortgleich mit Kachel und Detailfenster (lib/scoreText.js)
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.s600);
+    y = drawWrapped(doc, SCORE_HINT, PAGE.mx, y + 5, PAGE.cw, { lineH: 3.1 });
+    if (categoryMean != null) {
+        y = drawWrapped(
+            doc,
+            `${CATEGORY_MEAN_TITLE}: ${fmtNum(categoryMean, 2)} / 5. ${CATEGORY_MEAN_NOTE}`,
+            PAGE.mx, y + 1.5, PAGE.cw, { lineH: 3.1 },
+        );
+    }
 
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(7);
@@ -2244,10 +2259,10 @@ export const exportCompareAsPDF = async (compareData) => {
         return yPos + boxH + 6;
     };
 
-    y = drawKPIBlock('Ø Score', y, (comp) => {
+    y = drawKPIBlock('Ø Score (Gesamtnote)', y, (comp) => {
         const s = comp.score;
         return {
-            value: s != null ? String(s) : '–',
+            value: s != null ? `${fmtNum(s, 2)}${comp.scoreN != null ? ` (n = ${fmtInt(comp.scoreN)})` : ''}` : '–',
             valueColor: s > 3 ? C.emerald500 : s >= 2 ? C.s800 : s != null ? C.rose500 : C.s300,
         };
     });

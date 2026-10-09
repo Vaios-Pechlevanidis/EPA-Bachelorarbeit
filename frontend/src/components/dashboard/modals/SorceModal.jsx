@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowDown, ArrowUp, Filter, Search, Star as StarIcon, X } from "lucide-react";
 import ModalShell, { ModalLoader, ModalError } from "./ModalShell";
 import { Star } from "../../../icons";
+import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, SCORE_HINT, scoreCountText } from "@/lib/scoreText";
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000") + "/api";
 
@@ -45,13 +46,17 @@ function ScoreStars({ score }) {
   );
 }
 
-export default function SorceModal({ open, onOpenChange, companyId }) {
-  // Ergebnis je Firma; "loading" gilt, solange der Schlüssel nicht passt
+/* Detailfenster der Kachel „Ø Score“ (D1, 2026-10-09): oben die Gesamtnote mit n
+   (scoreData = Antwort von GET /companies/{id}/ratings, wie die Kachel), darunter
+   die Kategorien unter „Kategorienmittel“ für denselben Zeitraum (startDate). */
+export default function SorceModal({ open, onOpenChange, companyId, scoreData = null, startDate = null }) {
+  // Ergebnis je Firma und Zeitraum; "loading" gilt, solange der Schlüssel nicht passt
   // (kein setState im Effekt, Lint-Regel react-hooks/set-state-in-effect).
+  const requestKey = companyId ? `${companyId}:${startDate ?? "all"}` : null;
   const [result, setResult] = useState({ key: null, data: null, error: "" });
-  const loading = open && result.key !== companyId;
-  const data = result.key === companyId ? result.data : null;
-  const error = result.key === companyId ? result.error : "";
+  const loading = open && Boolean(requestKey) && result.key !== requestKey;
+  const data = result.key === requestKey ? result.data : null;
+  const error = result.key === requestKey ? result.error : "";
 
   const [searchTerm, setSearchTerm]   = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -61,14 +66,17 @@ export default function SorceModal({ open, onOpenChange, companyId }) {
   const [sortDir, setSortDir]         = useState("asc");
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || !requestKey) return undefined;
     let active = true;
-    fetch(`${API_URL}/companies/${companyId}/ratings/avg`)
+    const url = startDate
+      ? `${API_URL}/companies/${companyId}/ratings/avg?start_date=${startDate}`
+      : `${API_URL}/companies/${companyId}/ratings/avg`;
+    fetch(url)
       .then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); })
-      .then((json) => { if (active) setResult({ key: companyId, data: json, error: "" }); })
-      .catch((e) => { if (active) setResult({ key: companyId, data: null, error: e.message || "Error" }); });
+      .then((json) => { if (active) setResult({ key: requestKey, data: json, error: "" }); })
+      .catch((e) => { if (active) setResult({ key: requestKey, data: null, error: e.message || "Error" }); });
     return () => { active = false; };
-  }, [open, companyId]);
+  }, [open, companyId, startDate, requestKey]);
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -100,22 +108,20 @@ export default function SorceModal({ open, onOpenChange, companyId }) {
     setSearchTerm(""); setMinScore(""); setMaxScore(""); setSortKey("score"); setSortDir("asc");
   };
 
-  // Overall avg for header subtitle
-  const overall = rows.length ? rows.reduce((s, r) => s + r.score, 0) / rows.length : null;
+  // Gesamtnote (Ø Score) aus derselben Antwort wie die Kachel; Mittel der Kategorienmittel aus der Liste
+  const score = Number.isFinite(Number(scoreData?.score)) && scoreData?.score != null ? Number(scoreData.score) : null;
+  const categoryMean = rows.length ? rows.reduce((s, r) => s + r.score, 0) / rows.length : null;
+  const fmt2 = (n) => n.toFixed(2).replace(".", ",");
 
   return (
     <ModalShell
       open={open}
       onOpenChange={onOpenChange}
-      tone={overall ? (overall >= 3.5 ? "good" : overall >= 2.5 ? "warn" : "bad") : "neutral"}
+      tone={score != null ? (score >= 3.5 ? "good" : score >= 2.5 ? "warn" : "bad") : "neutral"}
       icon={<Star />}
       eyebrow="KENNZAHL · BEWERTUNGS­ÜBERSICHT"
-      title="Ø Score · Kategorien"
-      subtitle={
-        overall
-          ? `Durchschnitt über alle Kategorien: ${overall.toFixed(2).replace(".", ",")} / 5`
-          : "Detaillierte Bewertung pro Kategorie"
-      }
+      title="Ø Score"
+      subtitle={score != null ? `Gesamtnote ${fmt2(score)} / 5 · ${scoreCountText(scoreData?.score_n)}` : "Gesamtnote, Mitarbeitende"}
       size="lg"
       toolbar={
         <div className="flex flex-col gap-2">
@@ -184,6 +190,28 @@ export default function SorceModal({ open, onOpenChange, companyId }) {
         </div>
       }
     >
+      {/* Gesamtnote mit n und Berechnungshinweis (FA-38, wortgleich mit Kachel und PDF) */}
+      <div className="mb-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5" data-testid="score-overall">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[13px] font-semibold text-slate-900">Gesamtnote</span>
+          <span className={["font-semibold tnum text-[18px]", scoreTone(score).text].join(" ")}>
+            {score != null ? `${fmt2(score)} / 5` : "—"}
+          </span>
+        </div>
+        <span className="block text-[12px] text-slate-600 tnum">{scoreCountText(scoreData?.score_n)}</span>
+        <p className="mt-1.5 text-[11.5px] leading-4 text-slate-500">{SCORE_HINT}</p>
+      </div>
+
+      <div className="mb-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="text-[13px] font-semibold text-slate-900">{CATEGORY_MEAN_TITLE}</h3>
+          {categoryMean != null && (
+            <span className="text-[12px] text-slate-500 tnum">Mittel der Kategorien: {fmt2(categoryMean)} / 5</span>
+          )}
+        </div>
+        <p className="text-[11.5px] leading-4 text-slate-500">{CATEGORY_MEAN_NOTE}</p>
+      </div>
+
       {loading && <ModalLoader />}
       {error && <ModalError>{error}</ModalError>}
 
