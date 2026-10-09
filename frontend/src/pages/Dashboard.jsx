@@ -10,7 +10,7 @@ import { TopicOverviewCard } from "@/components/dashboard/TopicOverviewCard"
 import { AnomalyCard }       from "@/components/dashboard/AnomalyCard"
 import KPIGrid               from "@/components/dashboard/KPIGrid"
 import { DataStatusBar }     from "@/components/dashboard/DataStatusBar"
-import { invalidateDataStatus } from "@/hooks/useDataStatus"
+import { invalidateDataStatus, loadDataStatus } from "@/hooks/useDataStatus"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import SorceModal        from "../components/dashboard/modals/SorceModal"
 import TrendModal        from "../components/dashboard/modals/TrendModal"
@@ -28,7 +28,7 @@ import { fetchJsonShared } from "@/lib/sharedFetch"
 import { useTheme } from "../hooks/useTheme"
 import { API_URL, SHOW_FINANCE_EXTRAS } from "../config"
 import { exportKPIsAsPDF } from "../utils/pdfExport"
-import { waitForMultipleCharts, validateChart, waitForImagesInElement } from "../utils/chartValidator"
+import { waitForMultipleCharts, waitForChartReady, validateChart, waitForImagesInElement } from "../utils/chartValidator"
 
 export default function Dashboard() {
   const location = useLocation()
@@ -70,10 +70,12 @@ export default function Dashboard() {
     source: "employee", granularity: "overall", selectedYear: null, visibleTopics: [], stats: {},
   })
   const [topicOverviewData, setTopicOverviewData] = useState({ topics: [], sourceFilter: null, stats: {} })
+  // Zustand der Anomalien-Karte (Auswahl, Zähler, Eignung) für den PDF-Export
+  const [anomalyExportData, setAnomalyExportData] = useState(null)
 
   /* ---- Loading ---- */
   const [dashboardLoadingStates, setDashboardLoadingStates] = useState({
-    timelineChart: true, topicRatingChart: true, topicOverview: true,
+    timelineChart: true, topicRatingChart: true, topicOverview: true, anomalyChart: true,
   })
   const [exportingPDF, setExportingPDF] = useState(false)
 
@@ -312,13 +314,15 @@ export default function Dashboard() {
   }
 
   /* ---- PDF export ---- */
+  // Übernimmt alle Elemente des Dashboards: Datenstand, fünf Kennzahlen mit n und
+  // Datenbasis, Timeline, Topics im Detail, Anomalien im Verlauf, Topic-Übersicht.
   const handleExportPDF = async () => {
     if (!selectedCompanyName) { setError("Bitte wählen Sie zuerst eine Firma aus."); return }
     try {
       setExportingPDF(true); setError(null)
       const checkIfReady = () => {
         const s = loadingStatesRef.current
-        return !s.timelineChart && !s.topicRatingChart && !s.topicOverview && !s.kpiCards
+        return !s.timelineChart && !s.topicRatingChart && !s.topicOverview && !s.kpiCards && !s.anomalyChart
       }
       if (!checkIfReady()) {
         const maxWait = 45000, interval = 300, start = Date.now()
@@ -334,24 +338,45 @@ export default function Dashboard() {
       if (!chartResults.allReady) await new Promise((r) => setTimeout(r, 3000))
       const timelineEl    = document.getElementById("timeline-chart-export")
       const topicRatingEl = document.getElementById("topic-rating-chart-export")
+      // Fehlt ein Diagramm (z. B. keine Daten im gewählten Zeitraum), zeigt die Karte im
+      // Dashboard einen Text; das PDF übernimmt diesen Zustand statt abzubrechen.
       const tv = validateChart(timelineEl, "Timeline")
       const rv = validateChart(topicRatingEl, "Topic-Rating")
-      if (!tv.isValid || !rv.isValid) {
-        throw new Error("Charts nicht bereit: " + [!tv.isValid && tv.message, !rv.isValid && rv.message].filter(Boolean).join(", "))
-      }
+      if (!tv.isValid) console.warn("PDF-Export ohne Timeline-Diagramm:", tv.message)
+      if (!rv.isValid) console.warn("PDF-Export ohne Topic-Rating-Diagramm:", rv.message)
       await waitForImagesInElement(timelineEl, 3000)
       await waitForImagesInElement(topicRatingEl, 3000)
+      // Anomalien-Diagramm: nur prüfen, wenn die Reihe Monate hat (sonst zeigt die
+      // Karte einen Text statt eines Diagramms); ein fehlendes Diagramm bricht den
+      // Export nicht ab, die Seite nennt dann den Grund.
+      let anomalyEl = null
+      if (anomalyExportData?.monthsInSpan > 0) {
+        const anomalyReady = await waitForChartReady("anomaly-chart-export", 8000)
+        anomalyEl = anomalyReady.success ? anomalyReady.element : null
+      }
+      // Datenstand (dieselbe Antwort wie die Leiste, aus dem Zwischenspeicher)
+      const dataStatus = await loadDataStatus(effectiveCompanyId).catch(() => null)
+      const company = companies.find((c) => String(c.id) === String(effectiveCompanyId))
       await new Promise((r) => setTimeout(r, 1500))
       await exportKPIsAsPDF({
         companyName: selectedCompanyName,
+        reviewCount: company?.review_count ?? null,
+        timeRange: globalTimeRange,
+        lastImportLocal: importHistory[0]?.timestamp ?? null,
+        dataStatus,
         avgScore: data?.avg_overall || "-",
+        avgCount: data?.n_reviews ?? null,
         trend: trendData,
+        rolling: rollingData,
         mostCritical: mostCriticalData,
         negativeTopic: getNegativeTopicName(negativeTopicItem),
-        timelineChartElement: timelineEl,
+        negativeTopicItem,
+        timelineChartElement: tv.isValid ? timelineEl : null,
         timelineFilters,
-        topicRatingChartElement: topicRatingEl,
+        topicRatingChartElement: rv.isValid ? topicRatingEl : null,
         topicRatingFilters,
+        anomalyChartElement: anomalyEl,
+        anomalyData: anomalyExportData,
         topicOverviewData,
       })
     } catch (err) {
@@ -390,6 +415,8 @@ export default function Dashboard() {
   const handleTopicRatingLoadingChange  = useCallback((v) => setDashboardLoadingStates((p) => ({ ...p, topicRatingChart: v })), [])
   const handleTopicOverviewDataChange   = useCallback((d) => setTopicOverviewData(d), [])
   const handleTopicOverviewLoadingChange = useCallback((v) => setDashboardLoadingStates((p) => ({ ...p, topicOverview: v })), [])
+  const handleAnomalyDataChange         = useCallback((d) => setAnomalyExportData(d), [])
+  const handleAnomalyLoadingChange      = useCallback((v) => setDashboardLoadingStates((p) => ({ ...p, anomalyChart: v })), [])
 
   /* ---- Anomalien-Detailseite (analog zum Vergleich) ---- */
   // selection: {source, dimension, status} von der AnomalyCard; beim Klick auf den Topbar-Knopf ein Event.
@@ -675,7 +702,12 @@ export default function Dashboard() {
 
             {/* Anomalies (Inkrement 1) */}
             <div style={{ marginBottom: 16 }}>
-              <AnomalyCard companyId={selectedCompany || selectedCompanyId} onOpen={openAnomalies} />
+              <AnomalyCard
+                companyId={selectedCompany || selectedCompanyId}
+                onOpen={openAnomalies}
+                onDataChange={handleAnomalyDataChange}
+                onLoadingChange={handleAnomalyLoadingChange}
+              />
             </div>
 
             {/* Topic overview */}

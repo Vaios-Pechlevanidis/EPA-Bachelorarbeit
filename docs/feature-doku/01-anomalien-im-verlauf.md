@@ -275,8 +275,9 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 Die Farben kommen aus den Theme-Variablen der App (`--rose-500`, `--emerald-500`,
 `--color-grid`, `--color-axis`). Die Karte funktioniert deshalb im hellen und im dunklen Theme.
 Die Detailseite wendet das gespeicherte Theme auch an, wenn sie direkt über die URL
-geöffnet wird. Die Karte gehört nicht zum PDF-Export; der Export nutzt nur die
-Diagramm-IDs von Timeline und Topics.
+geöffnet wird. Seit 2026-10-09 gehört die Karte zum PDF-Export des Dashboards
+(Doku 09): Diagramm über die ID `anomaly-chart-export`, Zähler, Eignung und die
+markierten Veränderungen und Einzelmonate als Liste.
 
 ## 3. Begründung
 
