@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useState, useEffect, useMemo, memo, forwardRef, useImperativeHandle } from "react"
+import { useState, useEffect, useMemo, useRef, memo, forwardRef, useImperativeHandle } from "react"
 import { AlertTriangle, ArrowRight } from "lucide-react"
 import { ChartCardHeader, SourceToggle } from "./ChartHeader"
 import { Tag } from "../../icons"
@@ -49,6 +49,9 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
   const [tableModalOpen,   setTableModalOpen]   = useState(false)
   const [sourceFilter,     setSourceFilter]     = useState("all")
   const [,                 setIsModalOpen]      = useState(false)
+  // Ob schon Themen geladen wurden ("Lade…" gegenüber "aktualisiere…"); als Ref, damit der
+  // Abruf-Effekt nicht von topicsData abhängt (Lint-Regel exhaustive-deps).
+  const hasTopicsRef = useRef(false)
 
   // Loading-State nach außen kommunizieren
   useEffect(() => {
@@ -60,7 +63,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
     if (!companyId) return
 
     const fetchTopics = async () => {
-      const isFirst = topicsData.length === 0
+      const isFirst = !hasTopicsRef.current
       isFirst ? setLoading(true) : setRefreshing(true)
       try {
         setError(null)
@@ -79,6 +82,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
         const data = await fetchJsonShared(url)
         setTopicsData(data.topics || [])
         setTotalReviews(data.total_reviews ?? null)
+        hasTopicsRef.current = (data.topics || []).length > 0
       } catch (err) {
         console.error("Error fetching topics:", err)
         setError(err.message)
