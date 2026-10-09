@@ -22,6 +22,7 @@ import { BASIS, MIN_REVIEWS_PER_WINDOW } from '../lib/dataBasis';
 import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from '../lib/rollingAverage';
 import { evidenceText, fmtN, lastImportText, marketText, platformText, sourceLine, thresholdsNote, timestampCell } from '../lib/dataStatusText';
 import { fmtPeriod } from '../lib/anomalySeries';
+import { SHOW_FORECAST } from '../config';
 import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from '../lib/scoreText';
 // ═══════════════════════════════════════════════════════════════════════════
 // COLORS — gleiche Tokens wie das Frontend (colors_and_type.css)
@@ -1438,7 +1439,7 @@ const timelineStats = (tf) => {
         }
     } else {
         if (st.avgHistorical != null) out.push({ label: 'Ø Historisch', value: fmtNum(st.avgHistorical, 2), sub: st.dateRange || 'gesamte Historie', tone: 'info' });
-        if (st.avgForecast != null) out.push({ label: 'Ø Prognose', value: fmtNum(st.avgForecast, 2), sub: st.forecastRange || 'kommende Monate', tone: 'warn' });
+        if (SHOW_FORECAST && st.avgForecast != null) out.push({ label: 'Ø Prognose', value: fmtNum(st.avgForecast, 2), sub: st.forecastRange || 'kommende Monate', tone: 'warn' });
     }
     return out;
 };
@@ -1596,6 +1597,9 @@ export const exportKPIsAsPDF = async (kpiData) => {
     const ensureSpace = (y, needed) => (y + needed > limit ? newPage() : y);
 
     const range = TIME_RANGE_LABEL[timeRange] || TIME_RANGE_LABEL.all;
+    // Prognose nur, wenn der Schalter an ist und der Zeitverlauf eine geliefert hat (D2)
+    const showForecast = SHOW_FORECAST && Boolean(timelineFilters?.hasForecast);
+    const tlEyebrow = showForecast ? 'Zeitreihe · Historie & Prognose' : 'Zeitreihe · Historie';
     const emp = dataStatus?.sources?.employee ?? null;
     const cand = dataStatus?.sources?.candidates ?? null;
     const topics = topicOverviewData?.topics || [];
@@ -1611,10 +1615,13 @@ export const exportKPIsAsPDF = async (kpiData) => {
         timeStr,
         meta: [
             { label: 'Zeitfilter', value: range.value, sub: range.sub },
+            // Zeitraum der Daten; die Prognose (nur bei SHOW_FORECAST, D2) steht getrennt daneben
             {
-                label: 'Zeitraum',
+                label: 'Zeitraum der Daten',
                 value: timelineFilters?.stats?.dateRange || 'gesamter Zeitraum',
-                sub:   timelineFilters?.stats?.dateRangeSub || 'Timeline: Historie + Prognose',
+                sub:   showForecast && timelineFilters?.stats?.forecastRange
+                    ? `Prognose: ${timelineFilters.stats.forecastRange}`
+                    : 'Monate mit Bewertungen im Zeitverlauf',
             },
             {
                 label: 'Bewertungen',
@@ -1664,20 +1671,20 @@ export const exportKPIsAsPDF = async (kpiData) => {
     // SEITE 3 — TIMELINE + TOPICS IM DETAIL (Diagrammzeile des Dashboards)
     // ───────────────────────────────────────────────────────────────────────
     y = startSection('Timeline & Topics im Detail', 'Bewertungsverlauf und Bewertungen je Topic über Zeit');
-    y = drawSectionTitle(doc, y, 3, 'Timeline', 'Zeitreihe · Historie & Prognose');
+    y = drawSectionTitle(doc, y, 3, 'Timeline', tlEyebrow);
 
     const tlSource = sourceName(timelineFilters?.source);
     const tlMetric = timelineFilters?.metric || 'Ø Score';
     const tlLegend = [{ label: 'Historisch', color: C.blue600 }];
     if (timelineFilters?.hasInterpolation) tlLegend.push({ label: 'Interpoliert (gestrichelt)', color: C.s400, dashed: true });
-    if (timelineFilters?.hasForecast)      tlLegend.push({ label: 'Prognose', color: C.orange500, dashed: true });
+    if (showForecast)                      tlLegend.push({ label: 'Prognose', color: C.orange500, dashed: true });
     tlLegend.push({
         label: `Quelle: ${tlSource} · ${tlMetric}${timelineFilters?.stats?.dataPoints != null ? ` · n = ${timelineFilters.stats.dataPoints} Datenpunkte` : ''}`,
         sourceNote: true,
     });
     y = drawDashboardCard(doc, y, {
         header: {
-            eyebrow: 'Zeitreihe · Historie & Prognose',
+            eyebrow: tlEyebrow,
             title: 'Timeline',
             subtitle: `${tlSource} · ${tlMetric}${timelineFilters?.granularity === 'year' && timelineFilters?.selectedYear ? ` · ${timelineFilters.selectedYear}` : ''}`,
             iconTone: 'info',
@@ -1689,7 +1696,9 @@ export const exportKPIsAsPDF = async (kpiData) => {
         emptyText: 'Keine Daten für diesen Zeitraum verfügbar',
         legend: tlLegend,
         stats: timelineStats(timelineFilters),
-        caption: 'Abb. 1 · Bewertungsverlauf mit Prognose · gestrichelte Linien = interpolierte bzw. prognostizierte Werte',
+        caption: showForecast
+            ? 'Abb. 1 · Bewertungsverlauf mit Prognose · gestrichelte Linien = interpolierte bzw. prognostizierte Werte'
+            : 'Abb. 1 · Bewertungsverlauf · gestrichelte Linien = interpolierte Werte',
     });
 
     y += 5;

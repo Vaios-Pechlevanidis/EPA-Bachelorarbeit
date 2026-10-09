@@ -29,7 +29,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useState, useEffect, useMemo, useRef, memo } from "react"
-import { API_URL } from "@/config"
+import { API_URL, SHOW_FORECAST } from "@/config"
 import { MIN_REVIEWS_PER_MONTH } from "@/lib/dataBasis"
 import { ChartCardHeader, SourceToggle, DropdownPicker } from "./ChartHeader"
 import { TrendUp as TrendUpIcon } from "../../icons"
@@ -151,6 +151,10 @@ function processTimelineDataWithGaps(timelineData, valueKey) {
     return { data: result, hasGaps }
 }
 
+// Prognose nach Schalter (D2, config.js): aus → forecast_months=0, keine Prognoseelemente
+const FORECAST_MONTHS = SHOW_FORECAST ? 6 : 0
+const TIMELINE_EYEBROW = SHOW_FORECAST ? "ZEITREIHE · HISTORIE & PROGNOSE" : "ZEITREIHE · HISTORIE"
+
 // Memoized TimelineCard für bessere Performance
 export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersChange, onLoadingChange, globalTimeRange = "all" }) {
     const [timelineData, setTimelineData] = useState([])
@@ -241,7 +245,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 }
 
                 const response = await fetch(
-                    `${API_URL}/analytics/company/${companyId}/timeline?days=${days}&forecast_months=6&source=${source}`
+                    `${API_URL}/analytics/company/${companyId}/timeline?days=${days}&forecast_months=${FORECAST_MONTHS}&source=${source}`
                 )
 
                 if (!response.ok) {
@@ -259,7 +263,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 }
 
                 setTimelineData(filteredTimeline)
-                setForecastData(data.forecast || [])
+                setForecastData(SHOW_FORECAST ? (data.forecast || []) : [])
                 hasDataRef.current = filteredTimeline.length > 0
             } catch (err) {
                 console.error('Error fetching timeline data:', err)
@@ -885,7 +889,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
             >
                 <ChartCardHeader
                     icon={<TrendUpIcon />}
-                    eyebrow="ZEITREIHE · HISTORIE & PROGNOSE"
+                    eyebrow={TIMELINE_EYEBROW}
                     title="Timeline"
                     subtitle={`${SOURCE_LABEL[source]} · ${metric}`}
                     expandable
@@ -952,7 +956,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                             </span>
                             <div>
                                 <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">
-                                    ZEITREIHE · HISTORIE & PROGNOSE
+                                    {TIMELINE_EYEBROW}
                                 </p>
                                 <DialogTitle className="m-0 text-[18px] leading-6 font-semibold tracking-tight text-slate-900">
                                     Timeline
@@ -1096,7 +1100,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
 
                         <div className="mt-3 flex items-center justify-end flex-shrink-0">
                             <p className="text-xs text-slate-400">
-                                {SOURCE_LABEL[source]} · {metric} · Historie + Prognose
+                                {SOURCE_LABEL[source]} · {metric} · {SHOW_FORECAST ? "Historie + Prognose" : "Historie"}
                             </p>
                         </div>
                     </div>
