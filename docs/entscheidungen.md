@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-08 (E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-09 (E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -1062,6 +1062,37 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Status:** umgesetzt am 2026-10-08 (Branch `feature/inkrement-5-iteration-2`); Regel, Fassung
   2, festgeschrieben.
 
+### E21 – Nachtrag 2026-10-09 (Inkrement 6): Bezeichnung nach Signalen
+
+- **Anlass:** Die Bezeichnungen der Stufen aus Iteration 2 sind Kurzformen der Regeln (siehe
+  Grenzen oben): „nur Ereignisart“ steht auch über einem Eintrag mit Wortbezug am Rand des
+  Fensters, „Wortbezug oder Themenbezug“ auch über einem Eintrag mit Wortbezug und Ereignisart.
+  Was ein Eintrag tatsächlich trägt, war nur aus den Kennzeichen darunter ablesbar.
+- **Entscheidung:** Ein zusätzliches Feld `signal_label` je Beleg (`score_item`), Bündel
+  (`_finish_bundle`), Eintrag, weiterem Bündel einer Gruppe und in `item_scores` (Bündel und
+  Beleg, `item_signal_label`) aus der reinen Funktion `signal_label` in
+  `backend/services/explanation_ranking.py`. Die Bezeichnung nennt genau die vorhandenen Signale
+  in fester Reihenfolge, getrennt durch „ · “: **Wortbezug** (`term_match` ≥ 0,5),
+  **Ereignisart** (Ereignisart mit Arbeitgeberbezug erkannt, `category_match` ≥ 0,5),
+  **Themenverschiebung** (ein zugeordnetes Thema merklich verschoben, `category_match` = 1),
+  **ohne Arbeitgeberbezug** (Ereignisart aus der Gruppe ohne Arbeitgeberbezug, E22); ohne Signal
+  „kein Signal“. Die zeitliche Nähe ist kein Teil der Bezeichnung; sie steht wie bisher als
+  Kennzeichen am Eintrag. Badge und Kopfzeile des Abschnitts „Mögliche Zusammenhänge“ (Bündel
+  nach Signalen, Feld `n_by_signal_label` der Zusammenfassung) nutzen das Feld; Schlüssel,
+  Bezeichnung und Regel der Stufe stehen im Tooltip.
+- **Begründung:** Die Bezeichnung beschreibt, was gefunden wurde, und nicht eine Stufe; so
+  bleibt sie auch dort richtig, wo die Kurzform der Stufe ungenau ist. Setzung des Autors.
+- **Unverändert (Test):** Stufenregeln (Fassung 2), Schwellen, Ereignisarten (E22),
+  `test_frozen_rules.py` und die Zahlen aus E23. `backend/tests/explanations/test_signal_labels.py`
+  prüft über alle Kombinationen von `term_match` (0; 0,5; 1), `category_match` (0; 0,5; 1) und
+  Arbeitgeberbezug (keiner, ja, nein), dass jedes vorhandene Signal genannt wird und kein
+  fehlendes, und vergleicht Zustand, Bündel, Stufen und Ränge einer konstruierten Rangfolge mit
+  dem Stand vor dem Nachtrag (Commit `9870875`).
+- **Grenzen:** Ein Bündel trägt die höchsten Signale seiner Meldungen (E21); seine Bezeichnung
+  kann deshalb Signale verschiedener Meldungen zusammen nennen. Die Bezeichnungen sind in den
+  Interviews (DZ3) noch nicht auf Verständlichkeit geprüft.
+- **Status:** umgesetzt am 2026-10-09 (Branch `feature/inkrement-6-abschluss`, Commit `fc73068`).
+
 ## E22 – Ereignisarten mit Arbeitgeberbezug und Zuordnung zu Themen (Inkrement 5)
 
 - **Kontext:** Für `category_match` (E21) braucht jede Meldung eine Ereignisart aus dem Titel,
@@ -1198,3 +1229,118 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Grenzen des Nachtrags:** wie oben; zusätzlich: Die Zusatzauswertung nach Referenzzeiträumen
   (E5, `--annotations`) war bei diesem Lauf nicht verfügbar, weil die Annotationsdatei leer ist;
   sie wird nach der Annotation nachgeholt, ohne die Regeln zu ändern.
+
+## E24 – Rollierende Schnitte über 12 und 24 Monate (Inkrement 6, FA-08)
+
+- **Kontext:** FA-08 verlangt rollierende Durchschnitte; der Anforderungstext liegt nicht im
+  Repository. Die Kacheln aus Zyklus 1 hatten keinen Schnitt über ein festes Fenster.
+- **Entscheidung:** `GET /api/companies/{id}/ratings/trend?mode=rolling`
+  (`backend/services/rolling_average_service.py`) mittelt die Gesamtnote (Spalte
+  `durchschnittsbewertung`, Mitarbeitende) aller Bewertungen der 12 und der 24 vollen
+  Kalendermonate bis zum **Anker**, dem letzten vollen Kalendermonat mit Bewertungen des
+  Unternehmens (nicht dem heutigen Datum, der laufende Monat ist nie Anker). Die Differenz ist
+  12-Monats-Schnitt minus 24-Monats-Schnitt; bis 0,05 gilt sie als gleichauf. Je Fenster stehen
+  Zeitraum, n, Monate mit Bewertungen und die Kennzeichen „kleine Basis“ (unter 10 Bewertungen,
+  Schwelle aus E12) und „Daten reichen nicht über das ganze Fenster“. Die fünfte Kachel
+  „12- vs. 24-Monats-Schnitt“ und ihr Detailfenster zeigen das in neutraler Farbe; der
+  PDF-Export übernimmt es.
+- **Begründung:** Dieselbe Basis wie Erkennungsreihe (E3), Zeitverlauf und Ø Score (E26), damit
+  die Zahlen zueinander passen. Der Anker folgt den Daten, weil viele Reihen 2025-07 enden; ein
+  Fenster ab heute wäre dort leer. Fensterlängen 12 und 24 Monate: Setzung des Autors.
+- **Grenzen:** Der Schnitt gewichtet jede Bewertung gleich, Monate mit vielen Bewertungen wiegen
+  mehr. Das 24-Monats-Fenster enthält das 12-Monats-Fenster. Die Differenz ist beschreibend,
+  keine Prognose und kein Test.
+- **Status:** umgesetzt in Inkrement 6, Phase A (Commits `aea1db5`, `c401a65`); die Schwelle der
+  kleinen Basis ist vorläufig (T5 offen).
+
+## E25 – Datenstand je Unternehmen (Inkrement 6, FA-37)
+
+- **Kontext:** FA-37 verlangt, dass der Stand der Daten sichtbar ist; der Anforderungstext liegt
+  nicht im Repository.
+- **Entscheidung:** `GET /api/companies/{id}/data-status`
+  (`backend/services/data_status_service.py`) liefert je Quelle Anzahl, erste und jüngste
+  Bewertung, bewertete Monate und Eignung nach E4, die drei Zeitstempel der Tabellen (`datum`,
+  `update_datum`, `created_at`) mit ihrer Bedeutung, den Stand des Kurs-Zwischenspeichers (E15)
+  und des Belegspeichers (E18) und, falls vom Autor hinterlegt, den Vergleich mit der Zahl auf
+  der Plattform. Die Leiste `DataStatusBar` steht auf Dashboard, Anomalien-Seite und
+  Aktien-Dashboard; der PDF-Export übernimmt sie mit denselben Texten
+  (`frontend/src/lib/dataStatusText.js`).
+- **Begründung:** Die Interviewpartner sollen sehen, bis wann die Daten reichen und woher sie
+  stammen, bevor sie Kennzahlen deuten. Das Abrufdatum bei Kununu ist nicht gespeichert; die
+  Leiste nennt deshalb den Import in die Datenbank und die jüngste Bewertung und sagt das.
+- **Grenzen:** Der Vergleich mit der Plattform braucht einen Eintrag des Autors in
+  `backend/data/company_metadata.json`; ohne ihn steht „nicht hinterlegt“. `update_datum` fehlt
+  bei den Unternehmen aus Zyklus 1.
+- **Status:** umgesetzt in Inkrement 6, Phase A (Commits `e8dbdb4`, `5e7abba`).
+
+## E26 – Definition des Ø Score und Berechnungshinweis (Inkrement 6, D1, FA-38)
+
+- **Kontext:** Die Kachel „Ø Score“ zeigte bis 2026-10-09 das Mittel der 13 Kategorienmittel
+  (`avg_overall`), Erkennung (E3), Zeitverlauf und rollierende Schnitte (E24) dagegen die
+  Gesamtnote je Bewertung. Zwei Definitionen unter einem Namen.
+- **Entscheidung (Autor, 2026-10-09, D1):** „Ø Score“ ist das Mittel der Gesamtnote (Spalte
+  `durchschnittsbewertung`) aller Bewertungen der Mitarbeitenden im gewählten Zeitraum,
+  ungewichtet. Umsetzung (`backend/services/score_service.py`): `GET …/ratings` liefert
+  zusätzlich `score`, `score_n` und `score_definition`; `avg_overall` bleibt unverändert und heißt
+  „Kategorienmittel“ (`category_mean_definition`). Kachel, Detailfenster, PDF-Export und
+  Firmenvergleich zeigen `score` mit n. Das Detailfenster zeigt oben die Gesamtnote mit n,
+  darunter die Kategorien unter „Kategorienmittel“ mit dem Satz, dass ihr Mittel von der
+  Gesamtnote abweichen kann. „Kritischste Kategorie“ bleibt kategorienbasiert. Die Trend-Kachel
+  liest den neuen Modus `score_months`: Gesamtnote der letzten 12 (bei „3 Jahre“ 36) vollen
+  Kalendermonate gegen dieselbe Zahl Monate davor, n je Fenster, Anker wie E24; die bestehenden
+  Modi bleiben unverändert. Der Berechnungshinweis steht wortgleich unter den Kacheln (und als
+  Tooltip der Kachel), im Detailfenster und im PDF, aus einer Stelle
+  (`frontend/src/lib/scoreText.js`): „Ø Score: Mittel der Gesamtnote aller Bewertungen von
+  Mitarbeitenden im gewählten Zeitraum, ungewichtet. Kununu berechnet seinen Score anders (laut
+  Experteninterviews ohne Bewerbende und mit geringerem Gewicht für ältere Bewertungen); der Wert
+  kann deshalb von der Anzeige auf Kununu abweichen.“
+- **Begründung:** Eine Definition für alle Zahlen zur Gesamtbewertung; die Kachel stimmt damit
+  mit Zeitverlauf, rollierenden Schnitten und Erkennung überein. Der Hinweis auf Kununu stammt
+  aus den Experteninterviews; die Gewichtung von Kununu ist nicht nachgebildet (Setzung des
+  Autors).
+- **Grenzen:** Der Wert ist nicht der Score auf Kununu. Gesamtnote und Kategorienmittel können
+  deutlich auseinanderliegen (Test mit konstruierten Zeilen: 4,8 gegen 2,23); bei Telekom lagen
+  sie am 2026-10-09 bei 3,92 und 3,90. Das Trend-Detailfenster zeigt die Kategorien weiter mit
+  den bestehenden Modi; ihr Standard ist seit 2026-10-09 das am letzten Datenmonat verankerte
+  Fenster (`stable_all`).
+- **Status:** umgesetzt am 2026-10-09 (Commits `0b2737f`, `f1013a9`); Tests in
+  `backend/tests/test_score_service.py`.
+
+## E27 – Kennzeichnung der Datenbasis und n (Inkrement 6, FA-25, FA-26)
+
+- **Kontext:** FA-25 verlangt, dass erkennbar ist, worauf ein Element beruht, FA-26, dass die
+  Anzahl der zugrunde liegenden Bewertungen sichtbar ist; die Anforderungstexte liegen nicht im
+  Repository.
+- **Entscheidung:** Festes Vokabular in `frontend/src/lib/dataBasis.js`: Sternebewertung,
+  Freitextanalyse, Externe Meldungen, Marktdaten, als Kennzeichen an jeder Kachel, Karte und
+  Liste und im PDF. Jede Kennzahl nennt n; unter 5 Bewertungen je Monat (E4) oder 10 je Fenster
+  (E12) erscheint die Warnung „kleine Basis“. Keine neue Schwelle.
+- **Begründung:** Diagramme aus Sternen sollen nicht mit Diagrammen aus Texten oder externen
+  Quellen verwechselt werden; n macht sichtbar, wie belastbar eine Zahl ist. Die Begriffe sind
+  eine Setzung des Autors.
+- **Grenzen:** Die Warnung ist eine feste Schwelle, keine Unsicherheitsangabe. Die Kachel
+  „Negativstes Topic“ nennt Nennungen, nicht Bewertungen.
+- **Status:** umgesetzt in Inkrement 6, Phase A (Commits `c73594a`, `1ec9374`, `fe3b73f`); seit
+  2026-10-09 nennt die Kachel „Ø Score“ die Bewertungen mit Gesamtnote (E26).
+
+## E28 – Prognose im Zeitverlauf als Schalter beim Bauen (Inkrement 6, D2)
+
+- **Kontext:** Der Zeitverlauf zeigt seit Zyklus 1 eine Prognose (Holt, `forecast_months` in
+  `GET /api/analytics/company/{id}/timeline`). Sie ist in Zyklus 2 weder Gegenstand der
+  Anforderungen noch evaluiert.
+- **Entscheidung (Autor, 2026-10-09, D2):** Der Zeitverlauf behält die Prognose aus Zyklus 1;
+  die Evaluationsinstanz blendet sie aus. Schalter `VITE_SHOW_FORECAST` in
+  `frontend/src/config.js` nach dem Muster von `VITE_SHOW_FINANCE_EXTRAS` (Standard an; `false`
+  oder `0` aus), `ARG` im `frontend/Dockerfile`. Aus: Der Zeitverlauf ruft `forecast_months=0`
+  ab und zeigt weder Prognoselinie noch Trennlinie, Legendeneintrag oder „Ø Prognose“; die
+  x-Achse endet am letzten Monat mit Daten; der PDF-Export folgt demselben Schalter. Das
+  PDF-Deckblatt nennt unabhängig vom Schalter den Zeitraum der Daten; ist die Prognose an, steht
+  ihr Zeitraum getrennt und als Prognose bezeichnet darunter. `docs/evaluationsinstanz.md` und
+  `docs/evaluationsinstanz.env.example` setzen `VITE_SHOW_FORECAST=false`.
+- **Begründung:** In den Interviews soll das gezeigt werden, was Zyklus 2 evaluiert; eine nicht
+  evaluierte Prognose würde Aussagen über die Zukunft nahelegen. Außerhalb der Evaluation bleibt
+  sie erhalten (Entscheidung des Autors).
+- **Grenzen:** Der Schalter wirkt beim Bauen, nicht zur Laufzeit; die API bietet die Prognose
+  weiter an. Der Firmenvergleich rief schon vorher `forecast_months=0` ab.
+- **Status:** umgesetzt am 2026-10-09 (Commit `ef05ca6`); geprüft im Bau der Evaluationsinstanz
+  (`docs/abnahme-inkrement-6.md`).
