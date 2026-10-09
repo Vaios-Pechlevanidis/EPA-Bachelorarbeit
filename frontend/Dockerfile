@@ -14,6 +14,10 @@ ENV VITE_API_URL=$VITE_API_URL
 ARG VITE_SHOW_FINANCE_EXTRAS=true
 ENV VITE_SHOW_FINANCE_EXTRAS=$VITE_SHOW_FINANCE_EXTRAS
 
+# Prognose im Zeitverlauf (D2, E28); false blendet sie aus (Evaluationsinstanz).
+ARG VITE_SHOW_FORECAST=true
+ENV VITE_SHOW_FORECAST=$VITE_SHOW_FORECAST
+
 RUN npm run build
 
 FROM nginx:alpine

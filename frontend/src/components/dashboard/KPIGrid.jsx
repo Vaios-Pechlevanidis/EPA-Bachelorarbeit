@@ -4,6 +4,8 @@ import { Star, TrendUp, TrendDown, Alert, Tag } from "../../icons";
 import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from "@/lib/rollingAverage";
 import { DataBasisTags, SmallBasisWarning } from "./DataBasis";
 import { MIN_REVIEWS_PER_WINDOW } from "@/lib/dataBasis";
+import { NEGATIVE_TOPIC_LABEL } from "@/lib/labels";
+import { CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from "@/lib/scoreText";
 
 const fmt = (n, d = 1) => (isNaN(Number(n)) ? "—" : Number(n).toFixed(d).replace(".", ","));
 
@@ -53,7 +55,7 @@ const TONES = {
   },
 };
 
-/* ---- Score → tone mapping (Ø Score & Most Critical) -------------------- */
+/* ---- Score → tone mapping (Ø Score & Kritischste Kategorie) ------------- */
 const scoreTone = (s) => {
   const n = Number(s);
   if (!Number.isFinite(n)) return "neutral";
@@ -72,13 +74,14 @@ const trendTone = (sign) => {
 /* ============================================================================
    Single KPI tile
    ============================================================================ */
-function KPITile({ label, icon, value, valueSize = "lg", delta, footer, tone = "neutral", onClick, disabled, basis = null }) {
+function KPITile({ label, icon, value, valueSize = "lg", delta, footer, tone = "neutral", onClick, disabled, basis = null, title }) {
   const t = TONES[tone] ?? TONES.neutral;
   return (
     <button
       type="button"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
+      title={title}
       className={[
         "relative group w-full text-left rounded-lg overflow-hidden",
         "border px-4 py-3.5",
@@ -162,6 +165,21 @@ function RollingFooter({ data }) {
   );
 }
 
+/* ---- Trend der Gesamtnote (D1, Modus score_months) ----------------------- */
+function TrendFooter({ trendData }) {
+  const raw = trendData?.raw;
+  if (!raw) return "Gesamtnote, Mitarbeitende";
+  return (
+    <>
+      <span className="block">Gesamtnote, {trendData.windowMonths} volle Monate vs. {trendData.windowMonths} davor</span>
+      <span className="block tnum">{scoreTrendWindowsText(raw)}</span>
+      {trendData.nReviews && (
+        <SmallBasisWarning n={Math.min(trendData.nReviews.current ?? Infinity, trendData.nReviews.previous ?? Infinity)} min={MIN_REVIEWS_PER_WINDOW} context="in einem Fenster" />
+      )}
+    </>
+  );
+}
+
 /* ============================================================================
    KPIGrid — 5 colour-coded tiles. Each one pops a modal.
    ============================================================================ */
@@ -188,7 +206,7 @@ export default function KPIGrid({
     ? <Delta tone={avgT === "good" ? "pos" : avgT === "bad" ? "neg" : "warn"}>/ 5</Delta>
     : <Delta tone="neu">/ 5</Delta>;
 
-  const trendDelta = trendData ? parseFloat(trendData.avgDelta) : null;
+  const trendDelta = trendData?.avgDelta != null ? parseFloat(trendData.avgDelta) : null;
   const trendT     = trendTone(trendData?.sign);
 
   // Most-Critical tile is always "bad" once data exists — that's the whole
@@ -201,18 +219,20 @@ export default function KPIGrid({
   const rollingOk = rollingReady(rollingData);
 
   return (
+    <div>
     <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
 
-      {/* Ø Score: Mittel der Kategorienmittel, nur Mitarbeitende (Definition aus der Antwort, FA-38) */}
+      {/* Ø Score: Mittel der Gesamtnote, Mitarbeitende (D1, FA-38); Hinweis als Tooltip und unter den Kacheln */}
       <KPITile
         label="Ø Score"
         icon={<Star />}
         tone={avgT}
-        value={avgScore ? fmt(avgScore) : "—"}
+        value={avgScore != null ? fmt(avgScore) : "—"}
         delta={avgDelta}
+        title={SCORE_HINT}
         footer={
           <>
-            <span className="block tnum">{avgCount != null ? `n = ${fmtN(avgCount)} Bewertungen, Mitarbeitende` : "Mitarbeitende"}</span>
+            <span className="block tnum">{scoreCountText(avgCount)}</span>
             {avgCount != null && <SmallBasisWarning n={avgCount} min={MIN_REVIEWS_PER_WINDOW} />}
           </>
         }
@@ -228,11 +248,11 @@ export default function KPIGrid({
         tone={trendT}
         value={
           trendDelta !== null
-            ? `${trendDelta > 0 ? "+" : ""}${fmt(trendDelta, 1)}`
+            ? `${trendDelta > 0 ? "+" : ""}${fmt(trendDelta, 2)}`
             : "—"
         }
         delta={
-          trendData ? (
+          trendData?.sign ? (
             <Delta
               tone={trendT === "good" ? "pos" : trendT === "bad" ? "neg" : "neu"}
               icon={trendData.sign === "up" ? <TrendUp /> : trendData.sign === "down" ? <TrendDown /> : null}
@@ -241,17 +261,7 @@ export default function KPIGrid({
             </Delta>
           ) : null
         }
-        footer={
-          <>
-            <span className="block">{trendData?.windowMonths ? `vs. Vorperiode (${trendData.windowMonths} Mon.)` : "vs. Vorperiode"}</span>
-            {trendData?.nReviews && (
-              <span className="block tnum">n = {fmtN(trendData.nReviews.current)} / {fmtN(trendData.nReviews.previous)} Bewertungen (aktuell / Vorperiode)</span>
-            )}
-            {trendData?.nReviews && (
-              <SmallBasisWarning n={Math.min(trendData.nReviews.current ?? Infinity, trendData.nReviews.previous ?? Infinity)} min={MIN_REVIEWS_PER_WINDOW} context="in einem Fenster" />
-            )}
-          </>
-        }
+        footer={<TrendFooter trendData={trendData} />}
         basis="stars"
         disabled={!companyId}
         onClick={onOpenTrend}
@@ -270,9 +280,9 @@ export default function KPIGrid({
         onClick={onOpenRolling}
       />
 
-      {/* Most Critical */}
+      {/* Kritischste Kategorie: kategorienbasiert (niedrigstes Kategorienmittel) */}
       <KPITile
-        label="Most Critical"
+        label={CRITICAL_LABEL}
         icon={<Alert />}
         tone={criticalT}
         value={mostCriticalData?.topicName ?? "—"}
@@ -284,7 +294,7 @@ export default function KPIGrid({
         ) : null}
         footer={
           <>
-            <span className="block">niedrigster Kategorien-Score, Mitarbeitende</span>
+            <span className="block">{CRITICAL_NOTE}</span>
             {mostCriticalData?.n != null && <span className="block tnum">n = {fmtN(mostCriticalData.n)} Bewertungen in dieser Kategorie</span>}
             {mostCriticalData?.n != null && <SmallBasisWarning n={mostCriticalData.n} min={MIN_REVIEWS_PER_WINDOW} />}
           </>
@@ -294,9 +304,9 @@ export default function KPIGrid({
         onClick={onOpenCritical}
       />
 
-      {/* Negative Topic */}
+      {/* Negativstes Topic */}
       <KPITile
-        label="Negative Topic"
+        label={NEGATIVE_TOPIC_LABEL}
         icon={<Tag />}
         tone={negativeT}
         value={negName !== "-" ? negName : "—"}
@@ -322,6 +332,10 @@ export default function KPIGrid({
           }
         }}
       />
+    </div>
+
+    {/* Berechnungshinweis zum Ø Score (FA-38), wortgleich in Detailfenster und PDF (lib/scoreText.js) */}
+    <p className="mt-2 text-[11px] leading-4 text-slate-500" data-testid="score-hint">{SCORE_HINT}</p>
     </div>
   );
 }

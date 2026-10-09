@@ -1,5 +1,10 @@
 # Anleitung: Referenzzeiträume eintragen (zweite, unabhängige Person)
 
+> **Nicht durchgeführt, keine zweite Person verfügbar (E5, 2026-10-09).** Der Autor ist einziger
+> Annotator (Protokoll-Regel 8). Die Datei `backend/data/annotations_zweitperson.json` ist
+> entfernt; `backend/scripts/compare_annotations.py` vergleicht zwei beliebige Dateien
+> (`--b` ist Pflichtangabe). Die Anleitung bleibt als Dokument der Vorbereitung erhalten.
+
 Stand: 2026-10-08 (E5, Iteration 2). Für eine Person, die das Dashboard nie gesehen hat und es
 auch für diese Aufgabe nicht sehen soll. Sie braucht nur den Annotationsbogen (eine HTML-Datei)
 und einen Texteditor.

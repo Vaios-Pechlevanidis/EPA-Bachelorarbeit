@@ -380,7 +380,7 @@ def explanations_for(
     base: Dict[str, Any] = {
         "state": STATE_OPEN, "kind": window.get("kind"), "window": {k: window.get(k) for k in (
             "kind", "from", "to", "months", "transition_from", "anchor_from", "anchor_to", "window_before", "window_after")},
-        "n_items": 0, "n_bundles": 0, "n_groups": 0, "n_by_stage": None, "terms": [], "item_scores": {}, "sources": {},
+        "n_items": 0, "n_bundles": 0, "n_groups": 0, "n_by_stage": None, "n_by_signal_label": None, "terms": [], "item_scores": {}, "sources": {},
         "coverage": False, "reason": None, "error": None, "note": None, "open_note": OPEN_NOTE, "rules": rules(),
     }
     try:
@@ -400,7 +400,7 @@ def explanations_for(
     summary = {
         **base,
         "state": ranked["state"], "n_items": ranked["n_items"], "n_bundles": ranked["n_bundles"], "n_groups": ranked["n_groups"],
-        "n_by_stage": ranked["n_by_stage"], "terms": ranked["terms"], "item_scores": ranked["item_scores"],
+        "n_by_stage": ranked["n_by_stage"], "n_by_signal_label": ranked["n_by_signal_label"], "terms": ranked["terms"], "item_scores": ranked["item_scores"],
         "sources": evidence.get("sources", {}), "coverage": evidence.get("coverage", False), "reason": evidence.get("reason"),
         "note": ranked["note"], "open_note": ranked["open_note"], "search_term": info.get("search_term"),
         "direction": direction,

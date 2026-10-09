@@ -5,6 +5,13 @@ from pydantic import BaseModel, field_validator
 from database.supabase_client import get_supabase_client
 from services.data_status_service import company_data_status
 from services.rolling_average_service import company_rolling_averages
+from services.score_service import (
+    CATEGORY_MEAN_DEFINITION,
+    SCORE_DEFINITION,
+    TREND_MODE as SCORE_TREND_MODE,
+    company_score_trend,
+    score_from_rows,
+)
 from services.topic_average_rating_service import _fetch_all_rows
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
@@ -270,9 +277,9 @@ def get_company_ratings_avg(
     return res.data[0] if len(res.data) > 0 else {}
 
 
-# Wortlaut der Score-Definition der Kachel „Ø Score“ (Inkrement 6, FA-38); die
-# Erkennungsreihe und der Zeitverlauf mitteln dagegen die Spalte
-# durchschnittsbewertung je Bewertung (E3).
+# Wortlaut der Definition von ``avg_overall`` (Kategorienmittel). Seit D1
+# (2026-10-09) zeigt die Kachel „Ø Score“ stattdessen ``score``, das Mittel der
+# Gesamtnote (services/score_service.py, wie Erkennungsreihe E3 und Zeitverlauf).
 AVG_OVERALL_DEFINITION = "Mittel der 13 Kategorienmittel (ungewichtet), nur Mitarbeitende"
 
 # Mapping used for category counts (same keys as frontend CATEGORY_LABELS)
@@ -345,14 +352,23 @@ def _compute_avg_overall(company_id: int, start_date: Optional[str] = None) -> d
     """Liest die Tabelle ``employee`` seitenweise (optional ab ``start_date``)
     und liefert ``avg_overall_from_rows``. Bis 2026-10-09 las die Funktion nur
     eine Abfrage und damit höchstens 1000 Zeilen (PostgREST-Grenze); bei
-    Unternehmen mit mehr Bewertungen war der Wert unvollständig (Inkrement 6)."""
+    Unternehmen mit mehr Bewertungen war der Wert unvollständig (Inkrement 6).
+    Seit D1 (2026-10-09) liest dieselbe Abfrage die Gesamtnote mit und ergänzt
+    ``score`` und ``score_n``."""
     supabase = get_supabase_client()
-    columns = list(CATEGORY_COLUMN_MAP.values())
+    columns = ["durchschnittsbewertung"] + list(CATEGORY_COLUMN_MAP.values())
     q = supabase.table("employee").select(",".join(columns)).eq("company_id", company_id)
     if start_date:
         q = q.gte("datum", start_date)
     rows = _fetch_all_rows(q.order("id"), page_size=1000)
-    return avg_overall_from_rows(rows)
+    return {**avg_overall_from_rows(rows), **score_from_rows(rows)}
+
+
+def _compute_score(company_id: int) -> dict[str, Any]:
+    """``score`` und ``score_n`` über alle Bewertungen der Mitarbeitenden (seitenweise)."""
+    supabase = get_supabase_client()
+    q = supabase.table("employee").select("durchschnittsbewertung").eq("company_id", company_id).order("id")
+    return score_from_rows(_fetch_all_rows(q, page_size=1000))
 
 
 @router.get("/companies/{company_id}/ratings")
@@ -360,11 +376,17 @@ def get_company_ratings_overall(
     company_id: int,
     start_date: Optional[str] = Query(default=None, description="Filter reviews from this date (YYYY-MM-DD)"),
 ):
-    """Kachel „Ø Score“: Mittel der Kategorienmittel der Mitarbeitenden.
+    """Kachel „Ø Score“ (D1, 2026-10-09): ``score`` = Mittel der Gesamtnote
+    (Spalte ``durchschnittsbewertung``) aller Bewertungen der Mitarbeitenden im
+    gewählten Zeitraum, ungewichtet; ``score_n`` = Bewertungen mit Gesamtnote.
+    ``avg_overall`` bleibt unverändert das Mittel der 13 Kategorienmittel
+    (Kategorienmittel, ``category_mean_definition``).
 
     Antwort (seit 2026-10-09 mit zusätzlichen Feldern, ``avg_overall`` unverändert)::
 
         {"avg_overall": 3.9, "n_reviews": 6899, "n_rated": 6880, "n_categories": 13,
+         "score": 3.8, "score_n": 6899, "score_definition": "Mittel der Gesamtnote …",
+         "category_mean_definition": "Kategorienmittel: …",
          "source": "employee", "basis": "sternebewertung",
          "definition": "Mittel der 13 Kategorienmittel (ungewichtet), nur Mitarbeitende"}
 
@@ -377,6 +399,8 @@ def get_company_ratings_overall(
         "source": "employee",
         "basis": "sternebewertung",
         "definition": AVG_OVERALL_DEFINITION,
+        "score_definition": SCORE_DEFINITION,
+        "category_mean_definition": CATEGORY_MEAN_DEFINITION,
     }
     if start_date:
         return {**_compute_avg_overall(company_id, start_date), **meta}
@@ -399,16 +423,18 @@ def get_company_ratings_overall(
         "n_reviews": _count_reviews("employee", company_id),
         "n_rated": None,
         "n_categories": len(values),
+        **_compute_score(company_id),
         **meta,
     }
-    
+
+
 @router.get("/companies/{company_id}/ratings/trend")
 def get_company_ratings_trend(
     company_id: int,
     days: int = Query(30, ge=1, le=3650),
     mode: str = Query(
         "rate",
-        description="Trend mode. 'rate' compares last N days vs previous N days and normalizes to 30 days. 'stable_months' compares last N full months vs the N months before. 'stable_all' auto-picks a comparable window (up to N months) based on available history. 'rolling' (Inkrement 6, FA-08): rollierende Schnitte der Gesamtbewertung über die letzten 12 und 24 vollen Kalendermonate mit Daten, Anker ist der letzte volle Monat mit Bewertungen.",
+        description="Trend mode. 'rate' compares last N days vs previous N days and normalizes to 30 days. 'stable_months' compares last N full months vs the N months before. 'stable_all' auto-picks a comparable window (up to N months) based on available history. 'rolling' (Inkrement 6, FA-08): rollierende Schnitte der Gesamtbewertung über die letzten 12 und 24 vollen Kalendermonate mit Daten, Anker ist der letzte volle Monat mit Bewertungen. 'score_months' (D1, 2026-10-09): Gesamtnote der letzten N vollen Kalendermonate bis zum Anker gegen die N davor, n je Fenster.",
     ),
     months: int = Query(12, ge=1, le=120),
 ):
@@ -433,12 +459,25 @@ def get_company_ratings_trend(
     Daten bis zum Anker). ``days`` und ``months`` werden in diesem Modus nicht
     verwendet; die übrigen Modi sind unverändert. Logik in
     ``services/rolling_average_service.py``.
+
+    **Modus ``score_months`` (D1, 2026-10-09):** Gesamtnote (Spalte
+    ``durchschnittsbewertung``) der letzten ``months`` vollen Kalendermonate bis
+    zum Anker (wie ``rolling``) gegen die ``months`` Kalendermonate davor.
+    Antwort: ``current`` und ``previous`` (je ``from``, ``to``, ``mean``, ``n``,
+    ``months_with_reviews``, ``low_basis``, ``covered``), ``difference``,
+    ``sign``, ``overall.deltaPoints``, ``n_reviews`` und Bereiche in derselben
+    Form wie ``stable_months``. Logik in ``services/score_service.py``.
     """
     if mode == "rolling":
         try:
             return company_rolling_averages(company_id)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
+
+    # Kachel „Trend“ seit D1 (2026-10-09): Gesamtnote statt Differenzen der
+    # Kategorienmittel; Anker wie ``rolling``. ``days`` wird nicht verwendet.
+    if mode == SCORE_TREND_MODE:
+        return company_score_trend(company_id, months)
 
     supabase = get_supabase_client()
     def to_float(x):

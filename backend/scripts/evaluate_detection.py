@@ -34,6 +34,24 @@ Ablauf
    Dazu die Listen der Treffer, der verfehlten Zeiträume und der zusätzlichen
    Markierungen; mit ``--json`` auch als Datei.
 
+Teilauswertungen (``--subset``, vor dem ersten Lauf festgelegt, E5 Aktualisierung
+2026-10-09): Jede Teilmenge der Referenzzeiträume wird für beide Varianten
+berichtet. Ohne ``--subset`` werden alle vier berichtet.
+
+- ``alle``: alle Einträge,
+- ``ohne_duenne``: kein Monat im Zeitraum mit weniger als ``THIN_MONTH_REVIEWS`` = 10
+  Bewertungen (Zählungen aus den Serien-CSVs in ``data/series/``),
+- ``mehrmonatig``: Zeitraum mindestens 2 Kalendermonate,
+- ``mit_anker``: ``note`` endet mit "Reihe + Ereignis".
+
+Der Abgleich selbst bleibt der der Gesamtmenge (Regel 6, Eins-zu-eins über alle
+Einträge der Reihe). Danach zählen nur Einträge der Teilmenge als Treffer (TP)
+oder verfehlt (FN); eine Erkennung, die einem Eintrag außerhalb der Teilmenge
+zugeordnet ist, zählt weder als Treffer noch als zusätzliche Markierung
+(``neutral``); nicht zugeordnete Erkennungen bleiben zusätzliche Markierungen (FP).
+Eine Reihe geht nur in die Teilauswertung ein, wenn sie mindestens einen Eintrag
+der Teilmenge hat.
+
 Die Abgleichregeln (``TOLERANCE_MONTHS``, ``MAX_SHIFT_MONTHS``, gleiche Richtung,
 Eins-zu-eins) sind mit Regel 6 fixiert und werden nach dem ersten Lauf nicht
 geändert. ``match_window``, ``match_series`` und ``evaluate`` sind reine
@@ -45,6 +63,7 @@ Verwendung
     uv run python scripts/evaluate_detection.py                       # Unternehmen aus der DB (nur SELECT)
     uv run python scripts/evaluate_detection.py --offline             # Unternehmensliste aus data_density.json
     uv run python scripts/evaluate_detection.py --source employee --json data/calibration/dz1_ergebnis.json
+    uv run python scripts/evaluate_detection.py --subset alle --subset mit_anker
 """
 
 from __future__ import annotations
@@ -65,6 +84,7 @@ from services.rating_series_service import OVERALL_DIMENSION, VALID_SOURCES  # n
 
 DEFAULT_FILE = os.path.join(BACKEND_DIR, "data", "annotations.json")
 DEFAULT_DENSITY = os.path.join(BACKEND_DIR, "data", "data_density.json")
+DEFAULT_SERIES_DIR = os.path.join(BACKEND_DIR, "data", "series")
 
 # Regel 6 (fixiert): Toleranz um den Referenzzeitraum und Kappung bei Lücken.
 TOLERANCE_MONTHS = 1
@@ -72,6 +92,17 @@ MAX_SHIFT_MONTHS = 3
 VARIANTS: Tuple[str, str] = ("niveauwechsel", "niveauwechsel+einzelmonate")
 KIND_LEVEL = "niveauwechsel"
 KIND_OUTLIER = "einzelmonat"
+
+# Teilauswertungen (vor dem ersten Lauf festgelegt, E5 Aktualisierung 2026-10-09)
+SUBSETS: Tuple[str, ...] = ("alle", "ohne_duenne", "mehrmonatig", "mit_anker")
+THIN_MONTH_REVIEWS = 10
+ANCHOR_SUFFIX = "Reihe + Ereignis"
+SUBSET_DEFINITIONS: Dict[str, str] = {
+    "alle": "alle Einträge",
+    "ohne_duenne": f"kein Monat im Zeitraum mit weniger als {THIN_MONTH_REVIEWS} Bewertungen (Serien-CSVs)",
+    "mehrmonatig": "Zeitraum mindestens 2 Kalendermonate",
+    "mit_anker": f"note endet mit \"{ANCHOR_SUFFIX}\"",
+}
 
 Fetcher = Callable[[int, str, str], Dict[str, Any]]
 
@@ -242,6 +273,81 @@ def evaluate(doc: Dict[str, Any], companies: Dict[str, va.CompanyInfo], fetch: F
     }
 
 
+# ── Teilauswertungen ─────────────────────────────────────────────────────────
+
+def _annotation_key(ann: Dict[str, Any]) -> Tuple[str, ...]:
+    return (va.normalize_company_name(ann["company"]),) + tuple(
+        ann[k] for k in ("source", "dimension", "period_from", "period_to", "direction"))
+
+
+def subset_member(name: str, ann: Dict[str, Any], counts: Optional[Dict[str, int]] = None) -> Optional[bool]:
+    """Gehört ein Eintrag zur Teilmenge ``name``? Reine Funktion.
+
+    ``counts``: Bewertungen je Monat der Reihe (Serien-CSV). Für ``ohne_duenne``
+    ohne Zählungen ist die Zugehörigkeit nicht bestimmbar (``None``); ein Monat
+    ohne Zeile zählt als 0 Bewertungen.
+    """
+    if name == "alle":
+        return True
+    if name == "mehrmonatig":
+        return _month_index(ann["period_to"]) - _month_index(ann["period_from"]) + 1 >= 2
+    if name == "mit_anker":
+        return str(ann.get("note") or "").strip().rstrip(".").rstrip().endswith(ANCHOR_SUFFIX)
+    if name == "ohne_duenne":
+        if counts is None:
+            return None
+        months = range(_month_index(ann["period_from"]), _month_index(ann["period_to"]) + 1)
+        return all(counts.get(_month_str(i), 0) >= THIN_MONTH_REVIEWS for i in months)
+    raise ValueError(f"unbekannte Teilmenge: {name}")
+
+
+def _restrict(variant_result: Dict[str, Any], keep: set) -> Dict[str, Any]:
+    """Kennzahlen einer Reihe, eingeschränkt auf die Einträge in ``keep``
+    (Schlüssel aus ``_annotation_key``). Zuordnung wie in der Gesamtmenge;
+    Treffer außerhalb der Teilmenge sind neutral."""
+    hits = [h for h in variant_result["hits"] if _annotation_key(h["annotation"]) in keep]
+    misses = [m for m in variant_result["misses"] if _annotation_key(m["annotation"]) in keep]
+    neutral = [h for h in variant_result["hits"] if _annotation_key(h["annotation"]) not in keep]
+    out = metrics(len(hits), len(variant_result["extras"]), len(misses))
+    out.update({"n_annotations": len(hits) + len(misses), "neutral": len(neutral),
+                "hits": hits, "misses": misses, "extras": variant_result["extras"]})
+    return out
+
+
+def evaluate_subsets(doc: Dict[str, Any], companies: Dict[str, va.CompanyInfo], report: Dict[str, Any],
+                     subsets: Tuple[str, ...] = SUBSETS) -> Dict[str, Any]:
+    """Teilauswertungen auf Grundlage eines Berichts von ``evaluate``; reine Funktion.
+    Zählungen für ``ohne_duenne`` aus ``CompanyInfo.counts`` (``attach_series_counts``)."""
+    out: Dict[str, Any] = {}
+    for name in subsets:
+        keep: set = set()
+        undetermined = 0
+        for ann in doc.get("annotations") or []:
+            info = companies.get(va.normalize_company_name(ann["company"]))
+            counts = info.counts.get(ann["source"]) if info is not None else None
+            member = subset_member(name, ann, counts)
+            if member is None:
+                undetermined += 1
+            elif member:
+                keep.add(_annotation_key(ann))
+        series: List[Dict[str, Any]] = []
+        for s in report["series"]:
+            variants = {v: _restrict(s["variants"][v], keep) for v in VARIANTS}
+            if variants[VARIANTS[0]]["n_annotations"]:
+                series.append({"series": s["series"], "source": s["source"], "variants": variants})
+        totals: Dict[str, Any] = {}
+        for variant in VARIANTS:
+            per_source = {}
+            for source in VALID_SOURCES:
+                items = [s["variants"][variant] for s in series if s["source"] == source]
+                if items:
+                    per_source[source] = _sum_metrics(items)
+            totals[variant] = {"gesamt": _sum_metrics([s["variants"][variant] for s in series]), "je_quelle": per_source}
+        out[name] = {"definition": SUBSET_DEFINITIONS[name], "n_annotations": len(keep),
+                     "n_undetermined": undetermined, "series": series, "totals": totals}
+    return out
+
+
 # ── Bericht ──────────────────────────────────────────────────────────────────
 
 def _pct(value: Optional[float]) -> str:
@@ -293,6 +399,25 @@ def format_report(report: Dict[str, Any], path: str = "") -> str:
                              f"(Fenster {m['window'][0]}..{m['window'][1]})")
             for e in v["extras"]:
                 lines.append(f"    Zusätzlich: {_fmt_detection(e)}")
+    if report.get("subsets"):
+        lines.append("")
+        lines.append("Teilauswertungen (vor dem ersten Lauf festgelegt, E5); Erkennungen zu Einträgen außerhalb der Teilmenge neutral")
+        for name, sub in report["subsets"].items():
+            extra = f", nicht bestimmbar {sub['n_undetermined']}" if sub["n_undetermined"] else ""
+            lines.append(f"  Teilmenge {name}: {sub['definition']} ({sub['n_annotations']} Einträge{extra})")
+            for variant in VARIANTS:
+                title = "Niveauwechsel allein" if variant == VARIANTS[0] else "Niveauwechsel und Einzelmonate"
+                lines.append(f"    Variante {title}")
+                lines.append(f"    {'Reihe':<56}{'Ann':>4}{'TP':>4}{'FP':>4}{'FN':>4}{'Neu':>4}{'Prec':>7}{'Rec':>7}{'F1':>7}")
+                for s in sub["series"]:
+                    v = s["variants"][variant]
+                    lines.append(f"    {s['series'][:56]:<56}{v['n_annotations']:>4}{v['tp']:>4}{v['fp']:>4}{v['fn']:>4}{v['neutral']:>4}"
+                                 f"{_pct(v['precision']):>7}{_pct(v['recall']):>7}{_pct(v['f1']):>7}")
+                tot = sub["totals"][variant]
+                rows = [("Gesamt " + src, m) for src, m in tot["je_quelle"].items()] + [("Gesamt", tot["gesamt"])]
+                for label, m in rows:
+                    lines.append(f"    {label:<56}{m['n_annotations']:>4}{m['tp']:>4}{m['fp']:>4}{m['fn']:>4}{'':>4}"
+                                 f"{_pct(m['precision']):>7}{_pct(m['recall']):>7}{_pct(m['f1']):>7}")
     return "\n".join(lines)
 
 
@@ -318,6 +443,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--offline", action="store_true", help="Unternehmensliste aus data_density.json statt aus der DB (die Erkennung liest weiterhin die DB)")
     parser.add_argument("--source", choices=list(VALID_SOURCES), action="append", help="nur diese Quelle(n) auswerten")
     parser.add_argument("--json", dest="json_out", help="Ergebnis zusätzlich als JSON-Datei schreiben")
+    parser.add_argument("--subset", choices=list(SUBSETS), action="append",
+                        help="Teilauswertung(en); ohne Angabe alle vier (alle, ohne_duenne, mehrmonatig, mit_anker)")
+    parser.add_argument("--series-dir", default=DEFAULT_SERIES_DIR, help="Serien-CSVs für die Teilmenge ohne_duenne")
     args = parser.parse_args(argv)
 
     doc, err = va._load_json(args.file, "Annotationsdatei")
@@ -341,7 +469,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Abbruch: Annotationen zuerst korrigieren (validate_annotations.py).")
         return 1
 
+    subsets = tuple(dict.fromkeys(args.subset)) if args.subset else SUBSETS
+    if "ohne_duenne" in subsets:
+        series_warnings: List[str] = []
+        if os.path.isdir(args.series_dir):
+            va.attach_series_counts(companies, args.series_dir, series_warnings)
+        else:
+            series_warnings.append(f"Serien-Verzeichnis {args.series_dir} fehlt; Teilmenge ohne_duenne nicht bestimmbar.")
+        for w in series_warnings:
+            print(f"Warnung: {w}")
+
     report = evaluate(doc, companies, _db_fetch, sources=args.source)
+    report["subsets"] = evaluate_subsets(doc, companies, report, subsets)
     print(format_report(report, args.file))
     if args.json_out:
         os.makedirs(os.path.dirname(os.path.abspath(args.json_out)), exist_ok=True)

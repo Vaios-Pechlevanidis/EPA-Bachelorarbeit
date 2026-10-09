@@ -1,7 +1,9 @@
 """
-Abgleich zweier Annotationsdateien (DZ1, E5, Iteration 2): Übereinstimmung der
-Referenzzeiträume des Autors (``data/annotations.json``) mit denen einer zweiten,
-unabhängigen Person (``data/annotations_zweitperson.json``).
+Abgleich zweier beliebiger Annotationsdateien (DZ1, E5): Übereinstimmung der
+Referenzzeiträume aus Datei A (Standard ``data/annotations.json``) mit denen aus
+Datei B (``--b``, Pflichtangabe). Eine zweite, unabhängige Person stand für DZ1
+nicht zur Verfügung (E5, Aktualisierung 2026-10-09); das Skript bleibt für
+spätere Vergleiche, etwa zweier Fassungen derselben Datei.
 
 Zuordnungsregel: dieselbe wie beim Abgleich Erkennung ↔ Referenz (E5, Regel 6,
 ``scripts/evaluate_detection.match_window``), auf zwei Zeiträume übertragen:
@@ -26,8 +28,8 @@ Die Funktionen ``match_periods`` und ``compare`` sind rein (Tests:
 Verwendung
 ----------
     cd backend
-    uv run python scripts/compare_annotations.py
-    uv run python scripts/compare_annotations.py --a data/annotations.json --b data/annotations_zweitperson.json --json data/calibration/dz1_uebereinstimmung.json
+    uv run python scripts/compare_annotations.py --b <andere_datei.json>
+    uv run python scripts/compare_annotations.py --a <datei_a.json> --b <datei_b.json> --json <ergebnis.json>
 """
 
 from __future__ import annotations
@@ -51,7 +53,6 @@ from make_annotation_sheet import company_names, is_eligible, is_evaluated, read
 from services.rating_series_service import OVERALL_DIMENSION, VALID_SOURCES  # noqa: E402
 
 DEFAULT_A = os.path.join(BACKEND_DIR, "data", "annotations.json")
-DEFAULT_B = os.path.join(BACKEND_DIR, "data", "annotations_zweitperson.json")
 DEFAULT_SERIES_DIR = os.path.join(BACKEND_DIR, "data", "series")
 DEFAULT_DENSITY = os.path.join(BACKEND_DIR, "data", "data_density.json")
 
@@ -210,7 +211,7 @@ def format_report(report: Dict[str, Any], path_a: str = "", path_b: str = "") ->
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--a", default=DEFAULT_A, help="Annotationsdatei A (Default: data/annotations.json)")
-    parser.add_argument("--b", default=DEFAULT_B, help="Annotationsdatei B (Default: data/annotations_zweitperson.json)")
+    parser.add_argument("--b", required=True, help="Annotationsdatei B (Pflichtangabe)")
     parser.add_argument("--series-dir", default=DEFAULT_SERIES_DIR, help="Serien-CSVs (bewertete Monate, geeignete Reihen)")
     parser.add_argument("--density", default=DEFAULT_DENSITY, help="data_density.json für die Unternehmensnamen")
     parser.add_argument("--source", default="employee", choices=list(VALID_SOURCES), help="Quelle der Reihen (Default: employee)")

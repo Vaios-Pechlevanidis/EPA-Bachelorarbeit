@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { TrendingDown, MessageCircle, Layers } from "lucide-react";
 import ModalShell, { ModalLoader, ModalError, ModalEmpty } from "./ModalShell";
+import { NEGATIVE_TOPIC_LABEL } from "@/lib/labels";
 import { Tag } from "../../../icons";
 import { API_URL } from "../../../config";
 
@@ -90,7 +91,7 @@ export default function NegativTopicModal({ open, onOpenChange, topic: propTopic
         .then((data) => {
           if (!data.topic) throw new Error("Keine negativen Topics vorhanden");
           setModal({
-            title: "Negative Topic",
+            title: NEGATIVE_TOPIC_LABEL,
             topic_label: data.topic, topic: data.topic,
             kritikpunkte: data.kritikpunkte || [],
             avg_rating: data.avg_rating,
@@ -109,7 +110,7 @@ export default function NegativTopicModal({ open, onOpenChange, topic: propTopic
             const sorted = pool.sort((a, b) => (a.avgRating || 5) - (b.avgRating || 5));
             const most = sorted[0];
             setModal({
-              title: "Negative Topic",
+              title: NEGATIVE_TOPIC_LABEL,
               topic_label: most?.topic, topic: most?.topic,
               categories: most?.topic ? [most.topic] : [],
               kritikpunkte: deriveKritikpunkte(most).slice(0, 3),
@@ -189,7 +190,7 @@ export default function NegativTopicModal({ open, onOpenChange, topic: propTopic
       onOpenChange={onOpenChange}
       tone="bad"
       icon={<Tag />}
-      eyebrow="KENNZAHL · NEGATIVES TOPIC"
+      eyebrow="KENNZAHL · NEGATIVSTES TOPIC"
       title={loading ? "Lade…" : topicLabel}
       subtitle={
         modal && Number.isFinite(Number(avgRating))

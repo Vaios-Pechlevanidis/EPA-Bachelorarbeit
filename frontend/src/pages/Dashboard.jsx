@@ -19,6 +19,7 @@ import MostCriticalModal from "../components/dashboard/modals/MostCriticalModal"
 import NegativTopicModal from "../components/dashboard/modals/NegativTopicModal"
 import ImportModal from "../components/dashboard/modals/ImportModal"
 import { getImportHistory } from "@/lib/importHistory"
+import { NEGATIVE_TOPIC_LABEL } from "@/lib/labels"
 
 import {
   Dashboard as DashboardIcon, Compare, Download, Building, Home, Search, Loader, Sun, Moon, Anomaly as AnomalyIcon, TrendUp,
@@ -146,29 +147,25 @@ export default function Dashboard() {
     } catch { setData(null) }
   }, [effectiveCompanyId, globalTimeRange])
 
+  // Trend der Gesamtnote (D1, 2026-10-09): letzte 12 (bei „3 Jahre“ 36) volle
+  // Kalendermonate bis zum letzten vollen Monat mit Bewertungen gegen dieselbe Zahl
+  // Monate davor, n je Fenster (Modus score_months). Kein Rückfall auf die
+  // Kategorien-Modi, damit die Kachel immer dieselbe Basis wie der Ø Score hat.
   const getTrend = useCallback(async (timeRange = globalTimeRange) => {
     const companyId = effectiveCompanyId
     if (!companyId) return
     const months = timeRange === "3y" ? 36 : 12
-    const urls = [
-      `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_all&months=${months}`,
-      `${API_URL}/companies/${companyId}/ratings/trend?mode=rate&days=30`,
-    ]
-    for (const url of urls) {
-      try {
-        const res = await fetch(url)
-        if (!res.ok) continue
-        const json = await res.json()
-        const deltaRaw = json.overall?.deltaPoints ?? json.overall?.avgDelta
-        const delta = typeof deltaRaw === "number" ? deltaRaw : parseFloat(deltaRaw)
-        if (!Number.isFinite(delta)) continue
-        const rounded = Math.round(delta * 10) / 10
-        const sign = rounded > 0.05 ? "up" : rounded < -0.05 ? "down" : "flat"
-        setTrendData({ avgDelta: rounded.toFixed(1), sign, windowMonths: json.months ?? null, nReviews: json.n_reviews ?? null })
+    try {
+      const res = await fetch(`${API_URL}/companies/${companyId}/ratings/trend?mode=score_months&months=${months}`)
+      if (!res.ok) throw new Error()
+      const json = await res.json()
+      const delta = Number(json.difference)
+      if (json.difference == null || !Number.isFinite(delta)) {
+        setTrendData(json.anchor ? { avgDelta: null, sign: null, windowMonths: json.months ?? months, nReviews: json.n_reviews ?? null, raw: json } : null)
         return
-      } catch { /* nächste Adresse versuchen */ }
-    }
-    setTrendData(null)
+      }
+      setTrendData({ avgDelta: delta.toFixed(2), sign: json.sign ?? "flat", windowMonths: json.months ?? months, nReviews: json.n_reviews ?? null, raw: json })
+    } catch { setTrendData(null) }
   }, [effectiveCompanyId, globalTimeRange])
 
   // Rollierende Schnitte (FA-08): unabhängig vom Zeitfilter, Anker ist der letzte volle Monat mit Daten.
@@ -256,7 +253,7 @@ export default function Dashboard() {
         if (Number.isFinite(br) && Number.isFinite(cr)) { if (cr < br) return cur; if (cr > br) return best }
         return freqOf(cur) > freqOf(best) ? cur : best
       }, base[0])
-      return { ...chosen, title: "Negative Topic", topic_label: chosen?.topic, categories: chosen?.topic ? [chosen.topic] : chosen?.categories }
+      return { ...chosen, title: NEGATIVE_TOPIC_LABEL, topic_label: chosen?.topic, categories: chosen?.topic ? [chosen.topic] : chosen?.categories }
     }
 
     try {
@@ -279,7 +276,7 @@ export default function Dashboard() {
             }, list[0])
             setNegativeTopicItem({
               ...chosen,
-              title: "Negative Topic",
+              title: NEGATIVE_TOPIC_LABEL,
               topic_label: chosen?.topic_label || chosen?.topic || chosen?.topic_text,
               categories: Array.isArray(chosen?.categories) ? chosen.categories : (chosen?.topic_label ? [chosen.topic_label] : []),
             })
@@ -315,7 +312,7 @@ export default function Dashboard() {
 
   /* ---- PDF export ---- */
   // Übernimmt alle Elemente des Dashboards: Datenstand, fünf Kennzahlen mit n und
-  // Datenbasis, Timeline, Topics im Detail, Anomalien im Verlauf, Topic-Übersicht.
+  // Datenbasis, Zeitverlauf, Topics im Detail, Anomalien im Verlauf, Topic-Übersicht.
   const handleExportPDF = async () => {
     if (!selectedCompanyName) { setError("Bitte wählen Sie zuerst eine Firma aus."); return }
     try {
@@ -364,8 +361,9 @@ export default function Dashboard() {
         timeRange: globalTimeRange,
         lastImportLocal: importHistory[0]?.timestamp ?? null,
         dataStatus,
-        avgScore: data?.avg_overall || "-",
-        avgCount: data?.n_reviews ?? null,
+        avgScore: data?.score ?? "-",
+        avgCount: data?.score_n ?? null,
+        categoryMean: data?.avg_overall ?? null,
         trend: trendData,
         rolling: rollingData,
         mostCritical: mostCriticalData,
@@ -668,8 +666,8 @@ export default function Dashboard() {
             <div style={{ marginBottom: 20 }}>
               <KPIGrid
                 companyId={effectiveCompanyId}
-                avgScore={data?.avg_overall}
-                avgCount={data?.n_reviews ?? null}
+                avgScore={data?.score ?? null}
+                avgCount={data?.score_n ?? null}
                 trendData={trendData}
                 rollingData={rollingData}
                 mostCriticalData={mostCriticalData}
@@ -727,13 +725,16 @@ export default function Dashboard() {
       <SorceModal
         open={open}
         onOpenChange={setOpen}
-        companyId={selectedCompany}
+        companyId={effectiveCompanyId}
+        scoreData={data}
+        startDate={getStartDate(globalTimeRange)}
       />
 
       <TrendModal
         open={openTrend}
         onOpenChange={setOpenTrend}
         companyId={effectiveCompanyId}
+        scoreTrend={trendData?.raw ?? null}
       />
 
       <RollingModal

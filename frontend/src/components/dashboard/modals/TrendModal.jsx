@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowDown, ArrowUp, Filter, Search, TrendingDown, TrendingUp, Minus, X } from "lucide-react";
 import ModalShell, { ModalLoader, ModalError, ModalEmpty } from "./ModalShell";
 import { TrendUp as TrendUpIcon } from "../../../icons";
+import { CATEGORY_MEAN_TITLE, scoreTrendWindowsText } from "@/lib/scoreText";
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000") + "/api";
 
@@ -44,8 +45,33 @@ const signTone = (sign) => {
   return { text: "text-slate-600", bg: "bg-slate-100", icon: Minus };
 };
 
-export default function TrendModal({ open, onOpenChange, companyId }) {
-  const [range, setRange]     = useState("1Y");
+/* Gesamtnote der Kachel (Modus score_months, D1): beide Fenster mit Mittel und n. */
+function ScoreTrendSummary({ trend }) {
+  if (!trend) return null;
+  const f2 = (n) => (n == null ? "–" : Number(n).toFixed(2).replace(".", ","));
+  const diff = trend.difference;
+  return (
+    <div className="mb-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5" data-testid="score-trend">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[13px] font-semibold text-slate-900">Gesamtnote ({trend.months} volle Monate vs. {trend.months} davor)</span>
+        <span className="font-semibold tnum text-[15px] text-slate-900">
+          {diff == null ? "—" : `${diff > 0 ? "+" : ""}${f2(diff)}`}
+        </span>
+      </div>
+      <span className="block text-[12px] text-slate-600 tnum">
+        Ø {f2(trend.current?.mean)} vs. Ø {f2(trend.previous?.mean)} · {scoreTrendWindowsText(trend)}
+      </span>
+      <span className="block text-[11.5px] text-slate-500">
+        Letzter voller Monat mit Bewertungen als Bezug; Mittel aller Bewertungen je Fenster, Mitarbeitende.
+      </span>
+    </div>
+  );
+}
+
+export default function TrendModal({ open, onOpenChange, companyId, scoreTrend = null }) {
+  // Standard "All" (stable_all): Fenster enden wie die Kachel am letzten Monat mit Daten;
+  // "1Y"/"3Y" (stable_months) rechnen ab heute und bleiben bei älteren Reihen leer.
+  const [range, setRange]     = useState("All");
   // Ergebnis je Firma und Zeitraum; "loading", solange der Schlüssel nicht passt
   // (kein setState im Effekt, Lint-Regel react-hooks/set-state-in-effect).
   const requestKey = companyId ? `${companyId}:${range}` : null;
@@ -142,8 +168,8 @@ export default function TrendModal({ open, onOpenChange, companyId }) {
       tone={overallTone}
       icon={<TrendUpIcon />}
       eyebrow="KENNZAHL · TREND-ENTWICKLUNG"
-      title="Trend pro Kategorie"
-      subtitle={`Vergleich · ${range === "All" ? "Gesamt" : range === "1Y" ? "Letzte 12 Monate" : "Letzte 36 Monate"}`}
+      title="Trend"
+      subtitle={`Gesamtnote und ${CATEGORY_MEAN_TITLE} · ${range === "All" ? "12 Monate bis zum letzten Monat mit Daten" : range === "1Y" ? "Letzte 12 Monate" : "Letzte 36 Monate"}`}
       size="lg"
       toolbar={
         <div className="flex flex-col gap-2">
@@ -244,6 +270,12 @@ export default function TrendModal({ open, onOpenChange, companyId }) {
         </div>
       }
     >
+      <ScoreTrendSummary trend={scoreTrend} />
+      <h3 className="text-[13px] font-semibold text-slate-900">{CATEGORY_MEAN_TITLE} je Kategorie</h3>
+      <p className="mb-1 text-[11.5px] leading-4 text-slate-500">
+        Differenz der Kategorienmittel zwischen den Fenstern (Monatsmittel je Kategorie); kann von der Gesamtnote abweichen.
+      </p>
+
       {loading && <ModalLoader />}
       {error && <ModalError>{error}</ModalError>}
       {!companyId && <ModalEmpty>Bitte zuerst eine Firma auswählen.</ModalEmpty>}

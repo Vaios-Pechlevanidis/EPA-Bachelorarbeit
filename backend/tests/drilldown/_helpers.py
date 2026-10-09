@@ -39,6 +39,46 @@ TOPIC_OVERVIEW_BASE = {
     (3, "candidates", "2024-01-01"): "550f88b47feeca3c",
 }
 
+# NFA-07 (Inkrement 6, 2026-10-09): Die Beispielzitate (``example``,
+# ``typicalStatements``, ``reviewDetails``) stammen seitdem nie aus
+# jobbeschreibung oder stellenbeschreibung und weichen deshalb von
+# TOPIC_OVERVIEW_BASE ab. Die Topic-Berechnung bleibt gleich: Hash der Antwort
+# ohne diese drei Felder, erzeugt auf Commit ef05ca6 (vor der Änderung, dort
+# stimmte die volle Antwort mit TOPIC_OVERVIEW_BASE überein).
+TOPIC_QUOTE_KEYS = ("example", "typicalStatements", "reviewDetails")
+TOPIC_OVERVIEW_CALC_BASE = {
+    (1, None, '2024-01-01'): "cbade695fb94a621",
+    (1, None, None): "a2f448f3498dd220",
+    (1, 'candidates', '2024-01-01'): "1b457c9d537004b9",
+    (1, 'candidates', None): "873a5c91136fad5c",
+    (1, 'employee', '2024-01-01'): "48c4b2bd6acb130d",
+    (1, 'employee', None): "66c05ad3e85148f8",
+    (2, None, '2024-01-01'): "23f3c62694554e17",
+    (2, None, None): "a1a187053a03b64a",
+    (2, 'candidates', '2024-01-01'): "32c1473aa64e235a",
+    (2, 'candidates', None): "070d9383cd341060",
+    (2, 'employee', '2024-01-01'): "ead869c6a8468177",
+    (2, 'employee', None): "ef633afb13c1ab4f",
+    (3, None, '2024-01-01'): "3227012fb9cf30f3",
+    (3, None, None): "129c1a3a08371c35",
+    (3, 'candidates', '2024-01-01'): "5e298fb29a0f8b62",
+    (3, 'candidates', None): "4697a59833978e32",
+    (3, 'employee', '2024-01-01'): "becc13c227b56b97",
+    (3, 'employee', None): "5dffc7f9bdad1f6a",
+}
+
+
+def without_quotes(body):
+    """Antwort von topic-overview ohne die Zitatfelder (NFA-07)."""
+    import copy
+
+    body = copy.deepcopy(body)
+    for topic in body.get("topics", []):
+        for key in TOPIC_QUOTE_KEYS:
+            topic.pop(key, None)
+    return body
+
+
 REVIEWS_BASE = {
     (1, None, None): "144b7a5de65d1da9",
     (1, None, 7): "a56c5c5a36302610",

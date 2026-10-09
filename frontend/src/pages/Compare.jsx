@@ -24,6 +24,8 @@ import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { exportCompareAsPDF } from "@/utils/pdfExport"
 import { Compare as CompareIcon, Star as StarIcon, Tag, TrendUp as TrendUpIcon } from "../icons"
 import { API_URL } from "../config"
+import { SCORE_HINT } from "@/lib/scoreText"
+import { CRITICAL_LABEL, NEGATIVE_TOPIC_LABEL } from "@/lib/labels"
 
 /* ─── Design-System Section component ─── */
 function DSSection({ icon, eyebrow, title, action, children, className = "" }) {
@@ -344,7 +346,7 @@ const ComparePage = () => {
                     fetch(`${API_URL}/companies/${companyId}/ratings`),
                     fetch(`${API_URL}/companies/${companyId}/ratings/avg`),
                     fetch(
-                        `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_all&months=12`
+                        `${API_URL}/companies/${companyId}/ratings/trend?mode=score_months&months=12`
                     ),
                     fetch(
                         `${API_URL}/analytics/company/${companyId}/timeline?days=1825&forecast_months=0&source=employee`
@@ -389,21 +391,18 @@ const ComparePage = () => {
                     ? await negTopicsRes.value.json()
                     : null
 
-            // Parse trend
+            // Trend der Gesamtnote wie die Kachel im Dashboard (D1, Modus score_months):
+            // letzte 12 volle Monate bis zum letzten Monat mit Bewertungen gegen die 12 davor
             let trend = null
-            if (trendJson) {
-                const deltaRaw =
-                    trendJson.overall?.deltaPoints ?? trendJson.overall?.avgDelta
-                const delta =
-                    typeof deltaRaw === "number"
-                        ? deltaRaw
-                        : parseFloat(deltaRaw)
+            if (trendJson && trendJson.difference != null) {
+                const delta = Number(trendJson.difference)
                 if (Number.isFinite(delta)) {
-                    const rounded = Math.round(delta * 10) / 10
-                    let sign = "flat"
-                    if (rounded > 0.05) sign = "up"
-                    else if (rounded < -0.05) sign = "down"
-                    trend = { avgDelta: rounded.toFixed(1), sign, windowMonths: trendJson.months ?? null }
+                    trend = {
+                        avgDelta: delta.toFixed(2),
+                        sign: trendJson.sign ?? "flat",
+                        windowMonths: trendJson.months ?? null,
+                        nReviews: trendJson.n_reviews ?? null,
+                    }
                 }
             }
 
@@ -604,7 +603,7 @@ const ComparePage = () => {
             .map((slot) => ({
                 name: slot.name,
                 colorIndex: slot.colorIndex,
-                score: companyData[slot.id]?.ratings?.avg_overall,
+                score: companyData[slot.id]?.ratings?.score,
             }))
             .filter((s) => s.score != null && Number.isFinite(s.score))
 
@@ -669,7 +668,8 @@ const ComparePage = () => {
                 return {
                     name: slot.name,
                     id: slot.id,
-                    score: data?.ratings?.avg_overall ?? null,
+                    score: data?.ratings?.score ?? null,
+                    scoreN: data?.ratings?.score_n ?? null,
                     trend: data?.trend ?? null,
                     mostCritical: data?.mostCritical ?? null,
                     negativeTopic: data?.negativeTopic ?? null,
@@ -881,7 +881,9 @@ const ComparePage = () => {
                                 <CardContent className="p-4 space-y-3">
                                     {activeSlots.map((slot) => {
                                         const score =
-                                            companyData[slot.id]?.ratings?.avg_overall
+                                            companyData[slot.id]?.ratings?.score
+                                        const scoreN =
+                                            companyData[slot.id]?.ratings?.score_n
                                         return (
                                             <div
                                                 key={slot.id}
@@ -910,11 +912,19 @@ const ComparePage = () => {
                                                             : "text-slate-400"
                                                     }`}
                                                 >
-                                                    {score != null ? score : "–"}
+                                                    {score != null ? Number(score).toFixed(2).replace(".", ",") : "–"}
+                                                    {scoreN != null && (
+                                                        <span className="block text-[10px] font-normal text-slate-500 text-right tnum">
+                                                            n = {Number(scoreN).toLocaleString("de-DE")}
+                                                        </span>
+                                                    )}
                                                 </span>
                                             </div>
                                         )
                                     })}
+                                    <p className="text-[10.5px] leading-[14px] text-slate-500 m-0" title={SCORE_HINT}>
+                                        Gesamtnote, Mitarbeitende, ungewichtet; n = Bewertungen mit Gesamtnote.
+                                    </p>
                                 </CardContent>
                             </Card>
 
@@ -980,11 +990,11 @@ const ComparePage = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Most Critical comparison */}
+                            {/* Kritischste Kategorie comparison */}
                             <Card className="rounded-lg border border-slate-200 bg-white shadow-xs overflow-hidden">
                                 <CardHeader className="px-4 py-3 border-b border-slate-200">
                                     <CardTitle className="text-[14px] font-semibold text-slate-900 tracking-tight">
-                                        Most Critical
+                                        {CRITICAL_LABEL}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
@@ -1023,11 +1033,11 @@ const ComparePage = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Negative Topic comparison */}
+                            {/* Negativstes Topic comparison */}
                             <Card className="rounded-lg border border-slate-200 bg-white shadow-xs overflow-hidden">
                                 <CardHeader className="px-4 py-3 border-b border-slate-200">
                                     <CardTitle className="text-[14px] font-semibold text-slate-900 tracking-tight">
-                                        Negative Topic
+                                        {NEGATIVE_TOPIC_LABEL}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
@@ -1145,13 +1155,13 @@ const ComparePage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Trend-Ausblick */}
+                                        {/* Trend der Gesamtnote (beschreibend, keine Prognose) */}
                                         <div className="flex gap-3 md:col-span-2">
                                             <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
                                                 <TrendingUp className="h-4 w-4 text-slate-600" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-slate-800 mb-1">Trend-Ausblick</p>
+                                                <p className="text-sm font-semibold text-slate-800 mb-1">Trend der Gesamtnote</p>
                                                 <ul className="space-y-0.5">
                                                     {summaryData.trends.map(({ slot, trend }) => (
                                                         <li key={slot.id} className="text-sm text-slate-600 flex items-center gap-2">

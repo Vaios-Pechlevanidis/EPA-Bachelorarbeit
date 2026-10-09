@@ -3,6 +3,7 @@ import { TrendingDown, BarChart3, Layers } from "lucide-react";
 import ModalShell, { ModalLoader, ModalError, ModalEmpty } from "./ModalShell";
 import { Alert } from "../../../icons";
 import { API_URL } from "../../../config";
+import { CRITICAL_LABEL } from "@/lib/scoreText";
 
 const LABELS = {
   avg_arbeitsatmosphaere: "Arbeitsatmosphäre",
@@ -86,9 +87,9 @@ export default function MostCriticalModal({ open, onOpenChange, companyId = null
       onOpenChange={onOpenChange}
       tone={tone}
       icon={<Alert />}
-      eyebrow="KENNZAHL · KRITISCHSTES THEMA"
-      title={loading || shownError || !shownItem ? "Most Critical" : shownItem.title}
-      subtitle={item ? `Niedrigster Topic-Score: ${fmt(item.score)} / 5` : "Kategorie mit dem niedrigsten Score"}
+      eyebrow="KENNZAHL · KRITISCHSTE KATEGORIE"
+      title={loading || shownError || !shownItem ? CRITICAL_LABEL : shownItem.title}
+      subtitle={item ? `Niedrigstes Kategorienmittel: ${fmt(item.score)} / 5` : "Kategorie mit dem niedrigsten Kategorienmittel"}
       size="md"
     >
       {loading && <ModalLoader />}

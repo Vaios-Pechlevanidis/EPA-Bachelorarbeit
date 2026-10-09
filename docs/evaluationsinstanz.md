@@ -1,6 +1,6 @@
 # Evaluationsinstanz für die Interviews (DZ3) – Varianten, Einstellungen, Prüfliste
 
-Stand: 2026-10-08. Die Evaluationsinstanz ist die Ausgabe des Dashboards, die in den
+Stand: 2026-10-09. Die Evaluationsinstanz ist die Ausgabe des Dashboards, die in den
 Experteninterviews (DZ3) gezeigt wird: Backend und Frontend aus diesem Repository auf dem
 Rechner des Autors gegen die gehostete Datenbank (nur lesend). Dieses Dokument legt die beiden
 Varianten mit ihren Folgen vor, nennt die nötigen Einstellungen und enthält eine Prüfliste für
@@ -11,6 +11,12 @@ den Tag vor einem Interview. Beispielwerte stehen in `docs/evaluationsinstanz.en
 > `VITE_SHOW_FINANCE_EXTRAS=false` gebaut; die Zusatzkarten des Aktien-Dashboards sind in den
 > Interviews nicht sichtbar (E16). Variante A bleibt als Standardbau außerhalb der Evaluation
 > beschrieben.
+>
+> **Entscheidung des Autors (2026-10-09, D2): ohne Prognose.** Die Evaluationsinstanz wird
+> zusätzlich mit `VITE_SHOW_FORECAST=false` gebaut. Der Zeitverlauf ruft dann
+> `forecast_months=0` ab und zeigt weder Prognoselinie noch Trennlinie, Legendeneintrag oder
+> „Ø Prognose“; die x-Achse endet am letzten Monat mit Daten; der PDF-Export folgt demselben
+> Schalter (E28). Ohne Angabe bleibt die Prognose aus Zyklus 1 sichtbar.
 
 ## 1. Die beiden Varianten (Entscheidung D3)
 
@@ -53,18 +59,23 @@ Aktienkurs“ mit dem Grund.
 |---|---|---|
 | `VITE_API_URL` | Adresse des Backends, `/api` wird angehängt (`frontend/src/config.js`) | `http://localhost:8000` |
 | `VITE_SHOW_FINANCE_EXTRAS` | `false` oder `0` blendet die Zusatzkarten aus (Variante B); jeder andere Wert oder keine Angabe: Variante A | `false` (Variante B, Entscheidung D3 vom 2026-10-08) |
+| `VITE_SHOW_FORECAST` | `false` oder `0` blendet die Prognose im Zeitverlauf und im PDF aus (`frontend/src/config.js`, E28); jeder andere Wert oder keine Angabe: mit Prognose | `false` (Entscheidung D2 vom 2026-10-09) |
 
 Bauen und starten (Beispiele):
 
 ```bash
-# Variante B als Produktionsbau, danach mit npm run preview oder einem statischen Server auf Port 3000 ausliefern
-cd frontend && VITE_SHOW_FINANCE_EXTRAS=false npm run build
+# Evaluationsinstanz als Produktionsbau, danach mit npm run preview oder einem statischen Server auf Port 3000 ausliefern
+# (VITE_API_URL ausdrücklich setzen: frontend/.env.production zeigt auf einen entfernten Server)
+cd frontend && VITE_API_URL=http://localhost:8000 VITE_SHOW_FINANCE_EXTRAS=false VITE_SHOW_FORECAST=false npm run build
 
-# Variante B mit dem Entwicklungsserver (Port 5173 ist in der CORS-Liste)
-cd frontend && VITE_SHOW_FINANCE_EXTRAS=false npm run dev -- --port 5173
+# dasselbe mit dem Entwicklungsserver (Port 5173 ist in der CORS-Liste)
+cd frontend && VITE_SHOW_FINANCE_EXTRAS=false VITE_SHOW_FORECAST=false npm run dev -- --port 5173
 
-# Docker (beide Dienste), Variante B
-docker compose build --build-arg VITE_SHOW_FINANCE_EXTRAS=false frontend
+# Docker (beide Dienste)
+docker compose build --build-arg VITE_SHOW_FINANCE_EXTRAS=false --build-arg VITE_SHOW_FORECAST=false frontend
+
+# Abnahme der Umgebung und der Speicher (nur lesend, Exit-Code ungleich 0 bei Lücken)
+cd backend && uv run python scripts/check_evaluation_instance.py
 ```
 
 ### 2.3 Stimmungsmodus (Vorher-Nachher-Vergleich, E11)
@@ -137,7 +148,8 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
 5. **Entfällt bei Variante B** (nur Variante A: Meldungen füllen mit
    `uv run python scripts/fetch_market_data.py --news`).
 6. **Frontend bauen** mit `VITE_SHOW_FINANCE_EXTRAS=false` (Variante B, Abschnitt 2.2) und
-   starten; im Browser prüfen: `/aktie` zeigt vier Kacheln und die Kurskarte über die ganze
+   `VITE_SHOW_FORECAST=false` (D2) und starten; im Browser prüfen: der Zeitverlauf zeigt keine
+   Prognose; `/aktie` zeigt vier Kacheln und die Kurskarte über die ganze
    Fläche, der Link unter dem Diagramm der Anomalien-Seite lautet „Aktienkurs und Kennzahlen“,
    der Tooltip „Aktie“ in der Seitenleiste ebenso.
 7. **Backend starten** und Antworten prüfen: `GET /api/analytics/company/19/market` liefert
@@ -157,7 +169,7 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
 11. **Netz:** Mit gefülltem Zwischenspeicher und `MARKET_LIVE_FETCH=0` braucht das Backend für
     Kurs und Kennzahlen kein Netz; die Datenbank (Supabase) und, in Variante A, Google News
     brauchen es. Verbindung am Interviewort vorab prüfen oder Variante B wählen.
-12. **Protokoll:** Commit-Hash, `VITE_SHOW_FINANCE_EXTRAS`, `MARKET_LIVE_FETCH`, `CONTEXT_LIVE_FETCH`,
+12. **Protokoll:** Commit-Hash, `VITE_SHOW_FINANCE_EXTRAS`, `VITE_SHOW_FORECAST`, `MARKET_LIVE_FETCH`, `CONTEXT_LIVE_FETCH`,
     `fetched_at` der Zwischenspeicher (Kurs und Belege, Zusammenfassung von `fetch_context.py`),
     `sentiment_mode` und das Datum des Durchlaufs festhalten.
 
