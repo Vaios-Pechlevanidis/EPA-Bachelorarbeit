@@ -50,6 +50,31 @@ const riskBadge = (statistical_meta) => {
 
 const fmt = (n, d = 1) => Number.isFinite(Number(n)) ? Number(n).toFixed(d).replace(".", ",") : "—"
 
+/* Sortierkopf der Tabelle; Zustand kommt als Props, damit die Komponente nicht
+   bei jedem Render neu entsteht (gleiches Verhalten). */
+function SortHeader({ label, sortable, keyName, align = "left", sortKey, sortDir, onToggle }) {
+  const isActive = sortKey === keyName
+  return (
+    <button
+      type="button"
+      onClick={sortable ? () => onToggle(keyName) : undefined}
+      className={[
+        "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.06em] uppercase",
+        align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start",
+        sortable ? "cursor-pointer hover:text-slate-900" : "cursor-default",
+        isActive ? "text-slate-900" : "text-slate-500",
+      ].join(" ")}
+    >
+      {label}
+      {sortable && (
+        isActive
+          ? (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)
+          : <ArrowUpDown className="h-3 w-3 opacity-40" />
+      )}
+    </button>
+  )
+}
+
 export default function TopicTableModal({
   open, onOpenChange, topics, onTopicSelect, sourceFilter, onSourceFilterChange,
 }) {
@@ -118,28 +143,8 @@ export default function TopicTableModal({
     return { total, avg, mentions, limited }
   }, [topics])
 
-  const SortHeader = ({ label, sortable, keyName, align = "left" }) => {
-    const isActive = sortKey === keyName
-    return (
-      <button
-        type="button"
-        onClick={sortable ? () => toggleSort(keyName) : undefined}
-        className={[
-          "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.06em] uppercase",
-          align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start",
-          sortable ? "cursor-pointer hover:text-slate-900" : "cursor-default",
-          isActive ? "text-slate-900" : "text-slate-500",
-        ].join(" ")}
-      >
-        {label}
-        {sortable && (
-          isActive
-            ? (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)
-            : <ArrowUpDown className="h-3 w-3 opacity-40" />
-        )}
-      </button>
-    )
-  }
+  // Sortierkopf: Zustand und Umschalter als Props (Komponente auf Modulebene, Lint-Regel react-hooks/static-components)
+  const sortHeaderProps = { sortKey, sortDir, onToggle: toggleSort }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -283,12 +288,12 @@ export default function TopicTableModal({
             <table className="w-full text-[13px]">
               <thead className="sticky top-0 bg-slate-50/80 backdrop-blur-sm border-b border-slate-200 z-10">
                 <tr>
-                  <th className="text-left px-4 py-2.5 font-medium text-slate-500"><SortHeader label="Topic"      sortable keyName="topic" /></th>
-                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[100px]"><SortHeader label="Erwähnungen" sortable keyName="frequency" align="center" /></th>
-                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[110px]"><SortHeader label="Ø Rating"   sortable keyName="rating"    align="center" /></th>
-                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[110px]"><SortHeader label="Sentiment"  align="center" /></th>
-                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[120px]"><SortHeader label="Datenqualität" align="center" /></th>
-                  <th className="text-left px-4 py-2.5 font-medium text-slate-500"><SortHeader label="Beispiel" /></th>
+                  <th className="text-left px-4 py-2.5 font-medium text-slate-500"><SortHeader {...sortHeaderProps} label="Topic"      sortable keyName="topic" /></th>
+                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[100px]"><SortHeader {...sortHeaderProps} label="Erwähnungen" sortable keyName="frequency" align="center" /></th>
+                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[110px]"><SortHeader {...sortHeaderProps} label="Ø Rating"   sortable keyName="rating"    align="center" /></th>
+                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[110px]"><SortHeader {...sortHeaderProps} label="Sentiment"  align="center" /></th>
+                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[120px]"><SortHeader {...sortHeaderProps} label="Datenqualität" align="center" /></th>
+                  <th className="text-left px-4 py-2.5 font-medium text-slate-500"><SortHeader {...sortHeaderProps} label="Beispiel" /></th>
                 </tr>
               </thead>
               <tbody>
