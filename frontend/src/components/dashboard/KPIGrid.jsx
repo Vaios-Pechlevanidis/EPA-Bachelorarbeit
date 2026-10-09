@@ -1,6 +1,7 @@
 import React from "react";
 import { Delta } from "../ui/primitives";
 import { Star, TrendUp, TrendDown, Alert, Tag } from "../../icons";
+import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from "@/lib/rollingAverage";
 
 const fmt = (n, d = 1) => (isNaN(Number(n)) ? "—" : Number(n).toFixed(d).replace(".", ","));
 
@@ -130,19 +131,47 @@ function KPITile({ label, icon, value, valueSize = "lg", delta, footer, tone = "
   );
 }
 
+/* ---- Rollierende Schnitte (Inkrement 6, FA-08) -------------------------
+   Daten: GET /companies/{id}/ratings/trend?mode=rolling. Die Kachel beschreibt
+   nur die Lage des 12-Monats-Schnitts zum 24-Monats-Schnitt (keine Prognose),
+   nennt Zeitraum und n je Fenster und warnt bei kleiner Basis. Neutrale Farbe. */
+const fmtN = (n) => (n == null ? "–" : Number(n).toLocaleString("de-DE"));
+
+function RollingFooter({ data }) {
+  if (!data) return "Sternebewertung, Mitarbeitende";
+  if (!data.anchor) return "keine datierten Bewertungen mit Gesamtnote";
+  const warnings = rollingWarnings(data);
+  return (
+    <>
+      <span className="block tnum">
+        12 M: {fmtRollingMonth(data.short.from)} – {fmtRollingMonth(data.short.to)}, n = {fmtN(data.short.n)} · 24 M: ab {fmtRollingMonth(data.long.from)}, n = {fmtN(data.long.n)}
+      </span>
+      <span className="block">12-Monats-Schnitt {rollingPhrase(data)}.</span>
+      {warnings.length > 0 && (
+        <span className="flex items-center gap-1 text-amber-700" title="Warnung bei kleiner Datenbasis">
+          <span className="w-3 h-3 flex-none"><Alert /></span>
+          {warnings.join(" · ")}
+        </span>
+      )}
+    </>
+  );
+}
+
 /* ============================================================================
-   KPIGrid — 4 colour-coded tiles. Each one pops a modal.
+   KPIGrid — 5 colour-coded tiles. Each one pops a modal.
    ============================================================================ */
 export default function KPIGrid({
   companyId,
   avgScore,
   avgCount,
   trendData,
+  rollingData,
   mostCriticalData,
   negativeTopicItem,
   getNegativeTopicName,
   onOpenScore,
   onOpenTrend,
+  onOpenRolling,
   onOpenCritical,
   onOpenNegative,
   topicOverviewRef,
@@ -164,8 +193,10 @@ export default function KPIGrid({
   // Negative-Topic tile is also always 'bad' when present.
   const negativeT = negativeTopicItem ? "bad" : "neutral";
 
+  const rollingOk = rollingReady(rollingData);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
 
       {/* Ø Score */}
       <KPITile
@@ -202,6 +233,18 @@ export default function KPIGrid({
         footer={trendData?.windowMonths ? `vs. Vorperiode (${trendData.windowMonths} Mon.)` : "vs. Vorperiode"}
         disabled={!companyId}
         onClick={onOpenTrend}
+      />
+
+      {/* 12- vs. 24-Monats-Schnitt (Inkrement 6, FA-08): beschreibt, keine Prognose, neutrale Farbe */}
+      <KPITile
+        label="12- vs. 24-Monats-Schnitt"
+        icon={<Star />}
+        tone="neutral"
+        value={rollingOk ? fmt(rollingData.short.mean, 2) : "—"}
+        delta={rollingOk ? <Delta tone="neu">24 M: {fmt(rollingData.long.mean, 2)}</Delta> : null}
+        footer={<RollingFooter data={rollingData} />}
+        disabled={!companyId}
+        onClick={onOpenRolling}
       />
 
       {/* Most Critical */}

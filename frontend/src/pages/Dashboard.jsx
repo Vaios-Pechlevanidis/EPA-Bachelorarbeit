@@ -12,6 +12,7 @@ import KPIGrid               from "@/components/dashboard/KPIGrid"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import SorceModal        from "../components/dashboard/modals/SorceModal"
 import TrendModal        from "../components/dashboard/modals/TrendModal"
+import RollingModal      from "../components/dashboard/modals/RollingModal"
 import MostCriticalModal from "../components/dashboard/modals/MostCriticalModal"
 import NegativTopicModal from "../components/dashboard/modals/NegativTopicModal"
 import ImportModal, { getImportHistory } from "../components/dashboard/modals/ImportModal"
@@ -35,6 +36,7 @@ export default function Dashboard() {
   /* ---- Modal state ---- */
   const [open, setOpen]               = useState(false)
   const [openTrend, setOpenTrend]     = useState(false)
+  const [openRolling, setOpenRolling] = useState(false)
   const [openNegative, setOpenNegative] = useState(false)
   const [openMostCritical, setOpenMostCritical] = useState(false)
   const [openImport, setOpenImport]   = useState(false)
@@ -53,6 +55,7 @@ export default function Dashboard() {
   /* ---- KPI data ---- */
   const [data, setData]                       = useState(null)
   const [trendData, setTrendData]             = useState(null)
+  const [rollingData, setRollingData]         = useState(null)   // 12- vs. 24-Monats-Schnitt (Inkrement 6, FA-08)
   const [mostCriticalData, setMostCriticalData] = useState(null)
   const [negativeTopicItem, setNegativeTopicItem] = useState(null)
 
@@ -160,6 +163,17 @@ export default function Dashboard() {
       } catch {}
     }
     setTrendData(null)
+  }
+
+  // Rollierende Schnitte (FA-08): unabhängig vom Zeitfilter, Anker ist der letzte volle Monat mit Daten.
+  async function getRolling() {
+    const companyId = effectiveCompanyId
+    if (!companyId) { setRollingData(null); return }
+    try {
+      const res = await fetch(`${API_URL}/companies/${companyId}/ratings/trend?mode=rolling`)
+      if (!res.ok) throw new Error()
+      setRollingData(await res.json())
+    } catch { setRollingData(null) }
   }
 
   async function getMostCritical(timeRange = globalTimeRange) {
@@ -343,20 +357,20 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!effectiveCompanyId) {
-      setData(null); setTrendData(null); setMostCriticalData(null); setNegativeTopicItem(null)
+      setData(null); setTrendData(null); setRollingData(null); setMostCriticalData(null); setNegativeTopicItem(null)
       setDashboardLoadingStates((p) => ({ ...p, kpiCards: false }))
       setImportHistory([])
       return
     }
     setDashboardLoadingStates((p) => ({ ...p, kpiCards: true }))
     setImportHistory(getImportHistory(effectiveCompanyId))
-    Promise.allSettled([getAvg(globalTimeRange), getTrend(globalTimeRange), getMostCritical(globalTimeRange), getNegativeTopic(globalTimeRange)])
+    Promise.allSettled([getAvg(globalTimeRange), getTrend(globalTimeRange), getRolling(), getMostCritical(globalTimeRange), getNegativeTopic(globalTimeRange)])
       .then(() => setDashboardLoadingStates((p) => ({ ...p, kpiCards: false })))
   }, [effectiveCompanyId, globalTimeRange])
 
   const handleImportSuccess = useCallback(() => {
     setImportHistory(getImportHistory(effectiveCompanyId))
-    Promise.allSettled([getAvg(), getTrend(), getMostCritical(), getNegativeTopic()])
+    Promise.allSettled([getAvg(), getTrend(), getRolling(), getMostCritical(), getNegativeTopic()])
       .then(() => setDashboardLoadingStates((p) => ({ ...p, kpiCards: false })))
   }, [effectiveCompanyId])
 
@@ -616,11 +630,13 @@ export default function Dashboard() {
                 avgScore={data?.avg_overall}
                 avgCount={null}
                 trendData={trendData}
+                rollingData={rollingData}
                 mostCriticalData={mostCriticalData}
                 negativeTopicItem={negativeTopicItem}
                 getNegativeTopicName={getNegativeTopicName}
                 onOpenScore={() => setOpen(true)}
                 onOpenTrend={() => setOpenTrend(true)}
+                onOpenRolling={() => setOpenRolling(true)}
                 onOpenCritical={() => setOpenMostCritical(true)}
                 onOpenNegative={() => setOpenNegative(true)}
                 topicOverviewRef={topicOverviewRef}
@@ -672,6 +688,13 @@ export default function Dashboard() {
         open={openTrend}
         onOpenChange={setOpenTrend}
         companyId={effectiveCompanyId}
+      />
+
+      <RollingModal
+        open={openRolling}
+        onOpenChange={setOpenRolling}
+        data={rollingData}
+        companyName={selectedCompanyName}
       />
 
       <MostCriticalModal
