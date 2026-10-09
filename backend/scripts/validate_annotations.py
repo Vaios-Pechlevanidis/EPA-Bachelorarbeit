@@ -6,7 +6,8 @@ Abschnitt 3). Die Referenzzeiträume dienen der Evaluation der Anomalieerkennung
 
 Geprüft werden
 
-- gültige Grundstruktur {"version": 1, "hinweise": {...}, "annotations": [...]}
+- gültige Grundstruktur {"version": n, "hinweise": {...}, "annotations": [...]}
+  mit ganzzahliger version >= 1 (Regel 8: spätere Änderungen erhöhen version)
 - Pflichtfelder je Eintrag: company, source, dimension, period_from, period_to, direction, note
 - company: auflösbar über den bereinigten Namen (strip, Whitespace-Kollaps,
   casefold) gegen die Unternehmen der Datenbank bzw. gegen die Unternehmensliste
@@ -361,8 +362,8 @@ def validate(
             result.errors.append(f"Schlüssel '{key}' fehlt auf oberster Ebene.")
     if result.errors:
         return result
-    if isinstance(doc["version"], bool) or doc["version"] != 1:
-        result.errors.append(f"version muss 1 sein, ist {doc['version']!r}.")
+    if isinstance(doc["version"], bool) or not isinstance(doc["version"], int) or doc["version"] < 1:
+        result.errors.append(f"version muss eine ganze Zahl ab 1 sein, ist {doc['version']!r}.")
     if not isinstance(doc["hinweise"], dict):
         result.errors.append("hinweise muss ein JSON-Objekt sein.")
     annotations = doc["annotations"]

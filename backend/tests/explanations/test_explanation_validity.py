@@ -173,7 +173,9 @@ class TestAggregate:
         records = script.window_records(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False)
         path = tmp_path / "out" / "validity.json"
         monkeypatch.setattr(script, "window_records", lambda *a, **k: records)
-        assert script.main(["--quiet", "--json", str(path)]) == 0
+        empty = tmp_path / "leer.json"   # nie die echte Annotationsdatei (E5, DZ1 läuft getrennt)
+        empty.write_text(json.dumps({"version": 1, "hinweise": {}, "annotations": []}), encoding="utf-8")
+        assert script.main(["--quiet", "--annotations", str(empty), "--json", str(path)]) == 0
         data = json.loads(path.read_text(encoding="utf-8"))
         assert data["total"]["coverage_nfa05"]["share"] == 0.5 and data["window_before"] == 3
         assert all("title" not in w for w in data["windows"])

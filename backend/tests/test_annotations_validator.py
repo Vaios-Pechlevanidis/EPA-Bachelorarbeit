@@ -300,9 +300,10 @@ def test_multiple_errors_in_one_entry_are_all_reported(companies):
 @pytest.mark.parametrize("doc,fragment", [
     ([], "JSON-Objekt"),
     ({"version": 1, "annotations": []}, "'hinweise' fehlt"),
-    ({"version": 2, "hinweise": {}, "annotations": []}, "version muss 1 sein"),
-    ({"version": True, "hinweise": {}, "annotations": []}, "version muss 1 sein"),
-    ({"version": "1", "hinweise": {}, "annotations": []}, "version muss 1 sein"),
+    ({"version": 0, "hinweise": {}, "annotations": []}, "version muss eine ganze Zahl ab 1 sein"),
+    ({"version": True, "hinweise": {}, "annotations": []}, "version muss eine ganze Zahl ab 1 sein"),
+    ({"version": "1", "hinweise": {}, "annotations": []}, "version muss eine ganze Zahl ab 1 sein"),
+    ({"version": 1.5, "hinweise": {}, "annotations": []}, "version muss eine ganze Zahl ab 1 sein"),
     ({"version": 1, "hinweise": {}, "annotations": {}}, "annotations muss eine Liste sein"),
     ({"version": 1, "hinweise": "text", "annotations": []}, "hinweise muss ein JSON-Objekt sein"),
 ])
@@ -310,6 +311,13 @@ def test_structure_errors(companies, doc, fragment):
     result = va.validate(doc, companies)
     assert not result.ok
     assert any(fragment in e for e in result.errors), result.errors
+
+
+def test_higher_version_is_valid(companies):
+    """Regel 8: spätere Änderungen erhöhen version; version 2 ist zulässig."""
+    doc = make_doc(valid_entry())
+    doc["version"] = 2
+    assert va.validate(doc, companies).ok
 
 
 def test_require_all_companies(companies):

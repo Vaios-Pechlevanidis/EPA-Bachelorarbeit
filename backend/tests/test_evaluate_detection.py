@@ -267,11 +267,6 @@ class TestCli:
         out = capsys.readouterr().out
         assert "Keine Annotationen" in out and "make_annotation_sheet.py" in out and "eigenen Commit" in out
 
-    def test_real_annotations_file_is_still_empty(self, capsys):
-        """annotations.json im Repository bleibt leer, bis der Autor annotiert (E5)."""
-        assert ed.main(["--file", ed.DEFAULT_FILE, "--offline"]) == 1
-        assert "Keine Annotationen" in capsys.readouterr().out
-
     def test_invalid_entries_abort_before_detection(self, tmp_path, capsys, monkeypatch):
         path = tmp_path / "annotations.json"
         path.write_text(json.dumps(doc(ann("2020-05", "2020-05", "fall", company="Demo 1"))), encoding="utf-8")
