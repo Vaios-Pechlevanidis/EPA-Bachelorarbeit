@@ -138,6 +138,22 @@ STAGE_LABELS = {
     STAGE_LOW: "nur Ereignisart",
     STAGE_NONE: "kein Bezug",
 }
+# Bezeichnung nach Signalen (Nachtrag zu E21, Inkrement 6, 2026-10-09): Badge und Kopfzeile
+# nennen genau die vorhandenen Signale eines Belegs, Bündels oder Eintrags, in dieser
+# Reihenfolge; Schlüssel und Regel der Stufe stehen nur im Tooltip. Die Stufenregeln, ihre
+# Schwellen und die Zahlen aus E23 bleiben unverändert; ``signal_label`` ist ein zusätzliches
+# Feld. Wortbezug: term_match >= TOPIC_WEAK; Ereignisart: Ereignisart mit Arbeitgeberbezug
+# erkannt (category_match >= CATEGORY_MATCH_ONLY); Themenverschiebung: ein zugeordnetes Thema
+# merklich verschoben (category_match >= TOPIC_STRONG); ohne Arbeitgeberbezug: Ereignisart aus
+# der Gruppe ohne Arbeitgeberbezug (E22, employer_related False).
+SIGNAL_TERM = "Wortbezug"
+SIGNAL_CATEGORY = "Ereignisart"
+SIGNAL_SHIFT = "Themenverschiebung"
+SIGNAL_NON_EMPLOYER = "ohne Arbeitgeberbezug"
+SIGNAL_NAMES = (SIGNAL_TERM, SIGNAL_CATEGORY, SIGNAL_SHIFT, SIGNAL_NON_EMPLOYER)
+SIGNAL_SEPARATOR = " · "
+SIGNAL_NONE_LABEL = "kein Signal"
+
 # Hinweis für den Abschnitt "Wie wird eingestuft?" (Ergebnis der Auswertung E23, 2026-10-08).
 STAGE_FINDING_NOTE = ("In der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung "
                       "ähnlich häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung.")
@@ -181,6 +197,27 @@ def rules() -> Dict[str, Any]:
 
 
 # ── Signale ──────────────────────────────────────────────────────────────────
+
+def signals_present(term: float, category: float, employer_related: Optional[bool] = None) -> List[str]:
+    """Vorhandene Signale in fester Reihenfolge (``SIGNAL_NAMES``); reine Funktion."""
+    present = []
+    if term >= TOPIC_WEAK:
+        present.append(SIGNAL_TERM)
+    if category >= CATEGORY_MATCH_ONLY:
+        present.append(SIGNAL_CATEGORY)
+    if category >= TOPIC_STRONG:
+        present.append(SIGNAL_SHIFT)
+    if employer_related is False:
+        present.append(SIGNAL_NON_EMPLOYER)
+    return present
+
+
+def signal_label(term: float, category: float, employer_related: Optional[bool] = None) -> str:
+    """Bezeichnung nach Signalen, z. B. "Wortbezug · Ereignisart"; ohne Signal
+    ``SIGNAL_NONE_LABEL``. Reine Funktion; die Stufe hängt nicht davon ab."""
+    present = signals_present(term, category, employer_related)
+    return SIGNAL_SEPARATOR.join(present) if present else SIGNAL_NONE_LABEL
+
 
 def time_match(month: Optional[str], window: Dict[str, Any]) -> float:
     """Zeitliche Nähe eines Monats zum Anker des Fensters (``transition_from`` bis
@@ -313,6 +350,7 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
         "company_in_title": company_in_title(title, company_words),
         "stage": stage,
         "stage_label": STAGE_LABELS[stage],
+        "signal_label": signal_label(t_match, cat_match, employer),
     }
 
 
@@ -402,6 +440,7 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
         "employer_related": employer,
         "stage": stage,
         "stage_label": STAGE_LABELS[stage],
+        "signal_label": signal_label(t_match, cat_match, employer),
         "source_type": representative.get("source_type"),
         "has_adhoc": any(i.get("source_type") == TYPE_ADHOC for i in items),
         "company_in_title": representative.get("company_in_title"),
@@ -559,7 +598,7 @@ def _group_member(bundle: Dict[str, Any], window: Dict[str, Any], kind: str) -> 
     rep = bundle["representative"]
     return {
         "id": rep.get("id"), "confidence": bundle["stage"], "stage_label": bundle["stage_label"],
-        "event": rep.get("title"), "date": rep.get("date"), "source": rep.get("publisher"), "url": rep.get("url"),
+        "signal_label": bundle["signal_label"], "event": rep.get("title"), "date": rep.get("date"), "source": rep.get("publisher"), "url": rep.get("url"),
         "source_type": rep.get("source_type"), "language": rep.get("language"), "issuer": rep.get("issuer"),
         "n_items": bundle["n_items"], "publishers": bundle["publishers"],
         "time_match": bundle["time_match"], "topic_match": bundle["topic_match"], "term_match": bundle["term_match"],
@@ -583,11 +622,13 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
            cache: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     rep = bundle["representative"]
     item_fields = ("id", "date", "title", "publisher", "url", "source", "source_type", "reliability", "language", "issuer",
-                   "time_match", "term_match", "category_match", "topic_match", "stage", "stage_label", "company_in_title")
+                   "time_match", "term_match", "category_match", "topic_match", "stage", "stage_label", "signal_label",
+                   "company_in_title")
     return {
         "id": rep.get("id"),
         "confidence": bundle["stage"],
         "stage_label": bundle["stage_label"],
+        "signal_label": bundle["signal_label"],
         "event": rep.get("title"),
         "date": rep.get("date"),
         "source": rep.get("publisher"),
@@ -673,7 +714,8 @@ def rank_evidence(
         for i in b["items"]:
             rank += 1
             item_scores[str(i.get("id"))] = {
-                "rank": rank, "stage": b["stage"], "stage_label": b["stage_label"], "bundle": b_index, "bundle_size": b["n_items"],
+                "rank": rank, "stage": b["stage"], "stage_label": b["stage_label"], "signal_label": b["signal_label"],
+                "item_signal_label": i["signal_label"], "bundle": b_index, "bundle_size": b["n_items"],
                 "time_match": i["time_match"], "term_match": i["term_match"], "category_match": i["category_match"],
                 "topic_match": i["topic_match"], "item_stage": i["stage"],
                 "category": i["category"]["id"] if i.get("category") else None,
@@ -682,6 +724,10 @@ def rank_evidence(
                 "company_in_title": i.get("company_in_title"),
                 "terms": [t["term"] for t in i["terms"]],
             }
+    # Bündel mit Stufe mindestens niedrig je Bezeichnung nach Signalen (Kopfzeile, zusätzlich zu n_by_stage)
+    n_by_signal_label: Dict[str, int] = {}
+    for b in eligible:
+        n_by_signal_label[b["signal_label"]] = n_by_signal_label.get(b["signal_label"], 0) + 1
     state = STATE_FOUND if explanations else STATE_OPEN
     return {
         "state": state,
@@ -690,6 +736,7 @@ def rank_evidence(
         "n_bundles": len(bundles),
         "n_groups": len(groups),
         "n_by_stage": n_by_stage,
+        "n_by_signal_label": n_by_signal_label,
         "item_scores": item_scores,
         "terms": terms,
         "note": EXPLANATION_NOTE,
@@ -733,7 +780,7 @@ __all__ = [
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
     "TIME_MID", "TIME_MIN", "RULES_VERSION", "RULES_VERSION_DATE", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
-    "OPEN_NOTE", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
+    "OPEN_NOTE", "SIGNAL_NAMES", "SIGNAL_NONE_LABEL", "signals_present", "signal_label", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
     "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "group_key", "group_bundles", "fmt_month", "time_phrase", "explanation_text",
     "title_sentiment", "rank_evidence", "topic_shift_table",
 ]

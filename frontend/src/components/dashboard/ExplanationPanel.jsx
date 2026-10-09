@@ -22,6 +22,10 @@ import { PageSection } from "./PageSection"
    höchstens ein Eintrag je Ereignisart (ohne Ereignisart je Begriff); die
    übrigen Bündel der Gruppe (entry.group.others) sind aufklappbar, mit Anzahl
    und Herausgebern. Beides ändert keine Stufe und keine Zahl der Auswertung.
+   Nachtrag zu E21 (Inkrement 6, 2026-10-09): Badge und Kopfzeile nennen die
+   vorhandenen Signale (signal_label: Wortbezug, Ereignisart, Themenverschiebung,
+   ohne Arbeitgeberbezug); Schlüssel, Bezeichnung und Regel der Stufe stehen im
+   Tooltip. Stufen und Sortierung bleiben unverändert.
    ============================================================================ */
 
 export const EXPLANATION_NOTE = "Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine Ursachen."
@@ -52,15 +56,17 @@ const fmtDay = (value) => {
     return Number.isNaN(d.getTime()) ? "ohne Datum" : d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
-/* Stufe als Badge mit ihrer Bezeichnung; rules = explanation_summary.rules (Bezeichnungen
-   und Regeln für den Tooltip). Der Schlüssel der Stufe steht nur im Tooltip. */
-export function StageBadge({ stage, rules = null, small = false }) {
-    const label = stageLabel(stage, rules)
+/* Badge mit der Bezeichnung nach Signalen (signal_label aus der Antwort; ohne Feld die
+   Bezeichnung der Stufe); rules = explanation_summary.rules. Schlüssel, Bezeichnung und
+   Regel der Stufe stehen nur im Tooltip. */
+export function StageBadge({ stage, signalLabel = null, rules = null, small = false }) {
+    const stageText = stageLabel(stage, rules)
+    const label = signalLabel || stageText
     const rule = rules?.stages?.[stage]
     return (
         <span
             className={`flex-none inline-flex items-center rounded-full font-medium tracking-wide ${small ? "px-1.5 py-0.5 text-[9.5px]" : "px-2 py-0.5 text-[10px]"} ${STAGE_CLASS}`}
-            title={`${label} (Schlüssel: ${stage})${rule ? `; Regel: ${rule}` : ""}`}
+            title={`Signale: ${label}. Stufe: ${stageText} (Schlüssel: ${stage})${rule ? `; Regel: ${rule}` : ""}`}
         >
             {label}
         </span>
@@ -149,7 +155,7 @@ function BundledItems({ items, rules }) {
                             {item.issuer ? ` · Mitteilung von ${item.issuer}` : ""} · Zeit {num(item.time_match, 2)}, Thema {num(item.topic_match, 2)}
                         </span>
                     </span>
-                    <span className="flex-none self-start"><StageBadge stage={item.stage} rules={rules} small /></span>
+                    <span className="flex-none self-start"><StageBadge stage={item.stage} signalLabel={item.signal_label} rules={rules} small /></span>
                 </li>
             ))}
         </ul>
@@ -176,7 +182,7 @@ function GroupMembers({ others, rules }) {
                             {o.terms?.length ? ` · Begriff: ${o.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
                         </span>
                     </span>
-                    <span className="flex-none self-start"><StageBadge stage={o.confidence} rules={rules} small /></span>
+                    <span className="flex-none self-start"><StageBadge stage={o.confidence} signalLabel={o.signal_label} rules={rules} small /></span>
                 </li>
             ))}
         </ul>
@@ -193,7 +199,7 @@ function ExplanationEntry({ entry, rules }) {
     return (
         <li className="border-t border-slate-100 first:border-t-0 py-3 flex flex-col sm:flex-row sm:items-start gap-x-3 gap-y-1.5 min-w-0">
             <div className="flex-none pt-0.5 sm:w-[118px]">
-                <StageBadge stage={entry.confidence} rules={rules} />
+                <StageBadge stage={entry.confidence} signalLabel={entry.signal_label} rules={rules} />
             </div>
             <div className="min-w-0 flex-1">
                 <p className="m-0 text-[12.5px] text-slate-800 leading-5 break-words">{entry.text}</p>
@@ -257,6 +263,12 @@ function stageCounts(n, rules) {
     return STAGE_ORDER.filter((s) => n[s]).map((s) => `${stageLabel(s, rules)} ${n[s]}`).join(", ")
 }
 
+/* Kopfzeile: Bündel (Stufe mindestens niedrig) je Bezeichnung nach Signalen. */
+function signalCounts(n) {
+    if (!n) return ""
+    return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([label, count]) => `${label} ${count}`).join(", ")
+}
+
 /* Abschnitt über der Belegliste. data = Antwort des Vergleichs (explanations, explanation_summary). */
 export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSANSÄTZE", className = "" }) {
     const [showRules, setShowRules] = useState(false)
@@ -271,7 +283,9 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
             : summary
                 ? open
                     ? `offen · ${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"} im Ereignisfenster, keiner erreicht die Stufe niedrig`
-                    : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel${summary.n_groups != null ? `, ${summary.n_groups} ${summary.n_groups === 1 ? "Gruppe" : "Gruppen"} nach Ereignisart` : ""})${stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
+                    : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel${summary.n_groups != null ? `, ${summary.n_groups} ${summary.n_groups === 1 ? "Gruppe" : "Gruppen"} nach Ereignisart` : ""})${signalCounts(summary.n_by_signal_label)
+                        ? ` · Bündel nach Signalen: ${signalCounts(summary.n_by_signal_label)}`
+                        : stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
                 : ""
     return (
         <PageSection className={className} icon={<Lightbulb />} eyebrow={eyebrow} title="Mögliche Zusammenhänge" subtitle={subtitle} basis={["external", "text"]}>

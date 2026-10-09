@@ -114,7 +114,7 @@ function EvidenceRow({ item, score = null, rules = null }) {
                             EN
                         </span>
                     )}
-                    {score && score.stage !== "keine" && <StageBadge stage={score.stage} rules={rules} small />}
+                    {score && score.stage !== "keine" && <StageBadge stage={score.stage} signalLabel={score.signal_label} rules={rules} small />}
                 </span>
                 <span className="block mt-0.5 text-[11px] text-slate-500">
                     {item.event
