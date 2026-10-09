@@ -5,6 +5,7 @@ import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
+import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
 import { EventsToggle, EvidenceSection } from "@/components/dashboard/EvidenceSection"
 import { ExplanationPanel } from "@/components/dashboard/ExplanationPanel"
@@ -289,6 +290,9 @@ export default function AnomaliesPage() {
                     </PageSection>
                 ) : (
                     <>
+                        {/* Datenstand (Inkrement 6, FA-37) */}
+                        <DataStatusBar companyId={companyId} />
+
                         {/* Verlauf (zwei Drittel) und Markierungen (ein Drittel) */}
                         <div className="grid gap-3 xl:grid-cols-3">
                             <PageSection

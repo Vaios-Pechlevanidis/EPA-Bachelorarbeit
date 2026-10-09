@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, BarChart3, Building2, LineChart, Newspaper, Users } from "lucide-react"
 import { TrendUp } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
+import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { ExpandableCard } from "@/components/dashboard/ExpandableCard"
 import { FinanceKpis, MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
@@ -287,6 +288,8 @@ export default function StockPage() {
                     </PageSection>
                 ) : (
                     <div className={fill ? "flex-1 min-h-0 flex flex-col gap-3" : "space-y-3"}>
+                        {/* Datenstand (Inkrement 6, FA-37) */}
+                        <DataStatusBar companyId={companyId} className="flex-none" />
                         {available && <FinanceKpis market={data} first={first} last={last} change={change} extras={SHOW_FINANCE_EXTRAS} />}
 
                         {/* Mit Zusatzkarten: Kurs (zwei Spalten), Meldungen (zwei Reihen), darunter

@@ -9,6 +9,8 @@ import { TopicRatingCard }   from "@/components/dashboard/TopicRatingCard"
 import { TopicOverviewCard } from "@/components/dashboard/TopicOverviewCard"
 import { AnomalyCard }       from "@/components/dashboard/AnomalyCard"
 import KPIGrid               from "@/components/dashboard/KPIGrid"
+import { DataStatusBar }     from "@/components/dashboard/DataStatusBar"
+import { invalidateDataStatus } from "@/hooks/useDataStatus"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import SorceModal        from "../components/dashboard/modals/SorceModal"
 import TrendModal        from "../components/dashboard/modals/TrendModal"
@@ -370,6 +372,7 @@ export default function Dashboard() {
 
   const handleImportSuccess = useCallback(() => {
     setImportHistory(getImportHistory(effectiveCompanyId))
+    invalidateDataStatus(effectiveCompanyId)
     Promise.allSettled([getAvg(), getTrend(), getRolling(), getMostCritical(), getNegativeTopic()])
       .then(() => setDashboardLoadingStates((p) => ({ ...p, kpiCards: false })))
   }, [effectiveCompanyId])
@@ -611,6 +614,9 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+
+            {/* Datenstand (Inkrement 6, FA-37) */}
+            {effectiveCompanyId && <DataStatusBar companyId={effectiveCompanyId} className="mb-4" />}
 
             {/* Error banner */}
             {error && <div className="ds-error">{error}</div>}
