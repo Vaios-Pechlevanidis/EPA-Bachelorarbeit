@@ -36,7 +36,7 @@ export default function NegativTopicModal({ open, onOpenChange, topic: propTopic
     t = t
       .replace(/^(leider|mittlerweile|eigentlich|grunds(ä|a)tzlich|insgesamt|generell)\s+/i, "")
       .replace(/^(es\s+gab|es\s+gibt|es\s+ist|man\s+hat|man\s+kann|ich\s+finde|ich\s+hatte|wir\s+haben)\s+/i, "");
-    t = t.split(/[.!?;:()\[\]—–-]/)[0].trim();
+    t = t.split(/[.!?;:()[\]—–-]/)[0].trim();
     const stop = new Set([
       "und","oder","aber","dass","das","der","die","den","dem","des","ein","eine","einer","eines",
       "mit","ohne","für","auf","im","in","am","an","zu","von","bei","als","auch","nicht","nur",

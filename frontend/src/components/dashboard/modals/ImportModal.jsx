@@ -248,7 +248,7 @@ export default function ImportModal({ open, onOpenChange, companyId, companyName
           resolve({ ok: true, filename: file.name })
         } else {
           let msg = `HTTP ${xhr.status}`
-          try { msg = JSON.parse(xhr.responseText)?.detail || msg } catch {}
+          try { msg = JSON.parse(xhr.responseText)?.detail || msg } catch { /* keine JSON-Antwort: HTTP-Status bleibt die Meldung */ }
           reject(new Error(msg))
         }
       }

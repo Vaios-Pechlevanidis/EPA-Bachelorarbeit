@@ -91,7 +91,7 @@ export default function Dashboard() {
   async function getCompanies() {
     try {
       setCompanies(await loadCompanies())
-    } catch {}
+    } catch { /* Firmenliste bleibt leer; die Suche zeigt dann keine Vorschläge */ }
   }
 
   const handleCompanySelectFromDropdown = useCallback((company) => {
@@ -162,7 +162,7 @@ export default function Dashboard() {
         const sign = rounded > 0.05 ? "up" : rounded < -0.05 ? "down" : "flat"
         setTrendData({ avgDelta: rounded.toFixed(1), sign, windowMonths: json.months ?? null, nReviews: json.n_reviews ?? null })
         return
-      } catch {}
+      } catch { /* nächste Adresse versuchen */ }
     }
     setTrendData(null)
   }
