@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, BarChart3, Building2, LineChart, Newspaper, Users } from "lucide-react"
 import { TrendUp } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
+import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { ExpandableCard } from "@/components/dashboard/ExpandableCard"
 import { FinanceKpis, MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
@@ -214,6 +215,7 @@ export default function StockPage() {
         <ExpandableCard
             icon={<Newspaper />}
             eyebrow="NACHRICHTEN · GOOGLE NEWS"
+            basis="external"
             title="Aktuelle Meldungen"
             subtitle={news.data?.items?.length ? `${news.data.items.length} Meldungen der letzten ${news.data.window_days} Tage` : undefined}
             accent="bg-sky-500"
@@ -287,6 +289,8 @@ export default function StockPage() {
                     </PageSection>
                 ) : (
                     <div className={fill ? "flex-1 min-h-0 flex flex-col gap-3" : "space-y-3"}>
+                        {/* Datenstand (Inkrement 6, FA-37) */}
+                        <DataStatusBar companyId={companyId} className="flex-none" />
                         {available && <FinanceKpis market={data} first={first} last={last} change={change} extras={SHOW_FINANCE_EXTRAS} />}
 
                         {/* Mit Zusatzkarten: Kurs (zwei Spalten), Meldungen (zwei Reihen), darunter
@@ -298,6 +302,7 @@ export default function StockPage() {
                                     <ExpandableCard
                                         icon={<LineChart />}
                                         eyebrow={priceView === "kurs" ? "KURSVERLAUF · MONATSSCHLUSS" : "KURS UND BEWERTUNGSVERLAUF"}
+                                        basis={priceView === "kurs" ? "market" : showPrice ? ["stars", "market"] : "stars"}
                                         title={priceView === "kurs" ? "Aktienkurs" : "Aktienkurs und Sternebewertung"}
                                         subtitle={priceSubtitle}
                                         actions={priceActions}
@@ -313,6 +318,7 @@ export default function StockPage() {
                                             <ExpandableCard
                                                 icon={<Users />}
                                                 eyebrow="ANALYSTEN · YAHOO FINANCE"
+                                                basis="market"
                                                 title="Analystenempfehlungen"
                                                 subtitle="Empfehlungen je Stufe, letzte vier Monate"
                                                 accent="bg-emerald-500"
@@ -324,6 +330,7 @@ export default function StockPage() {
                                             <ExpandableCard
                                                 icon={<BarChart3 />}
                                                 eyebrow="ERFOLGSRECHNUNG · YAHOO FINANCE"
+                                                basis="market"
                                                 title="Umsatz und Nettoergebnis"
                                                 subtitle={earningsPeriod === "annual" ? "Je Geschäftsjahr" : "Je Quartal"}
                                                 accent="bg-indigo-500"
@@ -342,7 +349,7 @@ export default function StockPage() {
                             ) : (
                                 <>
                                     {/* Ohne Kurs: Hinweis über die ganze Zeile, ab xl neben den Meldungen. */}
-                                    <PageSection icon={<LineChart />} eyebrow="AKTIE" title="Aktienkurs"
+                                    <PageSection icon={<LineChart />} eyebrow="AKTIE" basis="market" title="Aktienkurs"
                                         className={SHOW_FINANCE_EXTRAS ? "lg:col-span-2 xl:col-span-1" : "lg:col-span-2 xl:col-span-3"}>
                                         <EmptyNote height={80}>{noPriceText(data?.reason)}</EmptyNote>
                                     </PageSection>

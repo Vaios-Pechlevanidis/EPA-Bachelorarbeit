@@ -1445,8 +1445,6 @@ export const exportCompareAsPDF = async (compareData) => {
         timelineChartElement = null,
         categoryData = [],      // [{ category, ...companyValues }]
         companyColors = null,   // optional hex strings per company
-        summaryData = null,     // unused – reserved for future use
-        categoryChartView = 'radar',
     } = compareData;
 
     // Convert hex colour strings supplied by Compare.jsx to RGB triples

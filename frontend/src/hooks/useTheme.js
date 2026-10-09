@@ -10,7 +10,7 @@ export function useTheme() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved === "dark" || saved === "light") return saved
-    } catch {}
+    } catch { /* kein localStorage (privates Fenster): Browser-Präferenz gilt */ }
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
       return "dark"
     }
@@ -25,7 +25,7 @@ export function useTheme() {
     root.setAttribute("data-theme", theme)
     if (theme === "dark") root.classList.add("dark")
     else root.classList.remove("dark")
-    try { localStorage.setItem(STORAGE_KEY, theme) } catch {}
+    try { localStorage.setItem(STORAGE_KEY, theme) } catch { /* kein localStorage: Theme gilt nur für diese Sitzung */ }
   }, [theme])
 
   const toggle = useCallback(() => {

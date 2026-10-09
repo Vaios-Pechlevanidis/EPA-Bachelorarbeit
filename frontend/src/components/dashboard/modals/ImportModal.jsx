@@ -4,6 +4,7 @@ import ModalShell from "./ModalShell"
 import { API_URL } from "@/config"
 import { invalidateCompanies } from "@/lib/companies"
 import { invalidateSharedFetches } from "@/lib/sharedFetch"
+import { saveImportHistory } from "@/lib/importHistory"
 
 /* ---- constants ---- */
 const VALID_TYPES = [
@@ -29,19 +30,6 @@ function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function saveImportHistory(companyId, entry) {
-  if (!companyId) return
-  const key = `import_history_${companyId}`
-  const existing = JSON.parse(localStorage.getItem(key) || "[]")
-  const updated = [entry, ...existing].slice(0, 10)
-  localStorage.setItem(key, JSON.stringify(updated))
-}
-
-export function getImportHistory(companyId) {
-  if (!companyId) return []
-  return JSON.parse(localStorage.getItem(`import_history_${companyId}`) || "[]")
 }
 
 /* ---- sub-components ---- */
@@ -248,7 +236,7 @@ export default function ImportModal({ open, onOpenChange, companyId, companyName
           resolve({ ok: true, filename: file.name })
         } else {
           let msg = `HTTP ${xhr.status}`
-          try { msg = JSON.parse(xhr.responseText)?.detail || msg } catch {}
+          try { msg = JSON.parse(xhr.responseText)?.detail || msg } catch { /* keine JSON-Antwort: HTTP-Status bleibt die Meldung */ }
           reject(new Error(msg))
         }
       }

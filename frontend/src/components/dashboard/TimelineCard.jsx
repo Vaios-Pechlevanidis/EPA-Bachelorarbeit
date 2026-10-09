@@ -28,8 +28,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useState, useEffect, useMemo, memo } from "react"
+import { useState, useEffect, useMemo, useRef, memo } from "react"
 import { API_URL } from "@/config"
+import { MIN_REVIEWS_PER_MONTH } from "@/lib/dataBasis"
 import { ChartCardHeader, SourceToggle, DropdownPicker } from "./ChartHeader"
 import { TrendUp as TrendUpIcon } from "../../icons"
 
@@ -163,6 +164,9 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
     const [selectedYear, setSelectedYear] = useState(null)
     const [, setYears] = useState([])
     const [modalOpen, setModalOpen] = useState(false)
+    // Ob schon Daten geladen wurden (für "Lade…" gegenüber "aktualisiere…"); als Ref,
+    // damit der Abruf-Effekt nicht von timelineData abhängt (Lint-Regel exhaustive-deps).
+    const hasDataRef = useRef(false)
     
     // Kommuniziere Loading-State nach außen
     useEffect(() => {
@@ -213,7 +217,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
 
         const fetchTimelineData = async () => {
             // First load → full loading screen; subsequent refetches → silent overlay
-            const isFirst = timelineData.length === 0
+            const isFirst = !hasDataRef.current
             isFirst ? setLoading(true) : setRefreshing(true)
             try {
                 setError(null)
@@ -256,6 +260,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
 
                 setTimelineData(filteredTimeline)
                 setForecastData(data.forecast || [])
+                hasDataRef.current = filteredTimeline.length > 0
             } catch (err) {
                 console.error('Error fetching timeline data:', err)
                 setError(err.message)
@@ -500,7 +505,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 hasInterpolation: processedHistorical.length > 0 && processedHistorical.some(d => d._isMissing),
             });
         }
-    }, [metric, source, granularity, selectedYear, timelineData, forecastData, trendData, onFiltersChange]);
+    }, [metric, source, granularity, selectedYear, timelineData, forecastData, trendData, processedHistorical, onFiltersChange]);
 
     // Custom tooltip — slate-900 dark style mit Mono-Zahlen
     const CustomTooltip = ({ active, payload, label }) => {
@@ -564,6 +569,9 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                         {metric === "Ø Score" && dataPoint?.count && (
                             <p className="text-slate-500 mt-1.5 pt-1.5 border-t border-slate-700 tnum text-[11px]">
                                 {dataPoint.count} {dataPoint.count === 1 ? "Bewertung" : "Bewertungen"}
+                                {dataPoint.count < MIN_REVIEWS_PER_MONTH && (
+                                    <span className="block text-amber-400">kleine Basis (unter {MIN_REVIEWS_PER_MONTH} Bewertungen im Monat)</span>
+                                )}
                             </p>
                         )}
                     </>
@@ -882,6 +890,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                     subtitle={`${SOURCE_LABEL[source]} · ${metric}`}
                     expandable
                     actions={<FilterDropdowns compact />}
+                    basis="stars"
                 />
 
                 {/* Content nimmt restliche Card-Höhe ein, Stats werden via flex-1 Spacer an Boden gedrückt */}

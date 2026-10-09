@@ -229,6 +229,7 @@ export function EvidenceSection({ companyId, anomalyId = null, selection = null,
             className={className}
             icon={<Newspaper />}
             eyebrow={eyebrow}
+            basis="external"
             title="Externe Belege im Ereignisfenster"
             subtitle={subtitle}
             actions={!evidence.loading && !evidence.error && evidence.total > 0 && (

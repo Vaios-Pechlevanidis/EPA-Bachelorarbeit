@@ -4,82 +4,87 @@ import ModalShell, { ModalLoader, ModalError, ModalEmpty } from "./ModalShell";
 import { Tag } from "../../../icons";
 import { API_URL } from "../../../config";
 
+/* ---- helpers (reine Funktionen auf Modulebene; Lint-Regel exhaustive-deps) ---- */
+const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+
+const deriveKritikpunkte = (m) => {
+  if (!m) return [];
+  const fromKritikpunkte = Array.isArray(m.kritikpunkte) ? m.kritikpunkte : [];
+  if (fromKritikpunkte.length) return fromKritikpunkte;
+  const fromTypical = Array.isArray(m.typicalStatements) ? m.typicalStatements : [];
+  if (fromTypical.length) return fromTypical;
+  const fromReviewDetails = Array.isArray(m.reviewDetails)
+    ? m.reviewDetails.map((d) => d?.preview).filter(Boolean) : [];
+  if (fromReviewDetails.length) return fromReviewDetails;
+  const fromExample = typeof m.example === "string" && m.example.trim() ? [m.example] : [];
+  if (fromExample.length) return fromExample;
+  const fromWords = toArray(m.topic_words).length
+    ? toArray(m.topic_words)
+    : (typeof m.topic_text === "string" ? m.topic_text.split(",").map((x) => x.trim()).filter(Boolean) : []);
+  return fromWords;
+};
+
+const extractSubjectPhrase = (text) => {
+  if (!text) return "";
+  let t = String(text).replace(/\s+/g, " ").replace(/^[-••\s]+/, "").trim();
+  if (t.includes("\n")) t = t.split("\n")[0].trim();
+  t = t
+    .replace(/^(leider|mittlerweile|eigentlich|grunds(ä|a)tzlich|insgesamt|generell)\s+/i, "")
+    .replace(/^(es\s+gab|es\s+gibt|es\s+ist|man\s+hat|man\s+kann|ich\s+finde|ich\s+hatte|wir\s+haben)\s+/i, "");
+  t = t.split(/[.!?;:()[\]—–-]/)[0].trim();
+  const stop = new Set([
+    "und","oder","aber","dass","das","der","die","den","dem","des","ein","eine","einer","eines",
+    "mit","ohne","für","auf","im","in","am","an","zu","von","bei","als","auch","nicht","nur",
+    "ist","sind","war","waren","wird","werden","ich","wir","man","sehr","mehr","weniger","noch",
+    "kein","keine","keinen","keiner","keines","über","unter","vor","nach","aus","um","wie","weil",
+  ]);
+  const words = t.split(/\s+/)
+    .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+    .filter((w) => w.length >= 3 && !stop.has(w.toLowerCase()));
+  const phrase = words.slice(0, 4).join(" ").trim();
+  if (phrase) return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+  return t;
+};
+
+const summarizeKritikpunkt = (text, maxLen = 60) => {
+  if (!text) return "";
+  let t = String(text).replace(/\s+/g, " ").replace(/^[-••\s]+/, "").trim();
+  if (t.includes("\n")) t = t.split("\n")[0].trim();
+  const subject = extractSubjectPhrase(t);
+  if (subject && subject.length <= maxLen) return subject;
+  if (subject && subject.length > maxLen) t = subject;
+  if (t.length <= maxLen) return t;
+  const boundaries = [".", "!", "?", ";", ":"];
+  for (const b of boundaries) {
+    const idx = t.indexOf(b);
+    if (idx >= 25 && idx <= maxLen) return t.slice(0, idx + 1).trim();
+  }
+  const cut = t.lastIndexOf(" ", maxLen);
+  if (cut >= 25) return `${t.slice(0, cut).trim()}…`;
+  return `${t.slice(0, maxLen).trim()}…`;
+};
+
+
 export default function NegativTopicModal({ open, onOpenChange, topic: propTopic = null, companyId = null }) {
-  const [modal, setModal] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  /* ---- helpers (kept from original implementation) ---- */
-  const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
-
-  const deriveKritikpunkte = (m) => {
-    if (!m) return [];
-    const fromKritikpunkte = Array.isArray(m.kritikpunkte) ? m.kritikpunkte : [];
-    if (fromKritikpunkte.length) return fromKritikpunkte;
-    const fromTypical = Array.isArray(m.typicalStatements) ? m.typicalStatements : [];
-    if (fromTypical.length) return fromTypical;
-    const fromReviewDetails = Array.isArray(m.reviewDetails)
-      ? m.reviewDetails.map((d) => d?.preview).filter(Boolean) : [];
-    if (fromReviewDetails.length) return fromReviewDetails;
-    const fromExample = typeof m.example === "string" && m.example.trim() ? [m.example] : [];
-    if (fromExample.length) return fromExample;
-    const fromWords = toArray(m.topic_words).length
-      ? toArray(m.topic_words)
-      : (typeof m.topic_text === "string" ? m.topic_text.split(",").map((x) => x.trim()).filter(Boolean) : []);
-    return fromWords;
-  };
-
-  const extractSubjectPhrase = (text) => {
-    if (!text) return "";
-    let t = String(text).replace(/\s+/g, " ").replace(/^[-••\s]+/, "").trim();
-    if (t.includes("\n")) t = t.split("\n")[0].trim();
-    t = t
-      .replace(/^(leider|mittlerweile|eigentlich|grunds(ä|a)tzlich|insgesamt|generell)\s+/i, "")
-      .replace(/^(es\s+gab|es\s+gibt|es\s+ist|man\s+hat|man\s+kann|ich\s+finde|ich\s+hatte|wir\s+haben)\s+/i, "");
-    t = t.split(/[.!?;:()\[\]—–-]/)[0].trim();
-    const stop = new Set([
-      "und","oder","aber","dass","das","der","die","den","dem","des","ein","eine","einer","eines",
-      "mit","ohne","für","auf","im","in","am","an","zu","von","bei","als","auch","nicht","nur",
-      "ist","sind","war","waren","wird","werden","ich","wir","man","sehr","mehr","weniger","noch",
-      "kein","keine","keinen","keiner","keines","über","unter","vor","nach","aus","um","wie","weil",
-    ]);
-    const words = t.split(/\s+/)
-      .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-      .filter((w) => w.length >= 3 && !stop.has(w.toLowerCase()));
-    const phrase = words.slice(0, 4).join(" ").trim();
-    if (phrase) return phrase.charAt(0).toUpperCase() + phrase.slice(1);
-    return t;
-  };
-
-  const summarizeKritikpunkt = (text, maxLen = 60) => {
-    if (!text) return "";
-    let t = String(text).replace(/\s+/g, " ").replace(/^[-••\s]+/, "").trim();
-    if (t.includes("\n")) t = t.split("\n")[0].trim();
-    const subject = extractSubjectPhrase(t);
-    if (subject && subject.length <= maxLen) return subject;
-    if (subject && subject.length > maxLen) t = subject;
-    if (t.length <= maxLen) return t;
-    const boundaries = [".", "!", "?", ";", ":"];
-    for (const b of boundaries) {
-      const idx = t.indexOf(b);
-      if (idx >= 25 && idx <= maxLen) return t.slice(0, idx + 1).trim();
-    }
-    const cut = t.lastIndexOf(" ", maxLen);
-    if (cut >= 25) return `${t.slice(0, cut).trim()}…`;
-    return `${t.slice(0, maxLen).trim()}…`;
-  };
+  // Geladenes Thema je Firma; "loading", solange der Schlüssel nicht passt (kein
+  // setState im Effekt, Lint-Regel react-hooks/set-state-in-effect). Ein
+  // übergebenes Thema gilt sofort (beim Rendern abgeleitet). Anzeige wie zuvor.
+  const [result, setResult] = useState({ key: null, modal: null, error: null });
+  const loading = open && !propTopic && Boolean(companyId) && result.key !== companyId;
+  const modal = propTopic ?? (result.key === companyId ? result.modal : null);
+  const error = !propTopic && result.key === companyId ? result.error : null;
 
   /* ---- data loading ---- */
   useEffect(() => {
     if (!open) return;
 
-    if (propTopic) {
-      setModal(propTopic); setError(null); setLoading(false);
-      return;
-    }
+    if (propTopic) return;   // Thema kommt aus den Props
 
-    if (companyId) {
-      setLoading(true); setError(null);
+    if (!companyId) return;   // ohne Firma: leer (abgeleitet)
+
+    let active = true;
+    const setModal = (m) => { if (active) setResult({ key: companyId, modal: m, error: null }); };
+    {
       fetch(`${API_URL}/analytics/company/${companyId}/negative-kritikpunkte`)
         .then(async (res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
         .then((data) => {
@@ -112,11 +117,9 @@ export default function NegativTopicModal({ open, onOpenChange, topic: propTopic
             });
           })
         )
-        .catch((err) => { setError(err.message || "Fehler beim Laden"); setModal(null); })
-        .finally(() => setLoading(false));
-    } else {
-      setModal(null); setLoading(false); setError(null);
+        .catch((err) => { if (active) setResult({ key: companyId, modal: null, error: err.message || "Fehler beim Laden" }); });
     }
+    return () => { active = false; };
   }, [open, propTopic, companyId]);
 
   /* ---- derived display values ---- */

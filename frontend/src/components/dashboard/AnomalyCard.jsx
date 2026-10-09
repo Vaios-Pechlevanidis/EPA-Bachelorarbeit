@@ -17,7 +17,8 @@ import { Anomaly as AnomalyIcon } from "../../icons"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
-import { groupLabel, statusOptions } from "@/lib/reviewerStatus"
+import { groupLabel, statusDistinctionHint, statusOptions } from "@/lib/reviewerStatus"
+import { useDataStatus } from "@/hooks/useDataStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, periodWindows, trimToEvaluated } from "@/lib/anomalySeries"
 import { PARENT_SCOPE, GROUP_COMPANY_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
 
@@ -861,26 +862,47 @@ export function AnomalySourceToggle({ value, onChange, compact = false }) {
     return <SourceToggle value={value} onChange={onChange} options={SOURCES} compact={compact} />
 }
 
-/* Auswahl des Status innerhalb der Quelle; null = alle (E13). */
-export function StatusPicker({ source, value, onChange, compact = false }) {
+/* Auswahl des Status innerhalb der Quelle; null = alle (E13).
+   counts: n je Statusschlüssel (status_counts aus dem Datenstand, Inkrement 6),
+   erscheint hinter der Bezeichnung; hint: Text, wenn das Unternehmen aktuelle und
+   ehemalige Mitarbeitende nicht unterscheidet (A4), als Tooltip und Vermerk. */
+export function StatusPicker({ source, value, onChange, compact = false, counts = null, hint = null }) {
     const options = statusOptions(source)
+    const total = counts ? Object.values(counts).reduce((a, b) => a + (b || 0), 0) : null
+    const withCount = (o) => {
+        const n = o.key == null ? total : counts?.[o.key]
+        return n == null ? o.label : `${o.label} (${Number(n).toLocaleString("de-DE")})`
+    }
     return (
-        <DropdownPicker
-            label="Status"
-            icon={<Users />}
-            value={options.find((o) => o.key === value)?.label ?? "Alle"}
-            options={options.map((o) => ({ value: o.key ?? "", label: o.label }))}
-            onChange={(key) => onChange(key || null)}
-            align="start"
-            compact={compact}
-        />
+        <span title={hint ?? undefined} className="inline-flex items-center gap-1">
+            <DropdownPicker
+                label="Status"
+                icon={<Users />}
+                value={options.find((o) => o.key === value)?.label ?? "Alle"}
+                options={options.map((o) => ({ value: o.key ?? "", label: withCount(o) + (hint && o.key === "angestellt" ? " · ohne Unterscheidung" : "") }))}
+                onChange={(key) => onChange(key || null)}
+                align="start"
+                compact={compact}
+            />
+            {hint && <span className="text-[11px] text-amber-700" aria-label="Hinweis zum Status">⚠︎</span>}
+        </span>
     )
+}
+
+/* Vermerk unter dem Verlauf, wenn der Statusfilter nichts unterscheidet (A4, E13). */
+export function StatusHint({ hint, className = "" }) {
+    if (!hint) return null
+    return <p className={`m-0 text-[11px] text-slate-500 ${className}`}>Hinweis zum Status: {hint}</p>
 }
 
 export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
     const [selection, setSelection] = useState({ source: DEFAULT_SOURCE, dimension: OVERALL_DIMENSION.key, status: null })
     const { source, dimension, status } = selection
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
+    // Datenstand für n je Statusgruppe und den Hinweis ohne Unterscheidung (Inkrement 6, A4)
+    const dataStatus = useDataStatus(companyId)
+    const sourceStatus = dataStatus.data?.sources?.[source] ?? null
+    const statusHint = statusDistinctionHint(source, sourceStatus)
 
     if (!companyId) return null
 
@@ -908,16 +930,18 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 title="Anomalien im Verlauf"
                 subtitle={subtitle}
                 expandable
+                basis="stars"
                 actions={
                     <>
                         <AnomalySourceToggle value={source} onChange={changeSource} compact />
                         <DimensionPicker source={source} value={dimension} onChange={(key) => setSelection((s) => ({ ...s, dimension: key }))} compact />
-                        <StatusPicker source={source} value={status} onChange={(key) => setSelection((s) => ({ ...s, status: key }))} compact />
+                        <StatusPicker source={source} value={status} onChange={(key) => setSelection((s) => ({ ...s, status: key }))} compact counts={sourceStatus?.status_counts ?? null} hint={statusHint} />
                     </>
                 }
             />
             <div className="px-4 pt-4 pb-4">
                 <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />
+                {status && <StatusHint hint={statusHint} className="mt-2" />}
 
                 {/* Die Liste der Veränderungen steht nur auf der Detailseite; die Karte
                     zeigt Verlauf und Zähler und erklärt nur, wenn nichts erkannt werden kann. */}

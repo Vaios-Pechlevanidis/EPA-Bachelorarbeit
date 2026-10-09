@@ -1,6 +1,9 @@
 import React from "react";
 import { Delta } from "../ui/primitives";
 import { Star, TrendUp, TrendDown, Alert, Tag } from "../../icons";
+import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from "@/lib/rollingAverage";
+import { DataBasisTags, SmallBasisWarning } from "./DataBasis";
+import { MIN_REVIEWS_PER_WINDOW } from "@/lib/dataBasis";
 
 const fmt = (n, d = 1) => (isNaN(Number(n)) ? "—" : Number(n).toFixed(d).replace(".", ","));
 
@@ -69,7 +72,7 @@ const trendTone = (sign) => {
 /* ============================================================================
    Single KPI tile
    ============================================================================ */
-function KPITile({ label, icon, value, valueSize = "lg", delta, footer, tone = "neutral", onClick, disabled }) {
+function KPITile({ label, icon, value, valueSize = "lg", delta, footer, tone = "neutral", onClick, disabled, basis = null }) {
   const t = TONES[tone] ?? TONES.neutral;
   return (
     <button
@@ -126,23 +129,54 @@ function KPITile({ label, icon, value, valueSize = "lg", delta, footer, tone = "
       {footer && (
         <span className="block text-[11px] text-slate-500 mt-1">{footer}</span>
       )}
+
+      {/* Datenbasis (Inkrement 6, FA-25) */}
+      {basis && <DataBasisTags basis={basis} small className="mt-1.5" />}
     </button>
   );
 }
 
+/* ---- Rollierende Schnitte (Inkrement 6, FA-08) -------------------------
+   Daten: GET /companies/{id}/ratings/trend?mode=rolling. Die Kachel beschreibt
+   nur die Lage des 12-Monats-Schnitts zum 24-Monats-Schnitt (keine Prognose),
+   nennt Zeitraum und n je Fenster und warnt bei kleiner Basis. Neutrale Farbe. */
+const fmtN = (n) => (n == null ? "–" : Number(n).toLocaleString("de-DE"));
+
+function RollingFooter({ data }) {
+  if (!data) return "Sternebewertung, Mitarbeitende";
+  if (!data.anchor) return "keine datierten Bewertungen mit Gesamtnote";
+  const warnings = rollingWarnings(data);
+  return (
+    <>
+      <span className="block tnum">
+        12 M: {fmtRollingMonth(data.short.from)} – {fmtRollingMonth(data.short.to)}, n = {fmtN(data.short.n)} · 24 M: ab {fmtRollingMonth(data.long.from)}, n = {fmtN(data.long.n)}
+      </span>
+      <span className="block">12-Monats-Schnitt {rollingPhrase(data)}.</span>
+      {warnings.length > 0 && (
+        <span className="flex items-center gap-1 text-amber-700" title="Warnung bei kleiner Datenbasis">
+          <span className="w-3 h-3 flex-none"><Alert /></span>
+          {warnings.join(" · ")}
+        </span>
+      )}
+    </>
+  );
+}
+
 /* ============================================================================
-   KPIGrid — 4 colour-coded tiles. Each one pops a modal.
+   KPIGrid — 5 colour-coded tiles. Each one pops a modal.
    ============================================================================ */
 export default function KPIGrid({
   companyId,
   avgScore,
   avgCount,
   trendData,
+  rollingData,
   mostCriticalData,
   negativeTopicItem,
   getNegativeTopicName,
   onOpenScore,
   onOpenTrend,
+  onOpenRolling,
   onOpenCritical,
   onOpenNegative,
   topicOverviewRef,
@@ -164,17 +198,25 @@ export default function KPIGrid({
   // Negative-Topic tile is also always 'bad' when present.
   const negativeT = negativeTopicItem ? "bad" : "neutral";
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+  const rollingOk = rollingReady(rollingData);
 
-      {/* Ø Score */}
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
+
+      {/* Ø Score: Mittel der Kategorienmittel, nur Mitarbeitende (Definition aus der Antwort, FA-38) */}
       <KPITile
         label="Ø Score"
         icon={<Star />}
         tone={avgT}
         value={avgScore ? fmt(avgScore) : "—"}
         delta={avgDelta}
-        footer={avgCount ? `n = ${Number(avgCount).toLocaleString("de-DE")}` : "alle Quellen"}
+        footer={
+          <>
+            <span className="block tnum">{avgCount != null ? `n = ${fmtN(avgCount)} Bewertungen, Mitarbeitende` : "Mitarbeitende"}</span>
+            {avgCount != null && <SmallBasisWarning n={avgCount} min={MIN_REVIEWS_PER_WINDOW} />}
+          </>
+        }
+        basis="stars"
         disabled={!companyId}
         onClick={onOpenScore}
       />
@@ -199,9 +241,33 @@ export default function KPIGrid({
             </Delta>
           ) : null
         }
-        footer={trendData?.windowMonths ? `vs. Vorperiode (${trendData.windowMonths} Mon.)` : "vs. Vorperiode"}
+        footer={
+          <>
+            <span className="block">{trendData?.windowMonths ? `vs. Vorperiode (${trendData.windowMonths} Mon.)` : "vs. Vorperiode"}</span>
+            {trendData?.nReviews && (
+              <span className="block tnum">n = {fmtN(trendData.nReviews.current)} / {fmtN(trendData.nReviews.previous)} Bewertungen (aktuell / Vorperiode)</span>
+            )}
+            {trendData?.nReviews && (
+              <SmallBasisWarning n={Math.min(trendData.nReviews.current ?? Infinity, trendData.nReviews.previous ?? Infinity)} min={MIN_REVIEWS_PER_WINDOW} context="in einem Fenster" />
+            )}
+          </>
+        }
+        basis="stars"
         disabled={!companyId}
         onClick={onOpenTrend}
+      />
+
+      {/* 12- vs. 24-Monats-Schnitt (Inkrement 6, FA-08): beschreibt, keine Prognose, neutrale Farbe */}
+      <KPITile
+        label="12- vs. 24-Monats-Schnitt"
+        icon={<Star />}
+        tone="neutral"
+        value={rollingOk ? fmt(rollingData.short.mean, 2) : "—"}
+        delta={rollingOk ? <Delta tone="neu">24 M: {fmt(rollingData.long.mean, 2)}</Delta> : null}
+        footer={<RollingFooter data={rollingData} />}
+        basis="stars"
+        disabled={!companyId}
+        onClick={onOpenRolling}
       />
 
       {/* Most Critical */}
@@ -216,7 +282,14 @@ export default function KPIGrid({
             {fmt(mostCriticalData.score)} / 5
           </Delta>
         ) : null}
-        footer="niedrigster Topic-Score"
+        footer={
+          <>
+            <span className="block">niedrigster Kategorien-Score, Mitarbeitende</span>
+            {mostCriticalData?.n != null && <span className="block tnum">n = {fmtN(mostCriticalData.n)} Bewertungen in dieser Kategorie</span>}
+            {mostCriticalData?.n != null && <SmallBasisWarning n={mostCriticalData.n} min={MIN_REVIEWS_PER_WINDOW} />}
+          </>
+        }
+        basis="stars"
         disabled={!companyId}
         onClick={onOpenCritical}
       />
@@ -233,7 +306,13 @@ export default function KPIGrid({
             ? <Delta tone="neg">n = {negativeTopicItem.mention_count}</Delta>
             : null
         }
-        footer="höchste Negativrate"
+        footer={
+          <>
+            <span className="block">höchste Negativrate (Freitexte)</span>
+            {negativeTopicItem?.mention_count != null && <span className="block tnum">n = {fmtN(negativeTopicItem.mention_count)} Nennungen</span>}
+          </>
+        }
+        basis="text"
         disabled={!companyId}
         onClick={() => {
           if (negName && negName !== "-" && topicOverviewRef?.current?.openTopicByName) {

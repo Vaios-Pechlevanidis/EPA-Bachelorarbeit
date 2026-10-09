@@ -47,6 +47,8 @@ EXPECTED_IDS = {3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
 REQUIRED_FIELDS = {
     "company_id", "name", "name_normalized", "ticker", "ticker_scope", "isin", "sector",
     "peer_group", "news_term", "news_exclude", "news_term_confirmed", "eqs", "listed", "verification", "note",
+    # Inkrement 6 (FA-37): Vergleich mit der Plattform, nur vom Autor gefüllt, sonst null
+    "platform_review_count", "platform_count_date",
 }
 VERIFICATION_FIELDS = {"ticker_checked_with", "rows", "isin_source", "checked_at"}
 
@@ -422,3 +424,18 @@ def test_eqs_issuer_fields(entries):
     assert all(e["eqs"] for e in with_ticker)
     assert all(not e["eqs"]["confirmed"] for e in entries if e["eqs"] and e["company_id"] not in CONFIRMED_EQS), \
         "übrige UUIDs gelten erst nach Bestätigung durch den Autor"
+
+
+# ---------------------------------------------------------------------------
+# Plattformvergleich (Inkrement 6, FA-37): optionale Felder, nur vom Autor gefüllt
+# ---------------------------------------------------------------------------
+
+def test_platform_fields_are_null_or_well_formed(entries):
+    """``platform_review_count`` ist null oder eine positive ganze Zahl,
+    ``platform_count_date`` null oder ein Tag ``YYYY-MM-DD``; beide nur
+    zusammen gesetzt. Kein Abruf bei Kununu (Setzung des Autors)."""
+    for e in entries:
+        count, day = e["platform_review_count"], e["platform_count_date"]
+        assert count is None or (isinstance(count, int) and not isinstance(count, bool) and count > 0), e["name"]
+        assert day is None or re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(day)), e["name"]
+        assert (count is None) == (day is None), f"{e['name']}: Zahl und Datum nur zusammen"

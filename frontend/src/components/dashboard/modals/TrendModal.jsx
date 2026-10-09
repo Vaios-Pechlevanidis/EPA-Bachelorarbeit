@@ -46,9 +46,13 @@ const signTone = (sign) => {
 
 export default function TrendModal({ open, onOpenChange, companyId }) {
   const [range, setRange]     = useState("1Y");
-  const [data, setData]       = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  // Ergebnis je Firma und Zeitraum; "loading", solange der Schlüssel nicht passt
+  // (kein setState im Effekt, Lint-Regel react-hooks/set-state-in-effect).
+  const requestKey = companyId ? `${companyId}:${range}` : null;
+  const [result, setResult]   = useState({ key: null, data: null, error: "" });
+  const loading = open && Boolean(requestKey) && result.key !== requestKey;
+  const data = result.key === requestKey ? result.data : null;
+  const error = result.key === requestKey ? result.error : "";
 
   const [searchTerm, setSearchTerm]   = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -62,7 +66,6 @@ export default function TrendModal({ open, onOpenChange, companyId }) {
     const daysFallback = RANGE_TO_DAYS_FALLBACK[range];
 
     const controller = new AbortController();
-    setLoading(true); setError("");
 
     const url = stableMonths
       ? `${API_URL}/companies/${companyId}/ratings/trend?mode=stable_months&months=${stableMonths}`
@@ -72,12 +75,11 @@ export default function TrendModal({ open, onOpenChange, companyId }) {
 
     fetch(url, { signal: controller.signal })
       .then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); })
-      .then(setData)
-      .catch((e) => { if (e.name !== "AbortError") setError(e.message || "Failed to fetch"); })
-      .finally(() => setLoading(false));
+      .then((json) => setResult({ key: requestKey, data: json, error: "" }))
+      .catch((e) => { if (e.name !== "AbortError") setResult({ key: requestKey, data: null, error: e.message || "Failed to fetch" }); });
 
     return () => controller.abort();
-  }, [open, companyId, range]);
+  }, [open, companyId, range, requestKey]);
 
   const rows = useMemo(() => {
     if (!data) return [];

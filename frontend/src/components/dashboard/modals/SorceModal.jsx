@@ -46,9 +46,12 @@ function ScoreStars({ score }) {
 }
 
 export default function SorceModal({ open, onOpenChange, companyId }) {
-  const [data, setData]     = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState("");
+  // Ergebnis je Firma; "loading" gilt, solange der Schlüssel nicht passt
+  // (kein setState im Effekt, Lint-Regel react-hooks/set-state-in-effect).
+  const [result, setResult] = useState({ key: null, data: null, error: "" });
+  const loading = open && result.key !== companyId;
+  const data = result.key === companyId ? result.data : null;
+  const error = result.key === companyId ? result.error : "";
 
   const [searchTerm, setSearchTerm]   = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -58,13 +61,13 @@ export default function SorceModal({ open, onOpenChange, companyId }) {
   const [sortDir, setSortDir]         = useState("asc");
 
   useEffect(() => {
-    if (!open) return;
-    setLoading(true); setError("");
+    if (!open) return undefined;
+    let active = true;
     fetch(`${API_URL}/companies/${companyId}/ratings/avg`)
       .then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); })
-      .then(setData)
-      .catch((e) => setError(e.message || "Error"))
-      .finally(() => setLoading(false));
+      .then((json) => { if (active) setResult({ key: companyId, data: json, error: "" }); })
+      .catch((e) => { if (active) setResult({ key: companyId, data: null, error: e.message || "Error" }); });
+    return () => { active = false; };
   }, [open, companyId]);
 
   const rows = useMemo(() => {

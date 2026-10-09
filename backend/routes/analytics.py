@@ -5,7 +5,7 @@ API routes for analytics and company data.
 from fastapi import APIRouter, HTTPException, Query
 from database.supabase_client import get_supabase_client
 from typing import Optional, List, Dict, Any, Literal
-from services.topic_average_rating_service import fetch_all_rows_parallel, get_topic_rating_timeseries
+from services.topic_average_rating_service import _fetch_all_rows, fetch_all_rows_parallel, get_topic_rating_timeseries
 import services.review_service as review_service
 from services.keyword_topic_service import analyze_topic, topic_definitions_for, topic_for_dimension, topic_spans, topics_in_review
 from services.review_service import (
@@ -117,16 +117,20 @@ def get_company_timeline(
         
         timeline_data = []
         
+        # Seitenweise lesen (``_fetch_all_rows``): PostgREST liefert höchstens
+        # 1000 Zeilen je Abfrage; bis 2026-10-09 endete der Zeitverlauf dichter
+        # Unternehmen deshalb vor dem letzten Monat (Telekom 2018-06 statt
+        # 2025-07, Inkrement 6).
         # Get candidates data (if source is 'candidates' or 'all')
         if source in ["candidates", "all"]:
-            candidates_response = supabase.table("candidates")\
+            candidates_query = supabase.table("candidates")\
                 .select("durchschnittsbewertung, datum")\
                 .eq("company_id", company_id)\
                 .gte("datum", cutoff_date.isoformat())\
                 .order("datum")\
-                .execute()
+                .order("id")
             
-            candidates_data = candidates_response.data or []
+            candidates_data = _fetch_all_rows(candidates_query, page_size=review_service.PAGE_SIZE)
             for item in candidates_data:
                 if item.get("datum") and item.get("durchschnittsbewertung"):
                     timeline_data.append({
@@ -137,14 +141,14 @@ def get_company_timeline(
         
         # Get employee data (if source is 'employee' or 'all')
         if source in ["employee", "all"]:
-            employee_response = supabase.table("employee")\
+            employee_query = supabase.table("employee")\
                 .select("durchschnittsbewertung, datum")\
                 .eq("company_id", company_id)\
                 .gte("datum", cutoff_date.isoformat())\
                 .order("datum")\
-                .execute()
+                .order("id")
             
-            employee_data = employee_response.data or []
+            employee_data = _fetch_all_rows(employee_query, page_size=review_service.PAGE_SIZE)
             for item in employee_data:
                 if item.get("datum") and item.get("durchschnittsbewertung"):
                     timeline_data.append({

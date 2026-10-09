@@ -188,6 +188,41 @@ const LABEL_TO_CATEGORY_KEY = Object.fromEntries(
 
 const MAX_COMPANIES = 3
 
+/* Tooltip der Kategoriediagramme: Wert und Anzahl der Bewertungen je Firma und
+   Kategorie (counts aus der Kategorienzählung). Auf Modulebene, damit die
+   Komponente nicht bei jedem Render neu entsteht (Lint-Regel
+   react-hooks/static-components); Verhalten unverändert. */
+const CategoryChartTooltip = ({ active, payload, label, counts = {} }) => {
+    if (!active || !payload?.length || !label) return null
+    const categoryKey = LABEL_TO_CATEGORY_KEY[label]
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-md">
+            <p className="mb-1.5 font-semibold text-slate-800">{label}</p>
+            <ul className="space-y-1">
+                {payload.map((entry) => {
+                    const count = categoryKey
+                        ? (counts[entry.name]?.[categoryKey] ?? 0)
+                        : 0
+                    return (
+                        <li key={entry.name} className="flex items-center gap-2 text-sm">
+                            <span
+                                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                                style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-slate-700">
+                                {entry.name}: {entry.value != null ? Number(entry.value).toFixed(2) : "–"}
+                            </span>
+                            <span className="text-slate-500">
+                                ({count} Bewertung{count !== 1 ? "en" : ""})
+                            </span>
+                        </li>
+                    )
+                })}
+            </ul>
+        </div>
+    )
+}
+
 const ComparePage = () => {
     const location = useLocation()
     const navigate = useNavigate()
@@ -521,37 +556,9 @@ const ComparePage = () => {
         categoryCountByCompanyAndCategory[slot.name] = companyData[slot.id]?.categoryCounts ?? {}
     })
 
-    // Custom tooltip for category charts: shows value + number of ratings for this category per company
-    const CategoryChartTooltip = ({ active, payload, label }) => {
-        if (!active || !payload?.length || !label) return null
-        const categoryKey = LABEL_TO_CATEGORY_KEY[label]
-        return (
-            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-md">
-                <p className="mb-1.5 font-semibold text-slate-800">{label}</p>
-                <ul className="space-y-1">
-                    {payload.map((entry) => {
-                        const count = categoryKey
-                            ? (categoryCountByCompanyAndCategory[entry.name]?.[categoryKey] ?? 0)
-                            : 0
-                        return (
-                            <li key={entry.name} className="flex items-center gap-2 text-sm">
-                                <span
-                                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                                    style={{ backgroundColor: entry.color }}
-                                />
-                                <span className="text-slate-700">
-                                    {entry.name}: {entry.value != null ? Number(entry.value).toFixed(2) : "–"}
-                                </span>
-                                <span className="text-slate-500">
-                                    ({count} Bewertung{count !== 1 ? "en" : ""})
-                                </span>
-                            </li>
-                        )
-                    })}
-                </ul>
-            </div>
-        )
-    }
+    // Tooltip der Kategoriediagramme steht auf Modulebene (CategoryChartTooltip);
+    // die Zähler je Firma und Kategorie kommen als Prop (Recharts reicht die
+    // Props des content-Elements durch).
 
     // Build timeline overlay data (with dateKey for gap processing)
     const buildTimelineOverlay = () => {
@@ -1236,7 +1243,7 @@ const ComparePage = () => {
                                                 />
                                             ))}
                                             <Legend />
-                                            <Tooltip content={<CategoryChartTooltip />} />
+                                            <Tooltip content={<CategoryChartTooltip counts={categoryCountByCompanyAndCategory} />} />
                                         </RadarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -1270,7 +1277,7 @@ const ComparePage = () => {
                                                 width={130}
                                                 tick={{ fontSize: 11 }}
                                             />
-                                            <Tooltip content={<CategoryChartTooltip />} />
+                                            <Tooltip content={<CategoryChartTooltip counts={categoryCountByCompanyAndCategory} />} />
                                             <Legend />
                                             {activeSlots.map((slot) => (
                                                 <Bar

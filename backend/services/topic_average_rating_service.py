@@ -175,12 +175,17 @@ def get_topic_rating_timeseries(
     periods = sorted({p for (p, _t) in counts.keys()} | {p for (p, _t) in sums.keys()})
 
     data: List[Dict[str, Any]] = []
+    # n je Zeitraum und Thema (Werte, auf denen das Mittel beruht; Inkrement 6, FA-26)
+    counts_by_period: List[Dict[str, Any]] = []
     for p in periods:
         item: Dict[str, Any] = {"period": p}
+        count_item: Dict[str, Any] = {"period": p}
         for topic in topic_cols.keys():
             c = counts.get((p, topic), 0)
             item[topic] = None if c == 0 else round(sums[(p, topic)] / c, 2)
+            count_item[topic] = c
         data.append(item)
+        counts_by_period.append(count_item)
 
     return {
         "source": source,
@@ -188,4 +193,9 @@ def get_topic_rating_timeseries(
         "company_id": company_id,
         "topics": list(topic_cols.keys()),  # wichtig fürs Frontend: dynamisch Lines bauen
         "data": data,
+        # zusätzlich seit 2026-10-09 (Inkrement 6): n je Zeitraum und Thema sowie je Thema gesamt
+        "counts": counts_by_period,
+        "n_by_topic": {topic: sum(c for (_p, t), c in counts.items() if t == topic) for topic in topic_cols.keys()},
+        "n_reviews": len(rows),
+        "basis": "sternebewertung",
     }

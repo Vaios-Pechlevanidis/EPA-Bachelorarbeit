@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useEffect, useMemo, useState, memo } from "react"
 import { API_URL } from "@/config"
+import { MIN_REVIEWS_PER_MONTH } from "@/lib/dataBasis"
 import { ChartCardHeader, SourceToggle, DropdownPicker } from "./ChartHeader"
 import { Star } from "../../icons"
 import { fetchJsonShared } from "@/lib/sharedFetch"
@@ -90,6 +91,8 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
 
   const [topics, setTopics] = useState([])
   const [rawData, setRawData] = useState([])
+  const [rawCounts, setRawCounts] = useState([])   // n je Zeitraum und Thema (Inkrement 6, FA-26)
+  const [topicN, setTopicN] = useState({})          // n je Thema gesamt
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -214,6 +217,8 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
 
         setTopics(json.topics || [])
         setRawData(json.data || [])
+        setRawCounts(json.counts || [])
+        setTopicN(json.n_by_topic || {})
 
 
 
@@ -437,6 +442,11 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
     const items = payload
       .filter((p) => p.dataKey !== "_gapMarker" && !p.dataKey.endsWith("__gap") && p.value != null)
       .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+    // n je Thema im Zeitraum (Inkrement 6, FA-26); Warnung unter 5 im Monat (E4)
+    const period = payload?.[0]?.payload?.period ?? payload?.[0]?.payload?.dateKey ?? null
+    const countRow = period ? rawCounts.find((c) => c.period === period) : null
+    const nOf = (key) => (countRow ? countRow[key] ?? null : null)
+    const small = granularity === "year" && countRow && items.some((p) => nOf(p.dataKey) != null && nOf(p.dataKey) < MIN_REVIEWS_PER_MONTH)
 
     return (
       <div className="bg-slate-900 border border-slate-700 rounded-md shadow-lg px-3 py-2 text-[12px] max-w-[300px]">
@@ -455,10 +465,16 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
               </div>
               <span className="font-semibold tnum text-white">
                 {Number(p.value).toFixed(2).replace(".", ",")}
+                {nOf(p.dataKey) != null && <span className="font-normal text-slate-500"> · n = {nOf(p.dataKey)}</span>}
               </span>
             </div>
           ))}
         </div>
+        {small && (
+          <p className="text-amber-400 mt-1.5 pt-1.5 border-t border-slate-700 text-[11px]">
+            kleine Basis: mindestens ein Thema unter {MIN_REVIEWS_PER_MONTH} Bewertungen im Monat
+          </p>
+        )}
       </div>
     )
   }
@@ -565,6 +581,11 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
                   <span className={["text-[12px] flex-1 truncate", hidden ? "text-slate-400" : "text-slate-800"].join(" ")}>
                     {prettifyTopicKey(t)}
                   </span>
+                  {topicN[t] != null && (
+                    <span className="text-[11px] tnum text-slate-500 flex-none" title="Bewertungen mit Wert in dieser Kategorie im gewählten Zeitraum (FA-26)">
+                      n = {Number(topicN[t]).toLocaleString("de-DE")}
+                    </span>
+                  )}
                 </button>
               )
             })}
@@ -680,6 +701,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
           subtitle={`${SOURCE_LABEL[source]} · ${visibleTopics.length}/${(topics || []).length} Topics${granularity === "year" && selectedYear ? ` · ${selectedYear}` : " · ges. Zeitraum"}`}
           expandable
           actions={<FilterDropdowns compact />}
+          basis="stars"
         />
 
         <div className="px-4 pt-4 pb-4 flex flex-col flex-1 min-h-0">

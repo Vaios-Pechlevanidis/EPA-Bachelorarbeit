@@ -3,8 +3,9 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Building2, Diamond, GitCompareArrows, ListOrdered, MessageSquareText, MousePointerClick } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusHint, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
+import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
 import { EventsToggle, EvidenceSection } from "@/components/dashboard/EvidenceSection"
 import { ExplanationPanel } from "@/components/dashboard/ExplanationPanel"
@@ -14,10 +15,11 @@ import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "@/component
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isPeriod, isTimeRangeKey, outlierCountText, periodIndex, periodWindows, selectionLabel, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
 import { PRICE_ON, PRICE_PARAM, noPriceText } from "@/lib/market"
-import { groupLabel, validStatus } from "@/lib/reviewerStatus"
+import { groupLabel, statusDistinctionHint, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { useAnomalyComparison, usePeriodComparison } from "@/hooks/useAnomalyComparison"
 import { useCompanyResource } from "@/hooks/useCompanyResource"
+import { useDataStatus } from "@/hooks/useDataStatus"
 import { useGlobalEvents } from "@/hooks/useEvidence"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
@@ -136,6 +138,10 @@ export default function AnomaliesPage() {
     const globalEvents = useGlobalEvents(showEvents)
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
+    // Datenstand: n je Statusgruppe und Hinweis, wenn aktuell/ehemalig nicht unterschieden wird (A4, E13)
+    const dataStatus = useDataStatus(companyId)
+    const sourceStatus = dataStatus.data?.sources?.[source] ?? null
+    const statusHint = statusDistinctionHint(source, sourceStatus)
     const selectedId = searchParams.get("anomaly")
     const selectedAnomaly = useMemo(() => anomalies.find((a) => a.id === selectedId) ?? null, [anomalies, selectedId])
     const windows = useMemo(() => comparisonWindows(selectedAnomaly), [selectedAnomaly])
@@ -260,6 +266,8 @@ export default function AnomaliesPage() {
                         source={source}
                         value={status}
                         onChange={(key) => updateParams({ status: key, anomaly: null })}
+                        counts={sourceStatus?.status_counts ?? null}
+                        hint={statusHint}
                     />
                 )}
                 {companyId && (
@@ -289,6 +297,9 @@ export default function AnomaliesPage() {
                     </PageSection>
                 ) : (
                     <>
+                        {/* Datenstand (Inkrement 6, FA-37) */}
+                        <DataStatusBar companyId={companyId} />
+
                         {/* Verlauf (zwei Drittel) und Markierungen (ein Drittel) */}
                         <div className="grid gap-3 xl:grid-cols-3">
                             <PageSection
@@ -297,6 +308,11 @@ export default function AnomaliesPage() {
                                 eyebrow="VERLAUF · AUFFÄLLIGE VERÄNDERUNGEN"
                                 title={`Monatsverlauf · ${dimensionLabel(dimension)}`}
                                 subtitle={chartSubtitle}
+                                basis={[
+                                    "stars",
+                                    ...(showPrice && marketData ? ["market"] : []),
+                                    ...(showEvents && globalEvents.events.length ? ["external"] : []),
+                                ]}
                                 actions={
                                     <>
                                         <EventsToggle
@@ -335,6 +351,7 @@ export default function AnomaliesPage() {
                                     events={showEvents ? globalEvents.events : null}
                                 />
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                                    <StatusHint hint={statusHint} />
                                     {showEvents && !globalEvents.loading && !globalEvents.error && globalEvents.events.length === 0 && (
                                         <p className="m-0 text-[11px] text-slate-500">
                                             Keine bestätigten allgemeinen Ereignisse hinterlegt (backend/data/global_events.json).
@@ -371,6 +388,7 @@ export default function AnomaliesPage() {
                                 className="flex flex-col"
                                 icon={markerTab === "outliers" ? <Diamond /> : <ListOrdered />}
                                 eyebrow={range ? `MARKIERUNGEN · ${fmtPeriod(range.from).toUpperCase()} – ${fmtPeriod(range.to).toUpperCase()}` : "MARKIERUNGEN"}
+                                basis="stars"
                                 title={markerTab === "outliers" ? "Auffällige Einzelmonate" : "Auffällige Veränderungen"}
                                 subtitle={markerTab === "outliers"
                                     ? "Starke Abweichung von den Nachbarmonaten, kein neues Niveau (E14); größte zuerst"
@@ -480,6 +498,7 @@ export default function AnomaliesPage() {
                                     className="xl:col-span-3"
                                     icon={<GitCompareArrows />}
                                     eyebrow={`VERGLEICH · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    basis={["stars", "text"]}
                                     title="Vorher-Nachher-Vergleich"
                                     subtitle={comparison.data
                                         ? `${group} · davor ${fmtPeriod(comparison.data.windows.before.from)} – ${fmtPeriod(comparison.data.windows.before.to)}: ${comparison.data.windows.before.n_reviews} · ab dem markierten Monat ${fmtPeriod(comparison.data.windows.after.from)} – ${fmtPeriod(comparison.data.windows.after.to)}: ${comparison.data.windows.after.n_reviews} Bewertungen`
@@ -492,6 +511,7 @@ export default function AnomaliesPage() {
                                     bodyClassName="px-4 py-4 flex-1 min-h-0 flex flex-col"
                                     icon={<MessageSquareText />}
                                     eyebrow={`EINZELBEWERTUNGEN · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    basis={["stars", "text"]}
                                     title="Bewertungen des Zeitraums"
                                     subtitle={`${group} · ${side === "before" ? "davor" : "ab dem markierten Monat"} · ${fmtPeriod(sideWindow.from)}${sideWindow.from !== sideWindow.to ? ` – ${fmtPeriod(sideWindow.to)}` : ""}${
                                         reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}
@@ -536,6 +556,7 @@ export default function AnomaliesPage() {
                                     className="xl:col-span-3"
                                     icon={<GitCompareArrows />}
                                     eyebrow={`DRILL-DOWN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
+                                    basis={["stars", "text"]}
                                     title="Vergleich mit dem Zeitraum davor"
                                     subtitle={periodComparison.data
                                         ? `${group} · Zeitraum davor ${selectionLabel(periodComparison.data.windows.before)}: ${periodComparison.data.windows.before.n_reviews} · Auswahl ${selectionLabel(periodComparison.data.windows.after)}: ${periodComparison.data.windows.after.n_reviews} Bewertungen`
@@ -560,6 +581,7 @@ export default function AnomaliesPage() {
                                         bodyClassName="px-4 py-4 flex-1 min-h-0 flex flex-col"
                                         icon={<MessageSquareText />}
                                         eyebrow={`EINZELBEWERTUNGEN · AUSWAHL ${selectionLabel(selection).toUpperCase()}`}
+                                        basis={["stars", "text"]}
                                         title="Bewertungen der Auswahl"
                                         subtitle={`${group} · ${periodSide === "before" ? "Zeitraum davor" : "Auswahl"} · ${selectionLabel(reviewSpan)}${
                                             reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`}

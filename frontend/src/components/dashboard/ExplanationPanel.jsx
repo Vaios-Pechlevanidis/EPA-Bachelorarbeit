@@ -70,7 +70,7 @@ export function StageBadge({ stage, rules = null, small = false }) {
 function Chip({ children, title, strong = false }) {
     return (
         <span
-            className={`inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10.5px] ${strong ? "text-slate-800 font-medium" : "text-slate-600"}`}
+            className={`inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10.5px] max-w-full break-words ${strong ? "text-slate-800 font-medium" : "text-slate-600"}`}
             title={title}
         >
             {children}
@@ -137,19 +137,19 @@ function BundledItems({ items, rules }) {
     return (
         <ul className="m-0 mt-2 p-0 list-none border-l-2 border-slate-200 pl-3 space-y-1">
             {items.map((item) => (
-                <li key={item.id} className="flex items-start gap-2 text-[11.5px]">
-                    <span className="w-[70px] flex-none text-slate-500 tnum">{fmtDay(item.date)}</span>
+                <li key={item.id} className="flex flex-col sm:flex-row sm:items-start gap-x-2 gap-y-0.5 text-[11.5px] min-w-0">
+                    <span className="sm:w-[70px] flex-none text-slate-500 tnum">{fmtDay(item.date)}</span>
                     <span className="min-w-0 flex-1">
-                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:underline underline-offset-2 inline-flex items-center gap-1 min-w-0">
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:underline underline-offset-2 inline-flex items-center gap-1 min-w-0 max-w-full">
                             <span className="truncate">{item.title}</span>
                             <ExternalLink className="w-3 h-3 flex-none text-slate-400" aria-hidden="true" />
                         </a>
-                        <span className="block text-[10.5px] text-slate-500">
+                        <span className="block text-[10.5px] text-slate-500 break-words">
                             {item.publisher || "Herausgeber unbekannt"} · {TYPE_LABELS[item.source_type] ?? item.source_type}
                             {item.issuer ? ` · Mitteilung von ${item.issuer}` : ""} · Zeit {num(item.time_match, 2)}, Thema {num(item.topic_match, 2)}
                         </span>
                     </span>
-                    <StageBadge stage={item.stage} rules={rules} small />
+                    <span className="flex-none self-start"><StageBadge stage={item.stage} rules={rules} small /></span>
                 </li>
             ))}
         </ul>
@@ -161,14 +161,14 @@ function GroupMembers({ others, rules }) {
     return (
         <ul className="m-0 mt-2 p-0 list-none border-l-2 border-slate-200 pl-3 space-y-1.5">
             {others.map((o) => (
-                <li key={o.id} className="flex items-start gap-2 text-[11.5px]">
-                    <span className="w-[70px] flex-none text-slate-500 tnum">{fmtDay(o.date)}</span>
+                <li key={o.id} className="flex flex-col sm:flex-row sm:items-start gap-x-2 gap-y-0.5 text-[11.5px] min-w-0">
+                    <span className="sm:w-[70px] flex-none text-slate-500 tnum">{fmtDay(o.date)}</span>
                     <span className="min-w-0 flex-1">
-                        <a href={o.url} target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:underline underline-offset-2 inline-flex items-center gap-1 min-w-0">
+                        <a href={o.url} target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:underline underline-offset-2 inline-flex items-center gap-1 min-w-0 max-w-full">
                             <span className="truncate">{o.event}</span>
                             <ExternalLink className="w-3 h-3 flex-none text-slate-400" aria-hidden="true" />
                         </a>
-                        <span className="block text-[10.5px] text-slate-500">
+                        <span className="block text-[10.5px] text-slate-500 break-words">
                             {o.source || "Herausgeber unbekannt"} · {TYPE_LABELS[o.source_type] ?? o.source_type}
                             {o.issuer ? ` · Mitteilung von ${o.issuer}` : ""}
                             {o.n_items > 1 ? ` · ${o.n_items} Meldungen (${(o.publishers ?? []).join(", ")})` : ""}
@@ -176,7 +176,7 @@ function GroupMembers({ others, rules }) {
                             {o.terms?.length ? ` · Begriff: ${o.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
                         </span>
                     </span>
-                    <StageBadge stage={o.confidence} rules={rules} small />
+                    <span className="flex-none self-start"><StageBadge stage={o.confidence} rules={rules} small /></span>
                 </li>
             ))}
         </ul>
@@ -191,13 +191,13 @@ function ExplanationEntry({ entry, rules }) {
     const others = group?.others ?? []
     const groupLabel = group ? (group.kind === "ereignisart" ? `Ereignisart ${group.label}` : group.label) : ""
     return (
-        <li className="border-t border-slate-100 first:border-t-0 py-3 flex items-start gap-3">
-            <div className="flex-none pt-0.5 w-[118px]">
+        <li className="border-t border-slate-100 first:border-t-0 py-3 flex flex-col sm:flex-row sm:items-start gap-x-3 gap-y-1.5 min-w-0">
+            <div className="flex-none pt-0.5 sm:w-[118px]">
                 <StageBadge stage={entry.confidence} rules={rules} />
             </div>
             <div className="min-w-0 flex-1">
-                <p className="m-0 text-[12.5px] text-slate-800 leading-5">{entry.text}</p>
-                <p className="m-0 mt-1 text-[11.5px] text-slate-600 flex items-center gap-1.5 flex-wrap">
+                <p className="m-0 text-[12.5px] text-slate-800 leading-5 break-words">{entry.text}</p>
+                <p className="m-0 mt-1 text-[11.5px] text-slate-600 flex items-center gap-1.5 flex-wrap min-w-0">
                     <a
                         href={entry.url}
                         target="_blank"
@@ -229,10 +229,10 @@ function ExplanationEntry({ entry, rules }) {
                 {bundled && open && <BundledItems items={entry.items ?? []} rules={rules} />}
                 {others.length > 0 && (
                     <div className="mt-1.5">
-                        <p className="m-0 text-[11px] text-slate-600 flex flex-wrap items-center gap-x-1.5">
+                        <p className="m-0 text-[11px] text-slate-600 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 min-w-0">
                             <button
                                 type="button"
-                                className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline"
+                                className="inline-flex items-start gap-1 text-left text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline min-w-0"
                                 onClick={() => setGroupOpen((v) => !v)}
                                 aria-expanded={groupOpen}
                                 title={`In der obersten Liste steht je ${group.kind === "ereignisart" ? "Ereignisart" : "Begriff"} ein Eintrag; die übrigen Bündel der Gruppe stehen hier.`}
@@ -240,7 +240,7 @@ function ExplanationEntry({ entry, rules }) {
                                 {groupOpen ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />}
                                 {groupOpen ? `Weitere Einträge zu ${groupLabel} ausblenden` : `${others.length} ${others.length === 1 ? "weiterer Eintrag" : "weitere Einträge"} zu ${groupLabel} anzeigen`}
                             </button>
-                            <span className="text-slate-400">
+                            <span className="text-slate-400 break-words min-w-0">
                                 · Gruppe: {group.n_bundles} Bündel, {group.n_items} {group.n_items === 1 ? "Meldung" : "Meldungen"} ({(group.publishers ?? []).join(", ")})
                             </span>
                         </p>
@@ -274,7 +274,7 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
                     : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel${summary.n_groups != null ? `, ${summary.n_groups} ${summary.n_groups === 1 ? "Gruppe" : "Gruppen"} nach Ereignisart` : ""})${stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
                 : ""
     return (
-        <PageSection className={className} icon={<Lightbulb />} eyebrow={eyebrow} title="Mögliche Zusammenhänge" subtitle={subtitle}>
+        <PageSection className={className} icon={<Lightbulb />} eyebrow={eyebrow} title="Mögliche Zusammenhänge" subtitle={subtitle} basis={["external", "text"]}>
             {loading ? (
                 <div className="flex items-center gap-2 py-1">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-200 border-t-slate-600"></div>

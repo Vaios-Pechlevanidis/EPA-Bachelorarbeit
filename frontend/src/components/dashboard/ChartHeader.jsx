@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Maximize2 } from "lucide-react";
+import { DataBasisTags } from "./DataBasis";
 
 /* ============================================================================
    ChartCardHeader — sticky header for chart cards.
@@ -23,6 +24,7 @@ export function ChartCardHeader({
   expandable,
   actions,            // node | null
   inlineActions = false,
+  basis = null,       // Datenbasis (DataBasis-Schlüssel oder Liste), Inkrement 6, FA-25
 }) {
   return (
     <div
@@ -38,9 +40,10 @@ export function ChartCardHeader({
             </span>
           )}
           <div className="min-w-0 flex-1">
-            {eyebrow && (
-              <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">
-                {eyebrow}
+            {(eyebrow || basis) && (
+              <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none flex flex-wrap items-center gap-x-2 gap-y-1">
+                {eyebrow && <span>{eyebrow}</span>}
+                <DataBasisTags basis={basis} small />
               </p>
             )}
             <h3 className="m-0 text-[14px] leading-5 font-semibold tracking-tight text-slate-900 inline-flex items-center gap-1.5">
