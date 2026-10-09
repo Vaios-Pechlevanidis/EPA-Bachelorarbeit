@@ -106,21 +106,24 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
     return { total, avg, mentions, limited }
   }, [topicsData])
 
-  // Daten an Parent für PDF Export
+  // Daten an Parent für PDF Export (alle Topics, n der Bewertungen, Zahl der
+  // Topics mit begrenzter Datenbasis wie im Banner der Karte)
   useEffect(() => {
     if (onDataChange && !loading) {
       onDataChange({
         topics: topicsData,
         sourceFilter: sourceFilter === "all" ? null : sourceFilter,
+        totalReviews,
         stats: stats ? {
           totalTopics:   stats.total,
           avgRating:     stats.avg.toFixed(1),
           totalMentions: stats.mentions,
-        } : { totalTopics: 0, avgRating: 0, totalMentions: 0 }
+          limited:       stats.limited,
+        } : { totalTopics: 0, avgRating: 0, totalMentions: 0, limited: 0 }
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topicsData, sourceFilter, loading])
+  }, [topicsData, sourceFilter, loading, totalReviews])
 
   useEffect(() => { setIsModalOpen(tableModalOpen || detailModalOpen) }, [tableModalOpen, detailModalOpen])
 

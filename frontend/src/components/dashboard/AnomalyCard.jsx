@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useMemo, useState, memo } from "react"
+import { useEffect, useMemo, useState, memo } from "react"
 import {
     LineChart,
     Line,
@@ -895,7 +895,10 @@ export function StatusHint({ hint, className = "" }) {
     return <p className={`m-0 text-[11px] text-slate-500 ${className}`}>Hinweis zum Status: {hint}</p>
 }
 
-export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
+/* onDataChange / onLoadingChange: Zustand der Karte für den PDF-Export (wie
+   TopicOverviewCard): Auswahl, Zähler, Eignung, Reihe; das Diagramm selbst wird
+   über die ID "anomaly-chart-export" aus dem DOM übernommen. */
+export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen, onDataChange = null, onLoadingChange = null }) {
     const [selection, setSelection] = useState({ source: DEFAULT_SOURCE, dimension: OVERALL_DIMENSION.key, status: null })
     const { source, dimension, status } = selection
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
@@ -903,6 +906,37 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
     const dataStatus = useDataStatus(companyId)
     const sourceStatus = dataStatus.data?.sources?.[source] ?? null
     const statusHint = statusDistinctionHint(source, sourceStatus)
+
+    useEffect(() => {
+        if (onLoadingChange) onLoadingChange(loading)
+    }, [loading, onLoadingChange])
+
+    useEffect(() => {
+        if (!onDataChange || loading) return
+        const series = data?.series ?? []
+        const trimmed = trimToEvaluated(series)
+        const outliers = data?.outlier_months ?? []
+        onDataChange({
+            source,
+            dimension,
+            status,
+            group: groupLabel(source, status),
+            dimensionName: dimensionLabel(dimension),
+            countText: countLabel(anomalies, data?.eligibility, outliers),
+            anomalies,
+            outliers,
+            eligibility: data?.eligibility ?? null,
+            minReviews: data?.params?.min_reviews_per_month ?? null,
+            monthsInSpan: series.length,
+            evaluatedMonths: series.filter((m) => m.evaluated).length,
+            evaluatedRange: trimmed.series.length && series.some((m) => m.evaluated)
+                ? { from: trimmed.series[0].period, to: trimmed.series[trimmed.series.length - 1].period }
+                : null,
+            hasInterpolation: interpolateGaps(series).some((m) => m.interpolated),
+            statusHint: status ? statusHint : null,
+            error: error || null,
+        })
+    }, [onDataChange, loading, data, anomalies, error, source, dimension, status, statusHint])
 
     if (!companyId) return null
 
@@ -940,7 +974,9 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen }) {
                 }
             />
             <div className="px-4 pt-4 pb-4">
-                <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />
+                <div id="anomaly-chart-export">
+                    <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />
+                </div>
                 {status && <StatusHint hint={statusHint} className="mt-2" />}
 
                 {/* Die Liste der Veränderungen steht nur auf der Detailseite; die Karte

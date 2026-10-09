@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ChevronDown, ChevronRight, Database } from "lucide-react"
 import { useDataStatus } from "@/hooks/useDataStatus"
-import { fmtPeriod } from "@/lib/anomalySeries"
+import { evidenceText, lastImportText, marketText, platformText, sourceLine, timestampCell } from "@/lib/dataStatusText"
 
 /* ============================================================================
    DataStatusBar — Datenstand und Abdeckung (Inkrement 6, FA-37).
@@ -13,32 +13,8 @@ import { fmtPeriod } from "@/lib/anomalySeries"
    mit der Plattform aus der Metadatei (nur vom Autor gefüllt, sonst „nicht
    hinterlegt“). Aufklappbar: Zeitstempel je Feld mit ihrer Bedeutung.
    Daten: GET /companies/{id}/data-status (useDataStatus). Nur Beschreibung.
+   Die Texte stehen in lib/dataStatusText.js; der PDF-Export nutzt dieselben.
    ============================================================================ */
-
-const fmtN = (n) => (n == null ? "–" : Number(n).toLocaleString("de-DE"))
-
-/* "2026-10-02T18:50:16" → "02.10.2026"; "2025-07-21" → "21.07.2025" */
-const fmtDay = (value) => {
-  if (!value) return "–"
-  const [y, m, d] = String(value).slice(0, 10).split("-")
-  return d && m && y ? `${d}.${m}.${y}` : "–"
-}
-
-const fmtStamp = (value) => {
-  if (!value) return "–"
-  const s = String(value)
-  return s.length >= 16 ? `${fmtDay(s)} ${s.slice(11, 16)}` : fmtDay(s)
-}
-
-function sourceLine(s) {
-  if (!s || !s.n_reviews) return "keine Bewertungen"
-  const span = s.first_review && s.last_review ? `${fmtDay(s.first_review)} – ${fmtDay(s.last_review)}` : "ohne Datum"
-  const eligible = s.eligible
-    ? `${s.evaluated_months} bewertete Monate, geeignet für die Erkennung`
-    : `${s.evaluated_months} bewertete ${s.evaluated_months === 1 ? "Monat" : "Monate"}, keine automatische Erkennung`
-  return `${fmtN(s.n_reviews)} ${s.n_reviews === 1 ? "Bewertung" : "Bewertungen"} · ${span} · ${eligible}${
-    s.n_undated ? ` · ${s.n_undated} ohne Datum` : ""}`
-}
 
 function Item({ label, children, title }) {
   return (
@@ -73,7 +49,7 @@ function TimestampTable({ data }) {
                 const t = s.timestamps?.[field]
                 return (
                   <td key={key} className="py-1 pr-3 tnum whitespace-nowrap">
-                    {t?.n ? `${fmtStamp(t.min)} – ${fmtStamp(t.max)} (${fmtN(t.n)})` : "leer"}
+                    {timestampCell(t)}
                   </td>
                 )
               })}
@@ -119,27 +95,19 @@ export function DataStatusBar({ companyId, className = "" }) {
               {sourceLine(cand)}
             </Item>
             <Item label="Letzter Import" title={data.last_import?.meaning ?? ""}>
-              {data.last_import?.value ? `${fmtStamp(data.last_import.value)} (Datenbank; Abrufdatum bei Kununu nicht gespeichert)` : "unbekannt"}
+              {lastImportText(data)}
             </Item>
             <Item label="Plattform" title="Anzahl der Bewertungen auf Kununu zum Stichtag, vom Autor in backend/data/company_metadata.json hinterlegt; kein Abruf">
-              {platform?.available
-                ? `${fmtN(platform.review_count)} Bewertungen am ${fmtDay(platform.count_date)} · im Datensatz ${fmtN(platform.dataset_count)} (${Math.round((platform.coverage_share ?? 0) * 100)} %)`
-                : platform?.note ?? "–"}
+              {platformText(platform)}
             </Item>
             {market !== undefined && (
               <Item label="Kurs" title="Zwischenspeicher der Monatsschlusskurse (E15); Abruf = fetched_at der Datei">
-                {market === null
-                  ? "kein Ticker"
-                  : market.available
-                    ? `${market.ticker}${market.ticker_scope && market.ticker_scope !== "eigene Aktie" ? ` (${market.ticker_scope})` : ""} · ${fmtPeriod(market.first_month)} – ${fmtPeriod(market.last_month)} · abgerufen ${fmtDay(market.fetched_at)}`
-                    : `${market.ticker}: kein Zwischenspeicher`}
+                {marketText(market)}
               </Item>
             )}
             {evidence !== undefined && (
               <Item label="Belege" title="Belegspeicher der externen Meldungen je Monat (E18); Abruf = jüngstes fetched_at">
-                {evidence === null || !evidence.months
-                  ? "kein gespeicherter Monat"
-                  : `${Object.values(evidence.sources ?? {}).map((s) => `${s.label} ${s.months} ${s.months === 1 ? "Monat" : "Monate"}`).join(", ")} · ${fmtPeriod(evidence.first_month)} – ${fmtPeriod(evidence.last_month)} · abgerufen ${fmtDay(evidence.fetched_at)}`}
+                {evidenceText(evidence)}
               </Item>
             )}
             <button
