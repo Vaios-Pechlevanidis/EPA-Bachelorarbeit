@@ -1,0 +1,4513 @@
+{
+  "generated_at": "2026-10-10T16:00:44+00:00",
+  "rules": {
+    "tolerance_months": 1,
+    "max_shift_months": 3,
+    "same_direction": true,
+    "one_to_one": true,
+    "assignment": "Annotationen in zeitlicher Reihenfolge, früheste passende Erkennung"
+  },
+  "annotations_version": 2,
+  "n_annotations": 20,
+  "series": [
+    {
+      "series": "1&1 AG / employee / durchschnittsbewertung",
+      "company": "1&1 AG",
+      "company_id": 21,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 107,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 2.168697,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.48172,
+        "n_evaluated": 107,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5,
+          "n_annotations": 3,
+          "n_detections": 1,
+          "hits": [
+            {
+              "annotation": {
+                "company": "1&1 AG",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2016-10",
+                "period_to": "2016-10",
+                "direction": "fall"
+              },
+              "window": [
+                "2016-09",
+                "2016-11"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2016-10",
+                "direction": "fall",
+                "delta": -0.393,
+                "severity": "medium",
+                "before_mean": 3.601,
+                "after_mean": 3.209,
+                "month_mean": 2.983
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "1&1 AG",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2018-04",
+                "period_to": "2018-04",
+                "direction": "rise"
+              },
+              "window": [
+                "2018-03",
+                "2018-05"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "1&1 AG",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2018-09",
+                "period_to": "2018-09",
+                "direction": "fall"
+              },
+              "window": [
+                "2018-08",
+                "2018-11"
+              ]
+            }
+          ],
+          "extras": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5,
+          "n_annotations": 3,
+          "n_detections": 1,
+          "hits": [
+            {
+              "annotation": {
+                "company": "1&1 AG",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2016-10",
+                "period_to": "2016-10",
+                "direction": "fall"
+              },
+              "window": [
+                "2016-09",
+                "2016-11"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2016-10",
+                "direction": "fall",
+                "delta": -0.393,
+                "severity": "medium",
+                "before_mean": 3.601,
+                "after_mean": 3.209,
+                "month_mean": 2.983
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "1&1 AG",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2018-04",
+                "period_to": "2018-04",
+                "direction": "rise"
+              },
+              "window": [
+                "2018-03",
+                "2018-05"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "1&1 AG",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2018-09",
+                "period_to": "2018-09",
+                "direction": "fall"
+              },
+              "window": [
+                "2018-08",
+                "2018-11"
+              ]
+            }
+          ],
+          "extras": []
+        }
+      }
+    },
+    {
+      "series": "Bechtle / employee / durchschnittsbewertung",
+      "company": "Bechtle",
+      "company_id": 24,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 139,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 1.394014,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.375836,
+        "n_evaluated": 139,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_annotations": 3,
+          "n_detections": 1,
+          "hits": [],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Bechtle",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-02",
+                "period_to": "2021-02",
+                "direction": "rise"
+              },
+              "window": [
+                "2021-01",
+                "2021-03"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Bechtle",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-08",
+                "period_to": "2021-09",
+                "direction": "fall"
+              },
+              "window": [
+                "2021-07",
+                "2021-10"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Bechtle",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2023-01",
+                "period_to": "2023-01",
+                "direction": "rise"
+              },
+              "window": [
+                "2022-12",
+                "2023-02"
+              ]
+            }
+          ],
+          "extras": [
+            {
+              "kind": "niveauwechsel",
+              "date": "2016-02",
+              "direction": "rise",
+              "delta": 0.443,
+              "severity": "medium",
+              "before_mean": 3.045,
+              "after_mean": 3.488,
+              "month_mean": 3.491
+            }
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_annotations": 3,
+          "n_detections": 1,
+          "hits": [],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Bechtle",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-02",
+                "period_to": "2021-02",
+                "direction": "rise"
+              },
+              "window": [
+                "2021-01",
+                "2021-03"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Bechtle",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-08",
+                "period_to": "2021-09",
+                "direction": "fall"
+              },
+              "window": [
+                "2021-07",
+                "2021-10"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Bechtle",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2023-01",
+                "period_to": "2023-01",
+                "direction": "rise"
+              },
+              "window": [
+                "2022-12",
+                "2023-02"
+              ]
+            }
+          ],
+          "extras": [
+            {
+              "kind": "niveauwechsel",
+              "date": "2016-02",
+              "direction": "rise",
+              "delta": 0.443,
+              "severity": "medium",
+              "before_mean": 3.045,
+              "after_mean": 3.488,
+              "month_mean": 3.491
+            }
+          ]
+        }
+      }
+    },
+    {
+      "series": "Cancom / employee / durchschnittsbewertung",
+      "company": "Cancom",
+      "company_id": 25,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 115,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 2.393035,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.502163,
+        "n_evaluated": 115,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 3,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_annotations": 3,
+          "n_detections": 0,
+          "hits": [],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Cancom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2016-08",
+                "period_to": "2016-08",
+                "direction": "rise"
+              },
+              "window": [
+                "2016-06",
+                "2016-10"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Cancom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-07",
+                "period_to": "2021-07",
+                "direction": "fall"
+              },
+              "window": [
+                "2021-04",
+                "2021-09"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Cancom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2023-12",
+                "period_to": "2023-12",
+                "direction": "rise"
+              },
+              "window": [
+                "2023-11",
+                "2024-01"
+              ]
+            }
+          ],
+          "extras": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_annotations": 3,
+          "n_detections": 2,
+          "hits": [],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Cancom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2016-08",
+                "period_to": "2016-08",
+                "direction": "rise"
+              },
+              "window": [
+                "2016-06",
+                "2016-10"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Cancom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-07",
+                "period_to": "2021-07",
+                "direction": "fall"
+              },
+              "window": [
+                "2021-04",
+                "2021-09"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Cancom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2023-12",
+                "period_to": "2023-12",
+                "direction": "rise"
+              },
+              "window": [
+                "2023-11",
+                "2024-01"
+              ]
+            }
+          ],
+          "extras": [
+            {
+              "kind": "einzelmonat",
+              "date": "2016-05",
+              "direction": "fall",
+              "deviation": -1.7,
+              "month_mean": 2.46,
+              "level": 4.16
+            },
+            {
+              "kind": "einzelmonat",
+              "date": "2017-08",
+              "direction": "fall",
+              "deviation": -1.574,
+              "month_mean": 2.06,
+              "level": 3.634
+            }
+          ]
+        }
+      }
+    },
+    {
+      "series": "Compugroup Medical Deutschland / employee / durchschnittsbewertung",
+      "company": "Compugroup Medical Deutschland",
+      "company_id": 27,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 76,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 1.801308,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.456035,
+        "n_evaluated": 76,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5,
+          "n_annotations": 3,
+          "n_detections": 1,
+          "hits": [
+            {
+              "annotation": {
+                "company": "Compugroup Medical Deutschland",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2022-08",
+                "period_to": "2022-11",
+                "direction": "fall"
+              },
+              "window": [
+                "2022-07",
+                "2023-01"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2022-08",
+                "direction": "fall",
+                "delta": -0.866,
+                "severity": "high",
+                "before_mean": 3.841,
+                "after_mean": 2.975,
+                "month_mean": 2.925
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Compugroup Medical Deutschland",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2019-06",
+                "period_to": "2019-08",
+                "direction": "fall"
+              },
+              "window": [
+                "2019-05",
+                "2019-09"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Compugroup Medical Deutschland",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-04",
+                "period_to": "2021-05",
+                "direction": "rise"
+              },
+              "window": [
+                "2021-03",
+                "2021-07"
+              ]
+            }
+          ],
+          "extras": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5,
+          "n_annotations": 3,
+          "n_detections": 1,
+          "hits": [
+            {
+              "annotation": {
+                "company": "Compugroup Medical Deutschland",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2022-08",
+                "period_to": "2022-11",
+                "direction": "fall"
+              },
+              "window": [
+                "2022-07",
+                "2023-01"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2022-08",
+                "direction": "fall",
+                "delta": -0.866,
+                "severity": "high",
+                "before_mean": 3.841,
+                "after_mean": 2.975,
+                "month_mean": 2.925
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Compugroup Medical Deutschland",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2019-06",
+                "period_to": "2019-08",
+                "direction": "fall"
+              },
+              "window": [
+                "2019-05",
+                "2019-09"
+              ]
+            },
+            {
+              "annotation": {
+                "company": "Compugroup Medical Deutschland",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-04",
+                "period_to": "2021-05",
+                "direction": "rise"
+              },
+              "window": [
+                "2021-03",
+                "2021-07"
+              ]
+            }
+          ],
+          "extras": []
+        }
+      }
+    },
+    {
+      "series": "Freenet / employee / durchschnittsbewertung",
+      "company": "Freenet",
+      "company_id": 33,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 86,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 0.971523,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.330232,
+        "n_evaluated": 86,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 2,
+          "fp": 3,
+          "fn": 1,
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "f1": 0.5,
+          "n_annotations": 3,
+          "n_detections": 5,
+          "hits": [
+            {
+              "annotation": {
+                "company": "Freenet",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2016-04",
+                "period_to": "2016-04",
+                "direction": "rise"
+              },
+              "window": [
+                "2016-03",
+                "2016-05"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2016-04",
+                "direction": "rise",
+                "delta": 0.967,
+                "severity": "high",
+                "before_mean": 2.498,
+                "after_mean": 3.465,
+                "month_mean": 3.542
+              }
+            },
+            {
+              "annotation": {
+                "company": "Freenet",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-09",
+                "period_to": "2021-09",
+                "direction": "fall"
+              },
+              "window": [
+                "2021-07",
+                "2021-10"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2021-09",
+                "direction": "fall",
+                "delta": -1.06,
+                "severity": "high",
+                "before_mean": 4.204,
+                "after_mean": 3.144,
+                "month_mean": 3.4
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Freenet",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2020-02",
+                "period_to": "2020-02",
+                "direction": "rise"
+              },
+              "window": [
+                "2020-01",
+                "2020-05"
+              ]
+            }
+          ],
+          "extras": [
+            {
+              "kind": "niveauwechsel",
+              "date": "2015-10",
+              "direction": "fall",
+              "delta": -0.803,
+              "severity": "high",
+              "before_mean": 3.301,
+              "after_mean": 2.498,
+              "month_mean": 2.712
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2019-10",
+              "direction": "rise",
+              "delta": 0.739,
+              "severity": "high",
+              "before_mean": 3.465,
+              "after_mean": 4.204,
+              "month_mean": 4.05
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2022-02",
+              "direction": "rise",
+              "delta": 0.845,
+              "severity": "high",
+              "before_mean": 3.144,
+              "after_mean": 3.989,
+              "month_mean": 3.8
+            }
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 2,
+          "fp": 3,
+          "fn": 1,
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "f1": 0.5,
+          "n_annotations": 3,
+          "n_detections": 5,
+          "hits": [
+            {
+              "annotation": {
+                "company": "Freenet",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2016-04",
+                "period_to": "2016-04",
+                "direction": "rise"
+              },
+              "window": [
+                "2016-03",
+                "2016-05"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2016-04",
+                "direction": "rise",
+                "delta": 0.967,
+                "severity": "high",
+                "before_mean": 2.498,
+                "after_mean": 3.465,
+                "month_mean": 3.542
+              }
+            },
+            {
+              "annotation": {
+                "company": "Freenet",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2021-09",
+                "period_to": "2021-09",
+                "direction": "fall"
+              },
+              "window": [
+                "2021-07",
+                "2021-10"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2021-09",
+                "direction": "fall",
+                "delta": -1.06,
+                "severity": "high",
+                "before_mean": 4.204,
+                "after_mean": 3.144,
+                "month_mean": 3.4
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Freenet",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2020-02",
+                "period_to": "2020-02",
+                "direction": "rise"
+              },
+              "window": [
+                "2020-01",
+                "2020-05"
+              ]
+            }
+          ],
+          "extras": [
+            {
+              "kind": "niveauwechsel",
+              "date": "2015-10",
+              "direction": "fall",
+              "delta": -0.803,
+              "severity": "high",
+              "before_mean": 3.301,
+              "after_mean": 2.498,
+              "month_mean": 2.712
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2019-10",
+              "direction": "rise",
+              "delta": 0.739,
+              "severity": "high",
+              "before_mean": 3.465,
+              "after_mean": 4.204,
+              "month_mean": 4.05
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2022-02",
+              "direction": "rise",
+              "delta": 0.845,
+              "severity": "high",
+              "before_mean": 3.144,
+              "after_mean": 3.989,
+              "month_mean": 3.8
+            }
+          ]
+        }
+      }
+    },
+    {
+      "series": "NTT DATA SE / employee / durchschnittsbewertung",
+      "company": "NTT DATA SE",
+      "company_id": 20,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 40,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 0.937347,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.356441,
+        "n_evaluated": 40,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.25,
+          "recall": 1.0,
+          "f1": 0.4,
+          "n_annotations": 1,
+          "n_detections": 4,
+          "hits": [
+            {
+              "annotation": {
+                "company": "NTT DATA SE",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2020-06",
+                "period_to": "2020-06",
+                "direction": "rise"
+              },
+              "window": [
+                "2020-05",
+                "2020-07"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2020-06",
+                "direction": "rise",
+                "delta": 1.45,
+                "severity": "high",
+                "before_mean": 2.544,
+                "after_mean": 3.995,
+                "month_mean": 3.72
+              }
+            }
+          ],
+          "misses": [],
+          "extras": [
+            {
+              "kind": "niveauwechsel",
+              "date": "2017-11",
+              "direction": "fall",
+              "delta": -0.617,
+              "severity": "high",
+              "before_mean": 3.916,
+              "after_mean": 3.299,
+              "month_mean": 2.875
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2019-07",
+              "direction": "fall",
+              "delta": -0.755,
+              "severity": "high",
+              "before_mean": 3.299,
+              "after_mean": 2.544,
+              "month_mean": 2.5
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2024-03",
+              "direction": "fall",
+              "delta": -0.502,
+              "severity": "high",
+              "before_mean": 3.995,
+              "after_mean": 3.492,
+              "month_mean": 3.5
+            }
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.25,
+          "recall": 1.0,
+          "f1": 0.4,
+          "n_annotations": 1,
+          "n_detections": 4,
+          "hits": [
+            {
+              "annotation": {
+                "company": "NTT DATA SE",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2020-06",
+                "period_to": "2020-06",
+                "direction": "rise"
+              },
+              "window": [
+                "2020-05",
+                "2020-07"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2020-06",
+                "direction": "rise",
+                "delta": 1.45,
+                "severity": "high",
+                "before_mean": 2.544,
+                "after_mean": 3.995,
+                "month_mean": 3.72
+              }
+            }
+          ],
+          "misses": [],
+          "extras": [
+            {
+              "kind": "niveauwechsel",
+              "date": "2017-11",
+              "direction": "fall",
+              "delta": -0.617,
+              "severity": "high",
+              "before_mean": 3.916,
+              "after_mean": 3.299,
+              "month_mean": 2.875
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2019-07",
+              "direction": "fall",
+              "delta": -0.755,
+              "severity": "high",
+              "before_mean": 3.299,
+              "after_mean": 2.544,
+              "month_mean": 2.5
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2024-03",
+              "direction": "fall",
+              "delta": -0.502,
+              "severity": "high",
+              "before_mean": 3.995,
+              "after_mean": 3.492,
+              "month_mean": 3.5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "series": "SAP SE / employee / durchschnittsbewertung",
+      "company": "SAP SE",
+      "company_id": 19,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 26,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 0.872294,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.365876,
+        "n_evaluated": 26,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "n_annotations": 1,
+          "n_detections": 1,
+          "hits": [
+            {
+              "annotation": {
+                "company": "SAP SE",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2024-07",
+                "period_to": "2024-08",
+                "direction": "rise"
+              },
+              "window": [
+                "2024-06",
+                "2024-09"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2024-07",
+                "direction": "rise",
+                "delta": 0.667,
+                "severity": "high",
+                "before_mean": 3.07,
+                "after_mean": 3.737,
+                "month_mean": 3.5
+              }
+            }
+          ],
+          "misses": [],
+          "extras": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "n_annotations": 1,
+          "n_detections": 2,
+          "hits": [
+            {
+              "annotation": {
+                "company": "SAP SE",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2024-07",
+                "period_to": "2024-08",
+                "direction": "rise"
+              },
+              "window": [
+                "2024-06",
+                "2024-09"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2024-07",
+                "direction": "rise",
+                "delta": 0.667,
+                "severity": "high",
+                "before_mean": 3.07,
+                "after_mean": 3.737,
+                "month_mean": 3.5
+              }
+            }
+          ],
+          "misses": [],
+          "extras": [
+            {
+              "kind": "einzelmonat",
+              "date": "2024-03",
+              "direction": "rise",
+              "deviation": 1.227,
+              "month_mean": 4.16,
+              "level": 2.933
+            }
+          ]
+        }
+      }
+    },
+    {
+      "series": "Telekom / employee / durchschnittsbewertung",
+      "company": "Telekom",
+      "company_id": 28,
+      "source": "employee",
+      "dimension": "durchschnittsbewertung",
+      "evaluated_months": 165,
+      "params": {
+        "method": "pelt",
+        "model": "l2",
+        "min_size": 3,
+        "penalty": 0.821218,
+        "penalty_mode": "scaled",
+        "penalty_factor": 2.0,
+        "noise_sigma": 0.28358,
+        "n_evaluated": 165,
+        "min_delta": 0.3,
+        "min_reviews_per_month": 5,
+        "outlier_sigma_factor": 3.0,
+        "outlier_min_delta": 0.5,
+        "outlier_neighbours": 3
+      },
+      "variants": {
+        "niveauwechsel": {
+          "tp": 2,
+          "fp": 2,
+          "fn": 1,
+          "precision": 0.5,
+          "recall": 0.6666666666666666,
+          "f1": 0.5714285714285715,
+          "n_annotations": 3,
+          "n_detections": 4,
+          "hits": [
+            {
+              "annotation": {
+                "company": "Telekom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2009-12",
+                "period_to": "2009-12",
+                "direction": "rise"
+              },
+              "window": [
+                "2009-11",
+                "2010-01"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2009-12",
+                "direction": "rise",
+                "delta": 0.948,
+                "severity": "high",
+                "before_mean": 3.393,
+                "after_mean": 4.341,
+                "month_mean": 4.248
+              }
+            },
+            {
+              "annotation": {
+                "company": "Telekom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2010-07",
+                "period_to": "2010-07",
+                "direction": "fall"
+              },
+              "window": [
+                "2010-04",
+                "2010-08"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2010-07",
+                "direction": "fall",
+                "delta": -0.65,
+                "severity": "high",
+                "before_mean": 4.341,
+                "after_mean": 3.691,
+                "month_mean": 3.0
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Telekom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2013-05",
+                "period_to": "2013-05",
+                "direction": "rise"
+              },
+              "window": [
+                "2013-04",
+                "2013-06"
+              ]
+            }
+          ],
+          "extras": [
+            {
+              "kind": "niveauwechsel",
+              "date": "2018-11",
+              "direction": "fall",
+              "delta": -0.638,
+              "severity": "high",
+              "before_mean": 3.691,
+              "after_mean": 3.053,
+              "month_mean": 3.212
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2019-02",
+              "direction": "rise",
+              "delta": 1.013,
+              "severity": "high",
+              "before_mean": 3.053,
+              "after_mean": 4.067,
+              "month_mean": 3.96
+            }
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 2,
+          "fp": 5,
+          "fn": 1,
+          "precision": 0.2857142857142857,
+          "recall": 0.6666666666666666,
+          "f1": 0.4,
+          "n_annotations": 3,
+          "n_detections": 7,
+          "hits": [
+            {
+              "annotation": {
+                "company": "Telekom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2009-12",
+                "period_to": "2009-12",
+                "direction": "rise"
+              },
+              "window": [
+                "2009-11",
+                "2010-01"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2009-12",
+                "direction": "rise",
+                "delta": 0.948,
+                "severity": "high",
+                "before_mean": 3.393,
+                "after_mean": 4.341,
+                "month_mean": 4.248
+              }
+            },
+            {
+              "annotation": {
+                "company": "Telekom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2010-07",
+                "period_to": "2010-07",
+                "direction": "fall"
+              },
+              "window": [
+                "2010-04",
+                "2010-08"
+              ],
+              "detection": {
+                "kind": "niveauwechsel",
+                "date": "2010-07",
+                "direction": "fall",
+                "delta": -0.65,
+                "severity": "high",
+                "before_mean": 4.341,
+                "after_mean": 3.691,
+                "month_mean": 3.0
+              }
+            }
+          ],
+          "misses": [
+            {
+              "annotation": {
+                "company": "Telekom",
+                "source": "employee",
+                "dimension": "durchschnittsbewertung",
+                "period_from": "2013-05",
+                "period_to": "2013-05",
+                "direction": "rise"
+              },
+              "window": [
+                "2013-04",
+                "2013-06"
+              ]
+            }
+          ],
+          "extras": [
+            {
+              "kind": "einzelmonat",
+              "date": "2015-05",
+              "direction": "fall",
+              "deviation": -1.115,
+              "month_mean": 2.7,
+              "level": 3.815
+            },
+            {
+              "kind": "einzelmonat",
+              "date": "2017-05",
+              "direction": "fall",
+              "deviation": -0.961,
+              "month_mean": 2.867,
+              "level": 3.828
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2018-11",
+              "direction": "fall",
+              "delta": -0.638,
+              "severity": "high",
+              "before_mean": 3.691,
+              "after_mean": 3.053,
+              "month_mean": 3.212
+            },
+            {
+              "kind": "niveauwechsel",
+              "date": "2019-02",
+              "direction": "rise",
+              "delta": 1.013,
+              "severity": "high",
+              "before_mean": 3.053,
+              "after_mean": 4.067,
+              "month_mean": 3.96
+            },
+            {
+              "kind": "einzelmonat",
+              "date": "2022-12",
+              "direction": "fall",
+              "deviation": -1.411,
+              "month_mean": 2.6,
+              "level": 4.011
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "totals": {
+    "niveauwechsel": {
+      "gesamt": {
+        "tp": 8,
+        "fp": 9,
+        "fn": 12,
+        "precision": 0.47058823529411764,
+        "recall": 0.4,
+        "f1": 0.4324324324324324,
+        "n_series": 8,
+        "n_annotations": 20
+      },
+      "je_quelle": {
+        "employee": {
+          "tp": 8,
+          "fp": 9,
+          "fn": 12,
+          "precision": 0.47058823529411764,
+          "recall": 0.4,
+          "f1": 0.4324324324324324,
+          "n_series": 8,
+          "n_annotations": 20
+        }
+      }
+    },
+    "niveauwechsel+einzelmonate": {
+      "gesamt": {
+        "tp": 8,
+        "fp": 15,
+        "fn": 12,
+        "precision": 0.34782608695652173,
+        "recall": 0.4,
+        "f1": 0.37209302325581395,
+        "n_series": 8,
+        "n_annotations": 20
+      },
+      "je_quelle": {
+        "employee": {
+          "tp": 8,
+          "fp": 15,
+          "fn": 12,
+          "precision": 0.34782608695652173,
+          "recall": 0.4,
+          "f1": 0.37209302325581395,
+          "n_series": 8,
+          "n_annotations": 20
+        }
+      }
+    }
+  },
+  "skipped": [],
+  "subsets": {
+    "alle": {
+      "definition": "alle Einträge",
+      "n_annotations": 20,
+      "n_undetermined": 0,
+      "series": [
+        {
+          "series": "1&1 AG / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-10",
+                    "period_to": "2016-10",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2016-09",
+                    "2016-11"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2016-10",
+                    "direction": "fall",
+                    "delta": -0.393,
+                    "severity": "medium",
+                    "before_mean": 3.601,
+                    "after_mean": 3.209,
+                    "month_mean": 2.983
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-04",
+                    "period_to": "2018-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2018-03",
+                    "2018-05"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-09",
+                    "period_to": "2018-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2018-08",
+                    "2018-11"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-10",
+                    "period_to": "2016-10",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2016-09",
+                    "2016-11"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2016-10",
+                    "direction": "fall",
+                    "delta": -0.393,
+                    "severity": "medium",
+                    "before_mean": 3.601,
+                    "after_mean": 3.209,
+                    "month_mean": 2.983
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-04",
+                    "period_to": "2018-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2018-03",
+                    "2018-05"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-09",
+                    "period_to": "2018-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2018-08",
+                    "2018-11"
+                  ]
+                }
+              ],
+              "extras": []
+            }
+          }
+        },
+        {
+          "series": "Bechtle / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 3,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-02",
+                    "period_to": "2021-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-01",
+                    "2021-03"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-08",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-01",
+                    "period_to": "2023-01",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2022-12",
+                    "2023-02"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 3,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-02",
+                    "period_to": "2021-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-01",
+                    "2021-03"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-08",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-01",
+                    "period_to": "2023-01",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2022-12",
+                    "2023-02"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Cancom / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 3,
+              "precision": null,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-08",
+                    "period_to": "2016-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2016-06",
+                    "2016-10"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-07",
+                    "period_to": "2021-07",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-04",
+                    "2021-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-12",
+                    "period_to": "2023-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2023-11",
+                    "2024-01"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 2,
+              "fn": 3,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-08",
+                    "period_to": "2016-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2016-06",
+                    "2016-10"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-07",
+                    "period_to": "2021-07",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-04",
+                    "2021-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-12",
+                    "period_to": "2023-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2023-11",
+                    "2024-01"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2016-05",
+                  "direction": "fall",
+                  "deviation": -1.7,
+                  "month_mean": 2.46,
+                  "level": 4.16
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2017-08",
+                  "direction": "fall",
+                  "deviation": -1.574,
+                  "month_mean": 2.06,
+                  "level": 3.634
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Compugroup Medical Deutschland / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2022-08",
+                    "period_to": "2022-11",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2022-07",
+                    "2023-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2022-08",
+                    "direction": "fall",
+                    "delta": -0.866,
+                    "severity": "high",
+                    "before_mean": 3.841,
+                    "after_mean": 2.975,
+                    "month_mean": 2.925
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2019-06",
+                    "period_to": "2019-08",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2019-05",
+                    "2019-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-04",
+                    "period_to": "2021-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-03",
+                    "2021-07"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2022-08",
+                    "period_to": "2022-11",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2022-07",
+                    "2023-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2022-08",
+                    "direction": "fall",
+                    "delta": -0.866,
+                    "severity": "high",
+                    "before_mean": 3.841,
+                    "after_mean": 2.975,
+                    "month_mean": 2.925
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2019-06",
+                    "period_to": "2019-08",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2019-05",
+                    "2019-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-04",
+                    "period_to": "2021-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-03",
+                    "2021-07"
+                  ]
+                }
+              ],
+              "extras": []
+            }
+          }
+        },
+        {
+          "series": "Freenet / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 2,
+              "fp": 3,
+              "fn": 1,
+              "precision": 0.4,
+              "recall": 0.6666666666666666,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-04",
+                    "period_to": "2016-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2016-03",
+                    "2016-05"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2016-04",
+                    "direction": "rise",
+                    "delta": 0.967,
+                    "severity": "high",
+                    "before_mean": 2.498,
+                    "after_mean": 3.465,
+                    "month_mean": 3.542
+                  }
+                },
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-09",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2021-09",
+                    "direction": "fall",
+                    "delta": -1.06,
+                    "severity": "high",
+                    "before_mean": 4.204,
+                    "after_mean": 3.144,
+                    "month_mean": 3.4
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2020-02",
+                    "period_to": "2020-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2020-01",
+                    "2020-05"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2015-10",
+                  "direction": "fall",
+                  "delta": -0.803,
+                  "severity": "high",
+                  "before_mean": 3.301,
+                  "after_mean": 2.498,
+                  "month_mean": 2.712
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-10",
+                  "direction": "rise",
+                  "delta": 0.739,
+                  "severity": "high",
+                  "before_mean": 3.465,
+                  "after_mean": 4.204,
+                  "month_mean": 4.05
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2022-02",
+                  "direction": "rise",
+                  "delta": 0.845,
+                  "severity": "high",
+                  "before_mean": 3.144,
+                  "after_mean": 3.989,
+                  "month_mean": 3.8
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 2,
+              "fp": 3,
+              "fn": 1,
+              "precision": 0.4,
+              "recall": 0.6666666666666666,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-04",
+                    "period_to": "2016-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2016-03",
+                    "2016-05"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2016-04",
+                    "direction": "rise",
+                    "delta": 0.967,
+                    "severity": "high",
+                    "before_mean": 2.498,
+                    "after_mean": 3.465,
+                    "month_mean": 3.542
+                  }
+                },
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-09",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2021-09",
+                    "direction": "fall",
+                    "delta": -1.06,
+                    "severity": "high",
+                    "before_mean": 4.204,
+                    "after_mean": 3.144,
+                    "month_mean": 3.4
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2020-02",
+                    "period_to": "2020-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2020-01",
+                    "2020-05"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2015-10",
+                  "direction": "fall",
+                  "delta": -0.803,
+                  "severity": "high",
+                  "before_mean": 3.301,
+                  "after_mean": 2.498,
+                  "month_mean": 2.712
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-10",
+                  "direction": "rise",
+                  "delta": 0.739,
+                  "severity": "high",
+                  "before_mean": 3.465,
+                  "after_mean": 4.204,
+                  "month_mean": 4.05
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2022-02",
+                  "direction": "rise",
+                  "delta": 0.845,
+                  "severity": "high",
+                  "before_mean": 3.144,
+                  "after_mean": 3.989,
+                  "month_mean": 3.8
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "NTT DATA SE / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 3,
+              "fn": 0,
+              "precision": 0.25,
+              "recall": 1.0,
+              "f1": 0.4,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "NTT DATA SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2020-06",
+                    "period_to": "2020-06",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2020-05",
+                    "2020-07"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2020-06",
+                    "direction": "rise",
+                    "delta": 1.45,
+                    "severity": "high",
+                    "before_mean": 2.544,
+                    "after_mean": 3.995,
+                    "month_mean": 3.72
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2017-11",
+                  "direction": "fall",
+                  "delta": -0.617,
+                  "severity": "high",
+                  "before_mean": 3.916,
+                  "after_mean": 3.299,
+                  "month_mean": 2.875
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-07",
+                  "direction": "fall",
+                  "delta": -0.755,
+                  "severity": "high",
+                  "before_mean": 3.299,
+                  "after_mean": 2.544,
+                  "month_mean": 2.5
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2024-03",
+                  "direction": "fall",
+                  "delta": -0.502,
+                  "severity": "high",
+                  "before_mean": 3.995,
+                  "after_mean": 3.492,
+                  "month_mean": 3.5
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 3,
+              "fn": 0,
+              "precision": 0.25,
+              "recall": 1.0,
+              "f1": 0.4,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "NTT DATA SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2020-06",
+                    "period_to": "2020-06",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2020-05",
+                    "2020-07"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2020-06",
+                    "direction": "rise",
+                    "delta": 1.45,
+                    "severity": "high",
+                    "before_mean": 2.544,
+                    "after_mean": 3.995,
+                    "month_mean": 3.72
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2017-11",
+                  "direction": "fall",
+                  "delta": -0.617,
+                  "severity": "high",
+                  "before_mean": 3.916,
+                  "after_mean": 3.299,
+                  "month_mean": 2.875
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-07",
+                  "direction": "fall",
+                  "delta": -0.755,
+                  "severity": "high",
+                  "before_mean": 3.299,
+                  "after_mean": 2.544,
+                  "month_mean": 2.5
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2024-03",
+                  "direction": "fall",
+                  "delta": -0.502,
+                  "severity": "high",
+                  "before_mean": 3.995,
+                  "after_mean": 3.492,
+                  "month_mean": 3.5
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "SAP SE / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.5,
+              "recall": 1.0,
+              "f1": 0.6666666666666666,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2024-03",
+                  "direction": "rise",
+                  "deviation": 1.227,
+                  "month_mean": 4.16,
+                  "level": 2.933
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Telekom / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 2,
+              "fp": 2,
+              "fn": 1,
+              "precision": 0.5,
+              "recall": 0.6666666666666666,
+              "f1": 0.5714285714285715,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2009-12",
+                    "period_to": "2009-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2009-11",
+                    "2010-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2009-12",
+                    "direction": "rise",
+                    "delta": 0.948,
+                    "severity": "high",
+                    "before_mean": 3.393,
+                    "after_mean": 4.341,
+                    "month_mean": 4.248
+                  }
+                },
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2010-07",
+                    "period_to": "2010-07",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2010-04",
+                    "2010-08"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2010-07",
+                    "direction": "fall",
+                    "delta": -0.65,
+                    "severity": "high",
+                    "before_mean": 4.341,
+                    "after_mean": 3.691,
+                    "month_mean": 3.0
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2013-05",
+                    "period_to": "2013-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2013-04",
+                    "2013-06"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2018-11",
+                  "direction": "fall",
+                  "delta": -0.638,
+                  "severity": "high",
+                  "before_mean": 3.691,
+                  "after_mean": 3.053,
+                  "month_mean": 3.212
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-02",
+                  "direction": "rise",
+                  "delta": 1.013,
+                  "severity": "high",
+                  "before_mean": 3.053,
+                  "after_mean": 4.067,
+                  "month_mean": 3.96
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 2,
+              "fp": 5,
+              "fn": 1,
+              "precision": 0.2857142857142857,
+              "recall": 0.6666666666666666,
+              "f1": 0.4,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2009-12",
+                    "period_to": "2009-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2009-11",
+                    "2010-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2009-12",
+                    "direction": "rise",
+                    "delta": 0.948,
+                    "severity": "high",
+                    "before_mean": 3.393,
+                    "after_mean": 4.341,
+                    "month_mean": 4.248
+                  }
+                },
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2010-07",
+                    "period_to": "2010-07",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2010-04",
+                    "2010-08"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2010-07",
+                    "direction": "fall",
+                    "delta": -0.65,
+                    "severity": "high",
+                    "before_mean": 4.341,
+                    "after_mean": 3.691,
+                    "month_mean": 3.0
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2013-05",
+                    "period_to": "2013-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2013-04",
+                    "2013-06"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2015-05",
+                  "direction": "fall",
+                  "deviation": -1.115,
+                  "month_mean": 2.7,
+                  "level": 3.815
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2017-05",
+                  "direction": "fall",
+                  "deviation": -0.961,
+                  "month_mean": 2.867,
+                  "level": 3.828
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2018-11",
+                  "direction": "fall",
+                  "delta": -0.638,
+                  "severity": "high",
+                  "before_mean": 3.691,
+                  "after_mean": 3.053,
+                  "month_mean": 3.212
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-02",
+                  "direction": "rise",
+                  "delta": 1.013,
+                  "severity": "high",
+                  "before_mean": 3.053,
+                  "after_mean": 4.067,
+                  "month_mean": 3.96
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2022-12",
+                  "direction": "fall",
+                  "deviation": -1.411,
+                  "month_mean": 2.6,
+                  "level": 4.011
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "totals": {
+        "niveauwechsel": {
+          "gesamt": {
+            "tp": 8,
+            "fp": 9,
+            "fn": 12,
+            "precision": 0.47058823529411764,
+            "recall": 0.4,
+            "f1": 0.4324324324324324,
+            "n_series": 8,
+            "n_annotations": 20
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 8,
+              "fp": 9,
+              "fn": 12,
+              "precision": 0.47058823529411764,
+              "recall": 0.4,
+              "f1": 0.4324324324324324,
+              "n_series": 8,
+              "n_annotations": 20
+            }
+          }
+        },
+        "niveauwechsel+einzelmonate": {
+          "gesamt": {
+            "tp": 8,
+            "fp": 15,
+            "fn": 12,
+            "precision": 0.34782608695652173,
+            "recall": 0.4,
+            "f1": 0.37209302325581395,
+            "n_series": 8,
+            "n_annotations": 20
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 8,
+              "fp": 15,
+              "fn": 12,
+              "precision": 0.34782608695652173,
+              "recall": 0.4,
+              "f1": 0.37209302325581395,
+              "n_series": 8,
+              "n_annotations": 20
+            }
+          }
+        }
+      }
+    },
+    "ohne_duenne": {
+      "definition": "kein Monat im Zeitraum mit weniger als 10 Bewertungen (Serien-CSVs)",
+      "n_annotations": 7,
+      "n_undetermined": 0,
+      "series": [
+        {
+          "series": "1&1 AG / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "precision": null,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-04",
+                    "period_to": "2018-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2018-03",
+                    "2018-05"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "precision": null,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-04",
+                    "period_to": "2018-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2018-03",
+                    "2018-05"
+                  ]
+                }
+              ],
+              "extras": []
+            }
+          }
+        },
+        {
+          "series": "Bechtle / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 2,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 2,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-02",
+                    "period_to": "2021-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-01",
+                    "2021-03"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-01",
+                    "period_to": "2023-01",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2022-12",
+                    "2023-02"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 2,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 2,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-02",
+                    "period_to": "2021-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-01",
+                    "2021-03"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-01",
+                    "period_to": "2023-01",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2022-12",
+                    "2023-02"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Freenet / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 3,
+              "fn": 0,
+              "precision": 0.25,
+              "recall": 1.0,
+              "f1": 0.4,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-04",
+                    "period_to": "2016-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2016-03",
+                    "2016-05"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2016-04",
+                    "direction": "rise",
+                    "delta": 0.967,
+                    "severity": "high",
+                    "before_mean": 2.498,
+                    "after_mean": 3.465,
+                    "month_mean": 3.542
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2015-10",
+                  "direction": "fall",
+                  "delta": -0.803,
+                  "severity": "high",
+                  "before_mean": 3.301,
+                  "after_mean": 2.498,
+                  "month_mean": 2.712
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-10",
+                  "direction": "rise",
+                  "delta": 0.739,
+                  "severity": "high",
+                  "before_mean": 3.465,
+                  "after_mean": 4.204,
+                  "month_mean": 4.05
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2022-02",
+                  "direction": "rise",
+                  "delta": 0.845,
+                  "severity": "high",
+                  "before_mean": 3.144,
+                  "after_mean": 3.989,
+                  "month_mean": 3.8
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 3,
+              "fn": 0,
+              "precision": 0.25,
+              "recall": 1.0,
+              "f1": 0.4,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Freenet",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2016-04",
+                    "period_to": "2016-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2016-03",
+                    "2016-05"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2016-04",
+                    "direction": "rise",
+                    "delta": 0.967,
+                    "severity": "high",
+                    "before_mean": 2.498,
+                    "after_mean": 3.465,
+                    "month_mean": 3.542
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2015-10",
+                  "direction": "fall",
+                  "delta": -0.803,
+                  "severity": "high",
+                  "before_mean": 3.301,
+                  "after_mean": 2.498,
+                  "month_mean": 2.712
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-10",
+                  "direction": "rise",
+                  "delta": 0.739,
+                  "severity": "high",
+                  "before_mean": 3.465,
+                  "after_mean": 4.204,
+                  "month_mean": 4.05
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2022-02",
+                  "direction": "rise",
+                  "delta": 0.845,
+                  "severity": "high",
+                  "before_mean": 3.144,
+                  "after_mean": 3.989,
+                  "month_mean": 3.8
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "SAP SE / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.5,
+              "recall": 1.0,
+              "f1": 0.6666666666666666,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2024-03",
+                  "direction": "rise",
+                  "deviation": 1.227,
+                  "month_mean": 4.16,
+                  "level": 2.933
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Telekom / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 2,
+              "fn": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "f1": 0.4,
+              "n_annotations": 2,
+              "neutral": 1,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2009-12",
+                    "period_to": "2009-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2009-11",
+                    "2010-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2009-12",
+                    "direction": "rise",
+                    "delta": 0.948,
+                    "severity": "high",
+                    "before_mean": 3.393,
+                    "after_mean": 4.341,
+                    "month_mean": 4.248
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2013-05",
+                    "period_to": "2013-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2013-04",
+                    "2013-06"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2018-11",
+                  "direction": "fall",
+                  "delta": -0.638,
+                  "severity": "high",
+                  "before_mean": 3.691,
+                  "after_mean": 3.053,
+                  "month_mean": 3.212
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-02",
+                  "direction": "rise",
+                  "delta": 1.013,
+                  "severity": "high",
+                  "before_mean": 3.053,
+                  "after_mean": 4.067,
+                  "month_mean": 3.96
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 5,
+              "fn": 1,
+              "precision": 0.16666666666666666,
+              "recall": 0.5,
+              "f1": 0.25,
+              "n_annotations": 2,
+              "neutral": 1,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2009-12",
+                    "period_to": "2009-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2009-11",
+                    "2010-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2009-12",
+                    "direction": "rise",
+                    "delta": 0.948,
+                    "severity": "high",
+                    "before_mean": 3.393,
+                    "after_mean": 4.341,
+                    "month_mean": 4.248
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2013-05",
+                    "period_to": "2013-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2013-04",
+                    "2013-06"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2015-05",
+                  "direction": "fall",
+                  "deviation": -1.115,
+                  "month_mean": 2.7,
+                  "level": 3.815
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2017-05",
+                  "direction": "fall",
+                  "deviation": -0.961,
+                  "month_mean": 2.867,
+                  "level": 3.828
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2018-11",
+                  "direction": "fall",
+                  "delta": -0.638,
+                  "severity": "high",
+                  "before_mean": 3.691,
+                  "after_mean": 3.053,
+                  "month_mean": 3.212
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-02",
+                  "direction": "rise",
+                  "delta": 1.013,
+                  "severity": "high",
+                  "before_mean": 3.053,
+                  "after_mean": 4.067,
+                  "month_mean": 3.96
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2022-12",
+                  "direction": "fall",
+                  "deviation": -1.411,
+                  "month_mean": 2.6,
+                  "level": 4.011
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "totals": {
+        "niveauwechsel": {
+          "gesamt": {
+            "tp": 3,
+            "fp": 6,
+            "fn": 4,
+            "precision": 0.3333333333333333,
+            "recall": 0.42857142857142855,
+            "f1": 0.375,
+            "n_series": 5,
+            "n_annotations": 7
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 3,
+              "fp": 6,
+              "fn": 4,
+              "precision": 0.3333333333333333,
+              "recall": 0.42857142857142855,
+              "f1": 0.375,
+              "n_series": 5,
+              "n_annotations": 7
+            }
+          }
+        },
+        "niveauwechsel+einzelmonate": {
+          "gesamt": {
+            "tp": 3,
+            "fp": 10,
+            "fn": 4,
+            "precision": 0.23076923076923078,
+            "recall": 0.42857142857142855,
+            "f1": 0.3,
+            "n_series": 5,
+            "n_annotations": 7
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 3,
+              "fp": 10,
+              "fn": 4,
+              "precision": 0.23076923076923078,
+              "recall": 0.42857142857142855,
+              "f1": 0.3,
+              "n_series": 5,
+              "n_annotations": 7
+            }
+          }
+        }
+      }
+    },
+    "mehrmonatig": {
+      "definition": "Zeitraum mindestens 2 Kalendermonate",
+      "n_annotations": 5,
+      "n_undetermined": 0,
+      "series": [
+        {
+          "series": "Bechtle / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 1,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-08",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 1,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-08",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Compugroup Medical Deutschland / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2022-08",
+                    "period_to": "2022-11",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2022-07",
+                    "2023-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2022-08",
+                    "direction": "fall",
+                    "delta": -0.866,
+                    "severity": "high",
+                    "before_mean": 3.841,
+                    "after_mean": 2.975,
+                    "month_mean": 2.925
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2019-06",
+                    "period_to": "2019-08",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2019-05",
+                    "2019-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-04",
+                    "period_to": "2021-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-03",
+                    "2021-07"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2022-08",
+                    "period_to": "2022-11",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2022-07",
+                    "2023-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2022-08",
+                    "direction": "fall",
+                    "delta": -0.866,
+                    "severity": "high",
+                    "before_mean": 3.841,
+                    "after_mean": 2.975,
+                    "month_mean": 2.925
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2019-06",
+                    "period_to": "2019-08",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2019-05",
+                    "2019-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-04",
+                    "period_to": "2021-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-03",
+                    "2021-07"
+                  ]
+                }
+              ],
+              "extras": []
+            }
+          }
+        },
+        {
+          "series": "SAP SE / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.5,
+              "recall": 1.0,
+              "f1": 0.6666666666666666,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2024-03",
+                  "direction": "rise",
+                  "deviation": 1.227,
+                  "month_mean": 4.16,
+                  "level": 2.933
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "totals": {
+        "niveauwechsel": {
+          "gesamt": {
+            "tp": 2,
+            "fp": 1,
+            "fn": 3,
+            "precision": 0.6666666666666666,
+            "recall": 0.4,
+            "f1": 0.5,
+            "n_series": 3,
+            "n_annotations": 5
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 2,
+              "fp": 1,
+              "fn": 3,
+              "precision": 0.6666666666666666,
+              "recall": 0.4,
+              "f1": 0.5,
+              "n_series": 3,
+              "n_annotations": 5
+            }
+          }
+        },
+        "niveauwechsel+einzelmonate": {
+          "gesamt": {
+            "tp": 2,
+            "fp": 2,
+            "fn": 3,
+            "precision": 0.5,
+            "recall": 0.4,
+            "f1": 0.4444444444444445,
+            "n_series": 3,
+            "n_annotations": 5
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 2,
+              "fp": 2,
+              "fn": 3,
+              "precision": 0.5,
+              "recall": 0.4,
+              "f1": 0.4444444444444445,
+              "n_series": 3,
+              "n_annotations": 5
+            }
+          }
+        }
+      }
+    },
+    "mit_anker": {
+      "definition": "note endet mit \"Reihe + Ereignis\"",
+      "n_annotations": 11,
+      "n_undetermined": 0,
+      "series": [
+        {
+          "series": "1&1 AG / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "precision": null,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-04",
+                    "period_to": "2018-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2018-03",
+                    "2018-05"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "precision": null,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "1&1 AG",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2018-04",
+                    "period_to": "2018-04",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2018-03",
+                    "2018-05"
+                  ]
+                }
+              ],
+              "extras": []
+            }
+          }
+        },
+        {
+          "series": "Bechtle / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 3,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-02",
+                    "period_to": "2021-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-01",
+                    "2021-03"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-08",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-01",
+                    "period_to": "2023-01",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2022-12",
+                    "2023-02"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 3,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-02",
+                    "period_to": "2021-02",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-01",
+                    "2021-03"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-08",
+                    "period_to": "2021-09",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-07",
+                    "2021-10"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Bechtle",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-01",
+                    "period_to": "2023-01",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2022-12",
+                    "2023-02"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2016-02",
+                  "direction": "rise",
+                  "delta": 0.443,
+                  "severity": "medium",
+                  "before_mean": 3.045,
+                  "after_mean": 3.488,
+                  "month_mean": 3.491
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Cancom / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 2,
+              "precision": null,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 2,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-07",
+                    "period_to": "2021-07",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-04",
+                    "2021-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-12",
+                    "period_to": "2023-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2023-11",
+                    "2024-01"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 0,
+              "fp": 2,
+              "fn": 2,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "n_annotations": 2,
+              "neutral": 0,
+              "hits": [],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-07",
+                    "period_to": "2021-07",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2021-04",
+                    "2021-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Cancom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2023-12",
+                    "period_to": "2023-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2023-11",
+                    "2024-01"
+                  ]
+                }
+              ],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2016-05",
+                  "direction": "fall",
+                  "deviation": -1.7,
+                  "month_mean": 2.46,
+                  "level": 4.16
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2017-08",
+                  "direction": "fall",
+                  "deviation": -1.574,
+                  "month_mean": 2.06,
+                  "level": 3.634
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Compugroup Medical Deutschland / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2022-08",
+                    "period_to": "2022-11",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2022-07",
+                    "2023-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2022-08",
+                    "direction": "fall",
+                    "delta": -0.866,
+                    "severity": "high",
+                    "before_mean": 3.841,
+                    "after_mean": 2.975,
+                    "month_mean": 2.925
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2019-06",
+                    "period_to": "2019-08",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2019-05",
+                    "2019-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-04",
+                    "period_to": "2021-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-03",
+                    "2021-07"
+                  ]
+                }
+              ],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 2,
+              "precision": 1.0,
+              "recall": 0.3333333333333333,
+              "f1": 0.5,
+              "n_annotations": 3,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2022-08",
+                    "period_to": "2022-11",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2022-07",
+                    "2023-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2022-08",
+                    "direction": "fall",
+                    "delta": -0.866,
+                    "severity": "high",
+                    "before_mean": 3.841,
+                    "after_mean": 2.975,
+                    "month_mean": 2.925
+                  }
+                }
+              ],
+              "misses": [
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2019-06",
+                    "period_to": "2019-08",
+                    "direction": "fall"
+                  },
+                  "window": [
+                    "2019-05",
+                    "2019-09"
+                  ]
+                },
+                {
+                  "annotation": {
+                    "company": "Compugroup Medical Deutschland",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2021-04",
+                    "period_to": "2021-05",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2021-03",
+                    "2021-07"
+                  ]
+                }
+              ],
+              "extras": []
+            }
+          }
+        },
+        {
+          "series": "SAP SE / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": []
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.5,
+              "recall": 1.0,
+              "f1": 0.6666666666666666,
+              "n_annotations": 1,
+              "neutral": 0,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "SAP SE",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2024-07",
+                    "period_to": "2024-08",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2024-06",
+                    "2024-09"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2024-07",
+                    "direction": "rise",
+                    "delta": 0.667,
+                    "severity": "high",
+                    "before_mean": 3.07,
+                    "after_mean": 3.737,
+                    "month_mean": 3.5
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2024-03",
+                  "direction": "rise",
+                  "deviation": 1.227,
+                  "month_mean": 4.16,
+                  "level": 2.933
+                }
+              ]
+            }
+          }
+        },
+        {
+          "series": "Telekom / employee / durchschnittsbewertung",
+          "source": "employee",
+          "variants": {
+            "niveauwechsel": {
+              "tp": 1,
+              "fp": 2,
+              "fn": 0,
+              "precision": 0.3333333333333333,
+              "recall": 1.0,
+              "f1": 0.5,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2009-12",
+                    "period_to": "2009-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2009-11",
+                    "2010-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2009-12",
+                    "direction": "rise",
+                    "delta": 0.948,
+                    "severity": "high",
+                    "before_mean": 3.393,
+                    "after_mean": 4.341,
+                    "month_mean": 4.248
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2018-11",
+                  "direction": "fall",
+                  "delta": -0.638,
+                  "severity": "high",
+                  "before_mean": 3.691,
+                  "after_mean": 3.053,
+                  "month_mean": 3.212
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-02",
+                  "direction": "rise",
+                  "delta": 1.013,
+                  "severity": "high",
+                  "before_mean": 3.053,
+                  "after_mean": 4.067,
+                  "month_mean": 3.96
+                }
+              ]
+            },
+            "niveauwechsel+einzelmonate": {
+              "tp": 1,
+              "fp": 5,
+              "fn": 0,
+              "precision": 0.16666666666666666,
+              "recall": 1.0,
+              "f1": 0.2857142857142857,
+              "n_annotations": 1,
+              "neutral": 1,
+              "hits": [
+                {
+                  "annotation": {
+                    "company": "Telekom",
+                    "source": "employee",
+                    "dimension": "durchschnittsbewertung",
+                    "period_from": "2009-12",
+                    "period_to": "2009-12",
+                    "direction": "rise"
+                  },
+                  "window": [
+                    "2009-11",
+                    "2010-01"
+                  ],
+                  "detection": {
+                    "kind": "niveauwechsel",
+                    "date": "2009-12",
+                    "direction": "rise",
+                    "delta": 0.948,
+                    "severity": "high",
+                    "before_mean": 3.393,
+                    "after_mean": 4.341,
+                    "month_mean": 4.248
+                  }
+                }
+              ],
+              "misses": [],
+              "extras": [
+                {
+                  "kind": "einzelmonat",
+                  "date": "2015-05",
+                  "direction": "fall",
+                  "deviation": -1.115,
+                  "month_mean": 2.7,
+                  "level": 3.815
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2017-05",
+                  "direction": "fall",
+                  "deviation": -0.961,
+                  "month_mean": 2.867,
+                  "level": 3.828
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2018-11",
+                  "direction": "fall",
+                  "delta": -0.638,
+                  "severity": "high",
+                  "before_mean": 3.691,
+                  "after_mean": 3.053,
+                  "month_mean": 3.212
+                },
+                {
+                  "kind": "niveauwechsel",
+                  "date": "2019-02",
+                  "direction": "rise",
+                  "delta": 1.013,
+                  "severity": "high",
+                  "before_mean": 3.053,
+                  "after_mean": 4.067,
+                  "month_mean": 3.96
+                },
+                {
+                  "kind": "einzelmonat",
+                  "date": "2022-12",
+                  "direction": "fall",
+                  "deviation": -1.411,
+                  "month_mean": 2.6,
+                  "level": 4.011
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "totals": {
+        "niveauwechsel": {
+          "gesamt": {
+            "tp": 3,
+            "fp": 3,
+            "fn": 8,
+            "precision": 0.5,
+            "recall": 0.2727272727272727,
+            "f1": 0.3529411764705882,
+            "n_series": 6,
+            "n_annotations": 11
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 3,
+              "fp": 3,
+              "fn": 8,
+              "precision": 0.5,
+              "recall": 0.2727272727272727,
+              "f1": 0.3529411764705882,
+              "n_series": 6,
+              "n_annotations": 11
+            }
+          }
+        },
+        "niveauwechsel+einzelmonate": {
+          "gesamt": {
+            "tp": 3,
+            "fp": 9,
+            "fn": 8,
+            "precision": 0.25,
+            "recall": 0.2727272727272727,
+            "f1": 0.2608695652173913,
+            "n_series": 6,
+            "n_annotations": 11
+          },
+          "je_quelle": {
+            "employee": {
+              "tp": 3,
+              "fp": 9,
+              "fn": 8,
+              "precision": 0.25,
+              "recall": 0.2727272727272727,
+              "f1": 0.2608695652173913,
+              "n_series": 6,
+              "n_annotations": 11
+            }
+          }
+        }
+      }
+    }
+  }
+}

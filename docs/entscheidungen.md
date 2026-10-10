@@ -180,7 +180,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     hat ein Agent nach dem Protokoll (`docs/referenzzeitraeume-literatur.md`, Abschnitt 3,
     Regeln 1–11) allein aus den Serien-CSVs vorgeschlagen: zuerst die Beurteilung aus der Reihe,
     danach die Suche nach einem Ereignisanker (Regel 7). Der Autor hat die Vorschläge am
-    2026-10-09 geprüft und freigegeben. Änderungen bei der Prüfung: [vom Autor zu ergänzen].
+    2026-10-09 geprüft und freigegeben. Änderungen bei der Prüfung: keine; alle 20 Vorschläge
+    sind unverändert übernommen (die Überarbeitung der `note` in Version 2 folgt unten).
   - **Version 2 (Commit `9703403`):** nur `note` geändert. In den 11 Einträgen mit Ereignisanker
     ist die nahezu wörtliche Schlagzeile durch eine eigene Kurzbeschreibung ersetzt; Datum,
     Quelle und Link bleiben. Die sechs Google-News-Links bleiben, weil sich ihr Originalziel
@@ -210,8 +211,11 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     Treffer oder verfehlt, eine Erkennung, die einem Eintrag außerhalb der Teilmenge zugeordnet
     ist, zählt weder als Treffer noch als zusätzliche Markierung („neutral“), und eine Reihe
     geht nur mit mindestens einem Eintrag der Teilmenge ein. Die Neutralregel ist eine Setzung
-    des Autors. Hauptmaß bleibt F1 nach Regel 6 über `alle`; welche Variante als Hauptwert
-    gilt: [vom Autor vor dem Lauf festzulegen].
+    des Autors. Hauptmaß bleibt F1 nach Regel 6 über `alle`; als Hauptwert gilt die Variante
+    **Niveauwechsel allein** (Festlegung des Autors am 2026-10-10 vor dem Lauf). Begründung: Die
+    Referenz verlangt ein neues, gehaltenes Niveau und schließt einzelne Ausreißermonate aus
+    (Regeln 2 und 4); Einzelmonate (E14) sind als Erkennung damit nicht dieselbe Art von
+    Veränderung. Die Variante mit Einzelmonaten wird zusätzlich berichtet.
   - **Parameter:** Die Erkennungsparameter (E9, E14) werden nach dem Lauf nicht an die Referenz
     angepasst. Ergibt der Lauf Anlass zu einer Änderung, wird sie als eigener Befund
     beschrieben und nicht mit derselben Referenz bewertet.
@@ -225,6 +229,16 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     Bis dahin wendet kein Test und kein Skriptlauf die Auswertung auf die echte Datei an.
 - **Status (2026-10-09):** Referenz geprüft und versioniert (version 2), Teilauswertungen
   festgelegt; der DZ1-Abgleich ist noch nicht gelaufen.
+- **Status (2026-10-10):** Der DZ1-Abgleich ist einmal gelaufen (Schritte 1–4 aus „Ablauf ab
+  hier“). `backend/data/calibration/dz1_ergebnis.json` und der Bericht der Erklärungsansätze
+  (`explanation_validity_referenz_2026-10-10.json` und `.md`) liegen im eigenen Commit
+  `ea3f21c`. Hauptwert F1 0,43 (Niveauwechsel allein), mit Einzelmonaten 0,37; Befunde in E9
+  und E14 (je Aktualisierung 2026-10-10), darunter die Abweichung, dass Reihen ohne
+  Referenzzeitraum nicht in den F1-Wert eingehen. Erklärungsansätze: Markierungen, die einen
+  Referenzzeitraum treffen, haben in 7 von 8 Fenstern einen Ansatz (4 von 8 mindestens
+  „mittel“), die übrigen in 16 von 20 (5 von 20); beschreibend, ohne Signifikanzaussage.
+  Parameter und Annotationsdatei bleiben unverändert; ein weiterer Lauf mit dieser Referenz
+  ist nicht vorgesehen.
 
 ## E6 – Unternehmens-Metadaten
 
@@ -394,6 +408,48 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   0,63 statt 0,29 Sterne); echte, aber kleine Veränderungen können dort unerkannt bleiben.
 - **Status:** **vorläufig.** Faktor 2 ist eine Setzung des Autors, geprüft an Demo 1–3, an
   synthetischen Reihen und an der Parameterübersicht, **nicht an Referenzzeiträumen** (DZ1).
+
+### E9 – Aktualisierung 2026-10-10: Abgleich mit den Referenzzeiträumen (DZ1)
+
+- **Lauf:** einmal am 2026-10-10, `backend/scripts/evaluate_detection.py` mit den
+  Standardparametern (skalierter Strafterm, Faktor 2, `min_size` 3, `min_delta` 0,3) gegen
+  `backend/data/annotations.json` (version 2, 20 Zeiträume in 8 Reihen, Mitarbeitende,
+  Gesamtbewertung), Abgleich nach Regel 6 (E5). Ergebnis:
+  `backend/data/calibration/dz1_ergebnis.json` (Commit `ea3f21c`).
+- **Ergebnis, Hauptwert (Niveauwechsel allein, E5):** 8 Treffer, 9 zusätzliche Markierungen,
+  12 verfehlte Zeiträume; **Precision 0,47, Recall 0,40, F1 0,43**. Je Reihe F1: SAP SE 1,00,
+  Telekom 0,57, 1&1, Compugroup und Freenet je 0,50, NTT DATA 0,40, Bechtle und Cancom 0,00.
+- **Teilauswertungen (E5), Niveauwechsel allein:** `ohne_duenne` (7 Zeiträume) F1 0,38;
+  `mehrmonatig` (5) F1 0,50; `mit_anker` (11) F1 0,35. Zeiträume mit Ereignisanker werden
+  nicht besser getroffen als alle.
+- **Befunde:**
+  - **Verfehlt:** Bei Cancom erkennt das Verfahren keinen Niveauwechsel, alle 3 Zeiträume
+    bleiben verfehlt. Das entspricht der Folge des skalierten Strafterms bei sehr
+    verrauschten Reihen (oben, „Folgen“: Strafterm 2,39 bei σ 0,50). Bei Bechtle liegt die
+    einzige Markierung (2016-02) außerhalb aller drei Zeiträume. Einmonatige und mehrmonatige
+    Zeiträume werden gleich oft getroffen (6 von 15 und 2 von 5).
+  - **Zusätzlich:** 5 der 9 zusätzlichen Markierungen liegen in Reihen, in denen die Referenz
+    die Obergrenze von 3 Zeiträumen (Regel 5) schon erreicht (Telekom 2, Freenet 3); 3 liegen
+    bei NTT DATA, darunter 2024-03 (−0,50), das bei der Annotation als Zweifelsfall unter
+    dem Richtwert von 0,5 Sternen nicht eingetragen wurde. Ein Teil der zusätzlichen
+    Markierungen sind also Veränderungen, die die Referenz nach ihren Regeln nicht aufnehmen
+    konnte, nicht zwingend Fehlalarme.
+  - **Reihen ohne Referenzzeitraum:** Das Skript bewertet nur Reihen mit mindestens einem
+    Eintrag. Markierungen in den 7 Reihen ohne Eintrag gehen damit nicht als zusätzliche
+    Markierungen ein; Regel 6 nennt F1 „über alle Reihen“. Betroffen sind 2 Niveauwechsel
+    (E.ON, RWE) und 3 Einzelmonate (RWE, Carl Zeiss 2), gezählt aus
+    `explanation_validity_referenz_2026-10-10.json`. Nachgerechnet, nicht als Hauptwert:
+    Niveauwechsel allein Precision 0,42, F1 0,41; mit Einzelmonaten Precision 0,29, F1 0,33.
+    Der Abgleich selbst bleibt unverändert (E5: Regel 6 nach dem ersten Lauf fixiert); die
+    Abweichung ist in der Arbeit zu nennen.
+- **Grenzen:** einziger Annotator, agentengestützte Einträge, Prüfung nicht blind gegenüber
+  der Erkennung (E5, „Grenzen für DZ1“); 20 Zeiträume in 8 Reihen sind eine kleine Basis,
+  einzelne Treffer verschieben F1 je Reihe stark.
+- **Parameter:** unverändert (E5). Der niedrige Recall bei verrauschten Reihen (Cancom) wäre
+  ein Anlass, den Faktor zu prüfen; eine Änderung wäre ein eigener Befund und dürfte nicht
+  mit derselben Referenz bewertet werden.
+- **Status:** an Referenzzeiträumen geprüft (DZ1, F1 0,43 im Hauptwert); Parameter
+  festgeschrieben.
 
 ## E10 – Themenweg für den Vorher-Nachher-Vergleich
 
@@ -579,6 +635,17 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   nicht gemeldet (kein einzelner Monat, aber auch zu kurz für einen Niveauwechsel).
 - **Status:** vorläufig (Faktor 3, 0,5 Sterne und 3 Nachbarmonate sind Setzungen; Prüfung
   gegen Referenzzeiträume wie E9 ausstehend).
+- **Aktualisierung 2026-10-10 – Abgleich mit den Referenzzeiträumen (DZ1):** Im Lauf aus E9
+  (Aktualisierung 2026-10-10) bringen die Einzelmonate in der Variante „Niveauwechsel und
+  Einzelmonate“ keinen zusätzlichen Treffer, aber 6 zusätzliche Markierungen in den annotierten
+  Reihen (Cancom 2016-05 und 2017-08, SAP SE 2024-03, Telekom 2015-05, 2017-05 und 2022-12);
+  F1 sinkt von 0,43 auf 0,37 (Precision 0,35, Recall 0,40). Das ist erwartbar und kein
+  Einwand gegen E14: Die Referenz schließt einzelne Ausreißermonate nach Regel 4 aus, ein
+  Einzelmonat ist dort also nie ein Referenzzeitraum. Deshalb gilt „Niveauwechsel allein“ als
+  Hauptwert (E5). Ob die gemeldeten Einzelmonate zutreffen, lässt sich mit dieser Referenz
+  nicht prüfen; dafür bräuchte es eine eigene Annotation einzelner Monate. Parameter
+  unverändert; **Status:** gegen die Referenz abgeglichen, als Hinweis ohne Prüfung der
+  Treffsicherheit.
 
 ## E15 – Kurs und Kennzahlen
 
