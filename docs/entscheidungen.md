@@ -180,7 +180,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     hat ein Agent nach dem Protokoll (`docs/referenzzeitraeume-literatur.md`, Abschnitt 3,
     Regeln 1–11) allein aus den Serien-CSVs vorgeschlagen: zuerst die Beurteilung aus der Reihe,
     danach die Suche nach einem Ereignisanker (Regel 7). Der Autor hat die Vorschläge am
-    2026-10-09 geprüft und freigegeben. Änderungen bei der Prüfung: [vom Autor zu ergänzen].
+    2026-10-09 geprüft und freigegeben. Änderungen bei der Prüfung: keine; alle 20 Vorschläge
+    sind unverändert übernommen (die Überarbeitung der `note` in Version 2 folgt unten).
   - **Version 2 (Commit `9703403`):** nur `note` geändert. In den 11 Einträgen mit Ereignisanker
     ist die nahezu wörtliche Schlagzeile durch eine eigene Kurzbeschreibung ersetzt; Datum,
     Quelle und Link bleiben. Die sechs Google-News-Links bleiben, weil sich ihr Originalziel
@@ -210,8 +211,11 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     Treffer oder verfehlt, eine Erkennung, die einem Eintrag außerhalb der Teilmenge zugeordnet
     ist, zählt weder als Treffer noch als zusätzliche Markierung („neutral“), und eine Reihe
     geht nur mit mindestens einem Eintrag der Teilmenge ein. Die Neutralregel ist eine Setzung
-    des Autors. Hauptmaß bleibt F1 nach Regel 6 über `alle`; welche Variante als Hauptwert
-    gilt: [vom Autor vor dem Lauf festzulegen].
+    des Autors. Hauptmaß bleibt F1 nach Regel 6 über `alle`; als Hauptwert gilt die Variante
+    **Niveauwechsel allein** (Festlegung des Autors am 2026-10-10 vor dem Lauf). Begründung: Die
+    Referenz verlangt ein neues, gehaltenes Niveau und schließt einzelne Ausreißermonate aus
+    (Regeln 2 und 4); Einzelmonate (E14) sind als Erkennung damit nicht dieselbe Art von
+    Veränderung. Die Variante mit Einzelmonaten wird zusätzlich berichtet.
   - **Parameter:** Die Erkennungsparameter (E9, E14) werden nach dem Lauf nicht an die Referenz
     angepasst. Ergibt der Lauf Anlass zu einer Änderung, wird sie als eigener Befund
     beschrieben und nicht mit derselben Referenz bewertet.
