@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-09 (E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-11 (E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -385,7 +385,7 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Die Differenzen machen die Schätzung unempfindlich gegen Niveauwechsel, der Median gegen
   Ausreißer. Der Strafterm wächst damit mit der Streuung (σ²) und langsam mit der Länge
   (ln n). Mit Faktor 2 entspricht die Form dem BIC-Strafterm für einen Mittelwertwechsel bei
-  bekannter Varianz; Beleg offen (Autor), vgl. Truong et al. 2020 zu prüfen. Ein ausdrücklich
+  bekannter Varianz; Beleg siehe „Nachtrag 2026-10-11“ unten. Ein ausdrücklich
   übergebener fester `penalty` bleibt möglich und hat Vorrang (fester Modus). `model`,
   `min_size`, `min_delta`, Schweregrad und das Protocol bleiben unverändert. Die API nennt je
   Antwort und je Anomalie `penalty_mode` („scaled“/„fixed“), `penalty_factor`,
@@ -450,6 +450,38 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   mit derselben Referenz bewertet werden.
 - **Status:** an Referenzzeiträumen geprüft (DZ1, F1 0,43 im Hauptwert); Parameter
   festgeschrieben.
+
+### E9 – Nachtrag 2026-10-11: Literaturbelege für Verfahren und Parameter
+
+- **Anlass:** Die Aktualisierung vom 2026-10-04 nannte für den Faktor 2 „Beleg offen“. Die
+  Belege stehen ausführlich in `docs/referenzzeitraeume-literatur.md`, Abschnitt 2.5.
+- **Belegt:**
+  - **Strafterm `2 · σ² · ln n`:** Das ist das Schwarz-Kriterium für Mittelwertwechsel bei
+    bekannter Varianz. Yao (1988) wendet es mit `log n` je Wechsel an und zeigt, dass es die
+    Zahl der Wechsel konsistent schätzt. Auf die Quadratsumme übertragen ergibt das
+    `2σ² · log n` (Fearnhead & Fryzlewicz 2024, Abschn. 3.3 und 3.4). Fearnhead & Fryzlewicz
+    (2024, Abschn. 9) setzen PELT genau so ein, mit `σ = MAD(diff)/√2`. Im R-Paket
+    `changepoint` ist es die SIC/BIC-Voreinstellung für Mittelwertwechsel.
+  - **Streuung `σ = 1,4826 · MAD(diff(values)) / √2`:** Das ist der gebräuchlichste Schätzer der
+    Rauschstreuung bei Mittelwertwechseln (Fearnhead & Fryzlewicz 2024, Abschn. 7; MAD nach
+    Hampel 1974, Faktor nach Rousseeuw & Croux 1993).
+  - **Faktor 2** ist die kleinste Strafe, für die die Konsistenz gilt. Das modifizierte BIC
+    (Zhang & Siegmund 2007) ist mit etwa `3 · log n` je Wechsel strenger.
+- **Nicht belegt (Setzungen):** `min_size = 3`, `min_delta = 0,3` und die Untergrenze
+  0,05 Sterne für σ. Fearnhead & Fryzlewicz (2024, Abschn. 9) warnen, dass eine
+  Mindestsegmentlänge eng beieinanderliegende Wechsel falsch verortet; das passt zu
+  `month_near_previous_level`. Der Fallback folgt dem Grundgedanken von MOSUM (Eichinger &
+  Kirch 2018), nutzt aber eine feste statt einer normierten Schwelle.
+- **Grenzen:** Die Belege setzen unabhängiges, normalverteiltes Rauschen gleicher Varianz
+  voraus. Bei Bewertungsreihen ist beides fraglich:
+  - Autokorrelation ist belegt (Moe & Trusov 2011). Sie lässt σ zu klein ausfallen und führt
+    zu zusätzlichen Markierungen (Fearnhead & Fryzlewicz 2024, Abschn. 7).
+  - Die Monatsmittel beruhen auf sehr unterschiedlich vielen Bewertungen, werden aber gleich
+    gewichtet.
+
+  Beides ist in der Arbeit zu nennen.
+- **Parameter:** unverändert. Der Nachtrag liefert Belege, keine neue Kalibrierung.
+- **Status:** Verfahren, Strafterm und Streuungsschätzung belegt; übrige Werte Setzungen.
 
 ## E10 – Themenweg für den Vorher-Nachher-Vergleich
 
@@ -646,6 +678,20 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   nicht prüfen; dafür bräuchte es eine eigene Annotation einzelner Monate. Parameter
   unverändert; **Status:** gegen die Referenz abgeglichen, als Hinweis ohne Prüfung der
   Treffsicherheit.
+- **Nachtrag 2026-10-11 – Literatureinordnung:** Die Regel ist eine Abwandlung des
+  Hampel-Identifiers bzw. Hampel-Filters (Davies & Gather 1993; Pearson et al. 2016). Dabei gilt
+  ein Wert als Ausreißer, wenn er um mehr als das t-fache der MAD-Streuung vom Median seines
+  Fensters abweicht; t = 3 ist eine übliche Wahl, Leys et al. (2013) empfehlen 2,5.
+  - **Übernommen:** Median der Nachbarmonate, Schwelle in Vielfachen einer robusten Streuung,
+    t = 3, 3 Monate je Seite.
+  - **Eigene Setzungen ohne Beleg:**
+    - beide Seiten werden getrennt verglichen;
+    - σ gilt für die ganze Reihe und stammt aus den Differenzen, nicht aus dem Fenster;
+    - die direkten Nachbarn werden zusätzlich geprüft;
+    - die Abweichung muss mindestens 0,5 Sterne betragen.
+
+  Belege: `docs/referenzzeitraeume-literatur.md`, Abschnitt 2.5. Parameter und Status sind
+  unverändert.
 
 ## E15 – Kurs und Kennzahlen
 

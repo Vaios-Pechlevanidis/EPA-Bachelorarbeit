@@ -3,6 +3,8 @@
 Stand: 2026-10-03, Zyklus 2 (Design Science Research). Begründet das Annotationsprotokoll für
 `backend/data/annotations.json` (E5), ergänzt E3–E5 (`docs/entscheidungen.md`) und nutzt `docs/datenbasis.md`.
 Wörtliche Zitate sind auf höchstens 20 Wörter gekürzt; die Fundstelle steht beim Zitat oder im Literatureintrag.
+Ergänzt am 2026-10-11 um Abschnitt 2.5 (Belege für Erkennungsverfahren und Parameter, E9/E14), den Punkt
+„Erkennungsparameter“ in Abschnitt 4 und die zugehörigen Einträge in Abschnitt 5.
 
 ## 1 Fragestellung
 
@@ -158,6 +160,72 @@ Hauptmaß. Für Monatsreihen mit Reaktionen über 1–3 Monate (2.1) sind Region
   leading up to the IPO", danach „The ratings decline after an IPO and remain lower for years" (Autorenzusammenfassung,
   CLS Blue Sky Blog 08.10.2025; https://doi.org/10.1287/mnsc.2023.04285); Fensterlänge im Volltext nicht prüfbar.
 
+### 2.5 Belege für Erkennungsverfahren und Parameter (E9, E14)
+
+Ergänzt am 2026-10-11. Prüft, welche Teile der Erkennung (`backend/models/changepoint_detector.py`,
+`backend/services/anomaly_service.py`) sich auf Literatur stützen. Im Volltext gelesen: Fearnhead & Fryzlewicz
+(2024), Killick & Eckley (2014), der Quellcode des R-Pakets `changepoint` und die EUSIPCO-Fassung von Pearson et
+al. Yao (1988), Schwarz (1978), Zhang & Siegmund (2007), Hampel (1974) und Rousseeuw & Croux (1993) nur nach
+Fearnhead & Fryzlewicz (2024); Leys et al. (2013) nur nach Abstract und Sekundärquelle.
+
+- **Der skalierte Strafterm `2 · σ² · ln n` ist das Schwarz-Kriterium bei bekannter Varianz.** Yao (1988) schätzt
+  die Zahl der Mittelwertwechsel mit dem Schwarz-Kriterium (Schwarz 1978): Strafe `log n` je Wechsel auf der Skala
+  der negativen Log-Likelihood. Bei unabhängigem, normalverteiltem Rauschen trifft die Schätzung die wahre Zahl mit
+  gegen 1 gehender Wahrscheinlichkeit (Fearnhead & Fryzlewicz 2024, Abschn. 3.4, Satz 3.3). Bei bekannter Varianz
+  hat „negative Log-Likelihood + Strafe“ dieselbe Lösung wie „Quadratsumme + 2σ² · Strafe“ (ebd., Abschn. 3.3);
+  mit `log n` je Wechsel folgt `2σ² · log n`, also `penalty_factor = 2`. Im R-Paket `changepoint` ist das die
+  SIC/BIC-Voreinstellung für Mittelwertwechsel: Kosten = Quadratsumme bei Varianz 1 (`mll_mean` in
+  `src/cost_general_functions.c`), Strafe `(diffparam + 1) · log(n)` mit `diffparam = 1`, der Wechselpunkt zählt
+  als Parameter (`R/penalty_decision.R`).
+- **Dieselbe Einstellung wird in der Literatur eingesetzt.** Fearnhead & Fryzlewicz (2024, Abschn. 9) rufen PELT
+  mit der Strafe `2 * sigma.est^2 * log(length(data))` und `sigma.est <- mad(diff(data))/sqrt(2)` auf. In ihrer
+  Simulation (n = 300, zwei Wechsel; Abschn. 7, Abb. 13) findet diese Einstellung bei normalverteiltem Rauschen in
+  99 von 100 Fällen die richtige Zahl von Wechseln.
+- **Einordnung des Faktors.** Die SIC-Strafe ist die kleinste, für die Yaos Konsistenzargument trägt, und hat
+  damit die höchste Trennschärfe (Fearnhead & Fryzlewicz 2024, Abschn. 3.4). Strenger ist das modifizierte BIC
+  (Zhang & Siegmund 2007) mit `3 · log n` je Wechsel und einem Term für die Abschnittslängen (ebd., Abschn. 3.5).
+  Im JSS-Artikel zu `changepoint` zählte die SIC-Voreinstellung den Wechselpunkt nicht mit und war halb so groß
+  (Killick & Eckley 2014, Abschn. 4). Für Faktor 2 sind daher Yao (1988) und Fearnhead & Fryzlewicz (2024) zu
+  zitieren, nicht der JSS-Artikel.
+- **Streuung aus den ersten Differenzen.** Fearnhead & Fryzlewicz (2024, Abschn. 3.3 und 7) nennen den MAD der
+  ersten Differenzen, geteilt durch √2, den gebräuchlichsten Schätzer der Rauschstreuung bei Mittelwertwechseln:
+  Differenzen innerhalb eines Abschnitts haben Mittel 0 und Varianz 2σ², die wenigen Differenzen an Wechseln
+  fängt der Median ab. Der MAD geht auf Hampel (1974) zurück; der Faktor 1,4826 macht ihn bei Normalverteilung
+  zur Standardabweichung (Rousseeuw & Croux 1993). Das R-Paket `breakfast` nutzt denselben Schätzer als
+  Voreinstellung (Fearnhead & Fryzlewicz 2024, Abschn. 9).
+- **Grenze dieses Schätzers.** Bei autokorrelierten Werten (Varianz der Differenz 2σ²(1 − ρ₁)) oder bei
+  Rauschen mit schwereren Rändern als die Normalverteilung wird σ unterschätzt. Dann ist der Strafterm zu klein,
+  und die Zahl der Wechsel wird überschätzt. Mit Laplace-Rauschen traf dieselbe Einstellung nur in 29 von 100
+  Fällen die richtige Zahl, im Mittel fast 5 statt 2 Wechsel (Fearnhead & Fryzlewicz 2024, Abschn. 7). Für
+  Bewertungsreihen ist Autokorrelation belegt (Moe & Trusov 2011, Abschn. 2.4).
+- **Ungleiche Fallzahl je Monat.** l2-Kosten und Schwarz-Kriterium setzen unabhängiges Rauschen gleicher Varianz
+  voraus (Fearnhead & Fryzlewicz 2024, Abschn. 1 und 3). Die Monatsmittel beruhen auf 5 bis über 170 Bewertungen
+  und streuen entsprechend ungleich; die Erkennung gewichtet sie trotzdem gleich. Dai et al. (2018) empfehlen für
+  Plattform-Scores mehr Gewicht für präzisere Bewertungen (Abschn. 2.4); in der Erkennung ist das nicht umgesetzt.
+- **Mindestsegmentlänge.** Für den Wert 3 gibt es keinen Beleg. Fearnhead & Fryzlewicz (2024, Abschn. 9) zeigen,
+  dass eine Mindestsegmentlänge eng beieinanderliegende Wechsel zwangsläufig falsch verortet, und warnen, dass sie
+  Vergleiche zwischen Verfahren stark bestimmt. Das stützt die in E9 beschriebene Folge (`month_near_previous_level`).
+- **Fallback mit gleitenden Mitteln.** Die Differenz der Summen zweier angrenzender Fenster ist der Grundgedanke
+  von MOSUM (Eichinger & Kirch 2018; Fearnhead & Fryzlewicz 2024, Abschn. 5.1). Dort ist die Statistik normiert
+  und die Schwelle aus ihrer Verteilung abgeleitet, im Projekt gilt eine feste Schwelle von 0,3 Sternen. Im
+  Dashboard greift der Fallback nicht (E9).
+- **Einzelmonate als Abwandlung des Hampel-Identifiers (E14).** Der Hampel-Filter erklärt den mittleren Wert eines
+  Fensters mit K Werten je Seite zum Ausreißer, wenn er um mehr als das t-fache der MAD-Streuung (1,4826 · MAD im
+  Fenster) vom Fenstermedian abweicht. Er setzt den Hampel-Identifier von Davies & Gather (1993) als gleitendes
+  Fenster um (Pearson et al. 2016; Definition nach der EUSIPCO-Fassung 2015, Abschn. 2). Für die Regel
+  „Median ± t · MAD“ empfehlen Leys et al. (2013) t = 2,5 als Voreinstellung; t = 3 ist strenger. E14 übernimmt
+  den Grundgedanken (Median der Nachbarn, Schwelle in Vielfachen einer robusten Streuung, t = 3, K = 3) und weicht
+  in vier Punkten ab: (1) linke und rechte Seite werden getrennt verglichen, beide müssen die Schwelle in derselben
+  Richtung überschreiten, und der Monat selbst zählt nicht zum Median; (2) σ ist die Streuung der ganzen Reihe aus
+  den Differenzen, nicht der MAD im Fenster; (3) die direkten Nachbarn dürfen nicht selbst auffällig sein;
+  (4) die Abweichung muss mindestens 0,5 Sterne betragen. Diese Abweichungen sind Setzungen des Autors ohne Beleg.
+
+Fazit (2.5): Belegt sind das Verfahren (PELT, l2), Form und Faktor des Strafterms und die Streuungsschätzung; sie
+entsprechen einer in der Literatur eingesetzten Einstellung. Die Einzelmonat-Regel ist eine Abwandlung eines
+belegten Verfahrens. Nicht belegt sind `min_size = 3`, `min_delta = 0,3`, die Untergrenze 0,05 Sterne für σ und
+die vier Abweichungen vom Hampel-Identifier; zu 5 Bewertungen je Monat und 0,5 Sternen siehe 2.2, 2.4 und Regel 3.
+Vermutlich verletzt sind die Annahmen unabhängiger Werte gleicher Varianz.
+
 ## 3 Abgeleitetes Annotationsprotokoll
 
 Gilt für `backend/data/annotations.json` (Felder company, source, dimension, period_from, period_to, direction,
@@ -266,10 +334,15 @@ Annotation vor Code; Eins-zu-eins-Zuordnung und F1.
   CEO-Wechsel mit Monatsfenstern (Li & Pinto 2026 betrifft Börsengänge; Fensterlänge und Aggregationsebene ohne
   Volltext nicht prüfbar); eine Quelle, die ≥ 5 oder ≥ 10 Bewertungen je Monat empfiehlt; Kontrollkarten-/
   CUSUM-Anwendungen auf Arbeitgeberbewertungen (Funde betreffen nur Produkt-/Hotelbewertungen).
+- **Erkennungsparameter (2.5, ergänzt 2026-10-11).** Für `min_size = 3`, `min_delta = 0,3`, die Untergrenze
+  0,05 Sterne für σ und die Abweichungen der Einzelmonat-Regel vom Hampel-Identifier wurde keine Quelle gefunden;
+  sie bleiben Setzungen. Die Belege für Strafterm und Streuungsschätzung setzen unabhängiges, normalverteiltes
+  Rauschen gleicher Varianz voraus; für Monatsmittel aus Bewertungen ist das nicht erfüllt (Autokorrelation,
+  ungleiche Fallzahl je Monat).
 
 ## 5 Literatur
 
-Alle Einträge geprüft (Crossref/Semantic Scholar bzw. arXiv/NBER sowie Verlags-, Proceedings- oder Volltextseite geöffnet; Quellen zu 2.3/2.4 am 2026-10-03):
+Alle Einträge geprüft (Crossref/Semantic Scholar bzw. arXiv/NBER sowie Verlags-, Proceedings- oder Volltextseite geöffnet; Quellen zu 2.3/2.4 am 2026-10-03; Quellen zu 2.5 am 2026-10-11 über Crossref bzw. arXiv und Paketquellen, Inhalt wie beim Eintrag vermerkt):
 
 - Abdulsalam, K., Christensen, D. M., Graffin, S. D., & Li, J. (2025). Do Boards Reward and Punish CEOs Based on Employee Satisfaction Ratings? Organization Science, 36(2), 881–902. https://doi.org/10.1287/orsc.2021.15818
 - Becker, M., Cardazzi, A., & McGurk, Z. (2022). Employee satisfaction and stock returns during the COVID-19 Pandemic. Journal of Behavioral and Experimental Finance, 33, 100603 (online 10 Nov 2021). https://doi.org/10.1016/j.jbef.2021.100603
@@ -277,22 +350,33 @@ Alle Einträge geprüft (Crossref/Semantic Scholar bzw. arXiv/NBER sowie Verlags
 - Chang, S.-J., Oh, J. Y. J., & Park, K. (2024). Crowd-sourced CEO approval and turnover. International Review of Financial Analysis, 96, 103587. https://doi.org/10.1016/j.irfa.2024.103587 (Zahlen aus dem Arbeitspapier vom 20.08.2021, https://apjfs.org/file/download/6737?view=1)
 - Cloos, J. (2021). Employer Review Platforms – Do the Rating Environment and Platform Design affect the Informativeness of Reviews? Theory, Evidence, and Suggestions. management revue – Socio-Economic Studies, 32(3), 152–181. https://doi.org/10.5771/0935-9915-2021-3-152
 - Dai, W., Jin, G. Z., Lee, J., & Luca, M. (2018). Aggregation of consumer ratings: an application to Yelp.com. Quantitative Marketing and Economics, 16(3), 289–339 (online 29 Dec 2017). https://doi.org/10.1007/s11129-017-9194-9 (Zitate aus NBER Working Paper 18567, November 2012, https://www.nber.org/papers/w18567)
+- Davies, L., & Gather, U. (1993). The Identification of Multiple Outliers. Journal of the American Statistical Association, 88(423), 782–792. https://doi.org/10.1080/01621459.1993.10476339 (Volltext nicht geöffnet; Inhalt nach Pearson et al. 2015, Abschn. 2)
+- Eichinger, B., & Kirch, C. (2018). A MOSUM procedure for the estimation of multiple random change points. Bernoulli, 24(1), 526–564. https://doi.org/10.3150/16-BEJ887 (Volltext nicht geöffnet; Inhalt nach Fearnhead & Fryzlewicz 2024, Abschn. 5.1)
+- Fearnhead, P., & Fryzlewicz, P. (2024). The Multiple Change-in-Gaussian-Mean Problem. Manuskript eines Kapitels aus dem Buch „Change-Point Detection and Data Segmentation“ (in Vorbereitung). arXiv:2405.06796 [stat.ME] (v1, 10 May 2024). https://arxiv.org/abs/2405.06796 (Volltext gelesen; das Buch war am 2026-10-11 nicht erschienen, nach Erscheinen das Buch zitieren)
 - Glassdoor (2022). Die 25 besten Arbeitgeber Deutschlands für 2022: Glassdoor verleiht Awards für Mitarbeiterzufriedenheit [Pressemitteilung]. PR Newswire, 12.01.2022. https://www.prnewswire.com/de/pressemitteilungen/die-25-besten-arbeitgeber-deutschlands-fur-2022-glassdoor-verleiht-awards-fur-mitarbeiterzufriedenheit-837885895.html ; Gewichtung nach Aktualität: Ellis, J. (2017). What Everyone Gets Wrong About Glassdoor. ERE.net, 27.12.2017. https://www.ere.net/what-everyone-gets-wrong-about-glassdoor/
 - Godes, D., & Silva, J. C. (2012). Sequential and Temporal Dynamics of Online Opinion. Marketing Science, 31(3), 448–473. https://doi.org/10.1287/mksc.1110.0653
 - Green, T. C., Huang, R., Wen, Q., & Zhou, D. (2019). Crowdsourced employer reviews and stock returns. Journal of Financial Economics, 134(1), 236–251. https://doi.org/10.1016/j.jfineco.2019.03.012 (Zitate aus dem Manuskript Juli 2018, https://faculty.georgetown.edu/qw50/Green,Huang,Wen,Zhou_EmpRatings.pdf)
 - Hales, J., Moon, J. R., Jr., & Swenson, L. A. (2018). A new era of voluntary disclosure? Empirical evidence on how employee postings on social media relate to future corporate disclosures. Accounting, Organizations and Society, 68–69, 88–108. https://doi.org/10.1016/j.aos.2018.04.004
+- Hampel, F. R. (1974). The Influence Curve and its Role in Robust Estimation. Journal of the American Statistical Association, 69(346), 383–393. https://doi.org/10.1080/01621459.1974.10482962 (Volltext nicht geöffnet; Inhalt nach Fearnhead & Fryzlewicz 2024, Abschn. 3.3)
 - Höllig, C. E., Ademi, E., & Tumasjan, A. (2025). Employer Responsiveness to Online Reviews: A Signal of Caring About Employees. Human Resource Management, 64(5), 1481–1502. https://doi.org/10.1002/hrm.22316 (open access, CC BY 4.0; Zitate aus dem Volltext https://openscience.ub.uni-mainz.de/server/api/core/bitstreams/e3fb3c2d-b81e-4b4c-9336-d209c9a22e97/content)
 - Hoon, C., Bormann, K. C., Graffius, M., & Hansen, C. (2019). The Impact of Organizational Scandals on Employee Voice Behaviors. Academy of Management Proceedings, 2019(1), 17206. https://doi.org/10.5465/AMBPP.2019.17206abstract (Inhalt nur nach Cloos 2021, S. 155, zitiert)
 - Huang, K., Li, M., & Markov, S. (2020). What do employees know? Evidence from a social media platform. The Accounting Review, 95(2), 199–226. https://doi.org/10.2308/accr-52519 (online 1 Aug 2019)
+- Killick, R., & Eckley, I. A. (2014). changepoint: An R Package for Changepoint Analysis. Journal of Statistical Software, 58(3), 1–19. https://doi.org/10.18637/jss.v058.i03 (Volltext gelesen); Quellcode des Pakets: https://github.com/rkillick/changepoint (`R/penalty_decision.R`, `src/cost_general_functions.c`, Hauptzweig am 2026-10-11 geöffnet)
 - Killick, R., Fearnhead, P., & Eckley, I. A. (2012). Optimal Detection of Changepoints With a Linear Computational Cost. Journal of the American Statistical Association, 107(500), 1590–1598. https://doi.org/10.1080/01621459.2012.737745 (Preprint: https://arxiv.org/abs/1101.1438)
 - Kim, S., Choi, K., Choi, H.-S., Lee, B., & Yoon, S. (2022). Towards a Rigorous Evaluation of Time-Series Anomaly Detection. Proceedings of the AAAI Conference on Artificial Intelligence, 36(7), 7194–7201. https://doi.org/10.1609/aaai.v36i7.20680 (Preprint: https://arxiv.org/abs/2109.05257)
 - Könsgen, R., Schaarschmidt, M., Ivens, S., & Munzel, A. (2018). Finding Meaning in Contradiction on Employee Review Sites — Effects of Discrepant Online Reviews on Job Application Intentions. Journal of Interactive Marketing, 43, 165–177. https://doi.org/10.1016/j.intmar.2018.05.001
 - Lavin, A., & Ahmad, S. (2015). Evaluating Real-Time Anomaly Detection Algorithms – The Numenta Anomaly Benchmark. In 2015 IEEE 14th International Conference on Machine Learning and Applications (ICMLA), Miami, FL (pp. 38–44). IEEE. https://doi.org/10.1109/ICMLA.2015.141 (Preprint: https://arxiv.org/abs/1510.03336)
+- Leys, C., Ley, C., Klein, O., Bernard, P., & Licata, L. (2013). Detecting outliers: Do not use standard deviation around the mean, use absolute deviation around the median. Journal of Experimental Social Psychology, 49(4), 764–766. https://doi.org/10.1016/j.jesp.2013.03.013 (Volltext nicht geöffnet; Empfehlung t = 2,5 nach der Dokumentation des R-Pakets `rempsyc`, Funktion `find_mad`, https://search.r-project.org/CRAN/refmans/rempsyc/html/find_mad.html)
 - Li, M., & Pinto, J. (2026). How Does Going Public Affect Employee Satisfaction? Evidence from Glassdoor Reviews. Management Science, 72(6), 4871–4888 (online 22 Sep 2025). https://doi.org/10.1287/mnsc.2023.04285 (Volltext nicht geöffnet; Ereignisbefunde nach der Zusammenfassung der Autoren: CLS Blue Sky Blog, 08.10.2025, https://clsbluesky.law.columbia.edu/2025/10/08/the-hidden-cost-of-going-public-why-employees-become-less-happy-after-ipos/)
 - Moe, W. W., & Trusov, M. (2011). The Value of Social Dynamics in Online Product Ratings Forums. Journal of Marketing Research, 48(3), 444–456. https://doi.org/10.1509/jmkr.48.3.444
 - Paparrizos, J., Kang, Y., Boniol, P., Tsay, R. S., Palpanas, T., & Franklin, M. J. (2022). TSB-UAD: An End-to-End Benchmark Suite for Univariate Time-Series Anomaly Detection. Proceedings of the VLDB Endowment, 15(8), 1697–1711. https://doi.org/10.14778/3529337.3529354 (Volltext: https://www.vldb.org/pvldb/vol15/p1697-paparrizos.pdf)
+- Pearson, R. K., Neuvo, Y., Astola, J., & Gabbouj, M. (2016). Generalized Hampel Filters. EURASIP Journal on Advances in Signal Processing, 2016, 87. https://doi.org/10.1186/s13634-016-0383-6 (Verlagsseite nicht abrufbar; Definition nach der Konferenzfassung: Pearson, R. K., Neuvo, Y., Astola, J., & Gabbouj, M. (2015). The class of generalized Hampel filters. 23rd European Signal Processing Conference (EUSIPCO). https://new.eurasip.org/Proceedings/Eusipco/Eusipco2015/papers/1570096433.pdf, Volltext gelesen)
 - Restart Career GmbH & kununu (2024). Auswirkungen von Restrukturierungen auf die Employer Brand [Branchenstudie, Leitung: Dr. Sabrina Zeplin; Primärbericht nicht geöffnet]. Berichtet in: PERSONALintern (21.03.2024). Einfluss von Restrukturierungen auf die Employer Brand. https://www.personalintern.de/artikel/einfluss-von-restrukturierungen-auf-die-employer-brand/ ; Handelsblatt (08.05.2024). Arbeitgeber-Image: Wie schlechtes Krisenmanagement langfristig schadet. https://www.handelsblatt.com/unternehmen/management/arbeitgeber-image-wie-schlechtes-krisenmanagement-langfristig-schadet/100035300.html ; Haupt, F. (2024). Schlechte Kununu-Bewertung nach Stellenabbau: Was tun? Personalwirtschaft, 21.11.2024. https://www.personalwirtschaft.de/news/hr-organisation/schlechte-kununu-bewertung-und-jetzt-184173/
+- Rousseeuw, P. J., & Croux, C. (1993). Alternatives to the Median Absolute Deviation. Journal of the American Statistical Association, 88(424), 1273–1283. https://doi.org/10.1080/01621459.1993.10476408 (Volltext nicht geöffnet; Inhalt nach Fearnhead & Fryzlewicz 2024, Abschn. 3.3 und 7)
+- Schwarz, G. (1978). Estimating the Dimension of a Model. The Annals of Statistics, 6(2), 461–464. https://doi.org/10.1214/aos/1176344136 (Volltext nicht geöffnet; Inhalt nach Fearnhead & Fryzlewicz 2024, Abschn. 3.4)
 - Tatbul, N., Lee, T. J., Zdonik, S., Alam, M., & Gottschlich, J. (2018). Precision and Recall for Time Series. In Advances in Neural Information Processing Systems 31 (NeurIPS 2018). Curran Associates. https://proceedings.neurips.cc/paper/2018/hash/8f468c873a32bb0619eaeb2050ba45d1-Abstract.html (Preprint: https://arxiv.org/abs/1803.03639)
 - Truong, C., Oudre, L., & Vayatis, N. (2020). Selective review of offline change point detection methods. Signal Processing, 167, 107299. https://doi.org/10.1016/j.sigpro.2019.107299 (Preprint: https://arxiv.org/abs/1801.00718)
 - van den Burg, G. J. J., & Williams, C. K. I. (2020). An Evaluation of Change Point Detection Algorithms. arXiv:2003.06222 [stat.ML] (v3, 12 Feb 2022). https://arxiv.org/abs/2003.06222
 - Wu, R., & Keogh, E. J. (2023). Current Time Series Anomaly Detection Benchmarks are Flawed and are Creating the Illusion of Progress. IEEE Transactions on Knowledge and Data Engineering, 35, 2421–2429 (online 14 Sep 2021). https://doi.org/10.1109/TKDE.2021.3112126 (Preprint: https://arxiv.org/abs/2009.13807; Band und Seiten nach Semantic Scholar, Heftnummer nicht geprüft)
+- Yao, Y.-C. (1988). Estimating the number of change-points via Schwarz' criterion. Statistics & Probability Letters, 6(3), 181–189. https://doi.org/10.1016/0167-7152(88)90118-6 (Volltext nicht geöffnet; Kriterium und Konsistenzsatz nach Fearnhead & Fryzlewicz 2024, Abschn. 3.4)
+- Zhang, N., & Siegmund, D. (2007). A Modified Bayes Information Criterion with Applications to the Analysis of Comparative Genomic Hybridization Data. Biometrics, 63(1), 22–32. https://doi.org/10.1111/j.1541-0420.2006.00662.x (Volltext nicht geöffnet; Inhalt nach Fearnhead & Fryzlewicz 2024, Abschn. 3.5)
