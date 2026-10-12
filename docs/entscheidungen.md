@@ -279,8 +279,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Hochschulen „Bildung“; NTT DATA „Beratung/Consulting“, Elmos „Industrie“, Evotec „Chemie“.
   Die Werte werden unverändert übernommen. Die Spaltenbeschreibung in Migration 006 nennt
   noch die alten Beispielwerte; die alten Werte stehen in der Git-Historie.
-- **Status:** Datei aktualisiert; Einspielen mit
-  `backend/scripts/seed_company_metadata.py --apply` (Probelauf: 21 Änderungen, 0 Fehler).
+- **Status:** Am 2026-10-12 vom Autor mit `backend/scripts/seed_company_metadata.py --apply`
+  eingespielt: 21 Unternehmen aktualisiert, bei den übrigen 5 war der Wert bereits gleich.
 
 ## E7 – Nachrichtenquelle für historische Meldungen
 
