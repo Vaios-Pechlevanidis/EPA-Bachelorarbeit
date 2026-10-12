@@ -45,10 +45,15 @@ MIGRATION_PATH = os.path.join(BACKEND_DIR, "migrations", "006_add_company_metada
 EXPECTED_IDS = {3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
                 26, 27, 28, 29, 30, 31, 32, 33}
 REQUIRED_FIELDS = {
-    "company_id", "name", "name_normalized", "ticker", "ticker_scope", "isin", "sector",
+    "company_id", "name", "name_normalized", "ticker", "ticker_scope", "isin", "sector", "kununu_url",
     "peer_group", "news_term", "news_exclude", "news_term_confirmed", "eqs", "listed", "verification", "note",
     # Inkrement 6 (FA-37): Vergleich mit der Plattform, nur vom Autor gefüllt, sonst null
     "platform_review_count", "platform_count_date",
+}
+# Branchen, die auf den Kununu-Profilen der 26 Unternehmen am 2026-10-12 angegeben waren
+KUNUNU_INDUSTRIES = {
+    "Beratung/Consulting", "Bildung", "Chemie", "Energie", "Forschung/Entwicklung", "Industrie",
+    "IT", "Maschinenbau", "Medizin/Pharma", "Telekommunikation",
 }
 VERIFICATION_FIELDS = {"ticker_checked_with", "rows", "isin_source", "checked_at"}
 
@@ -89,6 +94,9 @@ def test_metadata_json_structure_and_types(entries):
         assert isinstance(e["name"], str) and e["name"].strip()
         assert isinstance(e["name_normalized"], str)
         assert isinstance(e["sector"], str) and e["sector"].strip()
+        # Branche laut Kununu-Profil (E6, Nachtrag 2026-10-12); die Adresse belegt die Quelle
+        assert e["sector"] in KUNUNU_INDUSTRIES, f"{e['name']}: {e['sector']!r} ist keine Kununu-Branche"
+        assert re.fullmatch(r"https://www\.kununu\.com/de/[a-z0-9-]+", e["kununu_url"])
         assert isinstance(e["listed"], bool)
         assert isinstance(e["note"], str)
         for key in ("ticker", "isin"):
@@ -158,8 +166,11 @@ def test_metadata_json_known_assignments(entries):
     assert by_id[26]["ticker"] == "AFX.DE" and "Carl Zeiss" in by_id[26]["note"]
     for cid in (4, 5, 6, 9, 13, 14, 15, 16):
         assert by_id[cid]["listed"] is False
-    for cid in (13, 14, 15, 16):
-        assert by_id[cid]["sector"] == "Hochschule"
+    for cid in (13, 15, 16):
+        assert by_id[cid]["sector"] == "Bildung"
+    # Kununu führt das KIT und Carl Zeiss unter Forschung/Entwicklung
+    assert by_id[14]["sector"] == by_id[26]["sector"] == "Forschung/Entwicklung"
+    assert len({e["kununu_url"] for e in entries}) == 26, "jedes Unternehmen hat ein eigenes Profil"
     listed_de = [e for e in entries if e["peer_group"] == "Börsennotiert DE"]
     assert len(listed_de) >= 12
 

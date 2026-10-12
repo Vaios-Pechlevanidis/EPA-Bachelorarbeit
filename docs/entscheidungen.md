@@ -260,6 +260,28 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   werden und bleiben leer, bis sie aus einer belegbaren Quelle nachgetragen sind.
 - **Status:** Migration und Daten vorhanden; Einspielen nach Ausführung der Migration.
 
+### E6 – Nachtrag 2026-10-12: Branche laut Kununu
+
+- **Entscheidung des Autors:** `sector` enthält die Branche, die das Kununu-Profil des
+  Unternehmens angibt, statt der bisherigen eigenen Freitext-Einordnung. Die Branche wird nur
+  festgehalten; Erkennung, Erklärungsansätze und Dashboard werten sie nicht aus. Eine
+  amtliche Klassifikation (WZ 2008) wurde erwogen und verworfen.
+- **Quelle:** Branchenlink im Abschnitt zum kununu Score des öffentlichen Profils (Link auf
+  die Kununu-Suche mit Branchenfilter), abgerufen am 2026-10-12. Die Profil-Adresse steht je
+  Unternehmen in `company_metadata.json` (Feld `kununu_url`, nur in der Datei, nicht in der
+  Datenbank). Zehn Branchen kommen vor: Beratung/Consulting, Bildung, Chemie, Energie,
+  Forschung/Entwicklung, Industrie, IT, Maschinenbau, Medizin/Pharma, Telekommunikation.
+- **Zuordnung der Profile:** über die Kununu-Suche mit dem Namen aus der Datenbank, erster
+  Treffer. Bei Eckert & Ziegler gibt es mehrere Profile; gewählt ist
+  `eckert-ziegler1` (Eckert & Ziegler Strahlen- und Medizintechnik AG, 33 Bewertungen),
+  weil die Datenbank 31 Bewertungen enthält (Nuclitec: 19).
+- **Auffällig:** Kununu ordnet das KIT und Carl Zeiss „Forschung/Entwicklung“ zu, die übrigen
+  Hochschulen „Bildung“; NTT DATA „Beratung/Consulting“, Elmos „Industrie“, Evotec „Chemie“.
+  Die Werte werden unverändert übernommen. Die Spaltenbeschreibung in Migration 006 nennt
+  noch die alten Beispielwerte; die alten Werte stehen in der Git-Historie.
+- **Status:** Datei aktualisiert; Einspielen mit
+  `backend/scripts/seed_company_metadata.py --apply` (Probelauf: 21 Änderungen, 0 Fehler).
+
 ## E7 – Nachrichtenquelle für historische Meldungen
 
 - **Kontext:** `yfinance.Ticker.get_news` hat keinen Datumsparameter und liefert nur die
