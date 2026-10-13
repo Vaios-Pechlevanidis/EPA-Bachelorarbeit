@@ -51,7 +51,7 @@ import re
 from collections import Counter
 from typing import Any, Dict, Iterable, List, Optional, Set
 
-from services.review_service import clean_html_text
+from services.review_service import CATEGORY_TEXT_FIELDS, clean_html_text
 
 # Schwellen vom Autor am 2026-10-08 bestätigt (D2, Inkrement 5) und für die Auswertung
 # festgeschrieben; tests/explanations/test_frozen_rules.py hält die Werte fest.
@@ -64,9 +64,11 @@ TERM_MAX_COUNT = 50            # höchstens so viele kennzeichnende Begriffe je 
 TERM_PREFIX_MIN_LENGTH = 6     # ab dieser Länge des kürzeren Worts zählt der Wortanfang als Treffer
 COMPANY_PREFIX_MIN_LENGTH = 5  # Wortteil des Unternehmensnamens schließt ab dieser Länge auch Wortanfänge aus
 
-# Freitexte und Titel je Quelle (ohne Jobbezeichnung und Stellenbeschreibung).
+# Freitexte und Titel je Quelle (ohne Jobbezeichnung und Stellenbeschreibung); bei
+# Mitarbeitenden seit 2026-10-13 auch die Kommentare zu den Kategorien (Korrektur, E21/E23).
 TERM_TEXT_FIELDS: Dict[str, List[str]] = {
-    "employee": ["gut_am_arbeitgeber_finde_ich", "schlecht_am_arbeitgeber_finde_ich", "verbesserungsvorschlaege", "titel"],
+    "employee": ["gut_am_arbeitgeber_finde_ich", "schlecht_am_arbeitgeber_finde_ich", "verbesserungsvorschlaege", "titel",
+                 *CATEGORY_TEXT_FIELDS],
     "candidates": ["verbesserungsvorschlaege", "titel"],
 }
 _ALL_TEXT_FIELDS = list(dict.fromkeys(f for fields in TERM_TEXT_FIELDS.values() for f in fields))
@@ -132,6 +134,7 @@ came like well also even still new old big small high low top quite pretty very 
 STOPWORDS = STOPWORDS_DE | STOPWORDS_EN | REVIEW_WORDS
 
 _TOKEN_RE = re.compile(r"[a-zäöüß]+")
+_NAME_WITH_DIGITS_RE = re.compile(r"(?=[a-zäöüß0-9&]*[0-9&])[a-zäöüß0-9&]+")
 _LEGAL_RE = re.compile(r"\b(SE|AG|GmbH|KGaA|KG|mbH|Co|Group|Holding|Deutschland|Inc|Ltd|plc)\b", re.IGNORECASE)
 
 
@@ -175,8 +178,8 @@ def review_terms(row: Dict[str, Any], exclude: Iterable[str] = (), source: Optio
 def company_terms(name: Optional[str], search_term: Optional[str] = None) -> Set[str]:
     """Wortteile des Unternehmensnamens und des Suchbegriffs (``OR``-Glieder ohne
     Anführungszeichen, Rechtsform entfernt), dazu jedes Wort ohne Trennzeichen
-    (``E.ON`` → ``eon``, ``Duisburg-Essen`` → ``duisburgessen``); sie zählen nicht als
-    kennzeichnende Begriffe."""
+    (``E.ON`` → ``eon``, ``Duisburg-Essen`` → ``duisburgessen``) und Namen mit Ziffern oder
+    ``&`` als Ganzes (``1&1``); sie zählen nicht als kennzeichnende Begriffe."""
     parts: List[str] = []
     for raw in (name or "", search_term or ""):
         for part in re.split(r"\s+OR\s+", raw):
@@ -191,6 +194,10 @@ def company_terms(name: Optional[str], search_term: Optional[str] = None) -> Set
             joined = "".join(words)
             if len(joined) >= MIN_TERM_LENGTH:
                 out.add(joined)
+            # Namen mit Ziffern oder "&" ("1&1") bleiben als Ganzes (Korrektur 2026-10-13).
+            whole = _NAME_WITH_DIGITS_RE.fullmatch(piece.lower().strip(".,;:()\"'"))
+            if whole and len(whole.group(0)) >= MIN_TERM_LENGTH:
+                out.add(whole.group(0))
     return out
 
 

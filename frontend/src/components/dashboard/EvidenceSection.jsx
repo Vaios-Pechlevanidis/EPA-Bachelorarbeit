@@ -32,7 +32,7 @@ const selectClass =
 
 const TYPE_LABELS = {
     news: { label: "Meldung", className: "bg-slate-100 text-slate-600", title: "Nachrichtenmeldung (Google News RSS), Verlässlichkeit mittel" },
-    adhoc: { label: "Ad-hoc", className: "bg-blue-100 text-slate-700", title: "Pflicht- oder Unternehmensmitteilung (EQS News), Verlässlichkeit hoch" },
+    adhoc: { label: "EQS", className: "bg-blue-100 text-slate-700", title: "Pflicht- oder Unternehmensmitteilung über EQS News (Ad-hoc, Stimmrechte, Finanzberichte u. a.), Verlässlichkeit hoch" },
     global: { label: "Allgemeines Ereignis, Hypothese", className: "bg-amber-100 text-slate-700", title: "Allgemeines Ereignis, automatisch aus Wirtschaftsdaten (Eurostat: Wirtschaftsstimmung ESI, Inflationsrate), Verlässlichkeit: Hypothese" },
 }
 
@@ -64,12 +64,12 @@ const fmtStamp = (value) => {
     return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
-/* "12 Belege: 10 Meldungen, 2 Ad-hoc" */
+/* "12 Belege: 10 Meldungen, 2 EQS" */
 function countsText(total, counts) {
     if (!total) return "kein Beleg"
     const parts = [
         counts?.news ? `${counts.news} ${counts.news === 1 ? "Meldung" : "Meldungen"}` : null,
-        counts?.adhoc ? `${counts.adhoc} Ad-hoc` : null,
+        counts?.adhoc ? `${counts.adhoc} EQS` : null,
         counts?.global ? `${counts.global} ${counts.global === 1 ? "allgemeines Ereignis" : "allgemeine Ereignisse"}` : null,
     ].filter(Boolean)
     return `${total} ${total === 1 ? "Beleg" : "Belege"}${parts.length ? `: ${parts.join(", ")}` : ""}`
@@ -83,8 +83,10 @@ function windowText(window) {
     return `${span} (${window.months} ${window.months === 1 ? "Monat" : "Monate"}: ${window.window_before} davor, ${window.window_after} danach, ${ref})`
 }
 
-function TypeBadge({ type }) {
-    const t = TYPE_LABELS[type] ?? { label: type, className: "bg-slate-100 text-slate-600", title: "" }
+/* EQS-Mitteilungen heißen nur bei der EQS-Kategorie "Ad-hoc" Ad-hoc (Korrektur 2026-10-13, E19). */
+function TypeBadge({ type, category = null }) {
+    const base = TYPE_LABELS[type] ?? { label: type, className: "bg-slate-100 text-slate-600", title: "" }
+    const t = type === "adhoc" && String(category ?? "").trim().toLowerCase() === "ad-hoc" ? { ...base, label: "Ad-hoc" } : base
     return (
         <span className={`flex-none inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider ${t.className}`} title={t.title}>
             {t.label}
@@ -109,7 +111,7 @@ function EvidenceRow({ item, score = null, rules = null }) {
                         <span className="truncate">{item.title}</span>
                         <ExternalLink className="w-3 h-3 flex-none text-slate-400" aria-hidden="true" />
                     </a>
-                    <TypeBadge type={item.source_type} />
+                    <TypeBadge type={item.source_type} category={item.category} />
                     {item.language === "en" && (
                         <span className="flex-none inline-flex items-center px-1.5 py-0.5 rounded-full border border-slate-300 text-slate-500 text-[10px] uppercase tracking-wider" title="englischsprachige Meldung">
                             EN

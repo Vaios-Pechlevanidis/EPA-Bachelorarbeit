@@ -43,7 +43,10 @@ const STAGE_CLASS = "bg-slate-100 text-slate-700 border border-slate-300"
 
 const stageLabel = (stage, rules = null) => rules?.stage_labels?.[stage] ?? STAGE_LABELS[stage] ?? stage
 
-const TYPE_LABELS = { news: "Meldung", adhoc: "Ad-hoc", global: "Allgemeines Ereignis" }
+const TYPE_LABELS = { news: "Meldung", adhoc: "EQS-Mitteilung", global: "Allgemeines Ereignis" }
+/* EQS-Mitteilungen heißen nur bei der EQS-Kategorie "Ad-hoc" Ad-hoc (Korrektur 2026-10-13, E19). */
+const typeLabel = (type, eqsCategory = null) =>
+    type === "adhoc" && String(eqsCategory ?? "").trim().toLowerCase() === "ad-hoc" ? "Ad-hoc-Mitteilung (EQS)" : TYPE_LABELS[type] ?? type
 const SENTIMENT_LABELS = { positive: "positiv", neutral: "neutral", negative: "negativ" }
 
 const num = (v, digits = 2) =>
@@ -121,7 +124,7 @@ function SignalChips({ entry }) {
                 {entry.time_phrase} · {num(entry.time_match, 2)}
             </Chip>
             <Chip title={`Quellenart ordnet nur innerhalb einer Stufe; Verlässlichkeit ${entry.reliability ?? "–"}`}>
-                {TYPE_LABELS[entry.source_type] ?? entry.source_type}
+                {typeLabel(entry.source_type, entry.eqs_category)}
                 {entry.language === "en" ? " · EN" : ""}
             </Chip>
             {entry.company_in_title === false && (
@@ -151,7 +154,7 @@ function BundledItems({ items, rules }) {
                             <ExternalLink className="w-3 h-3 flex-none text-slate-400" aria-hidden="true" />
                         </a>
                         <span className="block text-[10.5px] text-slate-500 break-words">
-                            {item.publisher || "Herausgeber unbekannt"} · {TYPE_LABELS[item.source_type] ?? item.source_type}
+                            {item.publisher || "Herausgeber unbekannt"} · {typeLabel(item.source_type, item.eqs_category)}
                             {item.issuer ? ` · Mitteilung von ${item.issuer}` : ""} · Zeit {num(item.time_match, 2)}, Thema {num(item.topic_match, 2)}
                         </span>
                     </span>
@@ -175,7 +178,7 @@ function GroupMembers({ others, rules }) {
                             <ExternalLink className="w-3 h-3 flex-none text-slate-400" aria-hidden="true" />
                         </a>
                         <span className="block text-[10.5px] text-slate-500 break-words">
-                            {o.source || "Herausgeber unbekannt"} · {TYPE_LABELS[o.source_type] ?? o.source_type}
+                            {o.source || "Herausgeber unbekannt"} · {typeLabel(o.source_type, o.eqs_category)}
                             {o.issuer ? ` · Mitteilung von ${o.issuer}` : ""}
                             {o.n_items > 1 ? ` · ${o.n_items} Meldungen (${(o.publishers ?? []).join(", ")})` : ""}
                             {" "}· {o.time_phrase} · Zeit {num(o.time_match, 2)}, Thema {num(o.topic_match, 2)}

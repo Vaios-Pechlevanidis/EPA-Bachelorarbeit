@@ -36,8 +36,8 @@ stehen:
   Meldungen und ihren Herausgebern,
 - die **Signale als kleine Kennzeichen**: je getroffener Begriff mit den Zählungen („Begriff
   ‚stellenabbau‘ 12 ggü. 1“), die Ereignisart mit der Themenverschiebung oder dem Vermerk „nur
-  erkannt“, die zeitliche Nähe („im Monat vor dem Übergang · 1,00“), die Quellenart (Ad-hoc,
-  Meldung, EN), die Stimmung des Titels mit dem Vermerk, ob sie zur Richtung der Veränderung
+  erkannt“, die zeitliche Nähe („im Monat vor dem Übergang · 1,00“), die Quellenart
+  (EQS-Mitteilung, Ad-hoc-Mitteilung nur bei der EQS-Kategorie „Ad-hoc“, Meldung, EN), die Stimmung des Titels mit dem Vermerk, ob sie zur Richtung der Veränderung
   passt (ohne Einfluss auf die Stufe), und der Hinweis „Unternehmen im Titel nicht genannt“, wenn
   der Titel den Unternehmensnamen nicht enthält,
 - bei Bündeln aufklappbar die **gebündelten Meldungen** mit Datum, Titel, Herausgeber und je
@@ -77,7 +77,8 @@ Begründung; die Liste der Belege bleibt vollständig und prüfbar.
 2. **Begriffe aus den Bewertungen** (`backend/services/review_terms.py`). Kennzeichnend ist ein
    Wort, das mindestens 3 Bewertungen und mindestens 3 % der Bewertungen des Fensters danach
    nennen und dessen Anteil danach mindestens doppelt so groß ist wie davor. Gezählt werden
-   Freitexte und Titel der Bewertungen, je Bewertung ein Mal je Wort; nicht gezählt werden
+   Freitexte, Titel und (seit der Korrektur vom 2026-10-13) die Kommentare zu den Kategorien
+   der Bewertungen, je Bewertung ein Mal je Wort; nicht gezählt werden
    Stoppwörter, allgemeine Bewertungswörter (Arbeitgeber, Mitarbeiter, gut, schlecht, neu, …) und
    die Wortteile des Unternehmensnamens. Bei kleiner Basis (ein Fenster unter 10 Bewertungen)
    gibt es keine Begriffe. Die Vorverarbeitung des LDA-Modells aus Zyklus 1 wurde geprüft und
@@ -110,9 +111,9 @@ Begründung; die Liste der Belege bleibt vollständig und prüfbar.
    Themenbezug, nur Ereignisart) sind Kurzformen dieser Regeln.
 6. **Bündelung.** Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens 3 Tage
    Abstand, Titelähnlichkeit mindestens 0,5 nach Jaccard über die Begriffe) werden ein Eintrag;
-   Stellvertreter ist die Ad-hoc-Mitteilung, sonst die früheste Meldung; das Bündel trägt die
+   Stellvertreter ist die EQS-Mitteilung, sonst die früheste Meldung; das Bündel trägt die
    höchsten Signale seiner Meldungen.
-7. **Sortierung und Auswahl.** Stufe, dann Quellenart (Ad-hoc vor Meldung, nur innerhalb der
+7. **Sortierung und Auswahl.** Stufe, dann Quellenart (EQS vor Meldung, nur innerhalb der
    Stufe), dann Thema, Zeit, Anzahl der Meldungen, Datum. Die oberste Liste führt höchstens
    einen Eintrag je Ereignisart (ohne Ereignisart je Begriffsmenge); Stellvertreter ist das
    beste Bündel der Gruppe, die übrigen Bündel stehen im Eintrag unter `group`; höchstens fünf

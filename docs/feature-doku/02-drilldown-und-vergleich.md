@@ -92,7 +92,9 @@ Bewertungen des Fensters. Die **Verschiebung** ist Anteil danach minus Anteil da
 
 ### 2.4 Stimmung (E11)
 
-Je Bewertung schätzt der vorhandene `SentimentAnalyzer` die Stimmung der Freitexte:
+Je Bewertung schätzt der vorhandene `SentimentAnalyzer` die Stimmung der Freitexte (bei
+Mitarbeitenden seit der Korrektur vom 2026-10-13 auch der Kommentare zu den Kategorien; der
+Platzhalter „-“ zählt nicht als Text, E11):
 **positiv, neutral oder negativ** und eine **Polarität** zwischen −1 (negativ) und +1
 (positiv). Hauptmodus ist ein Transformer-Modell (German Sentiment BERT), die
 Sternebewertung dient als Hinweis; lädt das Modell nicht, gilt das Lexikon (Wortlisten). Je
@@ -204,7 +206,9 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
   (Ø der Monatsmittel 3,07 → 3,74), aber Ø je Bewertung 3,79 → 3,65, weil im März 2024
   174 der 246 Bewertungen des Fensters davor liegen (Ø 4,16).
 - **Freitext fehlt oft:** Bei älteren Bewertungen gibt es wenig Text (Telekom 2010: 6 von 27
-  Bewertungen davor). Die Stimmung beruht dann auf wenigen Texten.
+  Bewertungen davor). Die Stimmung beruht dann auf wenigen Texten. Bei Thyssenkrupp, Open Grid
+  Europe, E.ON, RWE und KIT sind die drei Freitextfelder leer; seit der Korrektur vom
+  2026-10-13 zählen dort die Kommentare zu den Kategorien (E23, Korrektur 2026-10-13).
 - **Schlüsselwörter:** nur deutsch, mehrdeutige Wörter zählen mit, keine Validierung
   (E10). Bei der Hervorhebung sieht man das direkt: „ansehen“ (Image) wird auch als Verb
   markiert. Viele Bewertungen nennen das Thema ihrer Dimension gar nicht (Telekom, Image,

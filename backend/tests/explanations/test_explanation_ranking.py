@@ -259,12 +259,12 @@ def _bundle(**kw):
 
 TEXT_CASES = [
     _bundle(),
-    _bundle(n_items=4, has_adhoc=True, category={"label": "Personalabbau und Restrukturierung", "employer_related": True, "shifted_topics": []},
+    _bundle(n_items=4, has_adhoc=True, has_eqs_adhoc=True, category={"label": "Personalabbau und Restrukturierung", "employer_related": True, "shifted_topics": []},
             terms=[{"term": "stellenabbau", "after": 12, "before": 1}]),
     _bundle(category={"label": "Personalabbau und Restrukturierung", "employer_related": True,
                       "shifted_topics": [{"topic": "Arbeitsatmosphäre", "share_shift_pp": -8.5}, {"topic": "Kommunikation", "share_shift_pp": 6.0}]},
             terms=[{"term": "stellenabbau", "after": 12, "before": 1}, {"term": "entlassung", "after": 6, "before": 0}]),
-    _bundle(source_type="adhoc", date="2023-04-03", category={"label": "Führungswechsel", "employer_related": True, "shifted_topics": []}),
+    _bundle(source_type="adhoc", eqs_category="Ad-hoc", date="2023-04-03", category={"label": "Führungswechsel", "employer_related": True, "shifted_topics": []}),
     _bundle(date="2022-12-20", category={"label": "Ohne Arbeitgeberbezug", "employer_related": False, "shifted_topics": []},
             terms=[{"term": "dividende", "after": 5, "before": 0}]),
     _bundle(date="2023-05-02", n_items=2),
@@ -291,6 +291,17 @@ class TestText:
         text = er.explanation_text(TEXT_CASES[4], WINDOW)
         assert "ohne erkennbaren Arbeitgeberbezug" in text and "3 Monate vor dem Übergang" in text and "eine Stufe zurückgestuft" in text
         assert "kein Wortbezug" not in text
+
+    def test_eqs_wording_follows_the_eqs_category(self):
+        """Korrektur 2026-10-13 (E19): nur die EQS-Kategorie "Ad-hoc" heißt Ad-hoc-Mitteilung."""
+        cat = {"label": "Führungswechsel", "employer_related": True, "shifted_topics": []}
+        single = er.explanation_text(_bundle(source_type="adhoc", eqs_category="Voting rights", date="2023-04-03", category=cat), WINDOW)
+        assert single.startswith("Möglicher Zusammenhang: eine EQS-Mitteilung zu Führungswechsel")
+        several = er.explanation_text(_bundle(n_items=3, has_adhoc=True, has_eqs_adhoc=False, date="2023-04-03", category=cat), WINDOW)
+        assert "3 Meldungen (darunter eine EQS-Mitteilung)" in several
+        assert er.is_eqs_adhoc({"source_type": "adhoc", "eqs_category": "Ad-hoc"})
+        assert not er.is_eqs_adhoc({"source_type": "adhoc", "eqs_category": "Directors' Dealings"})
+        assert not er.is_eqs_adhoc({"source_type": "news", "eqs_category": "Ad-hoc"})
 
     def test_after_and_without_terms(self):
         assert "2 Meldungen im Monat nach dem markierten Monat; kein Wortbezug zu den Bewertungen." in er.explanation_text(TEXT_CASES[5], WINDOW)

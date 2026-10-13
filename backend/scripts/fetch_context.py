@@ -79,13 +79,16 @@ def company_anchors(company_id: int) -> Dict[str, Any]:
     ``eligible: False``, dazu der erste und letzte Monat der bewerteten Reihe; nur lesend."""
     result = company_anomalies(company_id, source=SOURCE, dimension=DIMENSION)
     series = result.get("series") or []
+    evaluated = [m["period"] for m in series if m.get("evaluated")]
     return {
         "eligible": bool(result["eligibility"]["eligible"]),
         "anomalies": result["anomalies"],
         "outliers": result.get("outlier_months") or [],
-        "series_from": series[0]["period"] if series else None,   # erster und letzter bewerteter Monat
-        "series_to": series[-1]["period"] if series else None,     # (Grenzen der Vergleichsfenster)
-        "evaluated_months": [m["period"] for m in series if m.get("evaluated")],   # für den Abgleich mit E5 (Regel 6)
+        # Erster und letzter bewerteter Monat (Grenzen der Vergleichsfenster, E18). Bis 2026-10-13
+        # standen hier der erste und letzte datierte Monat; Korrektur siehe E18/E23.
+        "series_from": evaluated[0] if evaluated else None,
+        "series_to": evaluated[-1] if evaluated else None,
+        "evaluated_months": evaluated,   # für den Abgleich mit E5 (Regel 6)
     }
 
 

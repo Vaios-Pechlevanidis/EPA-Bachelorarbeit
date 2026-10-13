@@ -17,7 +17,9 @@ Schlüsselwörter deutsch und englisch, Themen, ``confirmed``). Regeln:
   gesucht (``streik`` trifft ``Streikwelle``); mehrere Wörter mit Leerzeichen,
   ``*`` steht für bis zu ``WILDCARD_MAX_WORDS`` beliebige Wörter dazwischen
   (``streicht * stellen`` trifft ``streicht 500 Stellen``). Bindestriche und
-  Schrägstriche im Titel gelten als Leerzeichen.
+  Schrägstriche im Titel gelten als Leerzeichen. Ein ``$`` am Ende eines Worts
+  verlangt das **ganze Wort** (``verdi$`` trifft ``Verdi``, nicht ``verdient``;
+  Korrektur 2026-10-13, E22).
 - Trifft mindestens eine Ereignisart mit Arbeitgeberbezug, gilt die mit den
   meisten getroffenen Schlüsselwörtern (bei Gleichstand die erste in der
   Datei). Die Gruppe ohne Arbeitgeberbezug gilt, wenn keine Ereignisart mit
@@ -141,6 +143,9 @@ def _keyword_regex(keyword: str) -> str:
     for word in keyword.split():
         if word == "*":
             parts.append(rf"(?:[^\s]+\s+){{0,{WILDCARD_MAX_WORDS}}}")
+        elif word.endswith("$") and len(word) > 1:
+            # ganzes Wort: kein Buchstabe und keine Ziffer danach (Korrektur 2026-10-13, E22)
+            parts.append(re.escape(word[:-1]) + rf"(?![{_WORD_CHARS}])" + r"\s+")
         else:
             parts.append(re.escape(word) + r"\s+")
     body = "".join(parts)
@@ -150,7 +155,8 @@ def _keyword_regex(keyword: str) -> str:
 
 def compile_keywords(keywords: List[str]) -> Optional[re.Pattern]:
     """Ein Muster für alle Schlüsselwörter einer Ereignisart: jedes als Wortanfang
-    (``(?<![a-zäöüß0-9])``), ``*`` als bis zu ``WILDCARD_MAX_WORDS`` Wörter dazwischen. None
+    (``(?<![a-zäöüß0-9])``), ``*`` als bis zu ``WILDCARD_MAX_WORDS`` Wörter dazwischen,
+    ``wort$`` nur als ganzes Wort. None
     ohne Schlüsselwörter. Die Gruppe ``kw`` liefert den getroffenen Text."""
     if not keywords:
         return None

@@ -26,7 +26,7 @@ from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
-from services.review_service import build_full_review, clean_html_text
+from services.review_service import CATEGORY_TEXT_FIELDS, build_full_review, clean_html_text
 
 # Textfelder, in denen nach Schlüsselwörtern gesucht wird (beide Quellen).
 TOPIC_TEXT_FIELDS: List[str] = [
@@ -34,6 +34,11 @@ TOPIC_TEXT_FIELDS: List[str] = [
     'jobbeschreibung', 'gut_am_arbeitgeber_finde_ich',  # employee
     'schlecht_am_arbeitgeber_finde_ich', 'titel'
 ]
+
+# Für die Erklärungsansätze (Vorher-Nachher-Vergleich und Themenverschiebung, E10, E21)
+# zusätzlich die Kommentare zu den Kategorien (Korrektur 2026-10-13, E23). Die
+# Themenübersicht aus Zyklus 1 bleibt bei TOPIC_TEXT_FIELDS.
+EXPLANATION_TOPIC_TEXT_FIELDS: List[str] = TOPIC_TEXT_FIELDS + CATEGORY_TEXT_FIELDS
 
 # NFA-07 (Inkrement 6, 2026-10-09): Aus diesen Feldern stammt nie ein
 # Beispielzitat (``example``, ``typicalStatements``, ``reviewDetails[].preview``
@@ -690,16 +695,17 @@ def _compiled_topics(source: Optional[str]) -> List[tuple]:
     return _COMPILED[source]
 
 
-def topics_in_review(row: Dict[str, Any], source: Optional[str]) -> List[str]:
+def topics_in_review(row: Dict[str, Any], source: Optional[str], fields: Optional[List[str]] = None) -> List[str]:
     """Namen der Themen, die eine Bewertung nennt, in der Reihenfolge der Definitionen.
 
-    Gleiche Regel wie ``analyze_topic``: ein Schlüsselwort in einem der
-    ``TOPIC_TEXT_FIELDS`` (Text klein geschrieben, Muster ohne Beachtung der
-    Groß-/Kleinschreibung).
+    Gleiche Regel wie ``analyze_topic``: ein Schlüsselwort in einem der Felder
+    ``fields`` (Standard ``TOPIC_TEXT_FIELDS``; die Erklärungsansätze übergeben
+    ``EXPLANATION_TOPIC_TEXT_FIELDS``), Text klein geschrieben, Muster ohne
+    Beachtung der Groß-/Kleinschreibung.
     """
     texts = [
         row.get(field).lower()
-        for field in TOPIC_TEXT_FIELDS
+        for field in (TOPIC_TEXT_FIELDS if fields is None else fields)
         if row.get(field) and isinstance(row.get(field), str)
     ]
     if not texts:
@@ -744,7 +750,7 @@ def topic_spans(text: Any, topic: str, source: Optional[str]) -> List[List[int]]
 
 __all__ = [
     "topic_for_dimension", "topic_spans",
-    "TOPIC_TEXT_FIELDS", "EMPLOYEE_TOPIC_DEFINITIONS", "CANDIDATE_TOPIC_DEFINITIONS",
+    "TOPIC_TEXT_FIELDS", "EXPLANATION_TOPIC_TEXT_FIELDS", "EMPLOYEE_TOPIC_DEFINITIONS", "CANDIDATE_TOPIC_DEFINITIONS",
     "QUOTE_EXCLUDED_FIELDS", "TOPIC_DEFINITIONS_BY_SOURCE", "topic_definitions_for", "topics_in_review", "analyze_topic",
     "NEUTRAL_FROM", "POSITIVE_FROM", "rating_class",
 ]

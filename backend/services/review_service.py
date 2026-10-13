@@ -111,11 +111,29 @@ def build_full_review(row: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+# Kommentare zu den 13 Kununu-Kategorien (nur Mitarbeitende). Bei mehreren Unternehmen aus
+# Zyklus 1 sind die drei Freitextfelder leer und nur diese Kommentare gefüllt; sie gehen seit
+# der Korrektur vom 2026-10-13 in Textauszug, Stimmung, Begriffe und Themen der
+# Erklärungsansätze ein (E10, E11, E21, E23). Der Platzhalter "-" zählt nicht als Text.
+CATEGORY_TEXT_FIELDS: List[str] = [
+    "arbeitsatmosphaere", "image", "work_life_balance", "karriere_weiterbildung", "gehalt_sozialleistungen",
+    "kollegenzusammenhalt", "umwelt_sozialbewusstsein", "vorgesetztenverhalten", "kommunikation",
+    "interessante_aufgaben", "umgang_mit_aelteren_kollegen", "arbeitsbedingungen", "gleichberechtigung",
+]
+
 # Freitextfelder je Quelle in Anzeigereihenfolge (Textauszug, Stimmung).
 TEXT_FIELDS_BY_SOURCE: Dict[str, List[str]] = {
-    "employee": ["gut_am_arbeitgeber_finde_ich", "schlecht_am_arbeitgeber_finde_ich", "verbesserungsvorschlaege"],
+    "employee": ["gut_am_arbeitgeber_finde_ich", "schlecht_am_arbeitgeber_finde_ich", "verbesserungsvorschlaege",
+                 *CATEGORY_TEXT_FIELDS],
     "candidates": ["stellenbeschreibung", "verbesserungsvorschlaege"],
 }
+
+_LETTER_RE = re.compile(r"[A-Za-zÄÖÜäöüß]")
+
+
+def has_text_content(value: Any) -> bool:
+    """True, wenn ein Textfeld mindestens einen Buchstaben enthält (nicht nur "-", "." o. Ä.)."""
+    return isinstance(value, str) and _LETTER_RE.search(value) is not None
 
 PREVIEW_MAX_CHARS = 240
 
@@ -123,7 +141,7 @@ PREVIEW_MAX_CHARS = 240
 def review_text(row: Dict[str, Any], source: str) -> str:
     """Bereinigte Freitexte einer Bewertung, durch Leerzeile getrennt (ohne Titel)."""
     parts = [clean_html_text(row.get(f)) for f in TEXT_FIELDS_BY_SOURCE.get(source, [])]
-    return "\n\n".join(p for p in parts if isinstance(p, str) and p.strip())
+    return "\n\n".join(p.strip() for p in parts if has_text_content(p))
 
 
 def review_preview(row: Dict[str, Any], source: str, max_chars: int = PREVIEW_MAX_CHARS) -> str:
@@ -263,7 +281,8 @@ def full_review_item(row: Dict[str, Any], source: str) -> Dict[str, Any]:
 
 
 __all__ = [
-    "clean_html_text", "build_full_review", "TEXT_FIELDS_BY_SOURCE", "review_text", "review_preview",
+    "clean_html_text", "build_full_review", "CATEGORY_TEXT_FIELDS", "TEXT_FIELDS_BY_SOURCE", "has_text_content",
+    "review_text", "review_preview",
     "UNKNOWN_STATUS", "STATUS_LABELS", "normalize_status", "validate_status", "filter_by_status",
     "parse_day", "fetch_review_rows_in_range", "sort_newest_first", "full_review_item",
 ]

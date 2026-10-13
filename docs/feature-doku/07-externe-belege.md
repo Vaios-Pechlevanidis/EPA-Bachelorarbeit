@@ -20,8 +20,9 @@ keine Meldung.
 
 Der Kopf des Abschnitts nennt das **Ereignisfenster** (zum Beispiel „Apr. 2024 – Aug. 2024, 5
 Monate: 3 davor, 1 danach, um den Übergang“) und die **Anzahl je Typ** („362 Belege: 350
-Meldungen, 12 Ad-hoc“). Je Beleg stehen Datum, Titel als Link in einem neuen Tab, Herausgeber,
-der Typ als Badge (**Meldung**, **Ad-hoc**, **Allgemeines Ereignis, Hypothese**) und bei
+Meldungen, 12 EQS“). Je Beleg stehen Datum, Titel als Link in einem neuen Tab, Herausgeber,
+der Typ als Badge (**Meldung**, **EQS** bzw. **Ad-hoc** nur bei der EQS-Kategorie „Ad-hoc“,
+**Allgemeines Ereignis, Hypothese**; Korrektur 2026-10-13, E19) und bei
 englischsprachigen Meldungen die Badge **EN**; bei Mitteilungen von EQS steht dazu, von welcher
 Gesellschaft sie stammen (bei Carl Zeiss: Carl Zeiss Meditec AG). Die neuesten Belege stehen
 oben; lange Listen werden in Schritten von 25 nachgeladen. Die Liste hat einen eigenen

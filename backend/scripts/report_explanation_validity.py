@@ -285,6 +285,7 @@ def aggregate(records: List[Dict[str, Any]], reference: Optional[Dict[str, Any]]
                    for c in sorted(companies.values(), key=lambda c: c["company_id"])]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "git": git_state(),
         "source": SOURCE, "offsets": list(ev.COMPARISON_OFFSETS), "max_per_marker": ev.COMPARISON_MAX,
         "rules": rules(),
         "reference": {"available": available, "reason": reason, "definition": REFERENCE_DEFINITION,
@@ -377,6 +378,22 @@ def markdown_tables(summary: Dict[str, Any]) -> str:
         for w in incomplete:
             lines.append(f"- {w['company']}, {w['group']}, {w['kind']}, {w['date']}, {w['offset_months']:+d} Monate ({w['missing_months']})")
     return "\n".join(lines)
+
+
+def git_state() -> Dict[str, Any]:
+    """Commit und uncommittete Änderungen unter backend/ (seit 2026-10-13 im Bericht)."""
+    import subprocess
+
+    def run(*args: str) -> Optional[str]:
+        try:
+            return subprocess.run(["git", *args], cwd=BACKEND_DIR, capture_output=True, text=True, check=True).stdout
+        except (OSError, subprocess.CalledProcessError):
+            return None
+
+    commit, status = run("rev-parse", "HEAD"), run("status", "--porcelain", "--", ".")
+    paths = [line[3:] for line in (status or "").splitlines() if line.strip()]
+    return {"commit": commit.strip() if commit else None, "dirty": bool(paths) if status is not None else None,
+            "dirty_paths": paths[:50]}
 
 
 def main(argv: Optional[List[str]] = None) -> int:

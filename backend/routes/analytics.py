@@ -7,7 +7,7 @@ from database.supabase_client import get_supabase_client
 from typing import Optional, List, Dict, Any, Literal
 from services.topic_average_rating_service import _fetch_all_rows, fetch_all_rows_parallel, get_topic_rating_timeseries
 import services.review_service as review_service
-from services.keyword_topic_service import analyze_topic, topic_definitions_for, topic_for_dimension, topic_spans, topics_in_review
+from services.keyword_topic_service import EXPLANATION_TOPIC_TEXT_FIELDS, analyze_topic, topic_definitions_for, topic_for_dimension, topic_spans, topics_in_review
 from services.review_service import (
     clean_html_text,
     fetch_review_rows_in_range,
@@ -452,7 +452,8 @@ def _reviews_in_range(
         rows = fetch_review_rows_in_range(src, company_id, start_day, end_day)
         tagged.extend({**row, "_source": src} for row in filter_by_status(rows, src, status))
     ordered = sort_newest_first(tagged)
-    mentioning = [r for r in ordered if topic in topics_in_review(r, r["_source"])] if topic else []
+    # Gleiche Felder wie der Vorher-Nachher-Vergleich (mit Kategorie-Kommentaren, Korrektur 2026-10-13).
+    mentioning = [r for r in ordered if topic in topics_in_review(r, r["_source"], EXPLANATION_TOPIC_TEXT_FIELDS)] if topic else []
     if topic_only:
         if dimension is None:
             raise ValueError("topic_only braucht dimension.")
@@ -463,7 +464,7 @@ def _reviews_in_range(
         src = row.pop("_source")
         out = full_review_item(row, src) if full else _review_list_item(row, src)
         if topic is not None:
-            out["mentions_topic"] = topic in topics_in_review(row, src)
+            out["mentions_topic"] = topic in topics_in_review(row, src, EXPLANATION_TOPIC_TEXT_FIELDS)
             if full:
                 texts = {"preview": out["preview"], **{k: out["fullReview"].get(k) for k in HIGHLIGHT_FIELDS}}
                 spans = {k: topic_spans(v, topic, src) for k, v in texts.items()}

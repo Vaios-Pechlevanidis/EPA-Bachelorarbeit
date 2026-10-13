@@ -57,10 +57,11 @@ Bündelung: Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens
 ``BUNDLE_MAX_DAYS`` Tage Abstand, Titelähnlichkeit mindestens
 ``BUNDLE_TITLE_SIMILARITY`` nach Jaccard über die Begriffe) werden ein
 Eintrag mit Anzahl der Meldungen und Herausgebern. Stellvertreter ist die
-Ad-hoc-Mitteilung, sonst die früheste Meldung; für das Bündel gelten die
-höchsten Signale seiner Meldungen.
+EQS-Mitteilung (Quelltyp ``adhoc``), sonst die früheste Meldung; für das Bündel
+gelten die höchsten Signale seiner Meldungen. Im Text heißt eine EQS-Mitteilung
+nur bei der EQS-Kategorie "Ad-hoc" Ad-hoc-Mitteilung (Korrektur 2026-10-13).
 
-Sortierung: Stufe, dann Quellenart (Ad-hoc vor Meldung; die Quellenart
+Sortierung: Stufe, dann Quellenart (EQS vor Meldung; die Quellenart
 ordnet nur innerhalb einer Stufe), dann ``topic_match``, ``time_match``,
 Anzahl der Meldungen, Datum. Höchstens ``MAX_EXPLANATIONS`` Einträge;
 erreicht kein Bündel die Stufe niedrig, ist die Liste leer und der Zustand
@@ -91,10 +92,11 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from services.event_categories import classify_title, load_event_categories
 from services.evidence_service import KIND_CHANGE, KIND_OUTLIER, KIND_SELECTION, month_index
 from services.evidence_sources import TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS
-from services.keyword_topic_service import topic_definitions_for, topics_in_review
+from services.keyword_topic_service import EXPLANATION_TOPIC_TEXT_FIELDS, topic_definitions_for, topics_in_review
 from services.review_terms import COMPANY_PREFIX_MIN_LENGTH, match_terms, term_set
 
 _TITLE_WORD_RE = re.compile(r"[a-zäöüß0-9&]+")
+_INNER_DOT_RE = re.compile(r"(?<=[a-zäöüß0-9])\.(?=[a-zäöüß0-9])")
 
 # ── Schwellen und Regeln (Setzungen; nur hier) ───────────────────────────────
 # Vom Autor am 2026-10-08 bestätigt (D2, Inkrement 5) und für die Auswertung
@@ -124,6 +126,15 @@ TIME_MIN = 0.3                   # zeitliche Nähe mindestens (Rand eines Fenste
 # 2 = vom Autor am 2026-10-08 festgelegt: hoch nur mit Wortbezug und Ereignisart.
 RULES_VERSION = 2
 RULES_VERSION_DATE = "2026-10-08"
+# Korrekturen ohne Änderung der Schwellen und Stufenregeln (E23, Nachtrag 2026-10-13); jeder
+# Bericht nennt sie unter rules()["corrections"].
+CORRECTIONS = (
+    "2026-10-13: Schlüsselwort 'verdi' nur als ganzes Wort (trifft nicht mehr 'verdient', 'verdienen'; E22)",
+    "2026-10-13: Begriffe, Themen und Stimmung der Bewertungen mit den Kommentaren zu den Kategorien (E10, E11, E21)",
+    "2026-10-13: Vergleichsfenster begrenzt durch den ersten und letzten bewerteten statt datierten Monat (E18)",
+    "2026-10-13: 'Unternehmen im Titel genannt' erkennt Namen mit Punkt oder Ziffern (E.ON, 1&1; ohne Einfluss auf die Stufe)",
+    "2026-10-13: EQS-Mitteilungen heißen nur bei der EQS-Kategorie 'Ad-hoc' Ad-hoc-Mitteilung (E19; ohne Einfluss auf die Stufe)",
+)
 
 STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE = "hoch", "mittel", "niedrig", "keine"
 STAGES = (STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE)
@@ -185,6 +196,7 @@ def rules() -> Dict[str, Any]:
         "bundle_max_days": BUNDLE_MAX_DAYS, "bundle_title_similarity": BUNDLE_TITLE_SIMILARITY,
         "max_explanations": MAX_EXPLANATIONS,
         "version": RULES_VERSION, "version_date": RULES_VERSION_DATE,
+        "corrections": list(CORRECTIONS),
         "stage_labels": dict(STAGE_LABELS),
         "finding_note": STAGE_FINDING_NOTE,
         "stages": {
@@ -314,7 +326,9 @@ def company_in_title(title: Any, company_words: Iterable[str]) -> Optional[bool]
     words = [w for w in (company_words or ()) if w]
     if not words or not title or not isinstance(title, str):
         return None
-    tokens = _TITLE_WORD_RE.findall(title.lower())
+    lowered = title.lower()
+    # Punkte innerhalb eines Worts entfallen zusätzlich ("E.ON" -> "eon"; Korrektur 2026-10-13).
+    tokens = _TITLE_WORD_RE.findall(lowered) + _TITLE_WORD_RE.findall(_INNER_DOT_RE.sub("", lowered))
     prefixes = tuple(w for w in words if len(w) >= COMPANY_PREFIX_MIN_LENGTH)
     exact = set(words)
     return any(t in exact or (prefixes and t.startswith(prefixes)) for t in tokens)
@@ -342,6 +356,7 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
         "id": item.get("id"), "date": item.get("date"), "title": title, "publisher": item.get("publisher"),
         "url": item.get("url"), "source": item.get("source"), "source_type": item.get("source_type"),
         "reliability": item.get("reliability"), "language": item.get("language"), "issuer": item.get("issuer"),
+        "eqs_category": item.get("category") if item.get("source_type") == TYPE_ADHOC else None,
         "time_match": tm, "term_match": t_match, "category_match": cat_match, "topic_match": topic,
         "terms": [{"term": t["term"], "word": t["word"], "before": t["before"], "after": t["after"],
                    "n_before": t["n_before"], "n_after": t["n_after"], "strong": is_strong_term(t)} for t in matched],
@@ -383,7 +398,7 @@ def _category_key(scored: Dict[str, Any]) -> Optional[str]:
 def bundle_items(scored: List[Dict[str, Any]], exclude: Iterable[str] = ()) -> List[Dict[str, Any]]:
     """Meldungen zum selben Ereignis bündeln: gleiche Ereignisart, höchstens
     ``BUNDLE_MAX_DAYS`` Tage Abstand zur frühesten Meldung des Bündels und Titelähnlichkeit
-    mindestens ``BUNDLE_TITLE_SIMILARITY`` zu ihr. Stellvertreter ist die Ad-hoc-Mitteilung,
+    mindestens ``BUNDLE_TITLE_SIMILARITY`` zu ihr. Stellvertreter ist die EQS-Mitteilung,
     sonst die früheste Meldung; Signale, Begriffe und Themen des Bündels sind die höchsten
     bzw. vereinigten seiner Meldungen. Reine Funktion."""
     ordered = sorted(scored, key=lambda s: (str(s.get("date") or "9999"), SOURCE_TYPE_ORDER.get(s.get("source_type"), 9), str(s.get("id"))))
@@ -442,7 +457,9 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
         "stage_label": STAGE_LABELS[stage],
         "signal_label": signal_label(t_match, cat_match, employer),
         "source_type": representative.get("source_type"),
+        "eqs_category": representative.get("eqs_category"),
         "has_adhoc": any(i.get("source_type") == TYPE_ADHOC for i in items),
+        "has_eqs_adhoc": any(is_eqs_adhoc(i) for i in items),
         "company_in_title": representative.get("company_in_title"),
     }
 
@@ -495,11 +512,23 @@ def time_phrase(month: Optional[str], window: Dict[str, Any], kind: Optional[str
     return f"im Monat nach {anchor}" if d == 1 else f"{d} Monate nach {anchor}"
 
 
+def is_eqs_adhoc(item: Dict[str, Any]) -> bool:
+    """Ad-hoc-Mitteilung im engen Sinn: EQS-Kategorie "Ad-hoc". Der Quelltyp ``adhoc`` umfasst
+    alle EQS-Mitteilungen (E19); die Bezeichnung folgt seit 2026-10-13 der EQS-Kategorie."""
+    return item.get("source_type") == TYPE_ADHOC and str(item.get("eqs_category") or "").strip().lower() == "ad-hoc"
+
+
+def _eqs_phrase(bundle: Dict[str, Any]) -> str:
+    return "Ad-hoc-Mitteilung" if is_eqs_adhoc(bundle) else "EQS-Mitteilung"
+
+
 def _count_phrase(bundle: Dict[str, Any]) -> str:
     n, adhoc = bundle["n_items"], bundle.get("has_adhoc")
     if n == 1:
-        return "eine Ad-hoc-Mitteilung" if bundle.get("source_type") == TYPE_ADHOC else "eine Meldung"
-    return f"{n} Meldungen" + (" (darunter eine Ad-hoc-Mitteilung)" if adhoc else "")
+        return f"eine {_eqs_phrase(bundle)}" if bundle.get("source_type") == TYPE_ADHOC else "eine Meldung"
+    if not adhoc:
+        return f"{n} Meldungen"
+    return f"{n} Meldungen (darunter eine {'Ad-hoc-Mitteilung' if bundle.get('has_eqs_adhoc') else 'EQS-Mitteilung'})"
 
 
 def _term_phrase(terms: List[Dict[str, Any]], kind: str) -> str:
@@ -599,7 +628,8 @@ def _group_member(bundle: Dict[str, Any], window: Dict[str, Any], kind: str) -> 
     return {
         "id": rep.get("id"), "confidence": bundle["stage"], "stage_label": bundle["stage_label"],
         "signal_label": bundle["signal_label"], "event": rep.get("title"), "date": rep.get("date"), "source": rep.get("publisher"), "url": rep.get("url"),
-        "source_type": rep.get("source_type"), "language": rep.get("language"), "issuer": rep.get("issuer"),
+        "source_type": rep.get("source_type"), "eqs_category": rep.get("eqs_category"),
+        "language": rep.get("language"), "issuer": rep.get("issuer"),
         "n_items": bundle["n_items"], "publishers": bundle["publishers"],
         "time_match": bundle["time_match"], "topic_match": bundle["topic_match"], "term_match": bundle["term_match"],
         "terms": [t["term"] for t in bundle["terms"]], "time_phrase": time_phrase(rep.get("date"), window, kind),
@@ -621,8 +651,8 @@ def _group_info(key: Tuple[str, str, str], members: List[Dict[str, Any]], window
 def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, direction: Optional[str],
            cache: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     rep = bundle["representative"]
-    item_fields = ("id", "date", "title", "publisher", "url", "source", "source_type", "reliability", "language", "issuer",
-                   "time_match", "term_match", "category_match", "topic_match", "stage", "stage_label", "signal_label",
+    item_fields = ("id", "date", "title", "publisher", "url", "source", "source_type", "eqs_category", "reliability",
+                   "language", "issuer", "time_match", "term_match", "category_match", "topic_match", "stage", "stage_label", "signal_label",
                    "company_in_title")
     return {
         "id": rep.get("id"),
@@ -634,6 +664,7 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
         "source": rep.get("publisher"),
         "url": rep.get("url"),
         "source_type": rep.get("source_type"),
+        "eqs_category": rep.get("eqs_category"),
         "reliability": rep.get("reliability"),
         "language": rep.get("language"),
         "issuer": rep.get("issuer"),
@@ -758,7 +789,7 @@ def topic_shift_table(before_rows: List[Dict[str, Any]], after_rows: List[Dict[s
     sizes = {"before": len(before_rows), "after": len(after_rows)}
     for side, rows in (("before", before_rows), ("after", after_rows)):
         for row in rows:
-            for t in topics_in_review(row, source):
+            for t in topics_in_review(row, source, EXPLANATION_TOPIC_TEXT_FIELDS):
                 if t in counts[side]:
                     counts[side][t] += 1
     small = any(n < LOW_BASIS_MIN_REVIEWS for n in sizes.values())

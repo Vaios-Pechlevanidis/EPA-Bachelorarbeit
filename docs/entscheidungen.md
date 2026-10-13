@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-13 (E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-13 (E23 Korrektur vorab festgelegt und E10, E11, E18, E19, E22 ergänzt am 2026-10-13; E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -750,6 +750,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     „Entwicklung“ bei Karriere auch im Sinn von Softwareentwicklung).
 - **Status:** endgültig für Inkrement 2 (Entscheidung des Autors); die Grenzen werden in
   Inkrement 5 neu bewertet.
+- **Korrektur 2026-10-13:** Für den Vorher-Nachher-Vergleich und die Erklärungsansätze werden
+  zusätzlich die Kommentare zu den 13 Kategorien durchsucht (`EXPLANATION_TOPIC_TEXT_FIELDS`); die
+  Themenübersicht aus Zyklus 1 bleibt unverändert. Siehe E23, Korrektur 2026-10-13.
 
 ## E11 – Stimmung im Vorher-Nachher-Vergleich
 
@@ -780,6 +783,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   trennt Wörter nur an Leerzeichen; ein Wort mit Satzzeichen („schlecht.“) wird nicht
   erkannt. Die Stichprobe ist nicht zufällig, sondern zeitlich.
 - **Status:** vorläufig (Stichprobengröße 300 ist eine Setzung).
+- **Korrektur 2026-10-13:** Der Text einer Bewertung umfasst bei Mitarbeitenden auch die
+  Kommentare zu den Kategorien; der Platzhalter „-“ zählt nicht als Text. Siehe E23, Korrektur
+  2026-10-13.
 
 ## E12 – Vergleichsfenster
 
@@ -1232,6 +1238,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   sagt nichts über den Inhalt der Meldungen.
 - **Status:** vorläufig (Fenstergrößen 3 und 1 Monat sowie Versätze ±12/±24 Monate als Setzung);
   Suchbegriffe und UUIDs der Unternehmen mit Markierungen bestätigt (2026-10-08).
+- **Korrektur 2026-10-13:** Die Vergleichsfenster werden jetzt wie beschrieben durch den ersten
+  und letzten **bewerteten** Monat begrenzt (bisher: datierter Monat). Siehe E23, Korrektur
+  2026-10-13.
 
 ## E19 – Quellenarten und Verlässlichkeit der Belege
 
@@ -1258,6 +1267,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   betreffen viele Unternehmen zugleich und sind nur eine Hypothese. Die Stufen beschreiben die
   Art der Quelle, nicht den Wahrheitsgehalt einer Meldung.
 - **Status:** vorläufig (Stufen sind Setzungen des Autors).
+- **Korrektur 2026-10-13:** Text und Badge heißen „Ad-hoc“ nur bei der EQS-Kategorie „Ad-hoc“, sonst
+  „EQS-Mitteilung“ bzw. „EQS“. Der Quelltyp `adhoc` (alle EQS-Mitteilungen) und die Verlässlichkeit
+  bleiben. Siehe E23, Korrektur 2026-10-13.
 
 ## E20 – Allgemeine Ereignisse
 
@@ -1519,6 +1531,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Ausschlussbegriff in `company_metadata.json` wäre eine Entscheidung nach E18.
 - **Status:** vom Autor am 2026-10-08 bestätigt (D1) und festgeschrieben; Änderungen nur mit
   dokumentiertem Grund.
+- **Korrektur 2026-10-13:** Das Schlüsselwort „verdi“ gilt nur als ganzes Wort (`verdi$`); es traf
+  bisher auch „verdient“ und „verdienen“. Siehe E23, Korrektur 2026-10-13.
 
 ## E23 – Auswertung der Erklärungsansätze: Markierungs- gegen Vergleichsfenster (Inkrement 5)
 
@@ -1605,6 +1619,114 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Grenzen des Nachtrags:** wie oben; zusätzlich: Die Zusatzauswertung nach Referenzzeiträumen
   (E5, `--annotations`) war bei diesem Lauf nicht verfügbar, weil die Annotationsdatei leer ist;
   sie wird nach der Annotation nachgeholt, ohne die Regeln zu ändern.
+
+### E23 – Korrektur 2026-10-13 (vorab festgelegt, vor dem Lauf)
+
+- **Anlass:** Das Gutachten vom 2026-10-13 fand fünf Fehler in der Erklärungskomponente.
+- **Entscheidung des Autors (2026-10-13):** Die Fehler werden als dokumentierte Korrektur behoben,
+  und der Bericht läuft genau einmal neu, getrennt abgelegt.
+  - Kennzahl und Lesart bleiben die aus E23: Abdeckungsquote nach NFA-05 neben den
+    Vergleichsfenstern, beschreibend.
+  - Es gibt kein neues Design und keinen Test.
+- **Korrekturen:**
+  1. **Schlüsselwort „verdi“ nur als ganzes Wort (E22).** Bisher traf es als Wortanfang auch
+     „verdient“, „verdienen“ und „Verdichtung“: etwa 80 der 131 Google-News-Titel der Ereignisart
+     „Tarifverhandlung und Streik“.
+     - Neue Schreibweise `wort$` in `backend/data/event_categories.json` (ganzes Wort).
+     - Wirkt auf Ereignisart, Stufe und Abdeckung.
+  2. **Kommentare zu den 13 Kategorien als Text (E10, E11, E21).** Bei Thyssenkrupp, Open Grid
+     Europe, E.ON, RWE und KIT sind die drei Freitextfelder leer, die Kategorie-Kommentare aber bei
+     30–68 % der Bewertungen gefüllt.
+     - Sie gehen jetzt in die kennzeichnenden Begriffe, die Themen des Vorher-Nachher-Vergleichs,
+       die Stimmung und den Textauszug ein; der Platzhalter „-“ zählt nicht als Text.
+     - Die Bewertungsliste „… die das Thema nennen“ nutzt dieselben Felder.
+     - Die Themenübersicht aus Zyklus 1 bleibt unverändert (`TOPIC_TEXT_FIELDS`).
+     - Wirkt auf Begriffe und Themenverschiebung, damit auf Stufe und Abdeckung.
+  3. **Grenzen der Vergleichsfenster (E18).** `fetch_context.company_anchors` begrenzt die
+     Vergleichsfenster jetzt durch den ersten und letzten bewerteten Monat, wie E18 es verlangt;
+     bisher galten der erste und letzte datierte Monat.
+     - Mit den heutigen Markierungen sind es 72 statt 76 Vergleichsfenster.
+     - Alle Monate liegen im Belegspeicher (geprüft 2026-10-13); es ist kein Abruf nötig.
+  4. **„Unternehmen im Titel genannt“** erkennt jetzt Namen mit Punkt oder Ziffern (E.ON, 1&1).
+     Ohne Einfluss auf Stufe und Abdeckung.
+  5. **Bezeichnung der EQS-Mitteilungen (E19).** Text und Badge sagen „Ad-hoc“ nur bei der
+     EQS-Kategorie „Ad-hoc“ (95 von 1 794 EQS-Einträgen); sonst „EQS-Mitteilung“ bzw. „EQS“.
+     - Quelltyp `adhoc`, Verlässlichkeit und Sortierung bleiben.
+     - Ohne Einfluss auf Stufe und Abdeckung.
+- **Unverändert:**
+  - Schwellen und Stufenregeln, Fassung 2 (`RULES_VERSION` 2, `test_frozen_rules.py`);
+  - Ereignisarten und ihre Themen;
+  - Fenster 3/1 Monate und Versätze ±12/±24;
+  - Markierungen (E9, E14) und Referenz (E5; `annotations.json` Version 3 mit unveränderten
+    Einträgen).
+- **Vermerk im Bericht:** `rules()["corrections"]` nennt die fünf Korrekturen; der Bericht nennt
+  zusätzlich Commit und uncommittete Änderungen (`git`).
+- **Lauf** (genau einmal, nach dem Commit dieser Änderungen, auf sauberem Arbeitsbaum):
+  ```
+  cd backend
+  uv run python scripts/report_explanation_validity.py --annotations data/annotations.json \
+    --json data/calibration/explanation_validity_korrektur_2026-10-13.json \
+    --md data/calibration/explanation_validity_korrektur_2026-10-13.md
+  ```
+- **Bericht:**
+  - Dieselben Kennzahlen wie E23: Abdeckungsquote nach NFA-05, Anteile je Stufe, Markierung gegen
+    Vergleich, getrennt nach Referenztreffern.
+  - Daneben stehen die Werte der Fassung 2 vom 2026-10-08 und der Referenzauswertung vom
+    2026-10-10.
+  - Die alten Dateien bleiben unverändert. Keine Signifikanzaussage.
+- **Grenzen:** Die Korrektur ändert das Design nicht.
+  - Weiterhin genügt ein Schlüsselwort im Titel für die Stufe „niedrig“, die Zeitbedingung schließt
+    im Standardfenster nichts aus, und die Richtung der Veränderung geht nicht in die Stufe ein.
+  - Das Gutachten vom 2026-10-13 zeigt mit einem Nullmodell ohne Anomaliebezug, dass die
+    Abdeckungsquote im Wesentlichen der Zahl der Belege folgt (77 % erwartet gegenüber 82 %
+    beobachtet). Das bleibt als Grenze von DZ2 zu nennen.
+- **Status:** vorab festgelegt am 2026-10-13; Lauf am 2026-10-13 (Befund unten).
+
+### E23 – Befund 2026-10-13: Lauf nach der Korrektur
+
+- **Lauf:** einmal am 2026-10-13 mit dem vorab festgelegten Befehl.
+  - Ergebnis: `backend/data/calibration/explanation_validity_korrektur_2026-10-13.json` und `.md`.
+  - Die Datei nennt die fünf Korrekturen (`rules.corrections`); die Annotationsdatei war Version 3.
+  - Alle 28 Markierungs- und 72 Vergleichsfenster liegen vollständig im Belegspeicher.
+- **Abweichung vom Ablauf:** Der Lauf fand vor dem Commit der Korrekturen statt (`git.commit`
+  `c42ad48`, `git.dirty` true). Die 12 geänderten Backend-Dateien stehen in `git.dirty_paths`; sie
+  sind seit dem Lauf unverändert und gehen so in den Commit der Korrektur ein. Ein zweiter Lauf ist
+  nicht vorgesehen.
+- **Ergebnisse** (in Klammern Fassung 2 vom 2026-10-08 bzw. Referenzauswertung vom 2026-10-10, vor
+  der Korrektur):
+
+  | Kennzahl | Markierungsfenster | Vergleichsfenster |
+  |---|---|---|
+  | Fenster | 28 (28) | 72 (76) |
+  | mit Ansatz, Abdeckungsquote nach NFA-05 | 23/28, 82 % (23/28, 82 %) | 57/72, 79 % (58/76, 76 %) |
+  | oberste Stufe mindestens mittel | 15/28, 54 % (9/28, 32 %) | 32/72, 44 % (23/76, 30 %) |
+  | mindestens ein Bündel hoch | 3/28, 11 % (2/28, 7 %) | 5/72, 7 % (3/76, 4 %) |
+  | oberste Stufe hoch / mittel / niedrig / offen | 3 / 12 / 8 / 5 (2 / 7 / 14 / 5) | 5 / 27 / 25 / 15 (3 / 20 / 35 / 18) |
+  | Fenster mit kennzeichnenden Begriffen | 21/28 (16/28) | 54/72 (43/76) |
+  | Niveauwechsel: mit Ansatz / mindestens mittel | 14/19 / 13/19 (14/19 / 7/19) | 38/48 / 23/48 (38/51 / 13/51) |
+  | Einzelmonate: mit Ansatz / mindestens mittel | 9/9 / 2/9 (9/9 / 2/9) | 19/24 / 9/24 (20/25 / 10/25) |
+
+  - Nach Referenzzeiträumen (E5): Markierungen mit Treffer haben in 7 von 8 Fenstern einen Ansatz,
+    davon 6 mindestens „mittel“ (vorher 7 und 4). Die übrigen haben ihn in 16 von 20, davon 9
+    mindestens „mittel“ (vorher 16 und 5).
+  - Bei den fünf Reihen ohne Freitext hat jetzt das Fenster der E.ON-Markierung 27 kennzeichnende
+    Begriffe (vorher 1) und erreicht „mittel“. Ebenso der RWE-Niveauwechsel 2023-02 mit 7 Begriffen
+    (vorher 0).
+- **Lesart (wie vorab festgelegt, beschreibend, ohne Signifikanzaussage):**
+  - Die Abdeckungsquote bleibt bei 82 % und liegt weiter nahe an den Vergleichsfenstern (79 %). Sie
+    unterscheidet Markierungs- und Vergleichsfenster nicht erkennbar; die Grenze aus dem Nullmodell
+    (Gutachten 2026-10-13) gilt unverändert.
+  - Durch die Kategorie-Kommentare steigt in beiden Gruppen der Anteil der Fenster mit Bezug zu den
+    Bewertungen (Begriffe, Stufe mindestens „mittel“).
+  - Bei den Niveauwechseln liegt dieser Anteil jetzt bei Markierungen höher als bei
+    Vergleichsfenstern (13/19 gegen 23/48). Das ist eine Beobachtung an kleinen Zahlen, nicht vorab
+    als Kriterium festgelegt und nicht getestet; sie trägt keine Aussage über DZ2 und keine über
+    Ursachen.
+- **Unverändert:** Schwellen, Stufenregeln (Fassung 2), Ereignisarten, Fenster, Markierungen und
+  Referenz. Die Dateien vom 2026-10-08 und 2026-10-10 bleiben stehen.
+- **Status:** Korrektur gelaufen und abgelegt. Wie DZ2 in der Arbeit eingeordnet wird, entscheidet
+  der Autor. Nach diesen Zahlen unterscheidet die Abdeckungsquote Markierungs- und Vergleichsfenster
+  nicht.
 
 ## E24 – Rollierende Schnitte über 12 und 24 Monate (Inkrement 6, FA-08)
 

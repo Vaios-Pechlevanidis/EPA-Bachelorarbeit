@@ -54,7 +54,7 @@ import calendar
 import threading
 from typing import Any, Dict, Iterable, List, Optional
 
-from services.keyword_topic_service import topic_definitions_for, topic_for_dimension, topics_in_review
+from services.keyword_topic_service import EXPLANATION_TOPIC_TEXT_FIELDS, topic_definitions_for, topic_for_dimension, topics_in_review
 from services.rating_series_service import month_key
 from services.review_service import review_text, sort_newest_first
 
@@ -216,7 +216,7 @@ def _window_stats(
     mentions = {topic: 0 for topic in topics}
     topic_sentiments: Dict[str, List[Dict[str, Any]]] = {topic: [] for topic in topics}
     for row in rows:
-        for topic in topics_in_review(row, source):
+        for topic in topics_in_review(row, source, EXPLANATION_TOPIC_TEXT_FIELDS):
             if topic not in mentions:
                 continue
             mentions[topic] += 1
