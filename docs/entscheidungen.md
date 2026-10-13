@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-13 (E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-13 (E30 neu am 2026-10-13, Hauptlauf ausstehend; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -1529,3 +1529,113 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   DZ1-Auswertung ist daher nicht betroffen. Der Bericht `report_context_decisions.py` (D3) zeigt
   seither die automatischen Ereignisse statt der Liste vom 2026-10-08.
 - **Status:** umgesetzt am 2026-10-13 (nicht committet); Schwellen vorläufig.
+
+## E30 – Semi-synthetische Prüfung der Erkennung (DZ1, Ergänzung)
+
+- **Kontext:** Die Referenzzeiträume aus E5 sind regelbasiert und agentengestützt (ein Annotator,
+  Prüfung nicht blind gegenüber der Erkennung). Der F1-Wert 0,43 (E9, Aktualisierung 2026-10-10)
+  misst deshalb die Übereinstimmung zweier Regeln, nicht die Erkennung gegen eine bekannte Wahrheit.
+  Das Gutachten vom 2026-10-13 empfiehlt, die Referenz zu behalten und um eine Messung mit bekannter
+  Wahrheit zu ergänzen (Weg A). Die Entscheidung wurde am 2026-10-13 getroffen.
+- **Entscheidung (vorab festgelegt, vor dem Hauptlauf):** `backend/scripts/simulate_detection.py`
+  setzt Niveauwechsel bekannter Größe in echte Reihen ohne zeitliche Struktur ein und misst, wie oft
+  die Erkennung sie findet und wie oft sie ohne Wechsel anschlägt. Die Simulation **kalibriert
+  nichts**:
+  - Erkennung (E9, E14), Parameter und Referenz (E5) bleiben unverändert.
+  - Die Ergebnisse sind kein Anlass, Parameter mit denselben 15 Reihen nachzustellen.
+  - Ein Änderungsanlass ist ein eigener Befund und muss mit anderen Daten geprüft werden.
+  - **Daten:** Mitarbeitende, Gesamtbewertung, die 15 nach E4 geeigneten Reihen; Datenbank nur lesend
+    (`fetch_review_rows`). Der Datenstand ist je Reihe über einen SHA-256 der gelesenen Bewertungen
+    (id, Datum, Note) festgehalten. Die Serien-CSVs reichen nicht, weil die Permutation die einzelnen
+    Noten braucht.
+  - **Rauschbedingungen** (Klammer, beide werden berichtet):
+    - `bewertungen`: Die Noten werden über die datierten Bewertungen des Unternehmens permutiert, die
+      Belegung je Monat bleibt. Die Streuung zwischen Monaten über das Stichprobenrauschen hinaus,
+      Trends und Autokorrelation fehlen; die Trefferquote ist eher optimistisch.
+    - `monate`: Die bewerteten Monate der echten Reihe tauschen samt Anzahl ihre Plätze. Echte
+      Niveauunterschiede werden zu zusätzlichem Rauschen; die Trefferquote ist eher pessimistisch.
+    - Der wahre Wert wird zwischen beiden gelesen.
+  - **Lage des Wechsels:**
+    - `mitte`: gleichverteilt mit mindestens 6 bewerteten Monaten davor und ab dem Wechsel
+      (2 · `min_size`).
+    - `ende` (nur Bedingung `bewertungen`): jüngster Wechsel, ab dem Wechsel liegen nur 3 bis 5
+      bewertete Monate.
+    - Richtung je Wiederholung mit Wahrscheinlichkeit 1/2.
+  - **Einsetzen:** `±delta` auf jedes Monatsmittel ab dem Wechselmonat, ohne Kappung an 1 bzw. 5
+    Sternen.
+  - **Größen** (`delta`):
+    - 0: Nullbedingung, dieselbe Reihe ohne Wechsel;
+    - 0,3: `min_delta`;
+    - 0,5: Richtwert der Referenz und Schweregrad „deutlich“;
+    - 0,75 und 1,0: Größenordnung der Referenz, deren |Δ| zwischen 0,47 und 1,15 liegt (Median 0,81).
+  - **Umfang:** Alle Größen einer Wiederholung nutzen dieselbe Rauschreihe, Stelle und Richtung. 200
+    Wiederholungen je Reihe, Seed 20261013, Zufall je Wiederholung aus
+    `SeedSequence([seed, company_id, rep])`.
+  - **Erkennung und Abgleich:**
+    - Erkennung mit den Standardparametern (`detect_anomalies`, `detect_outlier_months`).
+    - Abgleich nach Regel 6 (`evaluate_detection.match_series`, Toleranz ±1 Monat, Lückenkappung 3,
+      gleiche Richtung, Eins-zu-eins) gegen den Zeitraum [k, k].
+    - Gewertet werden die Niveauwechsel; Einzelmonate (E14) werden getrennt gezählt.
+  - **Hauptkennzahlen:**
+    - Recall je Größe, Bedingung und Lage, mit 95-%-Bootstrap-Intervall über die Reihen. Jede Reihe
+      zählt gleich, unabhängig von ihrer Länge.
+    - Markierungen je Wiederholung bei `delta` 0 (Fehlalarme bei zeitlich austauschbarem Rauschen),
+      mit Bootstrap-Intervall und als Median je 100 bewertete Monate.
+  - **Nebenkennzahlen:**
+    - Spanne und Median der Recalls je Reihe, Wilson-Intervall (Monte-Carlo-Fehler).
+    - Recall mit ±3 bzw. ±6 Monaten Toleranz (Verortung).
+    - Zusätzliche Markierungen nah (gleichgerichtet, höchstens 6 Monate) und fern.
+    - Gemeldetes minus eingesetztes Delta bei Treffern (Median, Quartile), Anteil „deutlich“,
+      Einzelmonate je Wiederholung, Anteil der Wiederholungen mit einem Monatsmittel außerhalb von
+      [1, 5].
+  - **Schichten** (Größe > 0):
+    - Richtung;
+    - Bewertungen im Wechselmonat (< / ≥ 10);
+    - kleinere Summe der Bewertungen in den 3 bewerteten Monaten vor bzw. ab dem Wechsel (< / ≥ 30);
+    - Lücke vor dem Wechsel;
+    - `delta / sigma` mit dem `noise_sigma` der simulierten Reihe (< 1; 1–1,5; 1,5–2; ≥ 2).
+  - **Precision und F1** stehen nur in der JSON-Datei. Mit genau einem Wechsel je Reihe hängen sie vom
+    Entwurf ab und werden **nicht** mit DZ1 verglichen.
+- **Lesart (vorab):** Es gibt keine Zielwerte. Berichtet wird, wie gut die Erkennung Wechsel einer
+  Größe unter den beiden Rauschbedingungen findet und wie oft sie ohne Wechsel anschlägt.
+  - Der Recall bei 0,5 und 0,75 Sternen beschreibt die Erkennung bei der Größenordnung, die als
+    „extrem“ gilt.
+  - Die Lage `ende` beschreibt die Erkennung jüngster Wechsel.
+  - Die Fehlalarme bei `delta` 0 werden neben die beobachteten Markierungen der echten Reihen
+    gestellt, ohne beides zu verrechnen.
+  - Abweichungen zwischen den Bedingungen werden als Spannweite berichtet, nicht aufgelöst.
+- **Probelauf vor der Festlegung (offengelegt):**
+  - **Lauf:** Am 2026-10-13 lief der erste Stand des Skripts einmal mit 10 Wiederholungen je Reihe:
+    nur Bedingung `bewertungen`, Lage `mitte`, Ausgabe im Scratchpad, nicht versioniert.
+  - **Gesehene Werte:** Recall 31 / 61 / 85 / 95 % bei 0,3 / 0,5 / 0,75 / 1,0; 0,33 zusätzliche
+    Markierungen je Wiederholung bei `delta` 0.
+  - **Gegenprüfung:** Danach wurde das Skript in drei Richtungen gegengeprüft: Statistikdesign,
+    Code-Korrektheit, Reproduzierbarkeit. Daraus folgen die zweite Rauschbedingung, die Lage `ende`,
+    Intervalle, Schichten, Verortungsprofil, feste Ordnung der Zeilen, Schutz vor uncommitteten
+    Änderungen und schärfere Tests.
+  - **Unverändert:** Größen, Wiederholungen, Seed und Rand. Die Wiederholungen 0–9 der Bedingung
+    `bewertungen`, Lage `mitte`, sind im Hauptlauf bitgleich enthalten.
+- **Ablauf:**
+  1. Skript, Tests (`backend/tests/anomaly/test_simulate_detection.py`) und dieser Eintrag in einem
+     eigenen Commit (Autor).
+  2. Genau ein Hauptlauf auf sauberem Arbeitsbaum:
+     ```
+     cd backend
+     uv run python scripts/simulate_detection.py --workers 6 \
+       --json data/calibration/semisynthetisch_<Datum>.json \
+       --records data/calibration/semisynthetisch_<Datum>_records.json.gz
+     ```
+     Das Skript bricht bei uncommitteten Änderungen unter `backend/` ab.
+  3. Ergebnisse in einem eigenen Commit.
+  4. Befund hier nachtragen, ohne Änderung von Parametern der Erkennung.
+- **Grenzen:**
+  - Nur Mitarbeitende und Gesamtbewertung, 15 Reihen.
+  - Die Bedingung `bewertungen` kennt keine Autokorrelation und keine Trends. Nach E9 (Nachtrag
+    2026-10-11) liegen die Fehlalarme in echten Reihen vermutlich höher; das ist eine Vermutung,
+    keine gesicherte Untergrenze.
+  - Ohne Kappung sind Anstiege nahe 5 Sternen ab etwa 0,75 nur nominal. Berichtet werden deshalb der
+    Recall nach Richtung und der Anteil der Monatsmittel außerhalb von [1, 5].
+  - Das gemeldete Delta ist auf Treffer bedingt und wegen `min_delta` nahe 0,3 nach oben verzerrt.
+  - Genau ein Wechsel je Reihe; mehrere dicht beieinanderliegende Wechsel werden nicht geprüft.
+  - Ein Nachrechnen braucht Lesezugriff auf die Datenbank mit identischen Fingerabdrücken.
+- **Status:** festgelegt am 2026-10-13; Hauptlauf ausstehend.
