@@ -479,8 +479,10 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
     )
   }
 
-  // Filter UI
-  const FilterDropdowns = ({ compact = false }) => (
+  // Filter UI. Als Funktion aufgerufen, nicht als <Komponente />: Eine im Rendern
+  // definierte Komponente ist bei jedem Rendern ein neuer Typ, React baut sie dann neu
+  // auf, und das Topic-Menü schloss sich nach jedem Häkchen.
+  const renderFilterDropdowns = (compact = false) => (
     <>
       <SourceToggle
         value={source}
@@ -700,7 +702,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
           title="Topics im Detail"
           subtitle={`${SOURCE_LABEL[source]} · ${visibleTopics.length}/${(topics || []).length} Topics${granularity === "year" && selectedYear ? ` · ${selectedYear}` : " · ges. Zeitraum"}`}
           expandable
-          actions={<FilterDropdowns compact />}
+          actions={renderFilterDropdowns(true)}
           basis="stars"
         />
 
@@ -816,7 +818,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
               </div>
             </div>
             <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 flex-wrap justify-end">
-              <FilterDropdowns />
+              {renderFilterDropdowns()}
             </div>
           </div>
 

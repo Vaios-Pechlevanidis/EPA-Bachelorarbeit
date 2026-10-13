@@ -94,65 +94,79 @@ function processTimelineDataWithGaps(data) {
   return { data: result, hasGaps }
 }
 
-/* ─────────── Sentiment-Distribution-Bar ─────────── */
-/* Statt einer SVG-Gauge: cleane horizontale Verteilungs-Bar mit Markierung. */
-function SentimentBar({ sentiment, rating }) {
-  const meta = sentimentMeta(sentiment)
-  // Position der Markierung (0 = ganz links / negativ, 100 = ganz rechts / positiv)
-  // Berechnet aus Rating (1-5) → 0-100%
-  const pct = Number.isFinite(Number(rating))
-    ? Math.max(0, Math.min(100, ((Number(rating) - 1) / 4) * 100))
-    : ((meta.value + 1) / 2) * 100
+/* ─────────── Verteilung der Bewertungen ─────────── */
+/* Gezählte Anteile der Bewertungen, die das Topic nennen, nach ihrem Sternewert
+   (ratingDistribution aus /topic-overview, seit 2026-10-13). Bis dahin zeigte die
+   Karte "Sentiment-Verteilung" feste Anteile (z. B. 15/15/70), die nur aus dem
+   Durchschnitt abgeleitet waren, und eine Raute auf dem Balken; beides ist entfernt. */
+const fmtStars = (v) =>
+  Number(v).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
-  // Sentiment-Verteilung als Stacked Segments
-  const negPct = pct < 35 ? 70 : pct < 60 ? 30 : 15
-  const posPct = pct >= 65 ? 70 : pct >= 40 ? 30 : 15
-  const neuPct = 100 - negPct - posPct
+// Ganze Prozent, die zusammen 100 ergeben (Verfahren des größten Restes).
+function wholePercents(counts) {
+  const total = counts.reduce((a, b) => a + b, 0)
+  if (!total) return counts.map(() => 0)
+  const raw = counts.map((c) => (c / total) * 100)
+  const result = raw.map(Math.floor)
+  let rest = 100 - result.reduce((a, b) => a + b, 0)
+  raw
+    .map((r, i) => [r - result[i], i])
+    .sort((a, b) => b[0] - a[0])
+    .forEach(([, i]) => {
+      if (rest > 0) { result[i] += 1; rest -= 1 }
+    })
+  return result
+}
+
+function RatingDistribution({ distribution }) {
+  if (!distribution?.n) {
+    return (
+      <p className="m-0 text-[12px] text-slate-500 text-center">
+        {distribution ? "Keine Bewertung mit Sternewert." : "Verteilung nicht verfügbar."}
+      </p>
+    )
+  }
+  const { negative, neutral, positive, n, fallback_overall: fallback = 0 } = distribution
+  const lo = distribution.neutral_from ?? 2.5
+  const hi = distribution.positive_from ?? 3.5
+  const [negPct, neuPct, posPct] = wholePercents([negative, neutral, positive])
+  const parts = [
+    { key: "neg", label: "negativ", range: `unter ${fmtStars(lo)} Sterne`, count: negative, pct: negPct,
+      bar: "bg-rose-500", pill: "bg-rose-50 text-rose-700 border-rose-200" },
+    { key: "neu", label: "neutral", range: `${fmtStars(lo)} bis unter ${fmtStars(hi)} Sterne`, count: neutral, pct: neuPct,
+      bar: "bg-slate-400", pill: "bg-slate-50 text-slate-700 border-slate-200" },
+    { key: "pos", label: "positiv", range: `ab ${fmtStars(hi)} Sterne`, count: positive, pct: posPct,
+      bar: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  ]
+  const tip = (p) => `${p.label} (${p.range}): ${p.count.toLocaleString("de-DE")} von ${n.toLocaleString("de-DE")} Bewertungen`
 
   return (
     <div className="w-full">
-      {/* Stacked Sentiment-Bar (Verteilung) */}
-      <div className="relative">
-        <div className="flex h-3 rounded-full overflow-hidden border border-slate-200 bg-white">
-          <div className="bg-rose-500"     style={{ width: `${negPct}%` }} title={`Negativ: ${negPct}%`} />
-          <div className="bg-slate-400"    style={{ width: `${neuPct}%` }} title={`Neutral: ${neuPct}%`} />
-          <div className="bg-emerald-500"  style={{ width: `${posPct}%` }} title={`Positiv: ${posPct}%`} />
-        </div>
-
-        {/* Indicator-Pfeil über der Bar */}
-        <div
-          className="absolute -top-1.5 transition-all duration-300 ease-out"
-          style={{ left: `calc(${pct}% - 6px)` }}
-        >
-          <div
-            className="w-3 h-3 rotate-45 border-2 border-white shadow-sm"
-            style={{ background: meta.color }}
-          />
-        </div>
+      {/* Anteile als gestapelter Balken, Breite = gezählter Anteil */}
+      <div className="flex h-3 rounded-full overflow-hidden border border-slate-200 bg-white">
+        {parts.map((p) => p.count > 0 && (
+          <div key={p.key} className={p.bar} style={{ width: `${(p.count / n) * 100}%` }} title={tip(p)} />
+        ))}
       </div>
 
-      {/* Skala-Beschriftung */}
-      <div className="flex justify-between mt-2 text-[10px] font-mono uppercase tracking-wider">
-        <span className="text-rose-700">Negativ</span>
-        <span className="text-slate-500">Neutral</span>
-        <span className="text-emerald-700">Positiv</span>
+      {/* Anteile mit Anzahl */}
+      <div className="flex flex-wrap justify-center gap-2 mt-3">
+        {parts.map((p) => (
+          <span key={p.key} title={tip(p)}
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-medium tnum ${p.pill}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${p.bar}`} />
+            {p.pct} % {p.label}
+            <span className="font-normal opacity-75">({p.count.toLocaleString("de-DE")})</span>
+          </span>
+        ))}
       </div>
 
-      {/* Verteilungswerte als kleine Pills */}
-      <div className="flex justify-center gap-2 mt-3">
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-          {negPct}% negativ
-        </span>
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-          {neuPct}% neutral
-        </span>
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          {posPct}% positiv
-        </span>
-      </div>
+      <p className="mt-3 mb-0 text-[11px] text-slate-500 text-center leading-snug">
+        Gezählt: {n.toLocaleString("de-DE")} Bewertungen, die das Topic nennen, je nach ihrer Sternebewertung
+        zu diesem Topic{fallback > 0 ? ` (${fallback.toLocaleString("de-DE")} ohne diese Teilbewertung: Gesamtnote)` : ""}.
+        Negativ unter {fmtStars(lo)}, neutral bis unter {fmtStars(hi)}, positiv ab {fmtStars(hi)} Sternen.
+        Keine Textanalyse.
+      </p>
     </div>
   )
 }
@@ -330,8 +344,6 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
 
   const handleExampleClick = () => handleStatementClick(currentExampleIndex)
 
-  const sentimentPercentage = Math.round(((Number(topic.avgRating) - 1) / 4) * 100)
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -374,7 +386,7 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
                 )}
               </DialogTitle>
               <p className="m-0 mt-1 text-[11px] text-slate-500">
-                {topic.frequency} Erwähnungen · Ø {fmt(topic.avgRating, 2)} / 5
+                {topic.frequency} Erwähnungen · Ø {fmt(topic.avgRating, 1)} / 5
                 {topic.statistical_meta?.review_count != null && ` · n=${topic.statistical_meta.review_count}`}
               </p>
             </div>
@@ -410,7 +422,7 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
                 {[
                   { key: "stats",          label: "Kennzahlen" },
                   { key: "timelineChart",  label: "Zeitverlauf" },
-                  { key: "sentimentChart", label: "Sentiment" },
+                  { key: "sentimentChart", label: "Verteilung" },
                   { key: "statements",     label: "Aussagen" },
                   { key: "exampleReview",  label: "Beispiel-Review" },
                 ].map((opt) => {
@@ -455,16 +467,16 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
               <div className={`bg-white border rounded-md px-4 py-3.5 text-center ${tone.border}`}>
                 <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1">Ø Rating</p>
                 <p className={`text-[26px] font-semibold tnum leading-tight ${tone.text}`}>
-                  {fmt(topic.avgRating, 2)}
+                  {fmt(topic.avgRating, 1)}
                 </p>
                 <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                   <div className={`h-full ${tone.bar}`} style={{ width: `${(Number(topic.avgRating) / 5) * 100}%` }} />
                 </div>
               </div>
               <div className={`bg-white border rounded-md px-4 py-3.5 text-center ${meta.border}`}>
-                <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1">Sentiment</p>
+                <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1">Einstufung</p>
                 <p className={`text-[20px] font-semibold leading-tight ${meta.text}`}>{meta.label}</p>
-                <p className="text-[11px] text-slate-500 mt-1 tnum">{sentimentPercentage}% Stimmung</p>
+                <p className="text-[11px] text-slate-500 mt-1 tnum">nach Ø Sternen: ab 3,5 positiv, ab 2,5 neutral</p>
               </div>
             </div>
             </Collapsible>
@@ -578,19 +590,18 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
               </div>
               )}
               {visibility.sentimentChart && (
-              <Section icon={<BarChart3 />} eyebrow="STIMMUNG" title="Sentiment-Verteilung">
-                {/* Großer Sentiment-Wert oben */}
+              <Section icon={<BarChart3 />} eyebrow="STERNEBEWERTUNG" title="Verteilung der Bewertungen">
+                {/* Ø Sterne des Topics und seine Einstufung */}
                 <div className="text-center mb-4">
                   <p className={`text-[36px] font-semibold tnum tracking-tight leading-none ${meta.text}`}>
-                    {sentimentPercentage}%
+                    Ø {fmt(topic.avgRating, 1)}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Gesamtstimmung · <span className={`font-semibold ${meta.text}`}>{meta.label}</span>
+                    Sterne · Einstufung <span className={`font-semibold ${meta.text}`}>{meta.label}</span>
                   </p>
                 </div>
 
-                {/* Horizontal Sentiment-Bar */}
-                <SentimentBar sentiment={topic.sentiment} rating={topic.avgRating} />
+                <RatingDistribution distribution={topic.ratingDistribution} />
               </Section>
               )}
             </div>

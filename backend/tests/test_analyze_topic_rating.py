@@ -163,3 +163,67 @@ class TestAnalyzeTopicNoDoubleCounting:
             all_reviews=reviews,
         )
         assert result["frequency"] == 2  # only reviews 0 and 2 match
+
+
+# ---------------------------------------------------------------------------
+# Tests: gezählte Verteilung (ratingDistribution, seit 2026-10-13)
+# ---------------------------------------------------------------------------
+
+class TestRatingDistribution:
+    """Die Verteilung im Detailfenster muss aus den einzelnen Bewertungen gezählt
+    sein, nicht aus dem Durchschnitt abgeleitet (vorher feste Anteile 15/15/70)."""
+
+    KEYWORDS = [r"\bwork[\s-]*life[\s-]*balance\b"]
+    RATING_FIELDS = ["sternebewertung_work_life_balance"]
+
+    def _run(self, reviews: list[dict]) -> dict:
+        return analyze_topic(
+            topic_name="Work-Life Balance",
+            keywords=self.KEYWORDS,
+            rating_fields=self.RATING_FIELDS,
+            all_reviews=reviews,
+        )
+
+    def test_counts_each_review_once_with_thresholds(self):
+        """Grenzen einschließlich: 2,5 ist neutral, 3,5 ist positiv."""
+        values = [1.0, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0]
+        reviews = [_make_employee_review(durchschnittsbewertung=3.0, topic_rating=v) for v in values]
+        dist = self._run(reviews)["ratingDistribution"]
+        assert (dist["negative"], dist["neutral"], dist["positive"]) == (2, 2, 3)
+        assert dist["n"] == 7
+        assert dist["fallback_overall"] == 0
+        assert (dist["neutral_from"], dist["positive_from"]) == (2.5, 3.5)
+
+    def test_not_derived_from_average(self):
+        """Ø 4,1 darf nicht zu 15/15/70 führen: zwei sehr schlechte, acht sehr gute."""
+        reviews = [_make_employee_review(durchschnittsbewertung=3.0, topic_rating=v) for v in [1.0] * 2 + [4.9] * 8]
+        result = self._run(reviews)
+        assert result["avgRating"] == pytest.approx(4.1, abs=0.05)
+        dist = result["ratingDistribution"]
+        assert (dist["negative"], dist["neutral"], dist["positive"]) == (2, 0, 8)
+
+    def test_fallback_to_overall_rating_is_counted_and_reported(self):
+        reviews = [
+            _make_employee_review(durchschnittsbewertung=2.0, topic_rating=None),
+            _make_employee_review(durchschnittsbewertung=4.0, topic_rating=None),
+            _make_employee_review(durchschnittsbewertung=1.0, topic_rating=5.0),
+        ]
+        dist = self._run(reviews)["ratingDistribution"]
+        assert (dist["negative"], dist["neutral"], dist["positive"]) == (1, 0, 2)
+        assert dist["fallback_overall"] == 2
+
+    def test_reviews_without_mention_or_value_are_not_counted(self):
+        reviews = [
+            _make_employee_review(durchschnittsbewertung=1.0, topic_rating=1.0, text="nichts zum Thema"),
+            {**_make_employee_review(durchschnittsbewertung=3.0), "durchschnittsbewertung": None},
+            _make_employee_review(durchschnittsbewertung=3.0, topic_rating=4.0),
+        ]
+        result = self._run(reviews)
+        assert result["frequency"] == 2  # die Bewertung ohne Wert nennt das Topic
+        dist = result["ratingDistribution"]
+        assert (dist["negative"], dist["neutral"], dist["positive"], dist["n"]) == (0, 0, 1, 1)
+
+    def test_label_uses_same_thresholds(self):
+        for value, label in [(2.4, "Negativ"), (2.5, "Neutral"), (3.4, "Neutral"), (3.5, "Positiv")]:
+            result = self._run([_make_employee_review(durchschnittsbewertung=3.0, topic_rating=value)])
+            assert result["sentiment"] == label, (value, result["sentiment"])

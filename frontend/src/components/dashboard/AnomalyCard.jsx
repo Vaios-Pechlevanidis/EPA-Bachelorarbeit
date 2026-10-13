@@ -675,14 +675,14 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             />
                         )}
                         {showPrice && (
-                            // Aktienkurs: dünn und zurückhaltend unter der Bewertungslinie.
+                            // Aktienkurs: dünner als die Bewertungslinie und unter ihr, aber voll deckend,
+                            // damit er sich klar von ihr und vom Hintergrund abhebt.
                             <Line
                                 yAxisId="price"
                                 type="linear"
                                 dataKey="price"
                                 stroke="var(--market-price)"
-                                strokeWidth={1}
-                                strokeOpacity={0.7}
+                                strokeWidth={1.25}
                                 dot={false}
                                 activeDot={{ r: 2.5, fill: "var(--market-price)", stroke: "var(--color-bg-card)", strokeWidth: 1 }}
                                 connectNulls={false}

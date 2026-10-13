@@ -30,8 +30,12 @@
   /* Auffällige Veränderungen (Anomalie-Markierung): hell 700er-Töne für Kontrast ≥ 4,5:1 */
   --anomaly-fall: #be123c;
   --anomaly-rise: #047857;
-  /* Aktienkurs als Einordnung (Inkrement 3): eigene, zurückhaltende Farbe, weder Bewertung noch Richtung */
-  --market-price: #7c3aed;
+  /* Aktienkurs als Einordnung (Inkrement 3): eigene Farbe, weder Bewertung noch Richtung.
+     2026-10-13: Violett lag zu nah am Blau der Bewertungslinie. Hell Orange, der
+     Gegenpol zu Blau (Fuchsia war hell noch zu nah daran), dunkel Fuchsia. Geprüft
+     (OKLab ΔE×100, auch bei Rot-Grün-Schwäche) gegen Bewertung, Abfall, Anstieg und
+     Grau; Kontrast zur Karte ≥ 3:1, auch auf den Auswahl- und Ereignisflächen. */
+  --market-price: #ea580c;   /* orange-600 */
   /* Aktien-Dashboard (E16): Empfehlungsstufen von stark kaufen bis stark verkaufen, Umsatz und Gewinn */
   --rating-strong-buy:   #15803d;
   --rating-buy:          #4ade80;
@@ -146,7 +150,7 @@
   --color-axis:          #475569;
   --anomaly-fall:        #fb7185;   /* rose-400 */
   --anomaly-rise:        #34d399;   /* emerald-400 */
-  --market-price:        #a78bfa;   /* violet-400 */
+  --market-price:        #f0abfc;   /* fuchsia-300 */
   --rating-strong-buy:   #22c55e;
   --rating-buy:          #86efac;
   --rating-hold:         #fde047;

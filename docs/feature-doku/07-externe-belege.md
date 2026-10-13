@@ -1,4 +1,4 @@
-# 07 – Externe Belege im Ereignisfenster
+# 07 – Externe Berichte im Ereignisfenster
 
 | | |
 |---|---|
@@ -6,12 +6,13 @@
 | Anforderungen | Erklärungsansätze neben dem Bewertungsverlauf laut Exposé (TF4); Kontext zu den auffälligen Veränderungen aus [01](01-anomalien-im-verlauf.md) und [03](03-auffaellige-einzelmonate.md); Anforderungstexte liegen nicht im Repository |
 | Entscheidungen | E7 (Quellen, Maßnahmen vom 2026-10-08), E18 (Ereignisfenster, Belegspeicher, Vergleichsfenster), E19 (Quellenarten, Verlässlichkeit), E20 (allgemeine Ereignisse, Dauerregel), E29 (allgemeine Ereignisse automatisch aus Wirtschaftsdaten, 2026-10-13) in `docs/entscheidungen.md` |
 | Status | umgesetzt und nachgeschärft (2026-10-08); **vorläufig** (Fenstergrößen, Verlässlichkeitsstufen und Dauergrenze sind Setzungen); Suchbegriffe der Unternehmen mit Markierungen, EQS-UUIDs und sechs allgemeine Ereignisse vom Autor bestätigt (D1–D3, 2026-10-08) |
-| Stand | 2026-10-08 (Nachschärfung: Vergleichsfenster, paralleler Abruf, Dauerregel) |
+| Stand | 2026-10-08 (Nachschärfung: Vergleichsfenster, paralleler Abruf, Dauerregel); 2026-10-13 Abschnitt umbenannt und Liste mit eigenem Scrollbereich |
 
 ## 1. Vorstellung
 
 Auf der Detailseite **„Anomalien im Verlauf“** (`/anomalies`) steht unter dem Vorher-Nachher-Vergleich
-ein neuer Abschnitt **„Externe Belege im Ereignisfenster“**, sobald eine auffällige Veränderung,
+ein neuer Abschnitt **„Externe Berichte im Ereignisfenster“** (bis 2026-10-13 „Externe Belege im
+Ereignisfenster“; „Berichte“ sagt im Dashboard deutlicher, was dort steht), sobald eine auffällige Veränderung,
 ein auffälliger Einzelmonat oder ein frei gewählter Zeitraum ausgewählt ist. Ein **Beleg** ist eine
 zeitlich nahe Meldung aus einer externen Quelle mit Datum, Titel, Herausgeber und Link. Er ist
 keine Ursache: Die Ansicht behauptet keinen Zusammenhang mit den Bewertungen und bewertet
@@ -23,7 +24,9 @@ Meldungen, 12 Ad-hoc“). Je Beleg stehen Datum, Titel als Link in einem neuen T
 der Typ als Badge (**Meldung**, **Ad-hoc**, **Allgemeines Ereignis, Hypothese**) und bei
 englischsprachigen Meldungen die Badge **EN**; bei Mitteilungen von EQS steht dazu, von welcher
 Gesellschaft sie stammen (bei Carl Zeiss: Carl Zeiss Meditec AG). Die neuesten Belege stehen
-oben; lange Listen werden in Schritten von 25 nachgeladen. Gibt es keinen Beleg, steht dort
+oben; lange Listen werden in Schritten von 25 nachgeladen. Die Liste hat einen eigenen
+Scrollbereich von etwa acht Einträgen (höchstens 360 px), damit hunderte Meldungen die Seite nicht
+verlängern; nach einem Wechsel von Sortierung oder Ereignisart beginnt sie wieder oben. Gibt es keinen Beleg, steht dort
 „Kein Beleg im Fenster gefunden“ mit den bekannten Grenzen (ältere Zeiträume, kleine
 Unternehmen, mehrdeutige Namen). Darunter nennt eine Zeile je Quelle, wie viele Monate des
 Fensters vorliegen, wie viele davon gerade abgerufen wurden, den Stand des Speichers und nicht

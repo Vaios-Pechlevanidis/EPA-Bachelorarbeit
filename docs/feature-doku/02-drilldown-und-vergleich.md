@@ -28,8 +28,12 @@ Darunter erscheinen zwei Abschnitte:
   Bewertungen verändert hat, er ist keine Aussage über Ursachen; dazu der verwendete
   Stimmungsmodus und die Stichprobe.
 - **„Bewertungen des Zeitraums“**: die Einzelbewertungen eines Fensters, umschaltbar
-  zwischen „davor“ und „ab dem markierten Monat“. Der Untertitel nennt Gruppe, Zeitraum und
-  Anzahl. Je Bewertung stehen Datum, Sterne, Titel, Status und ein Textauszug; ein Klick
+  zwischen „davor“ und „ab dem markierten Monat“. Nach der Auswahl einer Veränderung steht
+  die Liste auf „ab dem markierten Monat“ (seit 2026-10-13, vorher „davor“): Sie zeigt dann
+  dieselben Monate wie „von / bis“ der Drill-down-Leiste, und es erscheinen keine
+  Bewertungen, die älter als der markierte Monat sind, solange man nicht bewusst auf
+  „davor“ umschaltet. Die freie Auswahl (E17) beginnt ebenso mit „Auswahl“. Der Untertitel
+  nennt Gruppe, Zeitraum und Anzahl. Je Bewertung stehen Datum, Sterne, Titel, Status und ein Textauszug; ein Klick
   öffnet die Bewertung im vorhandenen Detailfenster (`ReviewDetailModal`), dort lässt sich
   mit den Pfeilen blättern. Es werden 25 Bewertungen geladen, weitere auf Knopfdruck.
 

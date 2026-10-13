@@ -48,9 +48,9 @@ import { loadCompany, loadCompanyName } from "@/lib/companies"
    /market geladen; unter dem Diagramm stehen dann der feste Hinweis und bei
    der Konzernmutter der Vermerk. Der Link zum Aktien-Dashboard (/aktie, E16)
    bleibt in jedem Fall.
-   Externe Belege (Inkrement 4, E18): Unter dem Vergleich steht für die
+   Externe Berichte (Inkrement 4, E18): Unter dem Vergleich steht für die
    ausgewählte Veränderung, den Einzelmonat oder die freie Auswahl der Abschnitt
-   "Externe Belege im Ereignisfenster" (EvidenceSection): zeitlich nahe
+   "Externe Berichte im Ereignisfenster" (EvidenceSection): zeitlich nahe
    Meldungen aus externen Quellen, keine Aussage über Ursachen. Das Kästchen
    "Allgemeine Ereignisse" (?ereignisse=an, Standard aus) blendet die automatisch
    aus Wirtschaftsdaten ermittelten allgemeinen Ereignisse (E29) als Flächen in den Monatsverlauf ein, beschriftet als
@@ -145,9 +145,11 @@ export default function AnomaliesPage() {
     const selectedId = searchParams.get("anomaly")
     const selectedAnomaly = useMemo(() => anomalies.find((a) => a.id === selectedId) ?? null, [anomalies, selectedId])
     const windows = useMemo(() => comparisonWindows(selectedAnomaly), [selectedAnomaly])
-    // Fenster der Bewertungsliste; beim Wechsel der Veränderung wieder "davor".
-    const [sideState, setSideState] = useState({ id: null, side: "before" })
-    const side = sideState.id === selectedId ? sideState.side : "before"
+    // Fenster der Bewertungsliste; beim Wechsel der Veränderung wieder "ab dem
+    // markierten Monat", passend zu "von / bis" der Drill-down-Leiste und zur
+    // freien Auswahl. "davor" zeigt die älteren Bewertungen nur auf Wunsch.
+    const [sideState, setSideState] = useState({ id: null, side: "after" })
+    const side = sideState.id === selectedId ? sideState.side : "after"
     const sideWindow = windows?.[side] ?? null
     const outliers = useMemo(() => data?.outlier_months ?? [], [data])
     // Freie Auswahl (E17): ?from=&to=, ?month= als ein Monat; nur ohne ausgewählte Veränderung.
@@ -542,7 +544,7 @@ export default function AnomaliesPage() {
                                     companyId={companyId}
                                     anomalyId={selectedAnomaly.id}
                                     group={{ source, dimension, status }}
-                                    eyebrow={`EXTERNE BELEGE · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
+                                    eyebrow={`EXTERNE BERICHTE · VERÄNDERUNG AB ${fmtPeriod(selectedAnomaly.date).toUpperCase()}`}
                                     scores={comparison.data?.explanation_summary?.item_scores ?? null}
                                     rules={comparison.data?.explanation_summary?.rules ?? null}
                                 />
@@ -624,7 +626,7 @@ export default function AnomaliesPage() {
                                     anomalyId={selectedOutlier?.id ?? null}
                                     selection={selectedOutlier ? null : selection}
                                     group={{ source, dimension, status }}
-                                    eyebrow={`EXTERNE BELEGE · ${selectedOutlier ? "EINZELMONAT" : "AUSWAHL"} ${selectionLabel(selection).toUpperCase()}`}
+                                    eyebrow={`EXTERNE BERICHTE · ${selectedOutlier ? "EINZELMONAT" : "AUSWAHL"} ${selectionLabel(selection).toUpperCase()}`}
                                     scores={periodComparison.data?.explanation_summary?.item_scores ?? null}
                                     rules={periodComparison.data?.explanation_summary?.rules ?? null}
                                 />

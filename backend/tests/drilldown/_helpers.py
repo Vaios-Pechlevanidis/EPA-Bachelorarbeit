@@ -68,13 +68,19 @@ TOPIC_OVERVIEW_CALC_BASE = {
 }
 
 
+# Felder, die nach dem Stand der Hashes hinzukamen; ihre Werte prüfen eigene Tests
+# (ratingDistribution seit 2026-10-13: tests/test_analyze_topic_rating.py).
+TOPIC_ADDED_KEYS = ("ratingDistribution",)
+
+
 def without_quotes(body):
-    """Antwort von topic-overview ohne die Zitatfelder (NFA-07)."""
+    """Antwort von topic-overview ohne die Zitatfelder (NFA-07) und ohne die später
+    hinzugekommenen Felder; die übrige Berechnung muss unverändert bleiben."""
     import copy
 
     body = copy.deepcopy(body)
     for topic in body.get("topics", []):
-        for key in TOPIC_QUOTE_KEYS:
+        for key in (*TOPIC_QUOTE_KEYS, *TOPIC_ADDED_KEYS):
             topic.pop(key, None)
     return body
 

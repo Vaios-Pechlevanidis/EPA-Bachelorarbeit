@@ -6,7 +6,8 @@ import { fmtPeriod } from "@/lib/anomalySeries"
 import { useEvidence } from "@/hooks/useEvidence"
 
 /* ============================================================================
-   EvidenceSection — "Externe Belege im Ereignisfenster" (Inkrement 4, E18).
+   EvidenceSection — "Externe Berichte im Ereignisfenster" (Inkrement 4, E18;
+   bis 2026-10-13 "Externe Belege im Ereignisfenster").
    Zeigt zu einer ausgewählten Veränderung, einem Einzelmonat oder einer freien
    Auswahl die Meldungen externer Quellen, deren Datum im Ereignisfenster liegt:
    Datum, Titel als Link (neuer Tab), Herausgeber, Typ als Badge, Sprache als
@@ -182,7 +183,7 @@ function SourcesLine({ sources }) {
    sonst selection {from, to}; group = {source, dimension, status} wie die Erkennung.
    scores = item_scores aus explanation_summary des Vergleichs (null, solange er lädt),
    rules = explanation_summary.rules (Tooltips der Stufen). */
-export function EvidenceSection({ companyId, anomalyId = null, selection = null, group = {}, eyebrow = "EXTERNE BELEGE", className = "", scores = null, rules = null }) {
+export function EvidenceSection({ companyId, anomalyId = null, selection = null, group = {}, eyebrow = "EXTERNE BERICHTE", className = "", scores = null, rules = null }) {
     const evidence = useEvidence(companyId, { anomalyId, selection, ...group })
     const data = evidence.data
     const [sort, setSort] = useState("date")
@@ -230,7 +231,7 @@ export function EvidenceSection({ companyId, anomalyId = null, selection = null,
             icon={<Newspaper />}
             eyebrow={eyebrow}
             basis="external"
-            title="Externe Belege im Ereignisfenster"
+            title="Externe Berichte im Ereignisfenster"
             subtitle={subtitle}
             actions={!evidence.loading && !evidence.error && evidence.total > 0 && (
                 <ListControls sort={sort} onSort={setSort} category={category} onCategory={setCategory} categories={categories} enabled={hasScores} />
@@ -269,9 +270,13 @@ export function EvidenceSection({ companyId, anomalyId = null, selection = null,
                     {items.length === 0 && category ? (
                         <p className="m-0 text-[12px] text-slate-500">Kein Beleg dieser Ereignisart im Fenster.</p>
                     ) : (
-                        <ul className="m-0 p-0 list-none">
-                            {items.map((item) => <EvidenceRow key={item.id} item={item} score={scores?.[item.id] ?? null} rules={rules} />)}
-                        </ul>
+                        /* Eigener Scrollbereich (etwa acht Einträge), damit lange Listen die Seite
+                           nicht verlängern; neue Sortierung oder Ereignisart beginnt wieder oben. */
+                        <div key={`${sort}:${category}`} className="max-h-[360px] overflow-y-auto overscroll-contain pr-1 border-y border-slate-100">
+                            <ul className="m-0 p-0 list-none">
+                                {items.map((item) => <EvidenceRow key={item.id} item={item} score={scores?.[item.id] ?? null} rules={rules} />)}
+                            </ul>
+                        </div>
                     )}
                     {evidence.hasMore && !needAll && (
                         <button

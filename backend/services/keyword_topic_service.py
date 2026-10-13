@@ -306,6 +306,23 @@ CANDIDATE_TOPIC_DEFINITIONS: Dict[str, Dict[str, List[str]]] = {
 }
 
 
+# Schwellen der Einstufung in Sternen (einschließlich): ab NEUTRAL_FROM "Neutral",
+# ab POSITIVE_FROM "Positiv", darunter "Negativ". Sie gelten für den Durchschnitt
+# eines Topics (Etikett "sentiment") und für jede einzelne Bewertung
+# (ratingDistribution). Es sind Setzungen auf der Sterneskala, keine Textanalyse.
+NEUTRAL_FROM = 2.5
+POSITIVE_FROM = 3.5
+
+
+def rating_class(value: float) -> str:
+    """'negative', 'neutral' oder 'positive' für einen Sternewert (1 bis 5)."""
+    if value >= POSITIVE_FROM:
+        return "positive"
+    if value >= NEUTRAL_FROM:
+        return "neutral"
+    return "negative"
+
+
 @lru_cache(maxsize=256)
 def _compiled_keywords(keywords: tuple) -> tuple:
     """Muster eines Themas, einmal kompiliert: einzeln in Listenreihenfolge
@@ -340,7 +357,11 @@ def analyze_topic(
     example_texts = []
     typical_statements = []
     review_details = []
-    
+    # Verteilung der Bewertungen, die das Topic nennen: je Bewertung ein Wert (Mittel
+    # ihrer Teilbewertungen des Topics, sonst die Gesamtnote), eingestuft mit rating_class.
+    distribution = {"negative": 0, "neutral": 0, "positive": 0}
+    fallback_overall = 0
+
     for review in all_reviews:
         # Check if topic is mentioned in text fields
         mentioned = False
@@ -393,16 +414,22 @@ def analyze_topic(
                     except (TypeError, ValueError):
                         pass
 
+            review_value = None
             if topic_specific:
                 ratings.extend(topic_specific)
+                review_value = sum(topic_specific) / len(topic_specific)
             else:
                 # No topic-specific rating available — use overall avg as fallback
                 avg_rating_val = review.get("durchschnittsbewertung")
                 if avg_rating_val is not None:
                     try:
-                        ratings.append(float(avg_rating_val))
+                        review_value = float(avg_rating_val)
+                        ratings.append(review_value)
+                        fallback_overall += 1
                     except (TypeError, ValueError):
                         pass
+            if review_value is not None:
+                distribution[rating_class(review_value)] += 1
             
             # Group by month for timeline
             date_str = review.get("datum")
@@ -418,16 +445,12 @@ def analyze_topic(
     # Calculate average rating
     avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
     
-    # Determine sentiment based on rating
-    if avg_rating >= 3.5:
-        sentiment = "Positiv"
-        color = "green"
-    elif avg_rating >= 2.5:
-        sentiment = "Neutral"
-        color = "orange"
-    else:
-        sentiment = "Negativ"
-        color = "red"
+    # Einstufung des Durchschnitts (Sterne, keine Textanalyse), Schwellen wie oben
+    sentiment, color = {
+        "positive": ("Positiv", "green"),
+        "neutral": ("Neutral", "orange"),
+        "negative": ("Negativ", "red"),
+    }[rating_class(avg_rating)]
     
     # Create timeline data (all available months, sorted chronologically)
     timeline_data = []
@@ -624,6 +647,15 @@ def analyze_topic(
         "frequency": len(mentions),
         "avgRating": avg_rating,
         "sentiment": sentiment,
+        # Gezählte Verteilung (seit 2026-10-13; vorher zeigte das Detailfenster feste
+        # Anteile 15/15/70 o. ä., die aus dem Durchschnitt abgeleitet waren).
+        "ratingDistribution": {
+            **distribution,
+            "n": sum(distribution.values()),
+            "fallback_overall": fallback_overall,
+            "neutral_from": NEUTRAL_FROM,
+            "positive_from": POSITIVE_FROM,
+        },
         "example": example,
         "color": color,
         "timelineData": timeline_data,
@@ -714,4 +746,5 @@ __all__ = [
     "topic_for_dimension", "topic_spans",
     "TOPIC_TEXT_FIELDS", "EMPLOYEE_TOPIC_DEFINITIONS", "CANDIDATE_TOPIC_DEFINITIONS",
     "QUOTE_EXCLUDED_FIELDS", "TOPIC_DEFINITIONS_BY_SOURCE", "topic_definitions_for", "topics_in_review", "analyze_topic",
+    "NEUTRAL_FROM", "POSITIVE_FROM", "rating_class",
 ]

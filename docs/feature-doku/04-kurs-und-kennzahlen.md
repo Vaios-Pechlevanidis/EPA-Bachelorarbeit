@@ -6,7 +6,7 @@
 | Anforderungen | Kurs und Kennzahlen als Einordnung neben dem Bewertungsverlauf (Auftrag Inkrement 3); FA-15 (Kurs und zwei bis drei Kennzahlen); integrierte Darstellung laut Exposé (TF4) |
 | Entscheidungen | E15 in `docs/entscheidungen.md`; E6 (Ticker, Sonderfälle) und E8 (yfinance als Abhängigkeit) unverändert |
 | Status | umgesetzt; **vorläufig** (Nutzungsbedingungen von Yahoo Finance offen) |
-| Stand | 2026-10-08 |
+| Stand | 2026-10-08; 2026-10-13 Farbe der Kurslinie (Kontrast) |
 
 ## 1. Vorstellung
 
@@ -21,8 +21,9 @@
 > Kennzahlen in einer Ansicht. Ohne Zutun zeigt die Seite keinen Kurs und lädt keine
 > Kursdaten; neu ist nur das Kästchen. Der Link zum Aktien-Dashboard bleibt.
 
-Im Monatsverlauf der Sternebewertung läuft der **Aktienkurs** als dünne,
-violette Linie mit. Er hat eine eigene **rechte Y-Achse**, beschriftet mit der Währung
+Im Monatsverlauf der Sternebewertung läuft der **Aktienkurs** als dünne Linie mit, im hellen
+Farbschema orange, im dunklen fuchsiafarben (bis 2026-10-13 violett und halb durchsichtig; das
+lag zu nah am Blau der Bewertungslinie, siehe 5. Prüfung und Belege). Er hat eine eigene **rechte Y-Achse**, beschriftet mit der Währung
 („Kurs in EUR“). Die Legende nennt Ticker, Währung und Bereinigung, der Tooltip eines Monats
 zeigt neben Monatsmittel und Zahl der Bewertungen den **Monatsschlusskurs**. Der Kurs wird
 nur für die angezeigten Monate gezeichnet; der Zeitfilter (Gesamt, 5 Jahre, 3 Jahre,
@@ -161,6 +162,22 @@ Ticker steht in Abschnitt 5 („Bestand des Zwischenspeichers“).
   Monate setzen die Auswahl. NTT DATA SE: Vermerk „Kurs der Konzernmutter NTT, Inc. (9432.T),
   nicht von NTT DATA SE selbst“. Open Grid Europe, auch mit `?kurs=an`: kein Kästchen, kein
   Abruf, nur der Link. Hell und dunkel, 1440, 800 und 375 Pixel Breite.
+- Farbe der Kurslinie, 2026-10-13: Die violette Linie (hell `#7c3aed`, dunkel `#a78bfa`, 70 %
+  deckend) war neben der blauen Bewertungslinie (`#3b82f6`) schwer zu unterscheiden. Geprüft
+  mit dem Paletten-Validator (OKLab ΔE×100, Simulation Rot-Grün- und Blau-Gelb-Schwäche nach
+  Machado u. a. 2009; Ziel ≥ 8 bei Farbsehschwäche, ≥ 15 bei normalem Sehen): Violett gegen Blau
+  im dunklen Modus 5,7 bzw. 13,5, also unter beiden Grenzen. Die Linie ist jetzt voll deckend und
+  1,25 px statt 1 px breit, weiter dünner als die Bewertungslinie (1,5 px).
+  - **Dunkel: Fuchsia** `#f0abfc`. Gegen Blau 17,3 / 27,1; gegen Abfall, Anstieg, die
+    bernsteinfarbenen Ereignis- und Auswahlflächen und Grau überall ≥ 12 bzw. ≥ 17.
+  - **Hell: Orange** `#ea580c`, der Gegenpol zu Blau. Ein erster Versuch mit Fuchsia (`#a21caf`,
+    gegen Blau 12,0 / 24,6) bestand zwar die Grenzen, war für den Autor im Browser aber noch zu
+    nah am Blau. Orange gegen Blau 30,5 / 36,1; gegen Abfall 14,8 / 15,5, gegen Grau 17,9 / 23,3;
+    gegen Anstieg 7,8 bei Rot-Schwäche (Warnbereich, zulässig, weil Anstiege zusätzlich durch
+    Form und Legende kenntlich sind). Kontrast zur Karte 3,6:1, auf den Auswahl- und
+    Ereignisflächen 3,1:1. Orange liegt nah am Bernstein der Ereignisflächen (`#d97706`); die
+    sind aber blasse Flächen, keine Linien, und in der Legende benannt.
+  - Die Farbe gilt über `--market-price` auch für die Kursfläche im Aktien-Dashboard.
 
 ### Bestand des Zwischenspeichers (Beleg für die Abnahme von Inkrement 3)
 

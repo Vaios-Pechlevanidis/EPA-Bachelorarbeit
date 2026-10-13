@@ -59,7 +59,7 @@ Hinweis:
 > Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine
 > Ursachen.
 
-Die **Belegliste** darunter (Abschnitt „Externe Belege im Ereignisfenster“, [07](07-externe-belege.md))
+Die **Belegliste** darunter (Abschnitt „Externe Berichte im Ereignisfenster“, [07](07-externe-belege.md))
 erhält eine Umschaltung der Sortierung (**Datum**, **Relevanz** = Rang der Erklärungsansätze)
 und einen **Filter nach Ereignisart**; je Beleg stehen dann Stufe, Ereignisart und getroffene
 Begriffe. Für Sortierung und Filter lädt die Liste alle Belege des Fensters.
