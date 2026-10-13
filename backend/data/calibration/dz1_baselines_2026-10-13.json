@@ -1,22 +1,14 @@
 {
-  "generated_at": "2026-10-13T13:03:12+00:00",
+  "generated_at": "2026-10-13T13:47:41+00:00",
   "argv": [
     "--json",
     "data/calibration/dz1_baselines_2026-10-13.json"
   ],
   "provenance": {
     "git": {
-      "commit": "25513000c5ad26e9ab42983a8b65ada310f0f12a",
-      "dirty": true,
-      "dirty_paths": [
-        "backend/data/annotations.json",
-        "backend/scripts/check_evaluation_instance.py",
-        "backend/scripts/make_annotation_sheet.py",
-        "backend/tests/test_check_evaluation_instance.py",
-        "backend/scripts/blind_annotations.py",
-        "backend/scripts/dz1_baselines.py",
-        "backend/tests/test_dz1_baselines.py"
-      ]
+      "commit": "38492c4797cda85ac9c562f82c88e460d1bb65a5",
+      "dirty": false,
+      "dirty_paths": []
     },
     "script_sha256": "d6af6aeac7db575d8859c8a70023dafb3b0d11620b76119949419787ad0f72ca",
     "evaluate_detection_sha256": "8adf99b7436ee3fe6667e4909849932292294c6efabd9763f23b40c74e34e45c",

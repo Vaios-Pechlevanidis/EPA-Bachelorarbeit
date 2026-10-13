@@ -705,9 +705,9 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   - **Einzelmonate:** In dieser Variante behandeln Zufall und naive Regel Einzelmonate wie Niveauwechsel.
 - **Parameter:** unverändert (E5, E30). Aus den Bezugsgrößen wird kein Anlass für Änderungen abgeleitet.
 - **Status:** Bezugsgrößen und Intervalle sind abgelegt. Sie sind beschreibend, ohne Signifikanzaussage im engeren Sinn.
-  Die Ergebnisdatei entstand vor dem Commit des Skripts (`provenance.git.dirty`: true). Das Ergebnis ist
-  deterministisch (geprüft: zweiter Lauf mit gleichem Inhalt); nach dem Commit wird es einmal neu
-  erzeugt, damit die Herkunft auf einen Commit zeigt.
+  Die Ergebnisdatei wurde nach dem Commit des Skripts auf sauberem Arbeitsbaum neu erzeugt (Commit
+  `38492c4`, `provenance.git.dirty`: false). Gegenüber dem ersten Lauf, der vor dem Commit stattfand,
+  änderten sich nur Zeitpunkt und Herkunftsangabe; die Ergebnisse sind gleich.
 
 ## E10 – Themenweg für den Vorher-Nachher-Vergleich
 
