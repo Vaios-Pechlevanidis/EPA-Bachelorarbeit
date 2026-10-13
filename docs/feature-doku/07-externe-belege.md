@@ -4,7 +4,7 @@
 |---|---|
 | Inkrement | 4 (Zyklus 2) |
 | Anforderungen | Erklärungsansätze neben dem Bewertungsverlauf laut Exposé (TF4); Kontext zu den auffälligen Veränderungen aus [01](01-anomalien-im-verlauf.md) und [03](03-auffaellige-einzelmonate.md); Anforderungstexte liegen nicht im Repository |
-| Entscheidungen | E7 (Quellen, Maßnahmen vom 2026-10-08), E18 (Ereignisfenster, Belegspeicher, Vergleichsfenster), E19 (Quellenarten, Verlässlichkeit), E20 (allgemeine Ereignisse, Dauerregel) in `docs/entscheidungen.md` |
+| Entscheidungen | E7 (Quellen, Maßnahmen vom 2026-10-08), E18 (Ereignisfenster, Belegspeicher, Vergleichsfenster), E19 (Quellenarten, Verlässlichkeit), E20 (allgemeine Ereignisse, Dauerregel), E29 (allgemeine Ereignisse automatisch aus Wirtschaftsdaten, 2026-10-13) in `docs/entscheidungen.md` |
 | Status | umgesetzt und nachgeschärft (2026-10-08); **vorläufig** (Fenstergrößen, Verlässlichkeitsstufen und Dauergrenze sind Setzungen); Suchbegriffe der Unternehmen mit Markierungen, EQS-UUIDs und sechs allgemeine Ereignisse vom Autor bestätigt (D1–D3, 2026-10-08) |
 | Stand | 2026-10-08 (Nachschärfung: Vergleichsfenster, paralleler Abruf, Dauerregel) |
 
@@ -36,11 +36,18 @@ Abschnitt endet mit dem festen Hinweis:
 > Ursachen; interne Auslöser sind von außen nicht sichtbar.
 
 Im Kopf des Monatsverlaufs gibt es das Kästchen **„Allgemeine Ereignisse“** (`?ereignisse=an`,
-Standard aus). Es blendet die vom Autor bestätigten allgemeinen Ereignisse (seit dem 2026-10-08
-sechs: Finanzkrise 2008/09, Atom-Moratorium 2011, erster und zweiter Lockdown, Überfall auf die
-Ukraine 2022, Energiepreiskrise 2022/23; jedes höchstens sechs Monate lang) als gestrichelte
-Flächen in das Diagramm ein, beschriftet als „Allgemeines Ereignis, Hypothese“; dieselben
+Standard aus). Es blendet die allgemeinen Ereignisse als gestrichelte Flächen in das Diagramm ein.
+Seit 2026-10-13 entstehen sie automatisch aus Wirtschaftsdaten von Eurostat (E29): ein
+Konjunktureinbruch (Wirtschaftsstimmung ESI mindestens 10 Punkte unter dem Wert drei Monate davor)
+oder ein Inflationsschub (Inflationsrate mindestens 2 Prozentpunkte über dem Wert drei Monate davor
+und mindestens 5 %); Stand 2026-10-13 fünf Ereignisse (2008/09, 2020, Nov. 2021, Frühjahr 2022,
+Herbst 2022), jedes höchstens sechs Monate lang. Bis dahin pflegte der Autor sie von Hand in
+`global_events.json` (E20). Die Flächen sind beschriftet als „Allgemeines Ereignis, Hypothese“; dieselben
 Ereignisse erscheinen im Abschnitt als Belege vom Typ „Allgemeines Ereignis“.
+Seit 2026-10-13 nennt die Legende nur noch das Kennzeichen und die Zahl der Ereignisse; Name und
+Zeitraum eines Ereignisses erscheinen im Tooltip, sobald die Maus über einen Monat innerhalb
+seiner Fläche fährt (vorher stand die vollständige Liste unter dem Diagramm und war
+unübersichtlich). Der PDF-Export enthält die allgemeinen Ereignisse nicht.
 
 Nutzen: Wer eine auffällige Veränderung betrachtet, sieht ohne eigene Suche, was in diesen
 Monaten über das Unternehmen gemeldet wurde, und kann es bei der Einordnung im Kopf behalten,
@@ -97,6 +104,15 @@ ohne dass das Dashboard daraus eine Ursache macht.
 7. **Allgemeine Ereignisse, Dauerregel (E20).** Ein allgemeines Ereignis dauert höchstens 6
    Monate (vorläufig); der Lader weist längere Einträge zurück. In der Abdeckung zählt ein
    allgemeines Ereignis nicht als Beleg, die Auswertung weist es getrennt aus.
+   **Automatisch aus Wirtschaftsdaten (E29, 2026-10-13).** `backend/services/macro_events.py`
+   ruft zwei Monatsreihen von Eurostat für Deutschland ab (ESI `ei_bssi_m_r2`, HVPI-Rate
+   `prc_hicp_manr`), speichert sie in `backend/data/macro/eurostat_de.json` (nicht versioniert,
+   neu abgerufen nach 7 Tagen, nicht bei `CONTEXT_LIVE_FETCH=0`) und leitet daraus die Ereignisse
+   ab: Konjunktureinbruch (ESI mindestens 10 Punkte unter dem Wert drei Monate davor) und
+   Inflationsschub (Rate mindestens 2 Prozentpunkte über dem Wert drei Monate davor und mindestens
+   5 %). Monate mit höchstens einem Monat Abstand und sich berührende Zeiträume beider Regeln
+   werden zusammengefasst, längere Zeiträume auf 6 Monate gekürzt. Alle Ereignisse gelten als
+   bestätigt; der Autor gibt nichts mehr frei.
 8. **Betrieb.** `uv run python scripts/fetch_context.py --comparison` füllt den Speicher für alle
    Markierungen der geeigneten Unternehmen und ihre Vergleichsfenster (gedrosselt, fortsetzbar,
    `--dry-run` zählt nur); `--from-month 2019-01 --company <id>` lädt alle Monate eines
@@ -275,12 +291,23 @@ verschobenen Fenster desselben Unternehmens. Die Unterscheidung muss aus dem Inh
 (thematische Korrespondenz, Inkrement 5). Die Zahlen sind beschreibend, ohne Test und ohne
 Aussage über Ursachen.
 
+### Allgemeine Ereignisse automatisch (Stand 2026-10-13)
+
+Vor der Umstellung auf Wirtschaftsdaten wurde geprüft, ob sich allgemeine Ereignisse aus
+gemeinsamen Veränderungen der eigenen Unternehmen ableiten lassen (Skript mit Zufallsvergleich,
+danach entfernt): 15 Unternehmen mit geeigneter Reihe, 28 Markierungen, in keinem
+3-Monats-Fenster mehr als 2 Unternehmen zugleich; kein Vorschlag. Die Wirtschaftsdaten ergeben
+fünf Ereignisse (Liste in E29). Tests: `backend/tests/evidence/test_macro_events.py` (Regeln,
+Zusammenfassen, Dauerregel, Zwischenspeicher, Abruf ohne Netz) und
+`backend/tests/evidence/test_global_events.py`; im Browser die Route
+`GET /api/analytics/global-events` mit erstem Abruf bei Eurostat.
+
 ## 6. Offene Punkte
 
 - Bestätigt am 2026-10-08: Suchbegriffe der elf Unternehmen mit Markierungen (NTT DATA mit
   erweitertem Begriff), die elf EQS-UUIDs, sechs allgemeine Ereignisse. Offen bleiben die
-  Suchbegriffe der Unternehmen ohne Markierung, die EQS-UUIDs der Emittenten ohne Markierung und
-  die Homeoffice-Pflicht 2021.
+  Suchbegriffe der Unternehmen ohne Markierung und die EQS-UUIDs der Emittenten ohne Markierung
+  (die Liste der allgemeinen Ereignisse entfällt seit E29).
 - Fenstergrößen 3 und 1 Monat sowie die Versätze der Vergleichsfenster gegen die
   Referenzzeiträume prüfen, sobald DZ1 vorliegt.
 - Die Vergleichsfenster zeigen nur, ob Markierungsfenster mehr oder weniger Meldungen haben als
@@ -289,3 +316,6 @@ Aussage über Ursachen.
 - Deutsche Fassungen der EQS-Mitteilungen (Detailroute je Meldung) und GDELT bleiben aus.
 - Die Fragen zu den Nutzungsbedingungen aus `docs/nutzungsbedingungen.md` bleiben beim Betreuer.
 - Rangfolge, thematische Zuordnung und Stimmung der Belege folgen in Inkrement 5.
+- Schwellen der automatischen allgemeinen Ereignisse (10 Punkte ESI, 2 Prozentpunkte und 5 %
+  Inflation, 3 Monate) sind Setzungen (E29); Ereignisse ohne gesamtwirtschaftliche Spur
+  (Atom-Moratorium, Kriegsbeginn) fehlen.

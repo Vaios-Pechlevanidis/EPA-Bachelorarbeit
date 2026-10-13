@@ -142,9 +142,12 @@ const fmtDelta = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(v))
 
 const fmtSpan = (from, to) => (from && to && from !== to ? `${fmtPeriod(from)} – ${fmtPeriod(to)}` : fmtPeriod(from ?? to))
 
-function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod = {}, priceCurrency = null }) {
+function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod = {}, priceCurrency = null, eventAreas = [] }) {
     if (!active || !payload?.length) return null
     const point = payload[0].payload
+    // Allgemeine Ereignisse, deren Zeitraum diesen Monat enthält (Name nur beim Überfahren, 2026-10-13)
+    const pointIdx = periodIndex(point.period)
+    const events = eventAreas.filter((e) => periodIndex(e.from) <= pointIdx && pointIdx <= periodIndex(e.to))
     const anomaly = anomaliesByPeriod[point.period]
     const outlier = outliersByPeriod[point.period]
     return (
@@ -228,6 +231,20 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod =
                     <p className="m-0 mt-1 text-[11px] text-slate-400">
                         Einzelner Monat, kein neues Niveau; beruht auf {outlier.n_values} Bewertungen mit Wert.
                     </p>
+                </div>
+            )}
+            {events.length > 0 && (
+                <div className="mt-1.5 pt-1.5 border-t border-slate-700 max-w-[280px]">
+                    <p className="mb-1 inline-flex items-center gap-1.5 text-amber-300 font-medium">
+                        <span className="inline-block w-3 h-2.5 rounded-[2px] border border-dashed border-amber-400 bg-amber-400/20 flex-none" />
+                        Allgemeines Ereignis, Hypothese
+                    </p>
+                    {events.map((e) => (
+                        <p key={e.key} className="m-0 text-white">
+                            {e.title}{" "}
+                            <span className="text-slate-400">({fmtPeriod(e.from)}{e.from !== e.to ? ` – ${fmtPeriod(e.to)}` : ""})</span>
+                        </p>
+                    ))}
                 </div>
             )}
         </div>
@@ -505,7 +522,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
         ]
     }, [compact, chartData, drag, selection])
     // Allgemeine Ereignisse (Inkrement 4, E20) als Flächen, auf den sichtbaren Ausschnitt begrenzt;
-    // nur bestätigte Ereignisse, Standard aus ("Hypothese", keine Aussage über Ursachen).
+    // automatisch aus Wirtschaftsdaten (E29), Standard aus ("Hypothese", keine Aussage über Ursachen).
     const eventAreas = useMemo(() => {
         if (!events?.length || !chartData.length) return []
         const first = periodIndex(chartData[0].period)
@@ -623,7 +640,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             />
                         )}
                         <Tooltip
-                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} outliersByPeriod={outliersByPeriod} priceCurrency={showPrice ? market.currency ?? "" : null} />}
+                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} outliersByPeriod={outliersByPeriod} priceCurrency={showPrice ? market.currency ?? "" : null} eventAreas={eventAreas} />}
                             cursor={{ stroke: "var(--color-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
                             filterNull={false}
                         />
@@ -803,11 +820,8 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span className="inline-flex items-center gap-1.5">
                     <span className="inline-block w-3 h-2.5 rounded-[2px] border border-dashed border-amber-600 bg-amber-100" />
-                    Allgemeines Ereignis, Hypothese:
+                    Allgemeines Ereignis, Hypothese ({eventAreas.length}; Name und Zeitraum beim Überfahren der Fläche)
                 </span>
-                {eventAreas.map((a) => (
-                    <span key={a.key}>{a.title} ({fmtPeriod(a.from)}{a.from !== a.to ? ` – ${fmtPeriod(a.to)}` : ""})</span>
-                ))}
             </p>
         )}
         {showLegend && !error && minReviews != null && hiddenEdges.length > 0 && hasVisibleValues && !compact && (

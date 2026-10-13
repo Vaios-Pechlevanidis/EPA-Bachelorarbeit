@@ -32,6 +32,22 @@ export function sourceLine(s) {
     s.n_undated ? ` · ${s.n_undated} ohne Datum` : ""}`
 }
 
+/* Kurzfassung für die zugeklappte Leiste: Bewertungen je Quelle und jüngste Bewertung
+ * (der letzte Import steht seit 2026-10-13 nur in der aufgeklappten Leiste). */
+export function summaryText(data) {
+  const emp = data?.sources?.employee
+  const cand = data?.sources?.candidates
+  const counts = [
+    emp?.n_reviews ? `${fmtN(emp.n_reviews)} Mitarbeitende` : null,
+    cand?.n_reviews ? `${fmtN(cand.n_reviews)} Bewerbende` : null,
+  ].filter(Boolean)
+  const last = [emp?.last_review, cand?.last_review].filter(Boolean).sort().pop()
+  return [
+    counts.length ? `Bewertungen: ${counts.join(", ")}` : "keine Bewertungen",
+    last ? `bis ${fmtDay(last)}` : null,
+  ].filter(Boolean).join(" · ")
+}
+
 /* Letzter Import in die Datenbank (created_at); das Abrufdatum bei Kununu ist nicht gespeichert. */
 export function lastImportText(data) {
   return data?.last_import?.value

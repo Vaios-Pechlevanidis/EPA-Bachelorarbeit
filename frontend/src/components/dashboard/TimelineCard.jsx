@@ -13,7 +13,7 @@ import {
     Legend,
     ComposedChart,
 } from "recharts"
-import { Filter, ChevronDown, Maximize2, X, Activity, BarChart2, Calendar } from "lucide-react"
+import { Filter, ChevronDown, Maximize2, X, Activity, BarChart2, Calendar, Eye, EyeOff } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -34,6 +34,8 @@ import { MIN_REVIEWS_PER_MONTH } from "@/lib/dataBasis"
 import { TIMELINE_LABEL } from "@/lib/labels"
 import { ChartCardHeader, SourceToggle, DropdownPicker } from "./ChartHeader"
 import { TrendUp as TrendUpIcon } from "../../icons"
+import { ForecastExplanation } from "./ForecastExplanation"
+import { fmtDe, fmtSigned } from "@/lib/forecastText"
 
 const SOURCE_LABEL = {
     employee: "Mitarbeiter",
@@ -160,6 +162,11 @@ const TIMELINE_EYEBROW = SHOW_FORECAST ? "ZEITREIHE · HISTORIE & PROGNOSE" : "Z
 export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersChange, onLoadingChange, globalTimeRange = "all" }) {
     const [timelineData, setTimelineData] = useState([])
     const [forecastData, setForecastData] = useState([])
+    // Kenngrößen der Prognose (Holt, forecast_info) für Erklärung und Durchschnittslinien im Detailfenster
+    const [forecastInfo, setForecastInfo] = useState(null)
+    // Detailfenster: Ansicht „Historisch“ (Monatswerte) oder „Geglättetes Niveau“, nie beide;
+    // die Legendeneinträge sind die Schalter, Start mit den Monatswerten
+    const [showSmoothed, setShowSmoothed] = useState(false)
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
     const [error, setError] = useState(null)
@@ -239,6 +246,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                     } else {
                         setTimelineData([])
                         setForecastData([])
+                        setForecastInfo(null)
                         setLoading(false)
                         setRefreshing(false)
                         return
@@ -265,6 +273,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
 
                 setTimelineData(filteredTimeline)
                 setForecastData(SHOW_FORECAST ? (data.forecast || []) : [])
+                setForecastInfo(SHOW_FORECAST ? (data.forecast_info ?? null) : null)
                 hasDataRef.current = filteredTimeline.length > 0
             } catch (err) {
                 console.error('Error fetching timeline data:', err)
@@ -347,6 +356,16 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
         return processTimelineDataWithGaps(timelineData, valueKey)
     }, [timelineData, metric])
 
+    // Geglättetes Niveau (Holt) je Monat, Schlüssel wie die X-Achse ("Jul 2025")
+    const smoothedByLabel = useMemo(() => {
+        const map = new Map()
+        for (const p of forecastInfo?.smoothed ?? []) {
+            const [y, m] = String(p.date).split("-").map(Number)
+            if (y && m && p.value != null) map.set(`${MONTH_NAMES[m - 1]} ${y}`, p.value)
+        }
+        return map
+    }, [forecastInfo])
+
     // Prepare chart data - combine historical and forecast with bridge point
     const chartData = useMemo(() => {
         if (timelineData.length === 0) return []
@@ -404,6 +423,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                     count: row.count ?? null,
                     score: row.score ?? null,
                     forecast: isLast && forecastData.length > 0 && metric === "Ø Score" ? row[valueKey] : null,
+                    smoothed: metric === "Ø Score" ? (smoothedByLabel.get(row.date) ?? null) : null,
                 }
             })
             // Bridge: last historical point gets forecast value for line connection
@@ -436,7 +456,23 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
         })) : []
 
         return [...historical, ...forecast]
-    }, [timelineData, forecastData, metric, trendData, forecastTrendData, processedHistorical])
+    }, [timelineData, forecastData, metric, trendData, forecastTrendData, processedHistorical, smoothedByLabel])
+
+    // Durchschnittslinien nur im Detailfenster und nur bei Ø Score mit Prognose
+    const showAverages = metric === "Ø Score" && forecastData.length > 0 && forecastInfo != null
+    const lastCount = timelineData.length ? timelineData[timelineData.length - 1].count ?? null : null
+    const canSmooth = showAverages && forecastInfo.method === "holt"
+
+    // Geglättete Ansicht: die Prognose setzt am geglätteten Niveau des letzten Monats an
+    // (Holt: Prognose h = Niveau + h · Steigung), nicht am letzten Monatswert
+    const smoothedChartData = useMemo(() => {
+        if (!canSmooth) return chartData
+        return chartData.map((row) => (
+            row.forecast != null && row.historical != null && row.smoothed != null
+                ? { ...row, forecast: row.smoothed }
+                : row
+        ))
+    }, [chartData, canSmooth])
 
     // Find the last historical date for reference line — derived from chartData so the
     // format always matches the XAxis dataKey (processTimelineDataWithGaps converts dates
@@ -517,6 +553,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
         if (!active || !payload?.length) return null
         const historicalValue = payload.find(p => p.dataKey === "historical")?.value
         const forecastValue = payload.find(p => p.dataKey === "forecast")?.value
+        const smoothedValue = payload.find(p => p.dataKey === "smoothed")?.value
         const dataPoint = payload[0]?.payload
         const isMissing = dataPoint?._isMissing
         const fmtV = (v) => metric === "Anzahl" ? Math.round(v) : Number(v).toFixed(2).replace(".", ",")
@@ -571,6 +608,15 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                 </span>
                             </p>
                         )}
+                        {smoothedValue != null && (
+                            <p className="flex items-center justify-between gap-3 mt-1">
+                                <span className="inline-flex items-center gap-1.5 text-slate-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                                    Geglättet
+                                </span>
+                                <span className="font-semibold tnum text-violet-300">{fmtV(smoothedValue)}</span>
+                            </p>
+                        )}
                         {metric === "Ø Score" && dataPoint?.count && (
                             <p className="text-slate-500 mt-1.5 pt-1.5 border-t border-slate-700 tnum text-[11px]">
                                 {dataPoint.count} {dataPoint.count === 1 ? "Bewertung" : "Bewertungen"}
@@ -615,10 +661,12 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
     )
 
     // Chart component — Modern Area-Chart mit Gradient-Fill (Stripe/Linear-Stil)
-    const TimelineChart = ({ height = 200 }) => (
+    const TimelineChart = ({ height = 200, averages = false }) => {
+        const smoothedView = averages && canSmooth && showSmoothed
+        return (
         <ResponsiveContainer width="100%" height={height === "100%" ? "100%" : height}>
             <ComposedChart
-                data={chartData}
+                data={smoothedView ? smoothedChartData : chartData}
                 margin={{ left: 0, right: 16, top: 8, bottom: 5 }}
             >
                 {/* Gradient-Definitionen für Area-Fills */}
@@ -680,8 +728,8 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                     />
                 )}
 
-                {/* === Historische Daten === */}
-                {metric !== "Trend" && (
+                {/* === Historische Daten (in der geglätteten Ansicht ausgeblendet) === */}
+                {metric !== "Trend" && !smoothedView && (
                     <Area
                         type="monotone"
                         dataKey="historical"
@@ -710,7 +758,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 )}
 
                 {/* Gestrichelte Gap-Line bei Lücken — deutlich sichtbar über der Area */}
-                {metric !== "Trend" && timelineHasGaps && (
+                {metric !== "Trend" && timelineHasGaps && !smoothedView && (
                     <Line
                         type="monotone"
                         dataKey="historicalGap"
@@ -722,6 +770,30 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                         activeDot={false}
                         connectNulls={false}
                         legendType="none"
+                        isAnimationActive={false}
+                    />
+                )}
+
+                {/* === Durchschnittswerte (nur Detailfenster): Ø Historisch und geglättetes Niveau (Holt) === */}
+                {averages && showAverages && forecastInfo.historical_mean != null && (
+                    <ReferenceLine
+                        y={forecastInfo.historical_mean}
+                        stroke="#64748b"
+                        strokeDasharray="4 4"
+                        strokeWidth={1}
+                        label={{ value: `Ø ${fmtDe(forecastInfo.historical_mean)}`, position: "insideTopLeft", fill: "#64748b", fontSize: 10 }}
+                    />
+                )}
+                {smoothedView && (
+                    <Line
+                        type="monotone"
+                        dataKey="smoothed"
+                        stroke="#7c3aed"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 3, fill: "#7c3aed", stroke: "#fff", strokeWidth: 2 }}
+                        connectNulls
+                        name="Geglättetes Niveau"
                         isAnimationActive={false}
                     />
                 )}
@@ -758,15 +830,43 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 )}
             </ComposedChart>
         </ResponsiveContainer>
-    )
+        )
+    }
 
     // Legend component (reusable)
-    const ChartLegend = ({ compact = false }) => (
+    // Legendeneintrag als Schalter der Ansicht (Detailfenster): aktiv normal, inaktiv blass und durchgestrichen;
+    // jeder Klick auf einen der beiden Einträge wechselt die Ansicht (an ↔ aus)
+    const ViewToggle = ({ active, onSelect, label, swatch }) => (
+        <button
+            type="button"
+            className={`flex items-center gap-2 rounded px-1 -mx-1 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 ${active ? "" : "opacity-50"}`}
+            onClick={(e) => { e.stopPropagation(); onSelect() }}
+            aria-pressed={active}
+            title={active ? `${label} ausblenden` : `${label} anzeigen`}
+        >
+            {active
+                ? <Eye className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                : <EyeOff className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />}
+            {swatch}
+            <span className={`text-slate-600 ${active ? "" : "line-through"}`}>{label}</span>
+        </button>
+    )
+
+    const ChartLegend = ({ compact = false, averages = false }) => (
         <div className={`${compact ? 'mt-2' : 'mt-3'} flex items-center justify-center gap-4 flex-wrap text-[11px]`}>
-            <div className="flex items-center gap-1.5">
-                <div className="h-0.5 w-5 rounded-full bg-blue-500"></div>
-                <span className="text-slate-600">Historisch</span>
-            </div>
+            {averages && canSmooth ? (
+                <ViewToggle
+                    active={!showSmoothed}
+                    onSelect={() => setShowSmoothed((v) => !v)}
+                    label="Historisch (Monatswerte)"
+                    swatch={<div className="h-0.5 w-5 rounded-full bg-blue-500"></div>}
+                />
+            ) : (
+                <div className="flex items-center gap-1.5">
+                    <div className="h-0.5 w-5 rounded-full bg-blue-500"></div>
+                    <span className="text-slate-600">Historisch</span>
+                </div>
+            )}
             {metric === "Trend" && (
                 <>
                     <div className="flex items-center gap-2">
@@ -798,7 +898,22 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                             background: "repeating-linear-gradient(90deg, #f97316 0px, #f97316 8px, transparent 8px, transparent 12px)" 
                         }}></div>
                         <span className="text-slate-600">Prognose</span>
+                        {averages && <ForecastExplanation info={forecastInfo} sourceLabel={SOURCE_LABEL[source]} lastCount={lastCount} />}
                     </div>
+                    {averages && canSmooth && (
+                        <ViewToggle
+                            active={showSmoothed}
+                            onSelect={() => setShowSmoothed((v) => !v)}
+                            label="Geglättetes Niveau (Ausgangspunkt der Prognose)"
+                            swatch={<div className="h-0.5 w-6 rounded-full bg-violet-600"></div>}
+                        />
+                    )}
+                    {averages && showAverages && (
+                        <div className="flex items-center gap-2">
+                            <div className="h-0 w-6" style={{ borderTop: "1px dashed #64748b" }}></div>
+                            <span className="text-slate-600">Ø Historisch</span>
+                        </div>
+                    )}
                     {lastHistoricalDate && (
                         <div className="flex items-center gap-2">
                             <div className="h-4 w-px bg-slate-400" style={{ borderLeft: "2px dashed #94a3b8" }}></div>
@@ -980,7 +1095,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                     <p className="text-[13px] text-slate-500">{emptyMessage}</p>
                                 </div>
                             ) : (
-                                <TimelineChart height="100%" />
+                                <TimelineChart height="100%" averages />
                             )}
                             {showOverlay && (
                                 <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-md pointer-events-none">
@@ -992,7 +1107,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                             )}
                         </div>
 
-                        <ChartLegend compact={true} />
+                        <ChartLegend compact={true} averages />
                         {timelineHasGaps && (
                             <p className="text-xs text-slate-500 text-center italic flex items-center justify-center gap-1 mt-2 flex-shrink-0">
                                 <span className="inline-block w-6 h-0 border-t-2 border-dashed border-slate-400"></span>
@@ -1002,7 +1117,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
 
                         {/* Extended Stats in Modal - Compact */}
                         {timelineData.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-3 flex-shrink-0">
+                            <div className={`mt-3 pt-3 border-t border-slate-200 grid grid-cols-2 ${showAverages && forecastInfo.method === "holt" ? "md:grid-cols-5" : "md:grid-cols-4"} gap-3 flex-shrink-0`}>
                                 {metric === "Anzahl" ? (
                                     <>
                                         <div className="text-center p-2 bg-slate-50 rounded-lg">
@@ -1072,6 +1187,12 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                                 {(timelineData.reduce((sum, d) => sum + d.score, 0) / timelineData.length).toFixed(2)}
                                             </p>
                                         </div>
+                                        {showAverages && forecastInfo.method === "holt" && (
+                                            <div className="text-center p-2 bg-violet-50 rounded-lg" title="Geglättetes Niveau am Ende der Reihe (Holt): gewichteter Durchschnitt, jüngere Monate zählen stärker; Ausgangspunkt der Prognose">
+                                                <p className="text-xs text-slate-500 mb-0.5">Geglättetes Niveau</p>
+                                                <p className="text-lg font-bold text-violet-700">{fmtDe(forecastInfo.level)}</p>
+                                            </div>
+                                        )}
                                         {forecastData.length > 0 && (
                                             <>
                                                 <div className="text-center p-2 bg-orange-50 rounded-lg">
@@ -1080,18 +1201,26 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                                         {(forecastData.reduce((sum, d) => sum + d.score, 0) / forecastData.length).toFixed(2)}
                                                     </p>
                                                 </div>
-                                                <div className="text-center p-2 bg-slate-50 rounded-lg">
-                                                    <p className="text-xs text-slate-500 mb-0.5">Trend</p>
-                                                    <p className={`text-lg font-bold ${
-                                                        forecastData[forecastData.length - 1]?.score > timelineData[timelineData.length - 1]?.score 
-                                                            ? 'text-green-600' 
-                                                            : 'text-red-600'
-                                                    }`}>
-                                                        {forecastData[forecastData.length - 1]?.score > timelineData[timelineData.length - 1]?.score 
-                                                            ? '↑ Steigend' 
-                                                            : '↓ Fallend'}
-                                                    </p>
-                                                </div>
+                                                {/* Trend der Prognose: Steigung je Monat aus Holt (forecast_info.trend);
+                                                    ohne Kenngrößen wie bisher letzter Prognosemonat gegen letzten Monat */}
+                                                {(() => {
+                                                    const slope = forecastInfo?.method === "holt" ? forecastInfo.trend : null
+                                                    const up = slope != null
+                                                        ? slope > 0
+                                                        : forecastData[forecastData.length - 1]?.score > timelineData[timelineData.length - 1]?.score
+                                                    const flat = slope === 0
+                                                    return (
+                                                        <div className="text-center p-2 bg-slate-50 rounded-lg" title={slope != null ? "Geglättete Steigung je Monat (Holt), mit der die Prognose fortgeschrieben wird" : undefined}>
+                                                            <p className="text-xs text-slate-500 mb-0.5">Trend der Prognose</p>
+                                                            <p className={`text-lg font-bold ${flat ? "text-slate-700" : up ? "text-green-600" : "text-red-600"}`}>
+                                                                {flat ? "→ Stabil" : up ? "↑ Steigend" : "↓ Fallend"}
+                                                            </p>
+                                                            {slope != null && (
+                                                                <p className="text-[11px] text-slate-500 tnum">{fmtSigned(slope)} je Monat</p>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })()}
                                             </>
                                         )}
                                     </>

@@ -74,6 +74,7 @@ class TestContracts:
     def test_store_and_events_defaults(self):
         gitignore = open(os.path.join(BACKEND_DIR, "..", ".gitignore"), encoding="utf-8").read()
         assert "backend/data/context/" in gitignore, "Belegspeicher bleibt außerhalb der Versionierung"
-        assert ev.STORE_DIR.name == "context" and ev.GLOBAL_EVENTS_PATH.name == "global_events.json"
+        assert "backend/data/macro/" in gitignore, "Zwischenspeicher der Wirtschaftsdaten bleibt außerhalb der Versionierung"
+        assert ev.STORE_DIR.name == "context" and ev.GLOBAL_EVENTS_PATH is None, "allgemeine Ereignisse automatisch (E29)"
         assert (ev.DEFAULT_WINDOW_BEFORE, ev.DEFAULT_WINDOW_AFTER) == (3, 1)
         assert src.MIN_FETCH_INTERVAL_S >= 2.0 and "non-commercial" in src.news_service.USER_AGENT

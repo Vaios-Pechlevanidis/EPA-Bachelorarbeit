@@ -39,3 +39,18 @@ def in_memory_db():
         assert isinstance(client, InMemoryClient), "Fallback nicht aktiv; Test würde die echte DB abfragen"
         yield client
     importlib.reload(supabase_client)
+
+
+@pytest.fixture(autouse=True)
+def _no_macro_data(tmp_path_factory, monkeypatch):
+    """Allgemeine Ereignisse kommen seit E29 aus Wirtschaftsdaten (``services/macro_events.py``).
+    Kein Test liest den echten Zwischenspeicher oder ruft Eurostat ab: leerer Speicherort und
+    ein Abruf, der fehlschlägt. Tests der Ereignisse setzen eigene Reihen ein."""
+    from services import macro_events
+
+    def no_network(url):
+        raise RuntimeError("Kein Netzabruf in Tests")
+
+    monkeypatch.setattr(macro_events, "CACHE_PATH", tmp_path_factory.mktemp("macro") / "eurostat_de.json")
+    monkeypatch.setattr(macro_events, "fetch_json", no_network)
+    macro_events._failed_fetch.clear()

@@ -119,7 +119,7 @@ export function useEvidence(companyId, { anomalyId = null, selection = null, sou
   }
 }
 
-/* Bestätigte allgemeine Ereignisse (GET /analytics/global-events, Inkrement 4, Schritt 7)
+/* Allgemeine Ereignisse (GET /analytics/global-events, Inkrement 4, Schritt 7; seit E29 automatisch aus Wirtschaftsdaten)
  * für das Overlay im Diagramm; enabled=false lädt nichts. Ergebnis: {loading, error, events}. */
 export function useGlobalEvents(enabled) {
   const [result, setResult] = useState({ loaded: false, events: [], error: "" })

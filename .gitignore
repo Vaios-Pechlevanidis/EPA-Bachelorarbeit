@@ -157,3 +157,4 @@ backend/data/annotationsbogen*.html
 
 # Belegspeicher der externen Belege (Inkrement 4, E18): nicht einchecken
 backend/data/context/
+backend/data/macro/

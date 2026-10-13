@@ -60,8 +60,10 @@ export default function Dashboard() {
   const [mostCriticalData, setMostCriticalData] = useState(null)
   const [negativeTopicItem, setNegativeTopicItem] = useState(null)
 
-  /* ---- Global time range filter ---- */
-  const [globalTimeRange, setGlobalTimeRange] = useState("all")
+  /* ---- Zeitraum der Kennzahlen ----
+     Die Auswahl „Standard / 1 Jahr / 3 Jahre“ ist seit 2026-10-13 entfernt; das
+     Dashboard zeigt immer den gesamten Zeitraum („all“). */
+  const globalTimeRange = "all"
 
   /* ---- Timeline / TopicRating filter state ---- */
   const [timelineFilters, setTimelineFilters] = useState({
@@ -577,28 +579,12 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Global time range filter */}
             <div className="ds-topbar-actions">
               {error && (
                 <span style={{ fontSize: 12, color: "var(--rose-700)", maxWidth: 240 }} className="truncate">
                   {error}
                 </span>
               )}
-              <div className="ds-time-filter">
-                {[
-                  { value: "all", label: "Standard" },
-                  { value: "1y",  label: "1 Jahr" },
-                  { value: "3y",  label: "3 Jahre" },
-                ].map(({ value, label }) => (
-                  <button
-                    key={value}
-                    className={`ds-time-btn${globalTimeRange === value ? " active" : ""}`}
-                    onClick={() => setGlobalTimeRange(value)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -748,6 +734,7 @@ export default function Dashboard() {
         open={openMostCritical}
         onOpenChange={setOpenMostCritical}
         companyId={effectiveCompanyId}
+        n={mostCriticalData?.n ?? null}
       />
 
       <NegativTopicModal

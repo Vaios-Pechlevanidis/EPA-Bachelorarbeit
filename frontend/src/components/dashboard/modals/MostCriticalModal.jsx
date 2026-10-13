@@ -23,7 +23,8 @@ const LABELS = {
 
 const fmt = (n, d = 2) => Number(n).toFixed(d).replace(".", ",");
 
-export default function MostCriticalModal({ open, onOpenChange, companyId = null }) {
+/* n: Bewertungen in der Kategorie (aus der Kachel); steht seit 2026-10-13 nur hier. */
+export default function MostCriticalModal({ open, onOpenChange, companyId = null, n = null }) {
   // Ergebnis je Firma; "loading", solange der Schlüssel nicht passt (kein setState
   // im Effekt, Lint-Regel react-hooks/set-state-in-effect); Anzeige wie zuvor.
   const [result, setResult]   = useState({ key: null, item: null, all: [], error: null });
@@ -89,7 +90,9 @@ export default function MostCriticalModal({ open, onOpenChange, companyId = null
       icon={<Alert />}
       eyebrow="KENNZAHL · KRITISCHSTE KATEGORIE"
       title={loading || shownError || !shownItem ? CRITICAL_LABEL : shownItem.title}
-      subtitle={item ? `Niedrigstes Kategorienmittel: ${fmt(item.score)} / 5` : "Kategorie mit dem niedrigsten Kategorienmittel"}
+      subtitle={item
+        ? `Niedrigstes Kategorienmittel: ${fmt(item.score)} / 5 · Mitarbeitende${n != null ? ` · n = ${Number(n).toLocaleString("de-DE")} Bewertungen in dieser Kategorie` : ""}`
+        : "Kategorie mit dem niedrigsten Kategorienmittel"}
       size="md"
     >
       {loading && <ModalLoader />}

@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-11 (E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-13 (E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -1053,6 +1053,8 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Grenzen:** Ein zeitliches Zusammentreffen ist keine Erklärung; auch sechs Monate treffen
   mehrere Fenster. Die Liste ist eine Auswahl, keine Vollständigkeit.
 - **Status:** vorläufig (Dauergrenze ist eine Setzung); sechs Ereignisse bestätigt (2026-10-08).
+- **Abgelöst (2026-10-13):** Datei, Vorschläge und Bestätigung durch den Autor ersetzt E29; die
+  Dauerregel gilt weiter.
 
 ## E21 – Erklärungsansätze: Signale und Stufen (Inkrement 5)
 
@@ -1479,3 +1481,51 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   weiter an. Der Firmenvergleich rief schon vorher `forecast_months=0` ab.
 - **Status:** umgesetzt am 2026-10-09 (Commit `ef05ca6`); geprüft im Bau der Evaluationsinstanz
   (`docs/abnahme-inkrement-6.md`).
+
+## E29 – Allgemeine Ereignisse automatisch aus Wirtschaftsdaten (ersetzt E20 in Teilen)
+
+- **Kontext:** Bis 2026-10-13 pflegte der Autor die allgemeinen Ereignisse von Hand in
+  `backend/data/global_events.json` (E20, sechs bestätigt). Der Autor will, dass alle wichtigen
+  allgemeinen Ereignisse automatisch eingetragen werden und die Datei entfällt. Geprüft wurden
+  drei Wege: gemeinsame Veränderungen über die eigenen Unternehmen (Skript mit Zufallsvergleich:
+  15 geeignete Unternehmen, 28 Markierungen, in keinem 3-Monats-Fenster mehr als 2 Unternehmen
+  zugleich, kein Vorschlag; das Skript ist wieder entfernt), Wikidata (uneinheitliche
+  Ereignisarten, mehrjährige Zeiträume, kein Maß für Wichtigkeit) und amtliche Wirtschaftsdaten.
+- **Entscheidung (Autor, 2026-10-13):** Wirtschaftsdaten, voll automatisch, ohne Freigabe.
+  `backend/services/macro_events.py` leitet die Ereignisse aus zwei Monatsreihen von Eurostat für
+  Deutschland ab (frei, ohne Schlüssel):
+  1. **Konjunktureinbruch:** Der Indikator der wirtschaftlichen Einschätzung (ESI,
+     `ei_bssi_m_r2`, `BS-ESI-I`, saisonbereinigt) liegt mindestens 10 Punkte unter seinem Wert
+     drei Monate davor. Die Europäische Kommission normiert den ESI auf Mittelwert 100 und
+     Standardabweichung 10; 10 Punkte sind eine Standardabweichung.
+  2. **Inflationsschub:** Die HVPI-Inflationsrate (`prc_hicp_manr`, `CP00`, Veränderung gegenüber
+     dem Vorjahresmonat) liegt mindestens 2 Prozentpunkte über ihrem Wert drei Monate davor und
+     beträgt mindestens 5 %.
+  Treffermonate mit höchstens einem Monat Abstand bilden einen Zeitraum; Zeiträume beider Regeln,
+  die sich überschneiden oder aneinandergrenzen, werden ein Ereignis. Ab 2007-01; höchstens
+  6 Monate (Dauerregel aus E20, längere Zeiträume werden auf die ersten 6 Monate gekürzt). Jedes
+  Ereignis gilt als bestätigt (`confirmed: true`), Titel und Vermerk nennen Regel, Werte, Quelle
+  und Abrufdatum, `url` führt zur Eurostat-Tabelle. Zwischenspeicher
+  `backend/data/macro/eurostat_de.json` (nicht versioniert), neu abgerufen, wenn älter als
+  7 Tage, außer bei `CONTEXT_LIVE_FETCH=0`; schlägt der Abruf fehl, gilt der alte Stand.
+  `global_events.json` ist gelöscht; `load_global_events` liest eine Datei nur noch, wenn ein
+  Pfad gesetzt ist (Tests).
+- **Ergebnis (Stand 2026-10-13):** fünf Ereignisse: Nov. 2008 – Jan. 2009 Konjunktureinbruch
+  (ESI 91,0 → 74,2), März – Juni 2020 Konjunktureinbruch (102,4 → 67,1), Nov. 2021
+  Inflationsschub (6,0 %), Apr. – Mai 2022 Inflationsschub (8,7 %), Sept. – Nov. 2022
+  Konjunktureinbruch und Inflationsschub (ESI 105,8 → 94,2; 11,6 %). Gegenüber E20 fehlen das
+  Atom-Moratorium 2011, der zweite Lockdown 2020/21 und der Kriegsbeginn Feb. – März 2022 als
+  eigenes Ereignis (seine Folgen erscheinen als Inflationsschub ab April 2022).
+- **Begründung:** Amtliche Reihen sind frei, datiert, zitierbar und wiederholbar; die Regeln
+  machen nachvollziehbar, warum ein Zeitraum als allgemeines Ereignis gilt. Ein schneller Einbruch
+  der Stimmung oder ein schneller Preisanstieg betrifft alle Arbeitgeber zugleich. Die Messung
+  über drei Monate hält die Ereignisse kurz und datierbar, wie die Dauerregel verlangt.
+- **Grenzen:** Schwellen (10 Punkte, 2 Prozentpunkte, 5 %), Messabstand (3 Monate) und
+  Zusammenfassung sind Setzungen. Ereignisse ohne gesamtwirtschaftliche Spur (Atom-Moratorium,
+  Kriegsbeginn als solcher) fehlen; die Ereignisse beschreiben Deutschland insgesamt, nicht
+  Branchen. Eurostat überarbeitet die Reihen; die Ereignisse folgen dem abgerufenen Stand.
+  Allgemeine Ereignisse bleiben Hypothesen; sie zählen nicht als Beleg und gehen nicht in die
+  Rangfolge der Erklärungsansätze ein (`rank_explanations` lässt Typ `global` außen vor), die
+  DZ1-Auswertung ist daher nicht betroffen. Der Bericht `report_context_decisions.py` (D3) zeigt
+  seither die automatischen Ereignisse statt der Liste vom 2026-10-08.
+- **Status:** umgesetzt am 2026-10-13 (nicht committet); Schwellen vorläufig.

@@ -183,12 +183,14 @@ def get_company_timeline(
                 "is_forecast": False
             })
         
-        # Calculate forecast using Holt's method
-        forecast_data = calculate_forecast(aggregated_timeline, forecast_months)
+        # Calculate forecast using Holt's method; forecast_info erklärt die
+        # Prognose im Detailfenster des Zeitverlaufs (2026-10-13)
+        forecast_data, forecast_info = forecast_with_details(aggregated_timeline, forecast_months)
         
         return {
             "timeline": aggregated_timeline,
             "forecast": forecast_data,
+            "forecast_info": forecast_info,
             "total_points": len(timeline_data),
             "current_date": datetime.now().isoformat()
         }
@@ -224,13 +226,33 @@ def calculate_forecast(historical_data: List[Dict[str, Any]], months: int) -> Li
     (exponential smoothing with trend). Forecasts are clamped to the rating bounds [0, 5].
     Falls back to average of historical scores if Holt fails (e.g. too little data).
     """
+    return forecast_with_details(historical_data, months)[0]
+
+
+def forecast_with_details(
+    historical_data: List[Dict[str, Any]], months: int
+) -> tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """
+    Prognose wie ``calculate_forecast`` und dazu ihre Kenngrößen für die Erklärung
+    im Dashboard (2026-10-13): Verfahren ("holt" oder Ersatz "mean"), Zahl und
+    Spanne der Monate, die geschätzten Glättungsgewichte alpha (Niveau) und beta
+    (Steigung), das geglättete Niveau und die Steigung am Ende der Reihe sowie das
+    geglättete Niveau je Monat (``smoothed``). Ohne Prognose: ``([], None)``.
+    Holt (1957/2004): Prognose für Monat h = Niveau + h * Steigung.
+    """
     if months <= 0:
-        return []
+        return [], None
     if len(historical_data) < 2:
-        return []
+        return [], None
 
     y_values = [point["score"] for point in historical_data]
     last_date = datetime.strptime(historical_data[-1]["date"], "%Y-%m")
+    info: Dict[str, Any] = {
+        "n_months": len(historical_data),
+        "first_month": historical_data[0]["date"],
+        "last_month": historical_data[-1]["date"],
+        "historical_mean": round(sum(y_values) / len(y_values), 4),
+    }
 
     try:
         from statsmodels.tsa.holtwinters import Holt  # type: ignore[import-untyped]
@@ -241,23 +263,49 @@ def calculate_forecast(historical_data: List[Dict[str, Any]], months: int) -> Li
         fit = model.fit()
         preds = fit.forecast(steps=months)
     except Exception:
-        return _fallback_forecast_average(historical_data, months, y_values)
+        info["method"] = "mean"
+        return _fallback_forecast_average(historical_data, months, y_values), info
+
+    def _num(value: Any) -> Optional[float]:
+        try:
+            v = float(value)
+        except (TypeError, ValueError):
+            return None
+        return round(v, 4) if np.isfinite(v) else None
+
+    levels = list(np.asarray(fit.level, dtype=float))
+    trends = list(np.asarray(fit.trend, dtype=float))
+    info.update({
+        "method": "holt",
+        "alpha": _num(fit.params.get("smoothing_level")),
+        "beta": _num(fit.params.get("smoothing_trend")),
+        "level": _num(levels[-1]) if levels else None,
+        "trend": _num(trends[-1]) if trends else None,
+        "smoothed": [
+            {"date": point["date"], "value": _num(levels[i])}
+            for i, point in enumerate(historical_data)
+            if i < len(levels)
+        ],
+    })
 
     forecast = []
+    clamped = False
     for i in range(months):
         month_offset = last_date.month + (i + 1)
         year_offset = (month_offset - 1) // 12
         month = ((month_offset - 1) % 12) + 1
         next_month = last_date.replace(year=last_date.year + year_offset, month=month)
-        score = float(preds[i])
-        score = max(0.0, min(5.0, score))
+        raw = float(preds[i])
+        score = max(0.0, min(5.0, raw))
+        clamped = clamped or score != raw
         forecast.append({
             "date": next_month.strftime("%Y-%m"),
             "date_display": next_month.strftime("%b %Y"),
             "score": round(score, 2),
             "is_forecast": True
         })
-    return forecast
+    info["clamped"] = clamped
+    return forecast, info
 
 
 @router.get("/company/{company_id}/category-ratings")

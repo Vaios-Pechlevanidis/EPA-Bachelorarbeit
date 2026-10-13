@@ -32,7 +32,7 @@ const selectClass =
 const TYPE_LABELS = {
     news: { label: "Meldung", className: "bg-slate-100 text-slate-600", title: "Nachrichtenmeldung (Google News RSS), Verlässlichkeit mittel" },
     adhoc: { label: "Ad-hoc", className: "bg-blue-100 text-slate-700", title: "Pflicht- oder Unternehmensmitteilung (EQS News), Verlässlichkeit hoch" },
-    global: { label: "Allgemeines Ereignis, Hypothese", className: "bg-amber-100 text-slate-700", title: "Allgemeines Ereignis aus global_events.json (vom Autor bestätigt), Verlässlichkeit: Hypothese" },
+    global: { label: "Allgemeines Ereignis, Hypothese", className: "bg-amber-100 text-slate-700", title: "Allgemeines Ereignis, automatisch aus Wirtschaftsdaten (Eurostat: Wirtschaftsstimmung ESI, Inflationsrate), Verlässlichkeit: Hypothese" },
 }
 
 /* Kästchen "Allgemeine Ereignisse" im Kopf des Monatsverlaufs (Overlay, Standard aus). */

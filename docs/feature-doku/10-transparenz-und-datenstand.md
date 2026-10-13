@@ -14,7 +14,9 @@ Inkrement 6 macht sichtbar, worauf jede Zahl des Dashboards beruht und wie aktue
 
 - Eine **Datenstand-Leiste** über Dashboard, Anomalien-Seite und Aktien-Dashboard nennt je Quelle
   die Zahl der Bewertungen, den Zeitraum, die bewerteten Monate, den letzten Import und den Stand
-  von Kurs- und Belegspeicher (E25).
+  von Kurs- und Belegspeicher (E25). Seit 2026-10-13 ist die Leiste standardmäßig zugeklappt: Eine
+  Zeile nennt die Bewertungen je Quelle und die jüngste Bewertung (der letzte Import nur aufgeklappt); der Schalter
+  „Datengrundlage“ öffnet alle Angaben, darin aufklappbar die Zeitstempel.
 - Jede Kachel, Karte und Liste trägt ein **Kennzeichen der Datenbasis** (Sternebewertung,
   Freitextanalyse, Externe Meldungen, Marktdaten) und **n**; bei kleiner Basis erscheint eine
   Warnung (E27).
@@ -38,7 +40,7 @@ Der PDF-Export übernimmt alle diese Elemente (Feature-Doku 09).
 `durchschnittsbewertung` aller Bewertungen der Mitarbeitenden ab `start_date`, ungewichtet),
 `score_n`, `score_definition` und `category_mean_definition`
 (`backend/services/score_service.py`). Der Berechnungshinweis steht in
-`frontend/src/lib/scoreText.js` und erscheint wortgleich unter den Kacheln, im Detailfenster und
+`frontend/src/lib/scoreText.js` und erscheint wortgleich als Tooltip der Kachel, im Detailfenster und
 im PDF:
 
 > Ø Score: Mittel der Gesamtnote aller Bewertungen von Mitarbeitenden im gewählten Zeitraum,
@@ -51,12 +53,28 @@ der letzten 12 (bei „3 Jahre“ 36) vollen Kalendermonate bis zum Anker gegen 
 davor, n je Fenster. Anker ist wie bei den rollierenden Schnitten der letzte volle Monat mit
 Bewertungen; der laufende Monat zählt nie.
 
+**Schlanke Kacheln (2026-10-13).** Die Kennzahl-Kacheln zeigen nur noch Titel, Wert, Zusatz
+(z. B. „/ 5“, „steigend“), das Kennzeichen der Datenbasis und die Warnung bei kleiner Basis. Die
+beschreibenden Zeilen (n, Zeitfenster, Erläuterung) und der Berechnungshinweis unter den Kacheln
+sind entfernt; sie stehen in den Detailfenstern (`SorceModal`, `TrendModal`, `RollingModal`,
+`MostCriticalModal` mit n der Kategorie, Topic-Details) und im PDF. Entschieden vom Autor.
+
+**Zeitfilter entfernt (2026-10-13).** Die Auswahl „Standard / 1 Jahr / 3 Jahre“ oben rechts im
+Dashboard ist entfernt; die Kennzahlen beziehen sich immer auf den gesamten Zeitraum („Standard“,
+`globalTimeRange = "all"`), der Trend damit auf 12 Monate. Entfernt auf Entscheidung des Autors;
+die Begründung trägt der Autor nach. Die Wege für
+„1 Jahr“ und „3 Jahre“ (`getStartDate`, PDF-Deckblatt) sind im Code noch vorhanden, werden aber
+nicht mehr erreicht.
+
 **Rollierende Schnitte (FA-08).** Modus `rolling`: Gesamtnote über 12 und 24 volle Monate bis zum
 Anker, Differenz, n je Fenster, Kennzeichen kleine Basis (unter 10 Bewertungen, E12) und
 unvollständige Fenster (E24).
 
 **Datenstand (FA-37).** `GET /api/companies/{id}/data-status`; Texte gemeinsam für Leiste und PDF
-in `frontend/src/lib/dataStatusText.js` (E25).
+in `frontend/src/lib/dataStatusText.js` (E25). Die Kurzzeile der zugeklappten Leiste stammt aus
+`summaryText`. Begründung: Die volle Leiste belegte über den Kennzahlen vier Zeilen, obwohl sie nur
+bei Bedarf gelesen wird; zugeklappt bleibt der Datenstand sichtbar, die Einzelheiten sind einen
+Klick entfernt. Das PDF zeigt den Datenstand weiter vollständig.
 
 **Datenbasis und n (FA-25, FA-26).** Vokabular und Schwellen in `frontend/src/lib/dataBasis.js`:
 5 Bewertungen je Monat (E4), 10 je Fenster (E12) (E27).

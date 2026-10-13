@@ -52,8 +52,8 @@ import { loadCompany, loadCompanyName } from "@/lib/companies"
    ausgewählte Veränderung, den Einzelmonat oder die freie Auswahl der Abschnitt
    "Externe Belege im Ereignisfenster" (EvidenceSection): zeitlich nahe
    Meldungen aus externen Quellen, keine Aussage über Ursachen. Das Kästchen
-   "Allgemeine Ereignisse" (?ereignisse=an, Standard aus) blendet bestätigte
-   allgemeine Ereignisse als Flächen in den Monatsverlauf ein, beschriftet als
+   "Allgemeine Ereignisse" (?ereignisse=an, Standard aus) blendet die automatisch
+   aus Wirtschaftsdaten ermittelten allgemeinen Ereignisse (E29) als Flächen in den Monatsverlauf ein, beschriftet als
    "Allgemeines Ereignis, Hypothese".
    Erklärungsansätze (Inkrement 5): Über der Belegliste steht der Abschnitt
    "Mögliche Zusammenhänge" (ExplanationPanel) mit den Erklärungsansätzen aus
@@ -354,7 +354,7 @@ export default function AnomaliesPage() {
                                     <StatusHint hint={statusHint} />
                                     {showEvents && !globalEvents.loading && !globalEvents.error && globalEvents.events.length === 0 && (
                                         <p className="m-0 text-[11px] text-slate-500">
-                                            Keine bestätigten allgemeinen Ereignisse hinterlegt (backend/data/global_events.json).
+                                            Keine allgemeinen Ereignisse: Die Wirtschaftsdaten (Eurostat) liegen nicht vor oder zeigen keinen Konjunktureinbruch und keinen Inflationsschub.
                                         </p>
                                     )}
                                     {showEvents && globalEvents.error && (

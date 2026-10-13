@@ -138,6 +138,12 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
    Monate werden übersprungen. Danach `CONTEXT_LIVE_FETCH=0` für den Interviewprozess setzen,
    damit im Gespräch keine Abrufe laufen; für Zeiträume, die nicht im Speicher liegen, gibt es
    dann keine Belege, die Ansicht nennt den Grund.
+   **Allgemeine Ereignisse (E29):** Vor `CONTEXT_LIVE_FETCH=0` einmal
+   `GET /api/analytics/global-events` aufrufen (oder das Kästchen „Allgemeine Ereignisse“ auf
+   der Anomalien-Seite einschalten); das füllt den Zwischenspeicher
+   `backend/data/macro/eurostat_de.json` mit den Wirtschaftsdaten von Eurostat. Ohne ihn zeigt die
+   Instanz bei `CONTEXT_LIVE_FETCH=0` keine allgemeinen Ereignisse. `basis.fetched_at` der Antwort
+   ins Protokoll (Punkt 12).
 4b. **Erklärungsansätze** (Inkrement 5): Sie entstehen aus demselben Belegspeicher und den
    Bewertungen; ein eigener Vorabruf ist nicht nötig. Mit `CONTEXT_LIVE_FETCH=0` zeigt der
    Abschnitt „Mögliche Zusammenhänge“ für Zeiträume ohne gespeicherte Monate den Zustand „offen“

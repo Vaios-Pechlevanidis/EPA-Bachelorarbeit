@@ -1,11 +1,11 @@
 import React from "react";
 import { Delta } from "../ui/primitives";
 import { Star, TrendUp, TrendDown, Alert, Tag } from "../../icons";
-import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from "@/lib/rollingAverage";
+import { rollingReady, rollingWarnings } from "@/lib/rollingAverage";
 import { DataBasisTags, SmallBasisWarning } from "./DataBasis";
 import { MIN_REVIEWS_PER_WINDOW } from "@/lib/dataBasis";
 import { NEGATIVE_TOPIC_LABEL } from "@/lib/labels";
-import { CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from "@/lib/scoreText";
+import { CRITICAL_LABEL, SCORE_HINT } from "@/lib/scoreText";
 
 const fmt = (n, d = 1) => (isNaN(Number(n)) ? "—" : Number(n).toFixed(d).replace(".", ","));
 
@@ -139,44 +139,29 @@ function KPITile({ label, icon, value, valueSize = "lg", delta, footer, tone = "
   );
 }
 
-/* ---- Rollierende Schnitte (Inkrement 6, FA-08) -------------------------
-   Daten: GET /companies/{id}/ratings/trend?mode=rolling. Die Kachel beschreibt
-   nur die Lage des 12-Monats-Schnitts zum 24-Monats-Schnitt (keine Prognose),
-   nennt Zeitraum und n je Fenster und warnt bei kleiner Basis. Neutrale Farbe. */
-const fmtN = (n) => (n == null ? "–" : Number(n).toLocaleString("de-DE"));
+/* ---- Kachel-Fußzeilen ----------------------------------------------------
+   Seit 2026-10-13 tragen die Kacheln keine beschreibenden Zeilen mehr (n,
+   Zeitfenster, Erklärung); diese stehen nur im Detailfenster der Kachel. Auf
+   der Kachel bleibt allein die Warnung bei kleiner Basis (E12, E27). */
 
+/* Rollierende Schnitte (Inkrement 6, FA-08): Daten GET …/ratings/trend?mode=rolling;
+   Zeiträume, n und Lage des 12- zum 24-Monats-Schnitt im RollingModal. */
 function RollingFooter({ data }) {
-  if (!data) return "Sternebewertung, Mitarbeitende";
-  if (!data.anchor) return "keine datierten Bewertungen mit Gesamtnote";
-  const warnings = rollingWarnings(data);
+  const warnings = data?.anchor ? rollingWarnings(data) : [];
+  if (!warnings.length) return null;
   return (
-    <>
-      <span className="block tnum">
-        12 M: {fmtRollingMonth(data.short.from)} – {fmtRollingMonth(data.short.to)}, n = {fmtN(data.short.n)} · 24 M: ab {fmtRollingMonth(data.long.from)}, n = {fmtN(data.long.n)}
-      </span>
-      <span className="block">12-Monats-Schnitt {rollingPhrase(data)}.</span>
-      {warnings.length > 0 && (
-        <span className="flex items-center gap-1 text-amber-700" title="Warnung bei kleiner Datenbasis">
-          <span className="w-3 h-3 flex-none"><Alert /></span>
-          {warnings.join(" · ")}
-        </span>
-      )}
-    </>
+    <span className="flex items-center gap-1 text-amber-700" title="Warnung bei kleiner Datenbasis">
+      <span className="w-3 h-3 flex-none"><Alert /></span>
+      {warnings.join(" · ")}
+    </span>
   );
 }
 
-/* ---- Trend der Gesamtnote (D1, Modus score_months) ----------------------- */
+/* Trend der Gesamtnote (D1, Modus score_months); Fenster und n im TrendModal. */
 function TrendFooter({ trendData }) {
-  const raw = trendData?.raw;
-  if (!raw) return "Gesamtnote, Mitarbeitende";
+  if (!trendData?.raw || !trendData.nReviews) return null;
   return (
-    <>
-      <span className="block">Gesamtnote, {trendData.windowMonths} volle Monate vs. {trendData.windowMonths} davor</span>
-      <span className="block tnum">{scoreTrendWindowsText(raw)}</span>
-      {trendData.nReviews && (
-        <SmallBasisWarning n={Math.min(trendData.nReviews.current ?? Infinity, trendData.nReviews.previous ?? Infinity)} min={MIN_REVIEWS_PER_WINDOW} context="in einem Fenster" />
-      )}
-    </>
+    <SmallBasisWarning n={Math.min(trendData.nReviews.current ?? Infinity, trendData.nReviews.previous ?? Infinity)} min={MIN_REVIEWS_PER_WINDOW} context="in einem Fenster" />
   );
 }
 
@@ -230,12 +215,7 @@ export default function KPIGrid({
         value={avgScore != null ? fmt(avgScore) : "—"}
         delta={avgDelta}
         title={SCORE_HINT}
-        footer={
-          <>
-            <span className="block tnum">{scoreCountText(avgCount)}</span>
-            {avgCount != null && <SmallBasisWarning n={avgCount} min={MIN_REVIEWS_PER_WINDOW} />}
-          </>
-        }
+        footer={avgCount != null ? <SmallBasisWarning n={avgCount} min={MIN_REVIEWS_PER_WINDOW} /> : null}
         basis="stars"
         disabled={!companyId}
         onClick={onOpenScore}
@@ -292,13 +272,7 @@ export default function KPIGrid({
             {fmt(mostCriticalData.score)} / 5
           </Delta>
         ) : null}
-        footer={
-          <>
-            <span className="block">{CRITICAL_NOTE}</span>
-            {mostCriticalData?.n != null && <span className="block tnum">n = {fmtN(mostCriticalData.n)} Bewertungen in dieser Kategorie</span>}
-            {mostCriticalData?.n != null && <SmallBasisWarning n={mostCriticalData.n} min={MIN_REVIEWS_PER_WINDOW} />}
-          </>
-        }
+        footer={mostCriticalData?.n != null ? <SmallBasisWarning n={mostCriticalData.n} min={MIN_REVIEWS_PER_WINDOW} /> : null}
         basis="stars"
         disabled={!companyId}
         onClick={onOpenCritical}
@@ -316,12 +290,6 @@ export default function KPIGrid({
             ? <Delta tone="neg">n = {negativeTopicItem.mention_count}</Delta>
             : null
         }
-        footer={
-          <>
-            <span className="block">höchste Negativrate (Freitexte)</span>
-            {negativeTopicItem?.mention_count != null && <span className="block tnum">n = {fmtN(negativeTopicItem.mention_count)} Nennungen</span>}
-          </>
-        }
         basis="text"
         disabled={!companyId}
         onClick={() => {
@@ -334,8 +302,8 @@ export default function KPIGrid({
       />
     </div>
 
-    {/* Berechnungshinweis zum Ø Score (FA-38), wortgleich in Detailfenster und PDF (lib/scoreText.js) */}
-    <p className="mt-2 text-[11px] leading-4 text-slate-500" data-testid="score-hint">{SCORE_HINT}</p>
+    {/* Berechnungshinweis zum Ø Score (FA-38): seit 2026-10-13 nur noch als Tooltip der Kachel,
+        im Detailfenster (SorceModal) und im PDF (lib/scoreText.js) */}
     </div>
   );
 }

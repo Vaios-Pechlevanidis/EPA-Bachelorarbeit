@@ -117,22 +117,26 @@ def get_selection_context(
 
 @router.get("/global-events")
 def get_global_events(
-    all_events: bool = Query(False, alias="all", description="auch unbestätigte Vorschläge"),
+    all_events: bool = Query(False, alias="all", description="ohne Wirkung seit E29 (alle Ereignisse gelten als bestätigt)"),
 ):
     """
-    Allgemeine Ereignisse aus ``backend/data/global_events.json`` (Inkrement 4, Schritt 7),
-    standardmäßig nur die vom Autor bestätigten::
+    Allgemeine Ereignisse, seit 2026-10-13 automatisch aus amtlichen Wirtschaftsdaten
+    (E29, ``services/macro_events.py``: Konjunktureinbruch nach dem ESI, Inflationsschub
+    nach der HVPI-Rate, Eurostat)::
 
         {"events": [{"id", "date_from", "date_to", "title", "scope", "note", "url", "confirmed"}, ...],
-         "n_confirmed", "note"}
+         "n_confirmed", "basis": {"fetched_at", "sources"}, "note"}
 
-    Bestätigte Ereignisse erscheinen im Ereignisfenster als Belege vom Typ ``global``
+    Die Ereignisse erscheinen im Ereignisfenster als Belege vom Typ ``global``
     (Verlässlichkeit ``hypothese``) und als einblendbares Overlay im Diagramm der
     Detailseite, beschriftet als „Allgemeines Ereignis, Hypothese“.
     """
+    from services import macro_events
+
     events = load_global_events(confirmed_only=not all_events)
     return {
         "events": events,
         "n_confirmed": sum(1 for e in events if e.get("confirmed") is True),
+        "basis": macro_events.status(),
         "note": EVIDENCE_NOTE,
     }

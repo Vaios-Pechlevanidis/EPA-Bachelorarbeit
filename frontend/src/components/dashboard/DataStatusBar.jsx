@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ChevronDown, ChevronRight, Database } from "lucide-react"
 import { useDataStatus } from "@/hooks/useDataStatus"
-import { evidenceText, lastImportText, marketText, platformText, sourceLine, timestampCell } from "@/lib/dataStatusText"
+import { evidenceText, lastImportText, marketText, platformText, sourceLine, summaryText, timestampCell } from "@/lib/dataStatusText"
 
 /* ============================================================================
    DataStatusBar — Datenstand und Abdeckung (Inkrement 6, FA-37).
@@ -11,7 +11,9 @@ import { evidenceText, lastImportText, marketText, platformText, sourceLine, tim
    Abrufdatum bei Kununu ist nicht gespeichert), der Stand des
    Kurs-Zwischenspeichers (E15) und des Belegspeichers (E18) und der Vergleich
    mit der Plattform aus der Metadatei (nur vom Autor gefüllt, sonst „nicht
-   hinterlegt“). Aufklappbar: Zeitstempel je Feld mit ihrer Bedeutung.
+   hinterlegt“). Standardmäßig zugeklappt: eine Kurzzeile (Bewertungen je
+   Quelle, jüngste Bewertung); „Datengrundlage“ klappt alle Angaben
+   auf, darin aufklappbar die Zeitstempel je Feld mit ihrer Bedeutung.
    Daten: GET /companies/{id}/data-status (useDataStatus). Nur Beschreibung.
    Die Texte stehen in lib/dataStatusText.js; der PDF-Export nutzt dieselben.
    ============================================================================ */
@@ -61,9 +63,11 @@ function TimestampTable({ data }) {
   )
 }
 
-/* companyId: Firma; compact: einzeilig mit aufklappbaren Details. */
+/* companyId: Firma. Zugeklappt eine Kurzzeile (summaryText); aufgeklappt alle
+   Angaben je Quelle und darunter die aufklappbare Zeitstempel-Tabelle. */
 export function DataStatusBar({ companyId, className = "" }) {
   const { loading, error, data } = useDataStatus(companyId)
+  const [expanded, setExpanded] = useState(false)
   const [open, setOpen] = useState(false)
   if (!companyId) return null
   const emp = data?.sources?.employee
@@ -74,20 +78,37 @@ export function DataStatusBar({ companyId, className = "" }) {
   const thresholds = data?.thresholds ?? { min_reviews_per_month: 5, min_evaluated_months: 12 }
   return (
     <section
-      className={`bg-white border border-slate-200 rounded-lg shadow-xs px-4 py-2 text-[11px] leading-4 ${className}`}
+      className={`bg-white border border-slate-200 rounded-lg shadow-xs px-4 py-1.5 text-[11px] leading-4 ${className}`}
       aria-label="Datenstand"
     >
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-1">
+      <button
+        type="button"
+        className="w-full flex items-center gap-3 text-left group"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        disabled={!data}
+      >
         <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 flex-none">
           <Database className="w-3 h-3" aria-hidden="true" />
           Datenstand
         </span>
-        {loading ? (
-          <span className="text-slate-500">Lade Datenstand…</span>
-        ) : error ? (
-          <span className="text-slate-500">Datenstand konnte nicht geladen werden: {error}</span>
-        ) : data ? (
-          <>
+        <span className="text-slate-600 min-w-0 truncate">
+          {loading
+            ? "Lade Datenstand…"
+            : error
+              ? `Datenstand konnte nicht geladen werden: ${error}`
+              : data ? summaryText(data) : null}
+        </span>
+        {data && (
+          <span className="inline-flex items-center gap-1 text-slate-500 group-hover:text-slate-800 ml-auto flex-none">
+            {expanded ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />}
+            {expanded ? "Ausblenden" : "Datengrundlage"}
+          </span>
+        )}
+      </button>
+      {expanded && data && (
+        <div className="mt-1.5 pt-1.5 pb-0.5 border-t border-slate-100 space-y-1">
+          <div className="flex flex-col gap-y-1">
             <Item label="Mitarbeitende" title={`Sternebewertung und Freitexte der Mitarbeitenden; bewertet = Monat mit mindestens ${thresholds.min_reviews_per_month} Bewertungen (E4), geeignet = mindestens ${thresholds.min_evaluated_months} bewertete Monate`}>
               {sourceLine(emp)}
             </Item>
@@ -110,22 +131,22 @@ export function DataStatusBar({ companyId, className = "" }) {
                 {evidenceText(evidence)}
               </Item>
             )}
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 underline-offset-2 hover:underline ml-auto flex-none"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-            >
-              {open ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />}
-              Zeitstempel
-            </button>
-          </>
-        ) : null}
-      </div>
-      {open && data && (
-        <div className="mt-2 pt-2 border-t border-slate-100 space-y-1.5">
-          <TimestampTable data={data} />
-          <p className="m-0 text-slate-500">{data.note}</p>
+          </div>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 underline-offset-2 hover:underline"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+          >
+            {open ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />}
+            Zeitstempel
+          </button>
+          {open && (
+            <div className="pt-1 space-y-1.5">
+              <TimestampTable data={data} />
+              <p className="m-0 text-slate-500">{data.note}</p>
+            </div>
+          )}
         </div>
       )}
     </section>

@@ -270,7 +270,10 @@ GDELT_ENV = "CONTEXT_GDELT"
 CURRENT_MONTH_MAX_AGE = timedelta(hours=12)
 FAILED_FETCH_TTL = 15 * 60      # Sekunden ohne neuen Versuch nach einem fehlgeschlagenen Abruf
 STORE_VERSION = 1
-GLOBAL_EVENTS_PATH = BACKEND_DIR / "data" / "global_events.json"
+# Allgemeine Ereignisse kommen seit 2026-10-13 automatisch aus Wirtschaftsdaten (E29,
+# services/macro_events.py); die Datei global_events.json entfällt. Ein gesetzter Pfad
+# liest stattdessen eine Datei im alten Format (für Tests und Vergleiche).
+GLOBAL_EVENTS_PATH: Optional[Path] = None
 MAX_GLOBAL_EVENT_MONTHS = 6     # vorläufig (E20): ein allgemeines Ereignis dauert höchstens so viele Monate
 
 EVIDENCE_NOTE = ("Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie sind keine Aussage über "
@@ -523,11 +526,17 @@ def event_months(event: Dict[str, Any]) -> int:
 
 def load_global_events(path: Optional[Path] = None, confirmed_only: bool = True,
                        max_months: int = MAX_GLOBAL_EVENT_MONTHS) -> List[Dict[str, Any]]:
-    """Allgemeine Ereignisse aus ``backend/data/global_events.json``; standardmäßig nur
-    bestätigte (``confirmed`` true). Fehlende oder unlesbare Datei und unvollständige
-    Einträge ergeben keine Ereignisse, keinen Fehler. Einträge, die länger als ``max_months``
-    Kalendermonate dauern, werden zurückgewiesen (Dauerregel, E20): Ein allgemeines Ereignis
-    muss datierbar sein; ein Zeitraum über Jahre hinge an fast jeder Markierung."""
+    """Allgemeine Ereignisse. Ohne ``path`` und ohne ``GLOBAL_EVENTS_PATH`` automatisch aus
+    Wirtschaftsdaten (E29, ``macro_events.global_events``; alle gelten als bestätigt, höchstens
+    ``max_months`` Monate). Mit Pfad aus einer Datei im Format von ``global_events.json``;
+    standardmäßig nur bestätigte (``confirmed`` true). Fehlende oder unlesbare Datei und
+    unvollständige Einträge ergeben keine Ereignisse, keinen Fehler. Einträge, die länger als
+    ``max_months`` Kalendermonate dauern, werden zurückgewiesen (Dauerregel, E20): Ein
+    allgemeines Ereignis muss datierbar sein; ein Zeitraum über Jahre hinge an fast jeder
+    Markierung."""
+    if path is None and GLOBAL_EVENTS_PATH is None:
+        from services import macro_events
+        return macro_events.global_events(max_months=max_months)
     path = Path(path or GLOBAL_EVENTS_PATH)
     if not path.exists():
         return []
@@ -606,8 +615,8 @@ def evidence_for_window(
     (wenn erlaubt) abgerufen, die Quellen nebeneinander in je einem Strang (der
     Mindestabstand gilt je Quelle; fällt eine Quelle aus, liefert die andere weiter);
     ``fetchers`` ordnet Quellen Abruffunktionen zu (Tests).
-    ``events`` sind allgemeine Ereignisse (Schritt 7); None lädt die bestätigten aus
-    ``global_events.json``, eine leere Liste schaltet sie ab."""
+    ``events`` sind allgemeine Ereignisse (Schritt 7); None lädt sie über
+    ``load_global_events`` (seit E29 automatisch), eine leere Liste schaltet sie ab."""
     now = now or utc_now()
     months = window_months(window)
     used_sources = list(sources) if sources else available_sources(info)

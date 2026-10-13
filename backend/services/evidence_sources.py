@@ -15,8 +15,8 @@ Quellen und Typen:
 - ``eqs`` EQS News, zweite Quelle für börsennotierte Unternehmen (Schritt 5),
   Typ ``adhoc``, Verlässlichkeit ``hoch``.
 - ``gdelt`` GDELT DOC, nur hinter dem Schalter ``CONTEXT_GDELT=1`` (Standard aus).
-- ``global`` allgemeine Ereignisse aus ``backend/data/global_events.json``
-  (Schritt 7), Typ ``global``, Verlässlichkeit ``hypothese``.
+- ``global`` allgemeine Ereignisse, seit E29 automatisch aus Wirtschaftsdaten
+  (``services/macro_events.py``; Schritt 7), Typ ``global``, Verlässlichkeit ``hypothese``.
 
 Der Typ ``market`` ist reserviert und wird nicht erzeugt. Zwischen zwei
 Abrufen derselben Quelle liegen mindestens ``MIN_FETCH_INTERVAL_S`` Sekunden;
