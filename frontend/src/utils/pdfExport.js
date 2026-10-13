@@ -7,6 +7,8 @@
  *                                    Warnung bei kleiner Basis und Datenbasis (FA-25, FA-26)
  *   03 Zeitverlauf + Topics im Detail — zwei Diagramm-Karten mit Legende und Kennzahlen
  *   04 Anomalien im Verlauf        — Diagramm-Karte, Eignung, markierte Veränderungen und Einzelmonate
+ *                                    (Einzelmonate nur mit SHOW_OUTLIER_MONTHS; Hinweise „ungeprüft“
+ *                                    und Prüfumfang aus config.js, E30)
  *   05 Topic-Übersicht             — Stats-Strip, Sentiment-Tabs, Tabelle aller Topics (mehrseitig)
  *
  * Chart-Extraktion: SVG → PNG (html2canvas als Rückfall), Diagramme aus dem DOM des Dashboards.
@@ -22,7 +24,7 @@ import { BASIS, MIN_REVIEWS_PER_WINDOW } from '../lib/dataBasis';
 import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from '../lib/rollingAverage';
 import { evidenceText, fmtN, lastImportText, marketText, platformText, sourceLine, thresholdsNote, timestampCell } from '../lib/dataStatusText';
 import { fmtPeriod } from '../lib/anomalySeries';
-import { SHOW_FORECAST } from '../config';
+import { OUTLIER_UNVALIDATED_NOTE, SHOW_FORECAST, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, isValidatedScope } from '../config';
 import { NEGATIVE_TOPIC_LABEL, TIMELINE_LABEL } from '../lib/labels';
 import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from '../lib/scoreText';
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1749,12 +1751,15 @@ export const exportKPIsAsPDF = async (kpiData) => {
     // ───────────────────────────────────────────────────────────────────────
     // SEITE 4 — ANOMALIEN IM VERLAUF (Inkrement 1, Karte unter der Diagrammzeile)
     // ───────────────────────────────────────────────────────────────────────
-    y = startSection('Anomalien im Verlauf', 'auffällige Veränderungen, Einzelmonate, Eignung der Reihe');
+    y = startSection('Anomalien im Verlauf', SHOW_OUTLIER_MONTHS
+        ? 'auffällige Veränderungen, Einzelmonate, Eignung der Reihe'
+        : 'auffällige Veränderungen, Eignung der Reihe');
     y = drawSectionTitle(doc, y, 5, 'Anomalien im Verlauf', 'Verlauf · auffällige Veränderungen');
 
     const an = anomalyData;
     const anomalies = an?.anomalies || [];
-    const outliers = an?.outliers || [];
+    // Einzelmonate (E14) nur mit SHOW_OUTLIER_MONTHS: sonst weder Legende noch Kachel noch Liste.
+    const outliers = SHOW_OUTLIER_MONTHS ? (an?.outliers || []) : [];
     const elig = an?.eligibility || null;
     const minReviews = an?.minReviews ?? dataStatus?.thresholds?.min_reviews_per_month ?? 5;
 
@@ -1768,6 +1773,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
     }
     if (outliers.length) {
         anLegend.push({ label: 'Raute = auffälliger Einzelmonat (unter bzw. über den Nachbarmonaten, kein neues Niveau)', color: C.s500, shape: 'diamond' });
+        anLegend.push({ label: OUTLIER_UNVALIDATED_NOTE, shape: 'none' });
     }
     anLegend.push({ label: `Sternebewertung, Monatsmittel, Monate mit mindestens ${minReviews} Bewertungen mit Wert`, sourceNote: true });
 
@@ -1778,7 +1784,9 @@ export const exportKPIsAsPDF = async (kpiData) => {
             sub: an?.monthsInSpan ? `von ${an.monthsInSpan} Monaten im Zeitraum` : 'Monate mit genug Bewertungen',
         },
         { label: 'Veränderungen', value: String(anomalies.length), sub: 'auffällige Niveauwechsel', tone: anomalies.length ? 'warn' : 'neutral' },
-        { label: 'Einzelmonate', value: String(outliers.length), sub: 'auffällig, kein neues Niveau', tone: outliers.length ? 'warn' : 'neutral' },
+        ...(SHOW_OUTLIER_MONTHS
+            ? [{ label: 'Einzelmonate', value: String(outliers.length), sub: 'auffällig, ungeprüft (E30)', tone: outliers.length ? 'warn' : 'neutral' }]
+            : []),
         {
             label: 'Erkennung',
             value: elig ? (elig.eligible ? 'geeignet' : 'nicht geeignet') : '–',
@@ -1825,6 +1833,14 @@ export const exportKPIsAsPDF = async (kpiData) => {
         doc.setTextColor(...C.s500);
         y = drawWrapped(doc, `Hinweis zum Status: ${an.statusHint}`, PAGE.mx, y + 2, PAGE.cw, { lineH: 3.2 }) + 1;
     }
+    // Reihe außerhalb des geprüften Umfangs (DZ1, E30), wie ScopeHint im Dashboard
+    if (an && !an.error && !(elig && !elig.eligible) && !isValidatedScope(an)) {
+        y = ensureSpace(y, 12);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...C.s500);
+        y = drawWrapped(doc, `${UNVALIDATED_SCOPE_NOTE}.`, PAGE.mx, y + 2, PAGE.cw, { lineH: 3.2 }) + 1;
+    }
 
     // Markierungen als Liste: im Dashboard als Tooltip, im PDF ausgeschrieben
     if (anomalies.length) {
@@ -1868,7 +1884,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
     }
     if (outliers.length) {
         y = ensureSpace(y + 5, 24);
-        y = drawListTitle(doc, y, 'Auffällige Einzelmonate', `${outliers.length} ${outliers.length === 1 ? 'Monat' : 'Monate'} · Abweichung vom Niveau der Nachbarmonate, kein neues Niveau`);
+        y = drawListTitle(doc, y, 'Auffällige Einzelmonate', `${outliers.length} ${outliers.length === 1 ? 'Monat' : 'Monate'} · Abweichung vom Niveau der Nachbarmonate, kein neues Niveau · ungeprüft (E30)`);
         y = drawMiniTable(doc, y, {
             cols: [
                 { label: 'Monat', w: 22 },

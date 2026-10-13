@@ -4,9 +4,9 @@
 |---|---|
 | Inkrement | 2 (Nachtrag, Zyklus 2) |
 | Anforderungen | Wunsch des Autors vom 2026-10-04: einzelne stark abweichende Monate sichtbar machen (Anlass Telekom Dezember 2022) |
-| Entscheidungen | E14 in `docs/entscheidungen.md`; E3, E4, E9 unverändert |
-| Status | umgesetzt; Schwellen **vorläufig** |
-| Stand | 2026-10-04 |
+| Entscheidungen | E14 in `docs/entscheidungen.md`; E3, E4, E9 unverändert; Zufallsbefund aus E30 (Befund 2026-10-13) |
+| Status | umgesetzt; Schwellen **vorläufig**; Treffsicherheit **ungeprüft**, als „ungeprüft“ gekennzeichnet; per Schalter `VITE_SHOW_OUTLIER_MONTHS` ausblendbar (2026-10-13) |
+| Stand | 2026-10-13 |
 
 ## 1. Vorstellung
 
@@ -24,6 +24,32 @@ gleichen Format wie beim Vergleich, mit Detailfenster.
 
 Nutzen: Kurze Einbrüche oder Spitzen, die die Niveauerkennung bewusst übergeht, werden
 sichtbar, und man kommt direkt zu den Bewertungen des Monats.
+
+**Nachtrag 2026-10-13 – Kennzeichnung und Schalter:**
+
+- **Kennzeichnung:** Überall, wo Einzelmonate erklärt werden, steht der Zusatz „Ungeprüft: in
+  der Simulation etwa so häufig wie bei reinem Zufall (E30)“:
+  - in der Legende unter dem Monatsverlauf (Karte, Detailseite, vergrößerte Kurskarte im
+    Aktien-Dashboard),
+  - im Tooltip einer Raute,
+  - unter der Liste „Einzelmonate“ der Karte „Markierungen“,
+  - im Text über dem Vergleich, wenn ein Einzelmonat ausgewählt ist,
+  - im PDF-Export: Legende, Kachel „Einzelmonate“ („auffällig, ungeprüft (E30)“) und Kopf der
+    Liste.
+
+  Der Wortlaut steht einmal in `frontend/src/config.js` (`OUTLIER_UNVALIDATED_NOTE`), damit alle
+  Ansichten dasselbe zeigen.
+- **Schalter `VITE_SHOW_OUTLIER_MONTHS`** (beim Bauen, Muster wie `VITE_SHOW_FORECAST`, E28):
+  Standard an; `false` oder `0` blendet die Einzelmonate im Frontend ganz aus.
+  - Monatsverlauf: keine Rauten, keine Einzelmonat-Zeile im Tooltip, kein Legendeneintrag.
+  - Detailseite: kein Umschalter „Veränderungen“ / „Einzelmonate“ und keine Liste;
+    `?liste=einzelmonate` zeigt die Veränderungen.
+  - Zähler: kein Einzelmonat in den Untertiteln von Karte und Detailseite.
+  - PDF-Export: weder Kachel noch Liste „Auffällige Einzelmonate“; das Inhaltsverzeichnis nennt
+    sie nicht.
+  - Ein Monat aus einem älteren Link (`?from=2022-12&to=2022-12` oder `?month=2022-12`) ist dann
+    eine freie Auswahl dieses Monats (Doku 06, E17), ohne den Text „Auffälliger Einzelmonat“.
+  - Das Backend liefert `outlier_months` unverändert; der Schalter wirkt nur auf die Anzeige.
 
 ## 2. Erklärung
 
@@ -64,6 +90,18 @@ Einzelmonate.
 
 ## 4. Grenzen
 
+- **Zufallsbefund (E30, Befund 2026-10-13):** In der semi-synthetischen Prüfung entstehen in den
+  15 geeigneten Reihen (Mitarbeitende, Gesamtbewertung) **ohne** eingesetzte Veränderung im
+  Mittel 8,9 Einzelmonate je Wiederholung, wenn die Noten über die Bewertungen permutiert
+  werden, und 5,4, wenn die bewerteten Monate ihre Plätze tauschen. Auf den echten Reihen sind
+  es 9: etwa so viele wie bei permutierten Noten und rund 1,7-mal so viele wie bei getauschten
+  Monaten. Einzelmonate treten damit etwa so häufig auf wie bei reinem Zufall; aus der Zahl
+  allein lässt sich nicht ablesen, dass ein gemeldeter Monat mehr ist als Rauschen. Die Werte
+  stehen nebeneinander und werden nicht verrechnet; es gibt keine Signifikanzaussage (E30). Die
+  Regel und ihre Parameter bleiben unverändert (E14).
+- Ob die gemeldeten Einzelmonate zutreffen, ist nicht geprüft: Die Referenzzeiträume schließen
+  einzelne Ausreißermonate aus (Regel 4, E5), der Hauptwert des Abgleichs nach Regel 6 wertet
+  nur Niveauwechsel (E14, Aktualisierung 2026-10-10). Deshalb der Zusatz „ungeprüft“ in der Anzeige.
 - Viele Einzelmonate beruhen auf 5 bis 11 Bewertungen; ein solcher Monat kann Zufall sein.
 - Keine Aussage über Ursachen.
 - Ränder der Reihe und zwei aufeinanderfolgende auffällige Monate werden nicht gemeldet.
@@ -78,9 +116,16 @@ Einzelmonate.
 | Regel | `backend/tests/anomaly/test_outlier_months.py`: einzelner Einbruch und einzelne Spitze, kein Einzelmonat am Niveauwechsel, Mindestabweichung 0,5, Schwelle 3 σ bei Streuung, nicht bewertete Monate, Sortierung, Route mit `outlier_months` und `dimension=all` |
 | Echte Daten | 2026-10-04, Mitarbeitende, Gesamtbewertung: Faktor 2,5 / 3 / 3,5 → 18 / 9 / 3 Einzelmonate in 15 Reihen; Liste in E14 |
 | Browser | Telekom: Rauten 2015-05, 2017-05, 2022-12; Auswahl Dezember 2022 → 11 Bewertungen; Dashboard-Karte mit Rauten, Legende und Zähler |
+| Simulation (E30) | `backend/data/calibration/semisynthetisch_2026-10-13.json`: `results.total`, Zeilen mit `delta` 0, `outliers_mean` 0,5913 (Permutation der Noten) bzw. 0,3583 (getauschte Monate) je Reihe und Wiederholung, mal 15 Reihen = 8,9 bzw. 5,4; `series[].observed_outliers` summiert 9 |
+| Kennzeichnung und Schalter (2026-10-13) | `npx eslint` ohne Befund für `config.js`, `AnomalyCard.jsx`, `Anomalies.jsx`, `pdfExport.js`; `vite build` im Standard und mit `VITE_SHOW_OUTLIER_MONTHS=false` (im Bündel ist der Wert eingesetzt). Browser, Telekom, Standardbau: Legende und Liste „Einzelmonate“ (Gesamtbewertung) sowie Tooltip der Raute Dez. 2022 (Dimension Kommunikation) mit dem Zusatz. Bau mit `false`: keine Rauten, kein Umschalter, `?liste=einzelmonate` zeigt die 4 Veränderungen, Untertitel ohne Einzelmonate (Detailseite und Dashboard-Karte), Hinweis „Stufe oder Monat anklicken“, keine Konsolenfehler aus der App. PDF-Export nicht im Browser erzeugt (nur Code und Bau geprüft) |
 
 ## 6. Offene Punkte
 
+- **Entscheidung des Autors offen:** Baut die Evaluationsinstanz (DZ3) mit
+  `VITE_SHOW_OUTLIER_MONTHS=false`? Vorschlag und Folgen in `docs/evaluationsinstanz.md`.
+- Eine Prüfung der Einzelmonate bräuchte eine eigene Annotation einzelner Monate oder eine
+  vorab festgelegte Prüfung mit anderen Daten (E30: keine Nachkalibrierung mit denselben 15
+  Reihen).
 - Faktor 3, Mindestabweichung 0,5 Sterne und 3 Nachbarmonate sind vorläufig.
 - Sollen Einzelmonate mit sehr wenigen Bewertungen (5–6) anders dargestellt werden?
 - Vorher-Nachher-Vergleich für einen Einzelmonat (Monat gegen Nachbarmonate) ist nicht

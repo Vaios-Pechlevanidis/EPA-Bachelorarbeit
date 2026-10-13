@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-13 (E30 neu am 2026-10-13, Hauptlauf ausstehend; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-13 (E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -239,6 +239,142 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   „mittel“), die übrigen in 16 von 20 (5 von 20); beschreibend, ohne Signifikanzaussage.
   Parameter und Annotationsdatei bleiben unverändert; ein weiterer Lauf mit dieser Referenz
   ist nicht vorgesehen.
+- **Aktualisierung 2026-10-13 – Herkunft im Repository, Version 3:**
+  - **Version 3 von `backend/data/annotations.json`:** ändert nur `hinweise.zweck` und
+    `hinweise.wichtig`. Bis Version 2 beschrieb sich die Datei als manuell erstellte
+    Referenzannotationen (Gold-Standard), eingetragen, bevor Erkennungscode existiert. Das trifft
+    seit 2026-10-03 (Reihenfolge aufgegeben) und 2026-10-09 (agentengestützte Entstehung) nicht mehr
+    zu. Die Selbstbeschreibung nennt jetzt: regelbasiert und agentengestützt, ein Annotator,
+    Freigabe nicht blind, kein unabhängiger Goldstandard. Unternehmen, Quelle, Dimension, Monate,
+    Richtung und `note` aller 20 Einträge sind unverändert (`backend/tests/test_annotations_file.py`).
+  - **Ablageort `docs/dz1-referenz/`:** Regelprüfer `dz1_rechner.py` und Agentendefinition als
+    unveränderte Kopien (SHA-256 im README); Entscheidungsprotokoll vom 2026-10-09 in bereinigter
+    Fassung; Prüfskript `pruefe_bereinigung.py`. Bisher lagen diese Dateien nur außerhalb des
+    Repositorys.
+    - Die Bereinigung ersetzt 91 Titel bzw. titelnahe Stellen durch „[Titel entfernt]“ (E7), nach
+      den Bereinigungsregeln B1–B3 im README (vollständige oder fast wörtliche Titel, wörtliche
+      Titelstücke ab vier Wörtern außer Namen und Zahlenangaben, nachformulierte Titelaussagen).
+      In drei Sätzen sind dafür Satzzeichen angepasst; sonst ist der Inhalt unverändert.
+    - Maschinell geprüft gegen den Belegspeicher und die Stufe-B-Abrufe des Annotationslaufs: kein
+      Titel ab 25 Zeichen, keine Folge von 8 Wörtern eines Titels; Treffer mit 4 und 5 Wörtern
+      einzeln gesichtet (Namen, Zahlenangaben, allgemeine Wendungen).
+  - **Begriffe:** „Annotationslauf 1“ und „Annotationslauf 2“ meinen die beiden Läufe des Agenten,
+    der die Referenz erzeugt hat; Annotationslauf 2 (2026-10-09) lieferte die 20 Einträge. Der
+    „erste Lauf“ in E5 und E9 bleibt der einmalige DZ1-Abgleich vom 2026-10-10.
+  - **Setzungen des Agenten (keine Protokollregeln):**
+    1. Bleiben auf dem neuen Niveau: Folgemittel mindestens |Δ|/2 und erster Folgemonat mindestens
+       0,25 Sterne in Sprungrichtung vom Vorniveau; ohne bewerteten Folgemonat kein Eintrag.
+    2. Vorniveau aus mindestens drei bewerteten Monaten.
+    3. Ein Monat mit 5–9 Bewertungen braucht einen weiteren Monat mit mindestens 0,5 Sternen
+       Abweichung in Sprungrichtung.
+    4. Bei mehr als drei Kandidaten Auswahl nach größtem |Δ| (Regel 5).
+    5. Abgrenzung nach der Definition: vom ersten abweichenden bis zum ersten Monat auf dem neuen
+       Niveau.
+    6. Anker nur mit Arbeitgeberbezug für das Unternehmen selbst; ohne Produkt-, Zahlen-, Kurs- und
+       Formalmeldungen und ohne Rankings; Ereignisse mit klar entgegengesetzter erwarteter Wirkung
+       zählen nicht, richtungsneutrale große Ereignisse (Vorstandswechsel, Übernahmen) zählen;
+       beurteilt nur nach Titel, Datum, Herausgeber und Kategorie.
+  - **Verworfener Annotationslauf 1:** Vor Annotationslauf 2, aus dem `f50b727` stammt, hat der
+    Agent einen ersten Annotationslauf mit 26 Einträgen abgebrochen und nicht committet. Damals
+    verlangte Setzung 1 nur 0,25 Sterne im Mittel der Folgemonate; nach ihrer Schärfung hat er neu
+    annotiert.
+    - Das Protokoll nennt dazu 12 bestanden und 14 gescheitert.
+    - Nachgerechnet mit dem archivierten Regelprüfer sind 11 der 26 Zeiträume regelkonform und 15
+      verworfen. 6 sind unverändert übernommen, 7 überlappen mit einem Eintrag aus
+      Annotationslauf 2, 13 haben kein Gegenstück.
+    - Die Zahl 12/14 ist damit nicht nachvollziehbar.
+    - Annotationslauf 1 wurde auf die Sperren geprüft: 66 Werkzeugaufrufe, kein Verstoß (Protokoll,
+      Abschnitt 2).
+  - **Korrektur:** Die Aktualisierung vom 2026-10-09 sagt „Änderungen bei der Prüfung: keine“. Das
+    gilt für die Prüfung der 20 Vorschläge durch den Autor. Den verworfenen Annotationslauf 1 und
+    die geschärfte Setzung nannte E5 bisher nicht.
+  - **Nachprüfung** (`backend/tests/test_dz1_referenz_archiv.py`, offline aus den Serien-CSVs):
+    - 19 Einträge sind regelkonform; einer ist ein Zweifelsfall mit Ereignisanker (Compugroup
+      Medical Deutschland, 2021-04 bis 2021-05, Δ +0,47).
+    - Richtung und Zahlen jeder `note` entsprechen dem Regelprüfer.
+    - Regel 5 ist in allen 8 Reihen mit Einträgen erfüllt.
+    - 6 der 7 geeigneten Reihen ohne Eintrag haben keinen regelkonformen Kandidaten. Carl Zeiss hat
+      einen (2023-04), den der Agent in Stufe A nach der Definition verworfen hat.
+    - Nicht mechanisch prüfbar sind die Abgrenzung (Setzung 5), die Auswahl (Setzung 4), das
+      Trendurteil (Regel 2) und die Ankerwahl (Setzung 6).
+  - **Grenzen für DZ1:** unverändert (siehe Aktualisierung 2026-10-09). Erkennungsparameter (E9,
+    E14) und Regel 6 bleiben unverändert; der DZ1-Abgleich vom 2026-10-10 wird nicht wiederholt.
+- **Aktualisierung 2026-10-13 – blinde Zweitannotation vorbereitet:** Die Referenz stammt bisher von
+  einem Annotator, nicht blind gegenüber der Erkennung (Aktualisierung 2026-10-09). Für eine zweite
+  Person, die weder Unternehmen noch Kalenderdaten sieht, sind die Werkzeuge vorbereitet; Durchführung
+  offen. Regel 8 gilt bis dahin unverändert (Autor einziger Annotator).
+  - **Blinder Bogen:** `backend/scripts/make_annotation_sheet.py --blind [--companies <ids>] [--seed <Zahl>]`
+    schreibt `backend/data/annotationsbogen_blind.html`. Die Reihen heißen „Reihe A“, „Reihe B“ … in
+    zufälliger, durch den Seed fester Reihenfolge. Die Monate heißen M001 … und zählen je Reihe
+    fortlaufend die Kalendermonate ab ihrem ersten Monat; Lücken werden als leere Monate eingefügt.
+    Das HTML enthält keine Jahreszahl, keinen Namen, keine id, keinen Dateinamen, kein
+    Erzeugungsdatum und nennt die Plattform nicht; das Skript prüft das vor dem Schreiben. Die
+    Protokollregeln behalten ihre Nummern; Regel 7 (Ereignisanker) ist als entfallen ausgewiesen, die
+    Regeln 8, 9 und 11 stehen sinngemäß für die zweite Person, jede Reihe wird für sich beurteilt,
+    blind gilt nur „Reihe allein“. Der Schlüssel `backend/data/annotationsbogen_blind_schluessel.json`
+    (Zuordnung Reihe -> Unternehmen, Mxxx -> YYYY-MM, Seed, Prüfsumme des Bogens) bleibt beim Autor
+    und ist über `.gitignore` ausgeschlossen. Ohne `--blind` ist die Ausgabe Byte für Byte
+    unverändert (Test).
+  - **Rückweg:** `backend/scripts/blind_annotations.py`:
+    - `--template` erzeugt eine leere Vorlage `data/annotations_zweitperson_blind.json` mit den Reihen
+      und ihren Indexbereichen, ohne Zuordnung.
+    - Ohne Option übersetzt das Skript die ausgefüllte Datei mit dem Schlüssel in das Schema von
+      `annotations.json`: Name aus `data_density.json`, YYYY-MM, auch die Monatsindizes der `note`,
+      die wie die Felder gelesen werden, also auch „M5“. Es schreibt `data/annotations_zweitperson.json`
+      mit `hinweise.herkunft` und prüft sie mit `validate_annotations` (offline, mit den Serien-CSVs).
+    - `--for-person` gibt den Prüfbericht zusätzlich in der Schreibweise des Bogens aus.
+    - `data/annotations.json` wird nie geschrieben.
+    - Tests: `backend/tests/test_blind_annotations.py`, darunter Schlüssel und Rückübersetzung invers.
+      Auf den echten Dateien ergeben die 20 Einträge des Autors nach Hin- und Rückübersetzung genau sich selbst.
+  - **Ablauf:**
+    1. Teilmenge und Person durch den Autor festlegen und hier notieren, bevor die Person beginnt.
+    2. Blinden Bogen und Vorlage erzeugen.
+    3. Bogen, Vorlage und die Abschnitte 1–4 und 6 aus `docs/annotation-anleitung.md` übergeben.
+       Nicht übergeben werden Schlüssel, Repository, Dashboard, `annotations.json` und Serien-CSVs.
+       Plattform, Zeitraum und Stand der Daten werden auch mündlich nicht genannt.
+    4. Rückübersetzung und Validierung; Fehler gehen in blinder Schreibweise an die Person zurück.
+    5. Blinde und übersetzte Datei unverändert in einem eigenen Commit ablegen.
+    6. Vergleich: `compare_annotations.py --b data/annotations_zweitperson.json --series data/annotations_zweitperson.json --json …`.
+    7. Optional nach der Abgabe die Person fragen, ob sie Reihen aneinander ausgerichtet oder
+       Kalendermonate vermutet hat, und die Antwort mit dem Ergebnis festhalten.
+  - **Maß:**
+    - Hauptmaß der Übereinstimmung bleibt der Abgleich nach Regel 6: Toleranz ±1 Monat, gleiche
+      Richtung, Eins-zu-eins. Berichtet werden übereinstimmende Zeiträume, nur beim Autor, nur bei der
+      Person und der Anteil der Reihen, in denen beide keinen Zeitraum sehen.
+    - Ergänzend: Cohens κ (Cohen 1960) auf Monatsebene über die bewerteten Monate der verglichenen
+      Reihen, gesamt und je Reihe. Kategorien sind `rise`, `fall` und `keine`; Monate innerhalb eines
+      Zeitraums tragen dessen Richtung. Der Bericht nennt p_o, p_e und die Kreuztabelle mit.
+    - κ kennt keine Toleranz und reagiert wegen der seltenen Zeiträume stark auf Verschiebungen.
+      Auf den 1019 bewerteten Monaten der 15 Reihen liegt p_e bei rund 0,95.
+    - Beispiel: Verschiebt man jeden Referenzzeitraum des Autors um einen Monat, stimmen nach Regel 6
+      weiterhin 20 von 20 überein, κ sinkt aber auf 0,31. Bei zwei Monaten sind es 9 von 20 und κ 0,11.
+    - κ wird deshalb nur zusammen mit Regel 6 berichtet; beide sind beschreibend, keines sagt, wer
+      richtig liegt.
+  - **Vorschlag zur Teilmenge (Entscheidung des Autors offen):**
+    - Variante A: alle 15 geeigneten Reihen (2547 Kalendermonate, davon 1019 bewertet).
+    - Variante B: mindestens 6 Reihen, je 3 aus den 8 Reihen mit Eintrag des Autors (ids 19, 20, 21,
+      24, 25, 27, 28, 33) und 3 aus den 7 ohne Eintrag (ids 3, 4, 7, 8, 14, 15, 26). Gezogen per Los
+      mit notiertem Seed, nicht danach, wie die Erkennung in einer Reihe abschneidet.
+    - In beiden Varianten wird die Auswahl festgelegt und hier vermerkt, bevor die Person beginnt.
+  - **Grenzen der blinden Fassung:**
+    - Länge der Reihe und Anzahl der Bewertungen je Monat bleiben sichtbar und erlauben grobe
+      Rückschlüsse auf die Unternehmensgröße.
+    - Die Indizes zählen je Reihe ab M001, die Reihen liegen aber nicht beliebig zueinander. Von den
+      15 geeigneten Reihen enden 6 im selben Kalendermonat, 4 in einem zweiten und 2 in einem
+      dritten; 8 beginnen innerhalb von 13 Kalendermonaten (Stand der Serien-CSVs am 2026-10-13).
+    - Am Ende ausgerichtet decken sich Reihen mit gleichem Endmonat genau, gleichzeitige Veränderungen
+      werden sichtbar. Wer den Stand der Daten oder das Alter der Plattform kennt oder schätzt, kann
+      Indizes ungefähr Kalendermonaten zuordnen und so Wissen über allgemeine Ereignisse einbeziehen.
+    - Abgeschwächt wird das ohne Eingriff in die Daten: Bogen und Anleitung nennen weder Plattform
+      noch Zeitraum noch Stand der Daten, der Autor nennt sie auch mündlich nicht, und die Person
+      beurteilt jede Reihe für sich. Ausschließen ließe sich die Ausrichtung nur durch Kürzen der
+      Reihen; das verändert die Daten und ist nicht vorgesehen.
+    - Der Vergleich misst die Übereinstimmung einer blinden Person mit der nicht blinden,
+      agentengestützten Referenz des Autors, nicht mit einem Goldstandard.
+- **Status (2026-10-13):** Version 3 der Annotationsdatei (nur Hinweise); Herkunft der Referenz in
+  `docs/dz1-referenz/` abgelegt und offline nachgeprüft; blinde Zweitannotation vorbereitet,
+  Durchführung offen (Teilmenge und Person bestimmt der Autor). Die Lesart von DZ1 steht als Vorschlag
+  in E31.
 
 ## E6 – Unternehmens-Metadaten
 
@@ -505,6 +641,74 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Parameter:** unverändert. Der Nachtrag liefert Belege, keine neue Kalibrierung.
 - **Status:** Verfahren, Strafterm und Streuungsschätzung belegt; übrige Werte Setzungen.
 
+### E9 – Nachtrag 2026-10-13: Bezugsgrößen und Unsicherheit (nachträglich, nicht vorab festgelegt)
+
+- **Anlass:** Das Gutachten vom 2026-10-13 hält F1 0,43 ohne Bezugsgröße und ohne Intervall für nicht einordenbar. Es hat erste Werte mit einem Prüfskript berechnet, das nicht im Repository liegt. Die Werte sind jetzt versioniert und reproduzierbar nachgerechnet.
+- **Lauf:** einmal am 2026-10-13 mit `backend/scripts/dz1_baselines.py` (Tests: `backend/tests/test_dz1_baselines.py`).
+  - Ergebnis: `backend/data/calibration/dz1_baselines_2026-10-13.json`.
+  - Eingaben, nur aus versionierten Dateien (kein Detektorlauf, keine Datenbank):
+    - `dz1_ergebnis.json`;
+    - `annotations.json`: Einträge gegenüber version 2 unverändert, gleicher SHA-256 der Einträge;
+    - die Serien-CSVs;
+    - `semisynthetisch_2026-10-13.json`: nur die Zahl der Markierungen in den 7 Reihen ohne Eintrag.
+  - Abgleich mit `evaluate_detection.match_series`; Regel 6 bleibt unverändert.
+  - Seed 20261013, je 10 000 Ziehungen.
+  - Die Datei nennt Commit, SHA-256 des Skripts und aller Eingaben, Seed und Ziehungen.
+- **Konsistenz:**
+  - Der Neuabgleich ergibt je Reihe und Variante dieselben Zahlen wie `dz1_ergebnis.json`.
+  - Bewertete Monate, Zahl der Markierungen und die Menge der 15 geeigneten Reihen stimmen zwischen CSVs, DZ1-Lauf und Simulation überein.
+- **Definitionen:**
+  - **Hauptwert:** die 8 annotierten Reihen wie im DZ1-Lauf.
+  - **Regelkonform:** alle 15 geeigneten Reihen. Markierungen in Reihen ohne Eintrag zählen als zusätzlich (Regel 6: „über alle Reihen“).
+  - **Zufall:** je Reihe so viele Markierungen wie die Erkennung, gleichverteilt auf die bewerteten Monate ohne Doppelung. Die Richtung ist entweder 50/50 oder folgt dem Vorniveau: Anstieg, wenn das Monatsmittel mindestens so hoch ist wie das Mittel der bis zu 6 vorangehenden bewerteten Monate.
+  - **Naive Regel:** je Reihe die k Monate mit dem größten Abstand |Monatsmittel − Vorniveau|.
+    - Erlaubt sind nur Monate mit mindestens 3 bewerteten Monaten davor und ab der Stelle.
+    - Zwei Markierungen liegen mindestens 3 bewertete Monate auseinander.
+    - k ist so groß wie die Zahl der Markierungen der Erkennung.
+  - **Unsicherheit:** Wilson-Intervalle (95 %) für Precision und Recall; Cluster-Bootstrap über die Reihen (Reihen mit Zurücklegen) mit 95-%-Perzentilintervall.
+- **Ergebnisse:**
+
+  | Kennzahl | Hauptwert, Niveauwechsel | Hauptwert, mit Einzelmonaten | regelkonform, Niveauwechsel | regelkonform, mit Einzelmonaten |
+  |---|---|---|---|---|
+  | TP / FP / FN | 8 / 9 / 12 | 8 / 15 / 12 | 8 / 11 / 12 | 8 / 20 / 12 |
+  | F1 | 0,43 | 0,37 | 0,41 | 0,33 |
+  | Precision (Wilson 95 %) | 0,47 [0,26; 0,69] | 0,35 [0,19; 0,55] | 0,42 [0,23; 0,64] | 0,29 [0,15; 0,47] |
+  | Recall (Wilson 95 %) | 0,40 [0,22; 0,61] | 0,40 [0,22; 0,61] | 0,40 [0,22; 0,61] | 0,40 [0,22; 0,61] |
+  | F1, Bootstrap über Reihen (95 %) | [0,27; 0,56] | [0,22; 0,49] | [0,24; 0,54] | [0,18; 0,44] |
+  | Zufall 50/50: F1 Mittel (99.-Perzentil) | 0,037 (0,16) | 0,042 (0,14) | 0,035 (0,15) | 0,037 (0,13) |
+  | Zufall mit Richtung aus dem Vorniveau: F1 Mittel (99.-Perzentil) | 0,062 (0,22) | 0,068 (0,19) | 0,059 (0,21) | 0,061 (0,17) |
+  | Zufallsziehungen mit F1 ≥ beobachtet | 0 von 10 000 | 0 von 10 000 | 0 von 10 000 | 0 von 10 000 |
+  | Naive Regel: F1 (TP / FP / FN) | 0,22 (4 / 13 / 16) | 0,28 (6 / 17 / 14) | 0,21 (4 / 15 / 16) | 0,25 (6 / 22 / 14) |
+
+  - **Zufall heißt hier Trefferzahl:** Die Zahl der Markierungen ist fest. Deshalb gilt je Ziehung F1 = 2·TP / (Markierungen + Zeiträume), und der Vergleich mit dem Zufall ist ein Vergleich der Trefferzahl. Im Hauptwert trifft der Zufall im Mittel 0,7 (50/50) bzw. 1,2 (Richtung aus dem Vorniveau) der 20 Zeiträume, in keiner Ziehung mehr als 6. Die Erkennung trifft 8.
+  - **Sensitivität:** mit der Lage-Regel des Prüfskripts (Rand und Abstand 3 bewertete Monate, wie `min_size`) ergibt sich F1 im Mittel 0,040 (99.-Perzentil 0,16) bzw. 0,069 (0,22).
+  - **Vergleich mit dem Prüfskript des Gutachtens:**
+    - Naive Regel und Wilson-Intervalle sind identisch.
+    - Die Zufallswerte des Prüfskripts (0,040 / 0,070) entsprechen der Sensitivität.
+    - Das Bootstrap-Intervall [0,26; 0,57] weicht nur durch einen anderen Seed und 20 000 statt 10 000 Ziehungen von [0,27; 0,56] ab.
+    - Mit Seed, Reihenfolge und Ziehungen des Prüfskripts liefern die Funktionen exakt dessen Werte (einmal geprüft, nicht versioniert).
+- **Lesart:**
+  - Der Hauptwert liegt deutlich über dem Zufall. Keine der 10 000 Ziehungen erreicht 8 Treffer, für beide Richtungsregeln und alle vier Varianten. Erkennung und Referenz liegen also nicht unabhängig voneinander. Das ist keine Aussage über eine unabhängige Wahrheit (E30) und keine kausale Aussage.
+  - Der Hauptwert liegt auch über der naiven Regel (0,43 gegen 0,22).
+  - Die Unsicherheit ist groß. Der Bootstrap über die Reihen ergibt [0,27; 0,56]. Precision und Recall haben nach Wilson jeweils eine Breite von etwa ±0,2. F1 0,43 ist als Bereich von etwa 0,27 bis 0,56 zu lesen (Bootstrap über Reihen), nicht als Punktwert.
+  - Der regelkonforme Wert 0,41 (mit Einzelmonaten 0,33) gehört in der Arbeit neben den Hauptwert. Der Unterschied (2 bzw. 5 zusätzliche Markierungen in Reihen ohne Eintrag) liegt innerhalb der Intervalle.
+- **Grenzen:**
+  - **Nachträglich gewählt:** Die Bezugsgrößen wurden nach Kenntnis des F1-Werts und des Prüfskripts gewählt, nicht vorab festgelegt.
+  - **Zufall:** Er ist eine schwache Bezugsgröße und zeigt nur, dass die Markierungen gegenüber der Referenz nicht beliebig liegen.
+  - **Naive Regel:** Sie nutzt dasselbe Vorniveau wie das Größenkriterium der Referenzregel (Protokoll-Regel 4). Sie ist der Referenz ähnlich und keine unabhängige Bezugsgröße.
+  - **Bootstrap:** Er zieht über nur 8 Reihen (regelkonform 15).
+    - Die Reihen sind ungleich lang (26 bis 165 bewertete Monate, regelkonform 13 bis 165) und haben ungleich viele Zeiträume.
+    - In der regelkonformen Menge haben 5 der 7 Reihen ohne Eintrag weder Markierungen noch Zeiträume, mit Einzelmonaten 4 von 7. Sie tragen zu TP, FP und FN nichts bei. Die effektive Zahl der Reihen ist also kleiner als 15.
+    - Das Intervall ist deshalb grob und kann die Unsicherheit unterschätzen.
+  - **Wilson:** Das Verfahren unterstellt unabhängige Markierungen bzw. Zeiträume.
+  - **Reihen ohne Eintrag:** Für die 7 Reihen ist nur die Zahl der Markierungen bekannt (Simulation 2026-10-13, Commit `c0ffb4c`), nicht ihre Lage. Bei Zufall und naiver Regel zählen sie unabhängig von der Lage als zusätzlich.
+  - **Einzelmonate:** In dieser Variante behandeln Zufall und naive Regel Einzelmonate wie Niveauwechsel.
+- **Parameter:** unverändert (E5, E30). Aus den Bezugsgrößen wird kein Anlass für Änderungen abgeleitet.
+- **Status:** Bezugsgrößen und Intervalle sind abgelegt. Sie sind beschreibend, ohne Signifikanzaussage im engeren Sinn.
+  Die Ergebnisdatei entstand vor dem Commit des Skripts (`provenance.git.dirty`: true). Das Ergebnis ist
+  deterministisch (geprüft: zweiter Lauf mit gleichem Inhalt); nach dem Commit wird es einmal neu
+  erzeugt, damit die Herkunft auf einen Commit zeigt.
+
 ## E10 – Themenweg für den Vorher-Nachher-Vergleich
 
 - **Kontext:** Inkrement 2 vergleicht die Bewertungen vor und ab einer auffälligen
@@ -714,6 +918,29 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
   Belege: `docs/referenzzeitraeume-literatur.md`, Abschnitt 2.5. Parameter und Status sind
   unverändert.
+
+### E14 – Aktualisierung 2026-10-13: Zufallsbefund und Schalter
+
+- **Befund (E30, Hauptlauf 2026-10-13):** Ohne eingesetzte Veränderung entstehen in den 15 geeigneten Reihen (Mitarbeitende, Gesamtbewertung) je Wiederholung 8,9 auffällige Einzelmonate, wenn die Noten über die Bewertungen permutiert werden. Tauschen die bewerteten Monate ihre Plätze, sind es 5,4 (`semisynthetisch_2026-10-13.json`, `results.total`, `delta` 0, `outliers_mean` 0,5913 bzw. 0,3583 je Reihe). Auf den echten Reihen sind es 9.
+  - Einzelmonate treten damit etwa so häufig auf wie bei reinem Zufall. Aus der Zahl allein lässt sich nicht ablesen, dass ein gemeldeter Monat mehr ist als Rauschen.
+  - Die Werte stehen nebeneinander und werden nicht verrechnet; es gibt keine Signifikanzaussage.
+  - Ob einzelne gemeldete Monate zutreffen, prüft weiterhin keine Messung (Referenz nach Regel 4 ohne Einzelmonate, siehe Aktualisierung 2026-10-10).
+- **Kennzeichnung (umgesetzt 2026-10-13):** Wo Einzelmonate erklärt werden, steht der Zusatz „Ungeprüft: in der Simulation etwa so häufig wie bei reinem Zufall (E30)“. Das betrifft:
+  - Legende, Tooltip der Raute und Liste „Einzelmonate“;
+  - den Text zu einem ausgewählten Einzelmonat;
+  - im PDF-Export Legende, Kachel und Listenkopf.
+
+  Der Wortlaut steht einmal in `frontend/src/config.js` (`OUTLIER_UNVALIDATED_NOTE`).
+- **Schalter `VITE_SHOW_OUTLIER_MONTHS`:** Er folgt dem Muster von `VITE_SHOW_FORECAST` (E28): Standard an; `false` oder `0` blendet die Einzelmonate beim Bauen aus. Dann entfallen:
+  - Rauten, Tooltip-Zeile und Legendeneintrag;
+  - Umschalter und Liste der Detailseite (`?liste=einzelmonate` zeigt die Veränderungen);
+  - der Einzelmonat in den Zählern;
+  - Kachel und Liste im PDF.
+
+  Ein Monat aus `?from=&to=` oder `?month=` wird dann zur freien Auswahl (E17). Das Backend liefert `outlier_months` unverändert.
+- **Vorschlag, Entscheidung des Autors offen:** Die Evaluationsinstanz baut mit `VITE_SHOW_OUTLIER_MONTHS=false` (`docs/evaluationsinstanz.md`, Abschnitt 1a). `scripts/check_evaluation_instance.py` meldet einen anderen Wert nur als Hinweis.
+- Regel, Faktor 3, 0,5 Sterne und 3 Nachbarmonate bleiben unverändert (E30: keine Nachkalibrierung mit denselben Reihen).
+- **Status:** Hinweis ohne geprüfte Treffsicherheit, als „ungeprüft“ gekennzeichnet; per Schalter ausblendbar.
 
 ## E15 – Kurs und Kennzahlen
 
@@ -1459,6 +1686,7 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   „Negativstes Topic“ nennt Nennungen, nicht Bewertungen.
 - **Status:** umgesetzt in Inkrement 6, Phase A (Commits `c73594a`, `1ec9374`, `fe3b73f`); seit
   2026-10-09 nennt die Kachel „Ø Score“ die Bewertungen mit Gesamtnote (E26).
+- **Nachtrag 2026-10-13 – Kennzeichnung ungeprüfter Reihen:** Geprüft ist die Erkennung nur für die Gesamtbewertung der Mitarbeitenden ohne Statusfilter. Für DZ1 sind das die 8 annotierten der 15 geeigneten Reihen (20 Zeiträume, F1 0,43, E9 Aktualisierung 2026-10-10), für E30 alle 15 Reihen. In den 15 Reihen liegen 28 Markierungen (19 Niveauwechsel, 9 Einzelmonate). Für andere Reihen zeigen Dashboard-Karte, Detailseite und PDF-Export unter dem Diagramm „Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die Gesamtbewertung der Mitarbeitenden ohne Statusfilter (DZ1, E30)“. Das betrifft Einzeldimensionen, Bewerbende und Statusgruppen. Umsetzung: `isValidatedScope` und `UNVALIDATED_SCOPE_NOTE` in `frontend/src/config.js`, Komponente `ScopeHint` in `AnomalyCard.jsx`. Die Markierungen selbst bleiben sichtbar.
 
 ## E28 – Prognose im Zeitverlauf als Schalter beim Bauen (Inkrement 6, D2)
 
@@ -1528,7 +1756,7 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Rangfolge der Erklärungsansätze ein (`rank_explanations` lässt Typ `global` außen vor), die
   DZ1-Auswertung ist daher nicht betroffen. Der Bericht `report_context_decisions.py` (D3) zeigt
   seither die automatischen Ereignisse statt der Liste vom 2026-10-08.
-- **Status:** umgesetzt am 2026-10-13 (nicht committet); Schwellen vorläufig.
+- **Status:** umgesetzt am 2026-10-13 (Commit `b7e8326`); Schwellen vorläufig.
 
 ## E30 – Semi-synthetische Prüfung der Erkennung (DZ1, Ergänzung)
 
@@ -1638,4 +1866,117 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   - Das gemeldete Delta ist auf Treffer bedingt und wegen `min_delta` nahe 0,3 nach oben verzerrt.
   - Genau ein Wechsel je Reihe; mehrere dicht beieinanderliegende Wechsel werden nicht geprüft.
   - Ein Nachrechnen braucht Lesezugriff auf die Datenbank mit identischen Fingerabdrücken.
-- **Status:** festgelegt am 2026-10-13; Hauptlauf ausstehend.
+- **Status:** festgelegt am 2026-10-13 (Commit `c0ffb4c`); Hauptlauf am 2026-10-13, Ergebnisse in Commit
+  `2551300`.
+
+### E30 – Befund 2026-10-13: Hauptlauf
+
+- **Lauf:** einmal am 2026-10-13 nach Schritt 2 des Ablaufs, auf Commit `c0ffb4c` mit sauberem
+  Arbeitsbaum. Dauer 307 s mit 6 Prozessen; NumPy 2.4.0, ruptures 1.1.10. Parameter wie vorab
+  festgelegt (15 Reihen, 200 Wiederholungen, Seed 20261013).
+  - Ergebnis: `backend/data/calibration/semisynthetisch_2026-10-13.json`.
+  - Datensätze je Wiederholung: `semisynthetisch_2026-10-13_records.json.gz` (45 000, ohne Noten und
+    ohne ids).
+  - Keine Abweichung vom Ablauf; Parameter der Erkennung unverändert.
+- **Recall** (Anteil getroffener Wechsel nach Regel 6, in Klammern das 95-%-Bootstrap-Intervall über die
+  Reihen):
+
+  | Größe | Rauschen je Bewertung, Inneres | Monate getauscht, Inneres | Rauschen je Bewertung, jüngster Wechsel |
+  |---|---|---|---|
+  | 0,3 | 23 % [19; 28] | 15 % [12; 18] | 15 % [11; 19] |
+  | 0,5 | 58 % [50; 66] | 41 % [34; 48] | 42 % [33; 52] |
+  | 0,75 | 81 % [74; 86] | 71 % [65; 77] | 73 % [65; 81] |
+  | 1,0 | 92 % [88; 95] | 87 % [83; 91] | 90 % [84; 94] |
+
+  - Lesart nach E30: Der wahre Wert liegt zwischen den beiden Rauschbedingungen.
+  - Wechsel von 0,5 Sternen werden zu etwa 40 bis 60 % gefunden, von 0,75 Sternen zu etwa 70 bis
+    80 %. Jüngste Wechsel (Reihenende) werden bei 0,5 Sternen seltener gefunden als Wechsel im Inneren
+    (42 % gegen 58 %).
+- **Unterschiede zwischen den Reihen** (0,5 Sterne, Rauschen je Bewertung, Inneres):
+  - Recall je Reihe 23 % (NTT DATA SE) bis 88 % (Telekom), Median 57 %.
+  - Bei getauschten Monaten 23 % bis 67 %, am Reihenende 18 % bis 94 %.
+- **Schichten** (0,5 Sterne, Rauschen je Bewertung, Inneres):
+  - Belegung um den Wechsel (3 bewertete Monate je Seite): unter 30 Bewertungen 53 %, ab 30
+    Bewertungen 73 %.
+  - Wechselmonat: unter 10 Bewertungen 54 %, ab 10 Bewertungen 65 %.
+  - Lücke davor: mit Lücke 48 %, ohne Lücke 64 %.
+  - Anstieg und Abfall: 60 % gegen 56 %; bei 0,75 Sternen 81 % gegen 80 %. Die fehlende Kappung
+    verschiebt den Vergleich der Richtungen also nicht erkennbar.
+  - `delta / sigma`: unter 1 28 %, 1–1,5 53 %, 1,5–2 65 %, ab 2 77 %.
+  - Bei getauschten Monaten unterscheiden sich die Schichten kaum (z. B. Belegung unter 30 / ab 30
+    Bewertungen: 39 % / 46 %).
+- **Verortung:**
+  - Mit ±3 Monaten Toleranz steigt der Recall bei 0,5 Sternen auf 65 % (Inneres) bzw. 50 %
+    (getauschte Monate).
+  - Gleichgerichtete Markierungen bis 6 Monate neben dem Wechsel, die ihm nicht zugeordnet sind: 0,16
+    bzw. 0,19 je Wiederholung.
+- **Markierungen ohne Wechsel** (`delta` 0, Fehlalarme bei zeitlich austauschbarem Rauschen):
+
+  | Kennzahl | Rauschen je Bewertung | Monate getauscht |
+  |---|---|---|
+  | je Wiederholung, mit Intervall | 0,35 [0,27; 0,48] | 0,25 [0,19; 0,31] |
+  | Median je 100 bewertete Monate | 0,70 | 0,57 |
+  | über die 15 Reihen zusammen | 5,3 | 3,7 |
+  | Reihen mit den meisten / wenigsten | Telekom 1,16 / Freenet 0,15 | E.ON 0,47 / 1&1 AG 0,07 |
+
+  - Zum Vergleich, nicht verrechnet (E30): Auf den echten Reihen sind es 19 Niveauwechsel.
+  - Zufallstreffer (eine Markierung im Fenster einer Stelle ohne Wechsel): 1 %.
+- **Auffällige Einzelmonate (E14) ohne Wechsel:**
+  - Über die 15 Reihen zusammen 8,9 bei Rauschen je Bewertung und 5,4 bei getauschten Monaten;
+    Telekom allein 3,15.
+  - Zum Vergleich, nicht verrechnet: 9 auf den echten Reihen.
+- **Gemeldete Größe und Schweregrad:**
+  - Das gemeldete Delta liegt bei Treffern im Median 0,12 / 0,05 / 0,02 / 0,01 Sterne über dem
+    eingesetzten (Größe 0,3 / 0,5 / 0,75 / 1,0). Nahe `min_delta` ist das der erwartete Auswahleffekt.
+  - Von den Treffern bei 0,3 Sternen tragen 30 % den Schweregrad „deutlich“ (ab 0,5 Sternen), bei
+    jüngsten Wechseln 62 %.
+- **Monatsmittel außerhalb von [1, 5]** (fehlende Kappung) in 3 / 13 / 30 / 43 % der Wiederholungen
+  bei 0,3 / 0,5 / 0,75 / 1,0 Sternen (Rauschen je Bewertung, Inneres).
+- **Einordnung** (beschreibend, nicht vorab festgelegt):
+  - Die Referenzzeiträume aus E5 haben |Δ| zwischen 0,47 und 1,15 (Median 0,81).
+  - In dieser Größenordnung findet die Erkennung in der Simulation etwa 70 bis 90 % der Wechsel.
+  - Im DZ1-Abgleich traf sie 8 von 20 Referenzzeiträumen (Recall 0,40).
+  - Die Simulation erklärt diesen Unterschied nicht. Mögliche Gründe, ungeprüft:
+    - Die Referenz enthält auch Einmonatsausschläge, die kein gehaltenes Niveau bilden;
+    - echtes Rauschen ist anders aufgebaut als beide Bedingungen;
+    - die Referenzregel erfasst selbst Rauschen (Permutationsprüfung im Gutachten vom 2026-10-13,
+      nicht im Repository).
+  - Die Erkennungsparameter bleiben unverändert (E5, E30).
+- **Status:** Hauptlauf gelaufen und abgelegt; Befund beschreibend, ohne Signifikanzaussage und ohne
+  Parameteränderung. Ein weiterer Lauf mit denselben Reihen ist nicht vorgesehen.
+
+## E31 – Lesart von DZ1 (Vorschlag, Entscheidung des Autors offen)
+
+- **Kontext:** Das Exposé verlangt für DZ1, dass die Erkennung extreme Veränderungen „zuverlässig“
+  erkennt, mit dem Kriterium „Abgleich mit manuell annotierten auffälligen Zeiträumen“. Ein
+  Erfolgskriterium wurde vor den Läufen nicht festgelegt (Gutachten vom 2026-10-13). Es liegen jetzt
+  drei Belege vor:
+  - der Abgleich mit der Referenz (E9, Aktualisierung 2026-10-10);
+  - Bezugsgrößen und Intervalle dazu (E9, Nachtrag 2026-10-13);
+  - die semi-synthetische Prüfung mit bekannter Wahrheit (E30, Befund 2026-10-13).
+- **Wichtig:** Jede Lesart, die jetzt formuliert wird, kennt diese Ergebnisse. Sie ist eine
+  Einordnung, kein Test, und wird in der Arbeit so bezeichnet.
+- **Vorschlag zur Lesart:**
+  - **DZ1 teilweise erreicht**, nur für die Gesamtbewertung der Mitarbeitenden:
+    - Anhaltende Niveauwechsel ab etwa 0,75 Sternen findet die Erkennung in der Simulation
+      überwiegend: 71–81 % im Inneren der Reihe, 73 % beim jüngsten Wechsel. Ab 1,0 Sternen sind es
+      87–92 %.
+    - Wechsel von 0,5 Sternen, also die Größe des Richtwerts „extrem“ der Referenz, findet sie nur zu
+      41–58 %, beim jüngsten Wechsel zu 42 %.
+    - Ohne Wechsel entstehen 0,25–0,35 Markierungen je Reihe bei zeitlich austauschbarem Rauschen.
+    - Gegen die regelbasierte Referenz: F1 0,43 (regelkonform 0,41). Das liegt deutlich über Zufall
+      (0,04) und über einer naiven Regel (0,22); das Bootstrap-Intervall über die Reihen beträgt
+      [0,27; 0,56].
+  - **Nicht erreicht** für auffällige Einzelmonate: Sie liegen auf Zufallsniveau (E14,
+    Aktualisierung 2026-10-13).
+  - **Nicht geprüft:** Einzeldimensionen, Bewerberquelle und Statusgruppen. TF2 ist damit nur für die
+    Gesamtbewertung beantwortet; das Dashboard kennzeichnet die übrigen Reihen (E27, Nachtrag
+    2026-10-13).
+  - **„Manuell annotiert“ ist nicht erfüllt**, solange keine Zweitannotation durch eine Person
+    vorliegt (E5, Aktualisierung 2026-10-13).
+- **Alternative für spätere Läufe** (nicht auf die vorliegenden Daten anzuwenden): ein vorab
+  festgelegtes Kriterium, etwa Recall ≥ 0,7 bei 0,75 Sternen in beiden Rauschbedingungen und
+  höchstens 0,5 Markierungen je Reihe ohne Wechsel. Geprüft würde an neuen Reihen oder einem neuen
+  Datenstand.
+- **Status:** Vorschlag; die Entscheidung über die Lesart trifft der Autor. Parameter unverändert
+  (E5, E30).

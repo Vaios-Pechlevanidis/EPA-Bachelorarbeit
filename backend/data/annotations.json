@@ -1,8 +1,8 @@
 {
-  "version": 2,
+  "version": 3,
   "hinweise": {
-    "zweck": "Manuell erstellte Referenzannotationen (Gold-Standard) extremer Veränderungen in Kununu-Bewertungsverläufen. Sie dienen in Zyklus 2 der Evaluation der automatischen Erkennung und Erklärung extremer Veränderungen.",
-    "wichtig": "Die Einträge werden MANUELL aus den Serien-CSVs in backend/data/series/ erstellt, und zwar BEVOR Erkennungscode existiert oder ausgeführt wird. Ergebnisse einer automatischen Erkennung dürfen weder als Vorlage noch zur Korrektur der Annotationen verwendet werden; sonst würde die spätere Validierung zirkulär (die Erkennung würde gegen sich selbst geprüft). Dieses Skript befüllt die Liste 'annotations' bewusst nicht.",
+    "zweck": "Referenzzeiträume extremer Veränderungen in Kununu-Bewertungsverläufen für den Abgleich der Erkennung (DZ1, E5). Sie sind regelbasiert und agentengestützt: Ein Agenten-Workflow hat sie allein aus den Serien-CSVs nach dem Protokoll (hinweise.protokoll) und zusätzlichen Setzungen vorgeschlagen; alle Zahlen stammen aus einem deterministischen Regelprüfer. Der Autor hat die Vorschläge am 2026-10-09 ohne Änderung freigegeben. Einziger Annotator, kein Übereinstimmungsmaß; die Freigabe war nicht blind gegenüber der Erkennung. Kein unabhängiger Goldstandard. Herkunft, Setzungen und Regelprüfer: docs/dz1-referenz/ und E5.",
+    "wichtig": "Entstehung nach dem Erkennungscode (E5, Aktualisierung 2026-10-03: die ursprünglich vorgesehene Reihenfolge 'Annotation vor dem ersten Erkennungscode' gilt nicht mehr). Ersatzregel: Die Einträge entstehen ohne Einsicht in Erkennungsergebnisse (keine Karte, keine API-Antwort, keine Parameterübersicht) allein aus den Serien-CSVs in backend/data/series/; Ergebnisse einer automatischen Erkennung dürfen weder als Vorlage noch zur Korrektur verwendet werden. Version 3 ändert nur diese Hinweise; Unternehmen, Quelle, Dimension, Monate, Richtung und note aller Einträge sind gegenüber Version 2 unverändert.",
     "vorgehen": [
       "1. Je Unternehmen und Quelle die CSV backend/data/series/<id>_<slug>_<source>.csv öffnen (Trennzeichen ';', Dezimalpunkt '.').",
       "2. Spalten: period (Kalendermonat), mean_durchschnittsbewertung (Monatsmittel), count (Anzahl Bewertungen), delta_vs_previous (Differenz zum letzten vorhergehenden Monat mit Wert, nicht zwingend der direkte Vormonat).",

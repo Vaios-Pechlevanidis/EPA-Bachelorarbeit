@@ -22,14 +22,31 @@ die nach E4 geeigneten Reihen der Quelle (Standard: Mitarbeitende,
 Gesamtbewertung) aus den Serien-CSVs, dazu jede Reihe mit Einträgen in einer der
 Dateien. Nur Zahlen; keine Wertung, welche Datei „richtig“ liegt.
 
-Die Funktionen ``match_periods`` und ``compare`` sind rein (Tests:
-``backend/tests/test_compare_annotations.py``). Das Skript liest nur Dateien.
+Zusätzlich (ergänzt 2026-10-13, blinde Zweitannotation): Cohens κ auf Monatsebene,
+gesamt und je Reihe. Einheit sind die bewerteten Monate (E4) der verglichenen Reihen
+mit Serien-CSV; jeder Monat erhält je Datei eine Kategorie ``rise``, ``fall`` oder
+``keine`` (Monate innerhalb eines Zeitraums tragen dessen Richtung; überschneiden sich
+Zeiträume einer Datei, gilt der früheste). κ = (p_o − p_e) / (1 − p_e) mit der
+beobachteten Übereinstimmung p_o und der aus den Randverteilungen erwarteten p_e
+(Cohen 1960); κ ist nicht definiert, wenn beide Dateien alle Monate derselben Kategorie
+zuordnen (p_e = 1). Anders als Regel 6 kennt κ keine Toleranz: Ein um einen Monat
+verschobener Zeitraum senkt κ. Die bisherige Textausgabe bleibt Zeichen für Zeichen
+erhalten; der κ-Block folgt am Ende, im JSON stehen ``kappa`` gesamt und je Reihe.
+
+``--series`` begrenzt den Vergleich auf eine Teilmenge: Schlüssel des blinden Bogens
+(``reihen``), die übersetzte Datei der Zweitannotation (``hinweise.herkunft.reihen``)
+oder kommagetrennte Unternehmens-ids.
+
+Die Funktionen ``match_periods``, ``month_categories``, ``cohens_kappa`` und ``compare``
+sind rein (Tests: ``backend/tests/test_compare_annotations.py``). Das Skript liest nur
+Dateien.
 
 Verwendung
 ----------
     cd backend
     uv run python scripts/compare_annotations.py --b <andere_datei.json>
     uv run python scripts/compare_annotations.py --a <datei_a.json> --b <datei_b.json> --json <ergebnis.json>
+    uv run python scripts/compare_annotations.py --b data/annotations_zweitperson.json --series data/annotations_zweitperson.json
 """
 
 from __future__ import annotations
@@ -92,6 +109,53 @@ def match_periods(a: List[Dict[str, Any]], b: List[Dict[str, Any]], evaluated: A
     return {"n_a": len(a), "n_b": len(b), "matches": matches, "only_a": only_a, "only_b": only_b}
 
 
+# ── Cohens κ auf Monatsebene ─────────────────────────────────────────────────
+
+KAPPA_CATEGORIES: Tuple[str, ...] = ("rise", "fall", "keine")
+
+
+def month_categories(periods: List[Dict[str, Any]], months: Any) -> Dict[str, str]:
+    """Kategorie je Monat aus ``months``: Richtung des Zeitraums, der den Monat enthält, sonst
+    „keine“; reine Funktion. Überschneiden sich Zeiträume, gilt der früheste (nach period_from,
+    period_to). Zeiträume mit ungültigem Monat oder unbekannter Richtung bleiben außen vor."""
+    cats = {m: "keine" for m in months}
+    for ann in sorted(periods, key=lambda x: (str(x.get("period_from")), str(x.get("period_to")))):
+        p_from, p_to, direction = ann.get("period_from"), ann.get("period_to"), ann.get("direction")
+        if direction not in ("rise", "fall") or not all(isinstance(p, str) and va.PERIOD_RE.fullmatch(p) for p in (p_from, p_to)):
+            continue
+        for m in va._month_range(p_from, p_to):
+            if cats.get(m) == "keine":
+                cats[m] = direction
+    return cats
+
+
+def cohens_kappa(pairs: List[Tuple[str, str]], categories: Tuple[str, ...] = KAPPA_CATEGORIES) -> Dict[str, Any]:
+    """Cohens κ für Paare (Kategorie A, Kategorie B); reine Funktion. Liefert κ, p_o, p_e, die
+    Zahl der Monate und die Kreuztabelle (Zeilen A, Spalten B). κ ist ``None``, wenn keine Monate
+    vorliegen oder p_e = 1 (beide Dateien ordnen alle Monate derselben Kategorie zu)."""
+    n = len(pairs)
+    matrix = {a: {b: 0 for b in categories} for a in categories}
+    for a, b in pairs:
+        matrix.setdefault(a, {}).setdefault(b, 0)
+        matrix[a][b] += 1
+    out: Dict[str, Any] = {"n_months": n, "kappa": None, "p_o": None, "p_e": None, "matrix": matrix, "reason": None}
+    if n == 0:
+        out["reason"] = "keine bewerteten Monate"
+        return out
+    cats = list(dict.fromkeys(list(categories) + [c for pair in pairs for c in pair]))
+    count_a = {c: sum(1 for a, _ in pairs if a == c) for c in cats}
+    count_b = {c: sum(1 for _, b in pairs if b == c) for c in cats}
+    agree = sum(1 for a, b in pairs if a == b)
+    expected = sum(count_a[c] * count_b[c] for c in cats)      # p_e · n²
+    out["p_o"] = round(agree / n, 4)
+    out["p_e"] = round(expected / (n * n), 4)
+    if expected == n * n:
+        out["reason"] = "nicht definiert: beide Dateien ordnen alle Monate derselben Kategorie zu"
+        return out
+    out["kappa"] = round((agree * n - expected) / (n * n - expected), 4)
+    return out
+
+
 # ── Reihen ───────────────────────────────────────────────────────────────────
 
 def group_by_series(doc: Dict[str, Any]) -> Dict[SeriesKey, List[Dict[str, Any]]]:
@@ -126,26 +190,35 @@ def series_from_csvs(series_dir: str, source: str, density_path: str,
 # ── Gesamtvergleich ──────────────────────────────────────────────────────────
 
 def compare(doc_a: Dict[str, Any], doc_b: Dict[str, Any], series: Optional[Dict[SeriesKey, Dict[str, Any]]] = None,
-            source: Optional[str] = None) -> Dict[str, Any]:
+            source: Optional[str] = None, only: Optional[Set[str]] = None) -> Dict[str, Any]:
     """Abgleich aller Reihen; reine Funktion. ``series`` sind die Reihen aus den CSVs (Name,
     bewertete Monate); dazu kommt jede Reihe mit Einträgen in A oder B. ``source`` begrenzt auf
-    eine Quelle. Liefert je Reihe Treffer, nur A, nur B und gesamt die Summen sowie den Anteil
-    der Reihen, in denen beide keinen Zeitraum sehen."""
+    eine Quelle, ``only`` auf die normalisierten Unternehmensnamen einer Teilmenge (``--series``).
+    Liefert je Reihe Treffer, nur A, nur B und gesamt die Summen sowie den Anteil der Reihen, in
+    denen beide keinen Zeitraum sehen; dazu Cohens κ auf Monatsebene je Reihe und gesamt."""
     series = series or {}
     by_a, by_b = group_by_series(doc_a), group_by_series(doc_b)
     keys = set(series) | set(by_a) | set(by_b)
     if source:
         keys = {k for k in keys if k[1] == source}
+    if only is not None:
+        keys = {k for k in keys if k[0] in only}
     rows: List[Dict[str, Any]] = []
+    all_pairs: List[Tuple[str, str]] = []
     for key in sorted(keys):
         a, b = by_a.get(key, []), by_b.get(key, [])
         info = series.get(key)
         name = info["name"] if info else (a or b)[0].get("company")
         evaluated = info["evaluated"] if info else set()
         result = match_periods(a, b, evaluated)
+        months = sorted(evaluated)
+        cat_a, cat_b = month_categories(a, months), month_categories(b, months)
+        pairs = [(cat_a[m], cat_b[m]) for m in months]
+        all_pairs.extend(pairs)
         rows.append({
             "series": f"{name} / {key[1]} / {key[2]}", "company": name, "source": key[1], "dimension": key[2],
             "evaluated_known": info is not None, "both_none": not a and not b, **result,
+            "kappa": cohens_kappa(pairs),
         })
     n_series = len(rows)
     both_none = sum(1 for r in rows if r["both_none"])
@@ -166,6 +239,13 @@ def compare(doc_a: Dict[str, Any], doc_b: Dict[str, Any], series: Optional[Dict[
         },
         "note": ("Beschreibende Zahlen. Übereinstimmung nach E5, Regel 6 (Toleranz, Richtung, Eins-zu-eins); "
                  "keine Aussage, welche Datei richtig liegt."),
+        "kappa": {
+            "overall": cohens_kappa(all_pairs),
+            "categories": list(KAPPA_CATEGORIES),
+            "n_series_with_months": sum(1 for r in rows if r["kappa"]["n_months"]),
+            "basis": ("Bewertete Monate (E4) der verglichenen Reihen mit Serien-CSV; Monate innerhalb eines Zeitraums "
+                      "tragen dessen Richtung, alle übrigen 'keine'; ohne Toleranz; gesamt über alle Monate gepoolt."),
+        },
     }
 
 
@@ -203,7 +283,91 @@ def format_report(report: Dict[str, Any], path_a: str = "", path_b: str = "") ->
             lines.append(f"    Nur bei B:       {o['period_from']}..{o['period_to']} {o['direction']}")
     lines.append("")
     lines.append(report["note"])
+    if report.get("kappa"):
+        lines.extend(format_kappa(report))
     return "\n".join(lines)
+
+
+def _num(value: Optional[float], digits: int = 2) -> str:
+    return "–" if value is None else f"{value:.{digits}f}".replace(".", ",")
+
+
+def format_kappa(report: Dict[str, Any]) -> List[str]:
+    """κ-Block des Berichts (nach der bisherigen Ausgabe)."""
+    k = report["kappa"]
+    o = k["overall"]
+    cats = k["categories"]
+    lines = [
+        "",
+        "Cohens κ auf Monatsebene (Kategorien rise / fall / keine; bewertete Monate der Reihen mit Serien-CSV; ohne Toleranz)",
+        f"  Gesamt: κ {_num(o['kappa'])} bei {o['n_months']} Monaten in {k['n_series_with_months']} Reihen; "
+        f"beobachtete Übereinstimmung {_pct(o['p_o'])}, aus den Randverteilungen erwartet {_pct(o['p_e'])}."
+        + (f" ({o['reason']})" if o["reason"] else ""),
+        "  Kreuztabelle (Zeilen A, Spalten B): " + "  ".join(
+            f"{a}: " + "/".join(str(o["matrix"].get(a, {}).get(b, 0)) for b in cats) for a in cats
+        ) + f"  (Reihenfolge {' / '.join(cats)})",
+        "",
+        f"  {'Reihe':<58}{'Monate':>7}{'κ':>7}{'p_o':>7}{'p_e':>7}",
+    ]
+    for s in report["series"]:
+        sk = s["kappa"]
+        lines.append(f"  {s['series'][:58]:<58}{sk['n_months']:>7}{_num(sk['kappa']):>7}{_pct(sk['p_o']):>7}{_pct(sk['p_e']):>7}"
+                     + ("   (ohne Serien-CSV: keine Monate)" if not s["evaluated_known"] else ""))
+    lines.append("  κ „–“: nicht definiert (keine Monate, oder beide Dateien ordnen alle Monate derselben Kategorie zu).")
+    lines.append("κ ist zufallskorrigiert: 1 = vollständige Übereinstimmung, 0 = so viel wie aus den Randverteilungen "
+                 "erwartet. Beschreibend; keine Aussage, welche Datei richtig liegt.")
+    return lines
+
+
+# ── Teilmenge (--series) ─────────────────────────────────────────────────────
+
+def selection_from_doc(doc: Any) -> Optional[List[Tuple[Optional[int], Optional[str]]]]:
+    """(Unternehmens-id, Name) der Reihen aus dem Schlüssel des blinden Bogens (``reihen``) oder
+    aus einer übersetzten Datei der Zweitannotation (``hinweise.herkunft.reihen``); ``None``,
+    wenn das Dokument keine solche Liste enthält."""
+    if not isinstance(doc, dict):
+        return None
+    reihen = doc.get("reihen")
+    if not isinstance(reihen, dict):
+        herkunft = (doc.get("hinweise") or {}).get("herkunft") if isinstance(doc.get("hinweise"), dict) else None
+        reihen = herkunft.get("reihen") if isinstance(herkunft, dict) else None
+    if not isinstance(reihen, dict):
+        return None
+    out: List[Tuple[Optional[int], Optional[str]]] = []
+    for info in reihen.values():
+        if isinstance(info, dict):
+            cid = info.get("company_id")
+            out.append((int(cid) if cid is not None else None, info.get("name") or info.get("company")))
+    return out
+
+
+def resolve_selection(spec: str, names: Dict[int, str]) -> Tuple[Optional[Set[str]], Optional[str]]:
+    """``--series``: Datei (Schlüssel oder übersetzte Datei) oder kommagetrennte ids ->
+    normalisierte Unternehmensnamen. Liefert (Namen, Fehlermeldung)."""
+    if os.path.isfile(spec):
+        doc, err = va._load_json(spec, "Reihenauswahl (--series)")
+        if err:
+            return None, err
+        pairs = selection_from_doc(doc)
+        if pairs is None:
+            return None, (f"{spec} enthält weder 'reihen' (Schlüssel des blinden Bogens) noch "
+                          "'hinweise.herkunft.reihen' (übersetzte Datei der Zweitannotation).")
+    else:
+        parts = [p for p in re.split(r"[,\s]+", spec.strip()) if p]
+        if not parts or not all(p.isdigit() for p in parts):
+            return None, f"--series '{spec}' ist weder eine Datei noch eine Liste von Unternehmens-ids."
+        pairs = [(int(p), None) for p in parts]
+    selected: Set[str] = set()
+    unknown: List[str] = []
+    for cid, name in pairs:
+        resolved = names.get(cid) if cid is not None else None
+        if not resolved and not name:
+            unknown.append(str(cid))
+            continue
+        selected.add(va.normalize_company_name(resolved or name))
+    if unknown:
+        return None, f"Unternehmens-id(s) {', '.join(unknown)} nicht in data_density.json."
+    return selected, None
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
@@ -216,6 +380,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--density", default=DEFAULT_DENSITY, help="data_density.json für die Unternehmensnamen")
     parser.add_argument("--source", default="employee", choices=list(VALID_SOURCES), help="Quelle der Reihen (Default: employee)")
     parser.add_argument("--json", dest="json_out", help="Ergebnis zusätzlich als JSON-Datei schreiben")
+    parser.add_argument("--series", dest="series_spec",
+                        help="nur diese Reihen: Schlüssel des blinden Bogens, übersetzte Datei der Zweitannotation "
+                             "(hinweise.herkunft.reihen) oder kommagetrennte Unternehmens-ids")
     args = parser.parse_args(argv)
 
     docs = []
@@ -231,7 +398,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     series = series_from_csvs(args.series_dir, args.source, args.density) if os.path.isdir(args.series_dir) else {}
     if not series:
         print(f"Hinweis: keine Serien-CSVs unter {args.series_dir}; es gilt die reine Toleranz, und die Reihen ohne Einträge fehlen.")
-    report = compare(docs[0], docs[1], series, source=args.source)
+    only: Optional[Set[str]] = None
+    if args.series_spec:
+        only, err = resolve_selection(args.series_spec, company_names(args.density))
+        if err:
+            print(f"FEHLER: {err}")
+            return 1
+        print(f"Auswahl (--series): {len(only)} Reihen.")
+    elif selection_from_doc(docs[1]) is not None:
+        print(f"Hinweis: Datei B stammt aus der blinden Zweitannotation; mit --series {args.b} "
+              "werden nur die Reihen des blinden Bogens verglichen.")
+    report = compare(docs[0], docs[1], series, source=args.source, only=only)
     if report["totals"]["n_a"] == 0 and report["totals"]["n_b"] == 0:
         print("Hinweis: beide Dateien enthalten keine Einträge; der Abgleich liefert noch keine Übereinstimmung.")
     print(format_report(report, os.path.relpath(args.a, BACKEND_DIR), os.path.relpath(args.b, BACKEND_DIR)))

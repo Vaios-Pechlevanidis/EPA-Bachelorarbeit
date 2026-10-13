@@ -1,0 +1,1408 @@
+{
+  "generated_at": "2026-10-13T13:03:12+00:00",
+  "argv": [
+    "--json",
+    "data/calibration/dz1_baselines_2026-10-13.json"
+  ],
+  "provenance": {
+    "git": {
+      "commit": "25513000c5ad26e9ab42983a8b65ada310f0f12a",
+      "dirty": true,
+      "dirty_paths": [
+        "backend/data/annotations.json",
+        "backend/scripts/check_evaluation_instance.py",
+        "backend/scripts/make_annotation_sheet.py",
+        "backend/tests/test_check_evaluation_instance.py",
+        "backend/scripts/blind_annotations.py",
+        "backend/scripts/dz1_baselines.py",
+        "backend/tests/test_dz1_baselines.py"
+      ]
+    },
+    "script_sha256": "d6af6aeac7db575d8859c8a70023dafb3b0d11620b76119949419787ad0f72ca",
+    "evaluate_detection_sha256": "8adf99b7436ee3fe6667e4909849932292294c6efabd9763f23b40c74e34e45c",
+    "python": "3.13.3",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "inputs": {
+      "dz1_ergebnis": {
+        "path": "data/calibration/dz1_ergebnis.json",
+        "sha256": "8939463eb9be7275530322a0c38fd42a1894160889165b7a0fa2ce94fa1bcd78",
+        "generated_at": "2026-10-10T16:00:44+00:00",
+        "annotations_version": 2
+      },
+      "annotations": {
+        "path": "data/annotations.json",
+        "sha256": "049dee95f2aace63f923d9a350ee507b2a899ba16f55bbbbc070eeb511b14f4f",
+        "version": 3,
+        "n_entries": 20,
+        "entries_sha256": "7f7be8628615ecbabe8a1adf6ed38196a0d192a4995ad8b571406fafcccaee4a"
+      },
+      "semisynthetisch": {
+        "path": "data/calibration/semisynthetisch_2026-10-13.json",
+        "sha256": "1ea21c2562f19fcbdbc4759b2c4c0418ced376999444826067030d2996d91fd4",
+        "generated_at": "2026-10-13T12:24:09+00:00",
+        "git_commit": "c0ffb4cdfc26c72835564ac15b31269c314a6c84"
+      },
+      "series_csv": [
+        {
+          "company_id": 3,
+          "path": "data/series/3_thyssenkrupp_employee.csv",
+          "sha256": "ffdf8d690b777464b7e37415aae0a205f58e6df3326e9c68b6d77e841d8ee29d",
+          "used": true
+        },
+        {
+          "company_id": 4,
+          "path": "data/series/4_open_grid_europe_employee.csv",
+          "sha256": "259c81b09f547f024bf08d868daee8a9a7d1984be923401de4535686c77a8b4f",
+          "used": true
+        },
+        {
+          "company_id": 5,
+          "path": "data/series/5_pledoc_gmbh_employee.csv",
+          "sha256": "c82ae3184d3bcc825d6d83b3b8e1e8b123bc69acd5a51fb8eaade254f602df2b",
+          "used": false
+        },
+        {
+          "company_id": 6,
+          "path": "data/series/6_e_on_digital_technology_employee.csv",
+          "sha256": "6c3434c967002cf10ff9651f404d948052cc7888ada916e65c15f97791d6e2d6",
+          "used": false
+        },
+        {
+          "company_id": 7,
+          "path": "data/series/7_e_on_employee.csv",
+          "sha256": "c6c111a27534def2fdf36e39c4b13249818f51b0d05df8ca009ce9a63bb03225",
+          "used": true
+        },
+        {
+          "company_id": 8,
+          "path": "data/series/8_rwe_employee.csv",
+          "sha256": "947b8ada54d9e99ec9a1676c00dc8f85236deb2bef35d850ff854d2b65d7596a",
+          "used": true
+        },
+        {
+          "company_id": 9,
+          "path": "data/series/9_thyssengas_gmbh_employee.csv",
+          "sha256": "9ce3f7f2411910a9931aadcce9fd97135c5d570646d199dab4f0305e3ddadfad",
+          "used": false
+        },
+        {
+          "company_id": 13,
+          "path": "data/series/13_universitaet_duisburg_essen_employee.csv",
+          "sha256": "a0a3a255a02d8054f32f4c856f959b896d1e8ea56ed40ac730af8daf6f905fb3",
+          "used": false
+        },
+        {
+          "company_id": 14,
+          "path": "data/series/14_karlsruher_institut_fuer_technologie_employee.csv",
+          "sha256": "e0b2c27bc81a03acb03a737752475f898f407667e945bb3af33d03400d76922c",
+          "used": true
+        },
+        {
+          "company_id": 15,
+          "path": "data/series/15_technische_universitaet_muenchen_employee.csv",
+          "sha256": "486304620f7688df4dfe2e3be48ee1b3a9198b8b2e50178e8cb5770e97a2c266",
+          "used": true
+        },
+        {
+          "company_id": 16,
+          "path": "data/series/16_universitaet_zu_koeln_employee.csv",
+          "sha256": "0ebd0a346bee8492018b4787214f05882cb1381b2775a50c2f416eca8ea9a61a",
+          "used": false
+        },
+        {
+          "company_id": 19,
+          "path": "data/series/19_sap_se_employee.csv",
+          "sha256": "a3df6d6327699c03334b65786984f071cd66c062e0dca0b3e9c90e01fdc0eb9f",
+          "used": true
+        },
+        {
+          "company_id": 20,
+          "path": "data/series/20_ntt_data_se_employee.csv",
+          "sha256": "f2c030299b88ebc3b076ce85e69d5a20f2e1a2e749817b026dad7a1b8849d883",
+          "used": true
+        },
+        {
+          "company_id": 21,
+          "path": "data/series/21_1_1_ag_employee.csv",
+          "sha256": "147391bdade1c0c1f498cd04e062f88a30b0511b2f66c37aa29083834106dd69",
+          "used": true
+        },
+        {
+          "company_id": 22,
+          "path": "data/series/22_aixtron_employee.csv",
+          "sha256": "b0ce02be890c73493954f835ca7be6bd5e74a82668917d67801be6bba9a69cb2",
+          "used": false
+        },
+        {
+          "company_id": 23,
+          "path": "data/series/23_atoss_employee.csv",
+          "sha256": "fe95c036c01bba6d7618e582edeaa522f85ec7b17e5bc4f4afba07a5ba5523b0",
+          "used": false
+        },
+        {
+          "company_id": 24,
+          "path": "data/series/24_bechtle_employee.csv",
+          "sha256": "9fb18b8f0e66c1a81a77972129c1da19038ffa5b888ff2c81a79b350fdce0759",
+          "used": true
+        },
+        {
+          "company_id": 25,
+          "path": "data/series/25_cancom_employee.csv",
+          "sha256": "41b64f5f386a23002e5170d23d888b2ee6b0d371eb1dbb5169df20e755b8f280",
+          "used": true
+        },
+        {
+          "company_id": 26,
+          "path": "data/series/26_carl_zeiss_employee.csv",
+          "sha256": "d04d2c4d093ae3b600ddfb84e28856a16f37327abccd3df8e4154857f2ea6d91",
+          "used": true
+        },
+        {
+          "company_id": 27,
+          "path": "data/series/27_compugroup_medical_deutschland_employee.csv",
+          "sha256": "aecaf073ec630707bbbdab075e08576aadd78e893a877389ddbe72a30278b1ed",
+          "used": true
+        },
+        {
+          "company_id": 28,
+          "path": "data/series/28_telekom_employee.csv",
+          "sha256": "f75c0f60ed3fa917cdf9f8cba7eeaa10c94d2d5e21bdf9cb9f54418ee5aa4486",
+          "used": true
+        },
+        {
+          "company_id": 29,
+          "path": "data/series/29_eckert_ziegler_employee.csv",
+          "sha256": "951555a0a4ef1939fa2d1c3b76fbd4c8b702495e574c8708e8fa6604508b3500",
+          "used": false
+        },
+        {
+          "company_id": 30,
+          "path": "data/series/30_elmos_semiconductor_employee.csv",
+          "sha256": "4ed0ab9de8822940a9e7235d4ce919a3310f3e51390a6a67d89ac3873765d358",
+          "used": false
+        },
+        {
+          "company_id": 31,
+          "path": "data/series/31_evotec_employee.csv",
+          "sha256": "1de3c237f2cfc176d75579a6355dc4c70eef277119a7273e4b46a14fd1fe5baf",
+          "used": false
+        },
+        {
+          "company_id": 32,
+          "path": "data/series/32_formycon_employee.csv",
+          "sha256": "46e0abd46e68def04826550b9e74e41ba5ba1b9e1a583060567ac5b29ad2b3d9",
+          "used": false
+        },
+        {
+          "company_id": 33,
+          "path": "data/series/33_freenet_employee.csv",
+          "sha256": "ad131c140624f88d2dd2dbc6db0d2faba6e7b5a2d956f7ee123bf3d0a802c7d5",
+          "used": true
+        }
+      ]
+    }
+  },
+  "params": {
+    "seed": 20261013,
+    "draws": 10000,
+    "bootstrap_draws": 10000,
+    "rng": "random.Random(f'{seed}/{Bezeichnung}') je Teil (Zufall je Variante, Richtung, Lage; Bootstrap je Bezugsmenge, Variante)",
+    "source": "employee",
+    "dimension": "durchschnittsbewertung",
+    "min_reviews_per_month": 5,
+    "rules": {
+      "tolerance_months": 1,
+      "max_shift_months": 3,
+      "same_direction": true,
+      "one_to_one": true,
+      "function": "evaluate_detection.match_series"
+    },
+    "scopes": {
+      "hauptwert": "annotierte Reihen wie im DZ1-Lauf",
+      "regelkonform": "alle geeigneten Reihen (E4); Markierungen in Reihen ohne Eintrag zählen als FP"
+    },
+    "random": {
+      "markers": "je Reihe so viele wie die Erkennung in der Variante",
+      "positions": {
+        "bewertete_monate": "gleichverteilt auf die bewerteten Monate ohne Doppelung",
+        "wie_pelt": "mindestens 3 bewertete Monate davor und ab der Stelle, Abstand mindestens 3 (Regel des Prüfskripts; nur Niveauwechsel)"
+      },
+      "directions": {
+        "richtung_50_50": "Münzwurf je Markierung",
+        "richtung_vorniveau": "rise, wenn Monatsmittel ≥ Mittel der bis zu 6 vorangehenden bewerteten Monate, sonst fall; ohne Vorniveau Münzwurf"
+      },
+      "regelkonform": "Markierungen der Reihen ohne Eintrag als feste Zahl FP addiert"
+    },
+    "naive": "je Reihe die k Stellen mit größtem |Monatsmittel − Mittel der bis zu 6 vorangehenden bewerteten Monate|, Stellen mit mindestens 3 bewerteten Monaten davor und ab der Stelle, absteigend nach (Betrag, Index, Richtung), gierig mit Abstand ≥ 3; k wie die Erkennung; Richtung rise, wenn Monatsmittel > Vorniveau",
+    "percentile": "Rang ⌊q·N⌋ der aufsteigend sortierten Werte (0-basiert, ohne Interpolation)",
+    "wilson_z": 1.959964,
+    "bootstrap": "Reihen mit Zurücklegen, TP/FP/FN summiert, F1; Ziehungen ohne definierten F1 nicht gewertet",
+    "status": "nachträglich gewählt, nicht vorab festgelegt; kalibriert nichts (E5, E9, E30)"
+  },
+  "checks": [
+    {
+      "name": "reihen",
+      "ok": true,
+      "detail": "8 annotierte von 15 geeigneten Reihen, wie im DZ1-Ergebnis"
+    },
+    {
+      "name": "geeignete_reihen",
+      "ok": true,
+      "detail": "Menge der geeigneten Reihen aus den CSVs gleich der Simulation"
+    },
+    {
+      "name": "referenzzeitraeume",
+      "ok": true,
+      "detail": "Einträge in annotations.json gleich den Einträgen im DZ1-Ergebnis"
+    },
+    {
+      "name": "bewertete_monate",
+      "ok": true,
+      "detail": "Zahl der bewerteten Monate aus den CSVs gleich DZ1-Ergebnis und Simulation"
+    },
+    {
+      "name": "markierungen",
+      "ok": true,
+      "detail": "Zahl der Markierungen je annotierter Reihe in DZ1-Ergebnis und Simulation gleich"
+    },
+    {
+      "name": "abgleich_reproduziert",
+      "ok": true,
+      "detail": "Neuabgleich mit match_series ergibt je Reihe und Variante dieselben TP/FP/FN wie dz1_ergebnis.json"
+    }
+  ],
+  "results": {
+    "hauptwert": {
+      "niveauwechsel": {
+        "n_series": 8,
+        "n_annotations": 20,
+        "n_markers": 17,
+        "observed": {
+          "tp": 8,
+          "fp": 9,
+          "fn": 12,
+          "precision": 0.4706,
+          "recall": 0.4,
+          "f1": 0.4324,
+          "precision_wilson95": [
+            0.2617,
+            0.6904
+          ],
+          "recall_wilson95": [
+            0.2188,
+            0.6134
+          ]
+        },
+        "bootstrap": {
+          "draws": 10000,
+          "n_series": 8,
+          "undefined": 0,
+          "f1_mean": 0.43,
+          "f1_median": 0.4375,
+          "f1_interval95": [
+            0.2667,
+            0.5641
+          ]
+        },
+        "random": {
+          "richtung_50_50": {
+            "draws": 10000,
+            "f1_mean": 0.0368,
+            "f1_median": 0.0541,
+            "f1_p95": 0.1081,
+            "f1_p99": 0.1622,
+            "f1_max": 0.2703,
+            "tp_mean": 0.6801,
+            "tp_p95": 2,
+            "tp_p99": 3,
+            "tp_distribution": {
+              "0": 4973,
+              "1": 3555,
+              "2": 1208,
+              "3": 229,
+              "4": 32,
+              "5": 3
+            },
+            "observed_f1": 0.4324,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          },
+          "richtung_vorniveau": {
+            "draws": 10000,
+            "f1_mean": 0.0624,
+            "f1_median": 0.0541,
+            "f1_p95": 0.1622,
+            "f1_p99": 0.2162,
+            "f1_max": 0.3243,
+            "tp_mean": 1.1544,
+            "tp_p95": 3,
+            "tp_p99": 4,
+            "tp_distribution": {
+              "0": 2843,
+              "1": 3920,
+              "2": 2293,
+              "3": 766,
+              "4": 152,
+              "5": 24,
+              "6": 2
+            },
+            "observed_f1": 0.4324,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          }
+        },
+        "naive": {
+          "tp": 4,
+          "fp": 13,
+          "fn": 16,
+          "precision": 0.2353,
+          "recall": 0.2,
+          "f1": 0.2162,
+          "precision_wilson95": [
+            0.0956,
+            0.4726
+          ],
+          "recall_wilson95": [
+            0.0807,
+            0.416
+          ]
+        }
+      },
+      "niveauwechsel+einzelmonate": {
+        "n_series": 8,
+        "n_annotations": 20,
+        "n_markers": 23,
+        "observed": {
+          "tp": 8,
+          "fp": 15,
+          "fn": 12,
+          "precision": 0.3478,
+          "recall": 0.4,
+          "f1": 0.3721,
+          "precision_wilson95": [
+            0.1881,
+            0.5511
+          ],
+          "recall_wilson95": [
+            0.2188,
+            0.6134
+          ]
+        },
+        "bootstrap": {
+          "draws": 10000,
+          "n_series": 8,
+          "undefined": 0,
+          "f1_mean": 0.3709,
+          "f1_median": 0.375,
+          "f1_interval95": [
+            0.2222,
+            0.4889
+          ]
+        },
+        "random": {
+          "richtung_50_50": {
+            "draws": 10000,
+            "f1_mean": 0.0417,
+            "f1_median": 0.0465,
+            "f1_p95": 0.1395,
+            "f1_p99": 0.1395,
+            "f1_max": 0.2326,
+            "tp_mean": 0.8957,
+            "tp_p95": 3,
+            "tp_p99": 3,
+            "tp_distribution": {
+              "0": 3936,
+              "1": 3803,
+              "2": 1733,
+              "3": 435,
+              "4": 82,
+              "5": 11
+            },
+            "observed_f1": 0.3721,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          },
+          "richtung_vorniveau": {
+            "draws": 10000,
+            "f1_mean": 0.0679,
+            "f1_median": 0.0465,
+            "f1_p95": 0.1395,
+            "f1_p99": 0.186,
+            "f1_max": 0.2791,
+            "tp_mean": 1.4601,
+            "tp_p95": 3,
+            "tp_p99": 4,
+            "tp_distribution": {
+              "0": 1995,
+              "1": 3606,
+              "2": 2741,
+              "3": 1218,
+              "4": 355,
+              "5": 71,
+              "6": 14
+            },
+            "observed_f1": 0.3721,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          }
+        },
+        "naive": {
+          "tp": 6,
+          "fp": 17,
+          "fn": 14,
+          "precision": 0.2609,
+          "recall": 0.3,
+          "f1": 0.2791,
+          "precision_wilson95": [
+            0.1255,
+            0.4647
+          ],
+          "recall_wilson95": [
+            0.1455,
+            0.519
+          ]
+        }
+      }
+    },
+    "regelkonform": {
+      "niveauwechsel": {
+        "n_series": 15,
+        "n_annotations": 20,
+        "n_markers": 19,
+        "observed": {
+          "tp": 8,
+          "fp": 11,
+          "fn": 12,
+          "precision": 0.4211,
+          "recall": 0.4,
+          "f1": 0.4103,
+          "precision_wilson95": [
+            0.2314,
+            0.6372
+          ],
+          "recall_wilson95": [
+            0.2188,
+            0.6134
+          ]
+        },
+        "bootstrap": {
+          "draws": 10000,
+          "n_series": 15,
+          "undefined": 0,
+          "f1_mean": 0.4063,
+          "f1_median": 0.4118,
+          "f1_interval95": [
+            0.2381,
+            0.5405
+          ]
+        },
+        "random": {
+          "richtung_50_50": {
+            "draws": 10000,
+            "f1_mean": 0.0349,
+            "f1_median": 0.0513,
+            "f1_p95": 0.1026,
+            "f1_p99": 0.1538,
+            "f1_max": 0.2564,
+            "tp_mean": 0.6801,
+            "tp_p95": 2,
+            "tp_p99": 3,
+            "tp_distribution": {
+              "0": 4973,
+              "1": 3555,
+              "2": 1208,
+              "3": 229,
+              "4": 32,
+              "5": 3
+            },
+            "observed_f1": 0.4103,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          },
+          "richtung_vorniveau": {
+            "draws": 10000,
+            "f1_mean": 0.0592,
+            "f1_median": 0.0513,
+            "f1_p95": 0.1538,
+            "f1_p99": 0.2051,
+            "f1_max": 0.3077,
+            "tp_mean": 1.1544,
+            "tp_p95": 3,
+            "tp_p99": 4,
+            "tp_distribution": {
+              "0": 2843,
+              "1": 3920,
+              "2": 2293,
+              "3": 766,
+              "4": 152,
+              "5": 24,
+              "6": 2
+            },
+            "observed_f1": 0.4103,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          }
+        },
+        "naive": {
+          "tp": 4,
+          "fp": 15,
+          "fn": 16,
+          "precision": 0.2105,
+          "recall": 0.2,
+          "f1": 0.2051,
+          "precision_wilson95": [
+            0.0851,
+            0.4333
+          ],
+          "recall_wilson95": [
+            0.0807,
+            0.416
+          ]
+        }
+      },
+      "niveauwechsel+einzelmonate": {
+        "n_series": 15,
+        "n_annotations": 20,
+        "n_markers": 28,
+        "observed": {
+          "tp": 8,
+          "fp": 20,
+          "fn": 12,
+          "precision": 0.2857,
+          "recall": 0.4,
+          "f1": 0.3333,
+          "precision_wilson95": [
+            0.1525,
+            0.4706
+          ],
+          "recall_wilson95": [
+            0.2188,
+            0.6134
+          ]
+        },
+        "bootstrap": {
+          "draws": 10000,
+          "n_series": 15,
+          "undefined": 0,
+          "f1_mean": 0.3277,
+          "f1_median": 0.3333,
+          "f1_interval95": [
+            0.1765,
+            0.4444
+          ]
+        },
+        "random": {
+          "richtung_50_50": {
+            "draws": 10000,
+            "f1_mean": 0.0373,
+            "f1_median": 0.0417,
+            "f1_p95": 0.125,
+            "f1_p99": 0.125,
+            "f1_max": 0.2083,
+            "tp_mean": 0.8957,
+            "tp_p95": 3,
+            "tp_p99": 3,
+            "tp_distribution": {
+              "0": 3936,
+              "1": 3803,
+              "2": 1733,
+              "3": 435,
+              "4": 82,
+              "5": 11
+            },
+            "observed_f1": 0.3333,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          },
+          "richtung_vorniveau": {
+            "draws": 10000,
+            "f1_mean": 0.0608,
+            "f1_median": 0.0417,
+            "f1_p95": 0.125,
+            "f1_p99": 0.1667,
+            "f1_max": 0.25,
+            "tp_mean": 1.4601,
+            "tp_p95": 3,
+            "tp_p99": 4,
+            "tp_distribution": {
+              "0": 1995,
+              "1": 3606,
+              "2": 2741,
+              "3": 1218,
+              "4": 355,
+              "5": 71,
+              "6": 14
+            },
+            "observed_f1": 0.3333,
+            "n_ge_observed": 0,
+            "share_ge_observed": 0.0,
+            "share_ge_observed_plus1": 0.0001,
+            "draws_with_fewer_markers": 0
+          }
+        },
+        "naive": {
+          "tp": 6,
+          "fp": 22,
+          "fn": 14,
+          "precision": 0.2143,
+          "recall": 0.3,
+          "f1": 0.25,
+          "precision_wilson95": [
+            0.1021,
+            0.3954
+          ],
+          "recall_wilson95": [
+            0.1455,
+            0.519
+          ]
+        }
+      }
+    }
+  },
+  "sensitivity_wie_pelt": {
+    "hauptwert": {
+      "niveauwechsel": {
+        "richtung_50_50": {
+          "draws": 10000,
+          "f1_mean": 0.0396,
+          "f1_median": 0.0541,
+          "f1_p95": 0.1081,
+          "f1_p99": 0.1622,
+          "f1_max": 0.2703,
+          "tp_mean": 0.733,
+          "tp_p95": 2,
+          "tp_p99": 3,
+          "tp_distribution": {
+            "0": 4607,
+            "1": 3780,
+            "2": 1330,
+            "3": 245,
+            "4": 35,
+            "5": 3
+          },
+          "observed_f1": 0.4324,
+          "n_ge_observed": 0,
+          "share_ge_observed": 0.0,
+          "share_ge_observed_plus1": 0.0001,
+          "draws_with_fewer_markers": 0
+        },
+        "richtung_vorniveau": {
+          "draws": 10000,
+          "f1_mean": 0.0693,
+          "f1_median": 0.0541,
+          "f1_p95": 0.1622,
+          "f1_p99": 0.2162,
+          "f1_max": 0.3243,
+          "tp_mean": 1.2821,
+          "tp_p95": 3,
+          "tp_p99": 4,
+          "tp_distribution": {
+            "0": 2387,
+            "1": 3865,
+            "2": 2576,
+            "3": 928,
+            "4": 206,
+            "5": 32,
+            "6": 6
+          },
+          "observed_f1": 0.4324,
+          "n_ge_observed": 0,
+          "share_ge_observed": 0.0,
+          "share_ge_observed_plus1": 0.0001,
+          "draws_with_fewer_markers": 0
+        }
+      }
+    },
+    "regelkonform": {
+      "niveauwechsel": {
+        "richtung_50_50": {
+          "draws": 10000,
+          "f1_mean": 0.0376,
+          "f1_median": 0.0513,
+          "f1_p95": 0.1026,
+          "f1_p99": 0.1538,
+          "f1_max": 0.2564,
+          "tp_mean": 0.733,
+          "tp_p95": 2,
+          "tp_p99": 3,
+          "tp_distribution": {
+            "0": 4607,
+            "1": 3780,
+            "2": 1330,
+            "3": 245,
+            "4": 35,
+            "5": 3
+          },
+          "observed_f1": 0.4103,
+          "n_ge_observed": 0,
+          "share_ge_observed": 0.0,
+          "share_ge_observed_plus1": 0.0001,
+          "draws_with_fewer_markers": 0
+        },
+        "richtung_vorniveau": {
+          "draws": 10000,
+          "f1_mean": 0.0657,
+          "f1_median": 0.0513,
+          "f1_p95": 0.1538,
+          "f1_p99": 0.2051,
+          "f1_max": 0.3077,
+          "tp_mean": 1.2821,
+          "tp_p95": 3,
+          "tp_p99": 4,
+          "tp_distribution": {
+            "0": 2387,
+            "1": 3865,
+            "2": 2576,
+            "3": 928,
+            "4": 206,
+            "5": 32,
+            "6": 6
+          },
+          "observed_f1": 0.4103,
+          "n_ge_observed": 0,
+          "share_ge_observed": 0.0,
+          "share_ge_observed_plus1": 0.0001,
+          "draws_with_fewer_markers": 0
+        }
+      }
+    }
+  },
+  "series": [
+    {
+      "company_id": 3,
+      "company": "Thyssenkrupp",
+      "annotated": false,
+      "evaluated_months": 32,
+      "n_annotations": 0,
+      "markers": {
+        "niveauwechsel": 0,
+        "niveauwechsel+einzelmonate": 0
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        }
+      }
+    },
+    {
+      "company_id": 4,
+      "company": "Open Grid Europe",
+      "annotated": false,
+      "evaluated_months": 22,
+      "n_annotations": 0,
+      "markers": {
+        "niveauwechsel": 0,
+        "niveauwechsel+einzelmonate": 0
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        }
+      }
+    },
+    {
+      "company_id": 7,
+      "company": "E.ON",
+      "annotated": false,
+      "evaluated_months": 38,
+      "n_annotations": 0,
+      "markers": {
+        "niveauwechsel": 1,
+        "niveauwechsel+einzelmonate": 1
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "dates": [
+            "2019-08"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "dates": [
+            "2019-08"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 8,
+      "company": "RWE",
+      "annotated": false,
+      "evaluated_months": 34,
+      "n_annotations": 0,
+      "markers": {
+        "niveauwechsel": 1,
+        "niveauwechsel+einzelmonate": 2
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "dates": [
+            "2022-09"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 0,
+          "dates": [
+            "2022-09",
+            "2024-07"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 14,
+      "company": "Karlsruher Institut für Technologie",
+      "annotated": false,
+      "evaluated_months": 27,
+      "n_annotations": 0,
+      "markers": {
+        "niveauwechsel": 0,
+        "niveauwechsel+einzelmonate": 0
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        }
+      }
+    },
+    {
+      "company_id": 15,
+      "company": "Technische Universität München",
+      "annotated": false,
+      "evaluated_months": 13,
+      "n_annotations": 0,
+      "markers": {
+        "niveauwechsel": 0,
+        "niveauwechsel+einzelmonate": 0
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        }
+      }
+    },
+    {
+      "company_id": 19,
+      "company": "SAP SE",
+      "annotated": true,
+      "evaluated_months": 26,
+      "n_annotations": 1,
+      "markers": {
+        "niveauwechsel": 1,
+        "niveauwechsel+einzelmonate": 2
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 1,
+          "dates": [
+            "2025-10"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "dates": [
+            "2024-09",
+            "2025-10"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 20,
+      "company": "NTT DATA SE",
+      "annotated": true,
+      "evaluated_months": 40,
+      "n_annotations": 1,
+      "markers": {
+        "niveauwechsel": 4,
+        "niveauwechsel+einzelmonate": 4
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 0,
+          "dates": [
+            "2017-11",
+            "2018-06",
+            "2020-07",
+            "2021-12"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 0,
+          "dates": [
+            "2017-11",
+            "2018-06",
+            "2020-07",
+            "2021-12"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 21,
+      "company": "1&1 AG",
+      "annotated": true,
+      "evaluated_months": 107,
+      "n_annotations": 3,
+      "markers": {
+        "niveauwechsel": 1,
+        "niveauwechsel+einzelmonate": 1
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3,
+          "dates": [
+            "2019-12"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3,
+          "dates": [
+            "2019-12"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 24,
+      "company": "Bechtle",
+      "annotated": true,
+      "evaluated_months": 139,
+      "n_annotations": 3,
+      "markers": {
+        "niveauwechsel": 1,
+        "niveauwechsel+einzelmonate": 1
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "dates": [
+            "2021-08"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "dates": [
+            "2021-08"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 25,
+      "company": "Cancom",
+      "annotated": true,
+      "evaluated_months": 115,
+      "n_annotations": 3,
+      "markers": {
+        "niveauwechsel": 0,
+        "niveauwechsel+einzelmonate": 2
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 3
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 3
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 3,
+          "dates": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 3,
+          "dates": [
+            "2017-08",
+            "2024-05"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 26,
+      "company": "Carl Zeiss",
+      "annotated": false,
+      "evaluated_months": 99,
+      "n_annotations": 0,
+      "markers": {
+        "niveauwechsel": 0,
+        "niveauwechsel+einzelmonate": 2
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 0
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "dates": []
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 0,
+          "dates": [
+            "2016-11",
+            "2024-12"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 27,
+      "company": "Compugroup Medical Deutschland",
+      "annotated": true,
+      "evaluated_months": 76,
+      "n_annotations": 3,
+      "markers": {
+        "niveauwechsel": 1,
+        "niveauwechsel+einzelmonate": 1
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3,
+          "dates": [
+            "2024-05"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3,
+          "dates": [
+            "2024-05"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 28,
+      "company": "Telekom",
+      "annotated": true,
+      "evaluated_months": 165,
+      "n_annotations": 3,
+      "markers": {
+        "niveauwechsel": 4,
+        "niveauwechsel+einzelmonate": 7
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 2,
+          "fp": 2,
+          "fn": 1
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 2,
+          "fp": 5,
+          "fn": 1
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 2,
+          "dates": [
+            "2010-07",
+            "2010-10",
+            "2017-05",
+            "2022-12"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 2,
+          "fp": 5,
+          "fn": 1,
+          "dates": [
+            "2009-12",
+            "2010-07",
+            "2010-10",
+            "2015-05",
+            "2017-05",
+            "2019-04",
+            "2022-12"
+          ]
+        }
+      }
+    },
+    {
+      "company_id": 33,
+      "company": "Freenet",
+      "annotated": true,
+      "evaluated_months": 86,
+      "n_annotations": 3,
+      "markers": {
+        "niveauwechsel": 5,
+        "niveauwechsel+einzelmonate": 5
+      },
+      "observed": {
+        "niveauwechsel": {
+          "tp": 2,
+          "fp": 3,
+          "fn": 1
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 2,
+          "fp": 3,
+          "fn": 1
+        }
+      },
+      "naive": {
+        "niveauwechsel": {
+          "tp": 1,
+          "fp": 4,
+          "fn": 2,
+          "dates": [
+            "2016-05",
+            "2016-11",
+            "2019-02",
+            "2021-12",
+            "2022-11"
+          ]
+        },
+        "niveauwechsel+einzelmonate": {
+          "tp": 1,
+          "fp": 4,
+          "fn": 2,
+          "dates": [
+            "2016-05",
+            "2016-11",
+            "2019-02",
+            "2021-12",
+            "2022-11"
+          ]
+        }
+      }
+    }
+  ]
+}

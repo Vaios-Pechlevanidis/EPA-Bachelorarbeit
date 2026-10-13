@@ -154,6 +154,9 @@ backend/data/market/
 docker-compose.yml
 # Annotationsbogen (E5, scripts/make_annotation_sheet.py): erzeugte Datei, nicht einchecken
 backend/data/annotationsbogen*.html
+# Schlüssel zum blinden Annotationsbogen (E5, make_annotation_sheet.py --blind): Zuordnung Reihe/Monat ->
+# Unternehmen/Kalendermonat; nur beim Autor, nicht einchecken
+backend/data/annotationsbogen_blind_schluessel*.json
 
 # Belegspeicher der externen Belege (Inkrement 4, E18): nicht einchecken
 backend/data/context/

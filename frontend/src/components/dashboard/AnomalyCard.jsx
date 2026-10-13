@@ -21,6 +21,7 @@ import { groupLabel, statusDistinctionHint, statusOptions } from "@/lib/reviewer
 import { useDataStatus } from "@/hooks/useDataStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, periodWindows, trimToEvaluated } from "@/lib/anomalySeries"
 import { PARENT_SCOPE, GROUP_COMPANY_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
+import { OUTLIER_UNVALIDATED_NOTE, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, isValidatedScope } from "@/config"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -32,6 +33,10 @@ import { PARENT_SCOPE, GROUP_COMPANY_SCOPE, fmtPrice, fmtPriceTick } from "@/lib
    Bewertendengruppe; die Erkennung läuft je Gruppe neu (E13).
    Inkrement 3: Im Aktien-Dashboard läuft der Aktienkurs als Einordnung auf einer
    zweiten Y-Achse mit (prop "market"); die Dashboard-Karte übergibt keinen Kurs.
+   Kennzeichnung (2026-10-13, E30): Auffällige Einzelmonate tragen in Legende und
+   Tooltip den Zusatz "ungeprüft"; mit VITE_SHOW_OUTLIER_MONTHS=false entfallen
+   sie ganz (config.js). Außerhalb des geprüften Umfangs (Mitarbeitende,
+   Gesamtbewertung, ohne Statusfilter) steht unter dem Diagramm ScopeHint.
    ============================================================================ */
 
 // Farbe je Richtung als Theme-Token (index.css: hell 700er-, dunkel 400er-Töne).
@@ -231,6 +236,7 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod =
                     <p className="m-0 mt-1 text-[11px] text-slate-400">
                         Einzelner Monat, kein neues Niveau; beruht auf {outlier.n_values} Bewertungen mit Wert.
                     </p>
+                    <p className="m-0 mt-1 text-[11px] text-slate-400">{OUTLIER_UNVALIDATED_NOTE}.</p>
                 </div>
             )}
             {events.length > 0 && (
@@ -251,11 +257,12 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod =
     )
 }
 
-/* Zähler für Untertitel (FA-26); bei nicht geeigneter Reihe kein "0". */
+/* Zähler für Untertitel (FA-26); bei nicht geeigneter Reihe kein "0".
+   Einzelmonate nur mit SHOW_OUTLIER_MONTHS. */
 function countLabel(anomalies, eligibility, outliers = []) {
     if (eligibility && !eligibility.eligible) return "keine automatische Erkennung"
     const n = anomalies.length
-    return `${n} ${n === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}${outlierCountText(outliers.length)}`
+    return `${n} ${n === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}${outlierCountText(SHOW_OUTLIER_MONTHS ? outliers.length : 0)}`
 }
 
 /* Liste der auffälligen Einzelmonate (Detailseite); Klick wählt den Monat aus. */
@@ -452,9 +459,10 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
         () => Object.fromEntries(visibleAnomalies.map((a) => [a.date, a])),
         [visibleAnomalies],
     )
-    // Auffällige Einzelmonate (E14) im sichtbaren Ausschnitt.
+    // Auffällige Einzelmonate (E14) im sichtbaren Ausschnitt; ohne SHOW_OUTLIER_MONTHS keine
+    // (dann weder Raute noch Tooltip-Zeile noch Legende, ein Klick wählt den Monat frei).
     const visibleOutliers = useMemo(
-        () => (data?.outlier_months ?? []).filter((o) => inWindow(o.date, range)),
+        () => (SHOW_OUTLIER_MONTHS ? (data?.outlier_months ?? []).filter((o) => inWindow(o.date, range)) : []),
         [data, range],
     )
     const outliersByPeriod = useMemo(
@@ -780,6 +788,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                     <DiamondGlyph direction="fall" /><DiamondGlyph direction="rise" />
                     auffälliger Einzelmonat (unter bzw. über den Nachbarmonaten, mindestens 3 σ und 0,5 Sterne; kein neues Niveau)
                 </span>
+                <span>{OUTLIER_UNVALIDATED_NOTE}</span>
             </p>
         )}
         {showLegend && !error && visibleAnomalies.length > 0 && !compact && (
@@ -909,6 +918,14 @@ export function StatusHint({ hint, className = "" }) {
     return <p className={`m-0 text-[11px] text-slate-500 ${className}`}>Hinweis zum Status: {hint}</p>
 }
 
+/* Vermerk unter dem Verlauf, wenn die Reihe außerhalb des geprüften Umfangs liegt
+   (DZ1, E30: nur Mitarbeitende, Gesamtbewertung, ohne Statusfilter). Ohne
+   automatische Erkennung (E4) oder im Fehlerfall kein Vermerk. */
+export function ScopeHint({ source, dimension, status, eligibility = null, error = null, className = "" }) {
+    if (error || (eligibility && !eligibility.eligible) || isValidatedScope({ source, dimension, status })) return null
+    return <p className={`m-0 text-[11px] text-slate-500 ${className}`}>{UNVALIDATED_SCOPE_NOTE}.</p>
+}
+
 /* onDataChange / onLoadingChange: Zustand der Karte für den PDF-Export (wie
    TopicOverviewCard): Auswahl, Zähler, Eignung, Reihe; das Diagramm selbst wird
    über die ID "anomaly-chart-export" aus dem DOM übernommen. */
@@ -929,7 +946,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen, onData
         if (!onDataChange || loading) return
         const series = data?.series ?? []
         const trimmed = trimToEvaluated(series)
-        const outliers = data?.outlier_months ?? []
+        const outliers = SHOW_OUTLIER_MONTHS ? data?.outlier_months ?? [] : []
         onDataChange({
             source,
             dimension,
@@ -992,6 +1009,7 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen, onData
                     <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />
                 </div>
                 {status && <StatusHint hint={statusHint} className="mt-2" />}
+                <ScopeHint source={source} dimension={dimension} status={status} eligibility={data?.eligibility} error={error} className="mt-2" />
 
                 {/* Die Liste der Veränderungen steht nur auf der Detailseite; die Karte
                     zeigt Verlauf und Zähler und erklärt nur, wenn nichts erkannt werden kann. */}

@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Building2, Diamond, GitCompareArrows, ListOrdered, MessageSquareText, MousePointerClick } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusHint, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, ScopeHint, StatusHint, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { AnomalyComparison } from "@/components/dashboard/AnomalyComparison"
 import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
@@ -23,7 +23,7 @@ import { useDataStatus } from "@/hooks/useDataStatus"
 import { useGlobalEvents } from "@/hooks/useEvidence"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
-import { SHOW_FINANCE_EXTRAS } from "@/config"
+import { OUTLIER_UNVALIDATED_NOTE, SHOW_FINANCE_EXTRAS, SHOW_OUTLIER_MONTHS } from "@/config"
 import { loadCompany, loadCompanyName } from "@/lib/companies"
 
 /* ============================================================================
@@ -60,6 +60,12 @@ import { loadCompany, loadCompanyName } from "@/lib/companies"
    der Antwort des Vergleichs (explanations, explanation_summary); die
    Belegliste erhält daraus Stufe und Ereignisart je Beleg, eine Umschaltung
    der Sortierung (Datum, Relevanz) und einen Filter nach Ereignisart.
+   Kennzeichnung (2026-10-13, E30): Unter dem Verlauf steht ScopeHint, wenn die
+   Reihe außerhalb des geprüften Umfangs liegt (geprüft: Mitarbeitende,
+   Gesamtbewertung, ohne Statusfilter); Einzelmonate tragen den Zusatz
+   "ungeprüft". Mit VITE_SHOW_OUTLIER_MONTHS=false (config.js) gibt es keine
+   Einzelmonate: keine Liste, kein Umschalter, ?liste=einzelmonate zeigt die
+   Veränderungen, ein Monat aus ?from=&to= ist eine freie Auswahl.
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -151,7 +157,8 @@ export default function AnomaliesPage() {
     const [sideState, setSideState] = useState({ id: null, side: "after" })
     const side = sideState.id === selectedId ? sideState.side : "after"
     const sideWindow = windows?.[side] ?? null
-    const outliers = useMemo(() => data?.outlier_months ?? [], [data])
+    // Auffällige Einzelmonate (E14); ohne SHOW_OUTLIER_MONTHS keine, ein Monat ist dann freie Auswahl.
+    const outliers = useMemo(() => (SHOW_OUTLIER_MONTHS ? data?.outlier_months ?? [] : []), [data])
     // Freie Auswahl (E17): ?from=&to=, ?month= als ein Monat; nur ohne ausgewählte Veränderung.
     const fromParam = searchParams.get("from") ?? searchParams.get("month")
     const toParam = searchParams.get("to") ?? searchParams.get("month")
@@ -187,8 +194,8 @@ export default function AnomaliesPage() {
         : topicOnly && reviewPages.highlight?.topic ? `, die ${reviewPages.highlight.topic} nennen` : ""
     const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
     const periodComparison = usePeriodComparison(companyId, selection, { source, dimension, status })
-    // Karte "Markierungen": Veränderungen oder Einzelmonate (?liste=einzelmonate).
-    const markerTab = searchParams.get("liste") === "einzelmonate" ? "outliers" : "changes"
+    // Karte "Markierungen": Veränderungen oder Einzelmonate (?liste=einzelmonate, nur mit SHOW_OUTLIER_MONTHS).
+    const markerTab = SHOW_OUTLIER_MONTHS && searchParams.get("liste") === "einzelmonate" ? "outliers" : "changes"
     const setMarkerTab = (key) => updateParams({ liste: key === "outliers" ? "einzelmonate" : null })
     const selectAnomaly = (id) => updateParams({ anomaly: id, month: null, from: null, to: null })
     const selectPeriod = (from, to) => updateParams({ from, to, month: null, anomaly: null })
@@ -356,6 +363,7 @@ export default function AnomaliesPage() {
                                 />
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
                                     <StatusHint hint={statusHint} />
+                                    <ScopeHint source={source} dimension={dimension} status={status} eligibility={eligibility} error={error} />
                                     {showEvents && !globalEvents.loading && !globalEvents.error && globalEvents.events.length === 0 && (
                                         <p className="m-0 text-[11px] text-slate-500">
                                             Keine allgemeinen Ereignisse: Die Wirtschaftsdaten (Eurostat) liegen nicht vor oder zeigen keinen Konjunktureinbruch und keinen Inflationsschub.
@@ -399,7 +407,7 @@ export default function AnomaliesPage() {
                                     : "Niveauwechsel (E9); Abfälle zuerst, innerhalb nach Größe"}
                                 bodyClassName="px-4 pt-2 pb-3 flex-1 min-h-0 flex flex-col"
                             >
-                                {eligibility?.eligible && (
+                                {eligibility?.eligible && SHOW_OUTLIER_MONTHS && (
                                     <div className="ds-time-filter self-start mb-2" role="group" aria-label="Markierungen">
                                         {[
                                             { key: "changes", label: `Veränderungen (${visibleAnomalies.length})` },
@@ -439,6 +447,9 @@ export default function AnomaliesPage() {
                                         )}
                                     </div>
                                 </div>
+                                {!loading && !error && markerTab === "outliers" && eligibility?.eligible && visibleOutliers.length > 0 && (
+                                    <p className="m-0 mt-2 text-[11px] text-slate-500">{OUTLIER_UNVALIDATED_NOTE}.</p>
+                                )}
                                 {!loading && !error && range && markerTab !== "outliers" && hiddenCount > 0 && (
                                     <p className="m-0 mt-2 text-[11px] text-slate-500">
                                         {hiddenCount} weitere außerhalb des Zeitraums.{" "}
@@ -489,7 +500,7 @@ export default function AnomaliesPage() {
                                 />
                                 {!selection && !selectedAnomaly && (
                                     <p className="m-0 text-[11px] text-slate-500 basis-full xl:basis-auto xl:ml-auto">
-                                        oder im Verlauf: Stufe, Raute oder Monat anklicken, Zeitraum ziehen
+                                        oder im Verlauf: {SHOW_OUTLIER_MONTHS ? "Stufe, Raute oder Monat" : "Stufe oder Monat"} anklicken, Zeitraum ziehen
                                     </p>
                                 )}
                             </div>
@@ -571,6 +582,7 @@ export default function AnomaliesPage() {
                                         <p className="m-0 mb-3 text-[12px] text-slate-600">
                                             Auffälliger Einzelmonat: {fmtPeriod(selectedOutlier.date)} weicht um {String(selectedOutlier.deviation).replace(".", ",")} Sterne
                                             vom Niveau seiner Nachbarmonate ab. Das ist ein Hinweis auf einen auffälligen Monat, keine Aussage über Ursachen.
+                                            {" "}{OUTLIER_UNVALIDATED_NOTE}.
                                         </p>
                                     )}
                                     <AnomalyComparison

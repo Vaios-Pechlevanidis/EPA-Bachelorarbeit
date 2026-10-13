@@ -5,7 +5,7 @@
 | Inkrement | Korrektur (2026-10-13) an der Topic-Übersicht aus Zyklus 1 |
 | Anforderungen | keine eigene Anforderung; Transparenz der angezeigten Zahlen wie FA-25 und FA-26 (Datenbasis und n, siehe [10](10-transparenz-und-datenstand.md)) |
 | Entscheidungen | keine neue; die Schwellen 2,5 und 3,5 Sterne stammen aus Zyklus 1 (eigene Setzung) |
-| Status | umgesetzt (2026-10-13), nicht committet; Schwellen **vorläufig** |
+| Status | umgesetzt (2026-10-13), Commit `baad4fa`; Schwellen **vorläufig** |
 | Stand | 2026-10-13 |
 
 ## 1. Vorstellung

@@ -27,14 +27,28 @@ def test_read_env_keys_returns_only_wanted_keys(tmp_path):
 
 
 def test_env_checks_environment_before_files():
-    rows = ce.env_checks({"MARKET_LIVE_FETCH": "0", "VITE_SHOW_FORECAST": "0"},
+    rows = ce.env_checks({"MARKET_LIVE_FETCH": "0", "VITE_SHOW_FORECAST": "0", "VITE_SHOW_OUTLIER_MONTHS": "0"},
                          {"MARKET_LIVE_FETCH": "1", "CONTEXT_LIVE_FETCH": "0"},
-                         {"VITE_SHOW_FINANCE_EXTRAS": "false", "VITE_SHOW_FORECAST": "true"})
+                         {"VITE_SHOW_FINANCE_EXTRAS": "false", "VITE_SHOW_FORECAST": "true", "VITE_SHOW_OUTLIER_MONTHS": "true"})
     status = {r["check"]: r["status"] for r in rows}
-    assert status == {"MARKET_LIVE_FETCH": "ok", "CONTEXT_LIVE_FETCH": "ok", "VITE_SHOW_FINANCE_EXTRAS": "ok", "VITE_SHOW_FORECAST": "ok"}
+    assert status == {"MARKET_LIVE_FETCH": "ok", "CONTEXT_LIVE_FETCH": "ok", "VITE_SHOW_FINANCE_EXTRAS": "ok",
+                      "VITE_SHOW_FORECAST": "ok", "VITE_SHOW_OUTLIER_MONTHS": "ok"}
     rows = ce.env_checks({}, {}, {"VITE_SHOW_FORECAST": "true"})
-    assert all(r["status"] == ce.ERROR for r in rows)
+    required = [r for r in rows if r["check"] not in ce.FRONTEND_SUGGESTED]
+    assert all(r["status"] == ce.ERROR for r in required)
     assert "nicht gesetzt" in rows[0]["result"]
+
+
+def test_env_checks_outlier_switch_is_only_a_suggestion():
+    """VITE_SHOW_OUTLIER_MONTHS (E30): Vorschlag false, Entscheidung offen; nie Lücke oder Fehler."""
+    def row(environ, frontend_file):
+        return next(r for r in ce.env_checks(environ, {}, frontend_file) if r["check"] == "VITE_SHOW_OUTLIER_MONTHS")
+
+    assert row({}, {"VITE_SHOW_OUTLIER_MONTHS": "false"})["status"] == ce.OK
+    unset = row({}, {})
+    assert unset["status"] == ce.HINT and unset["status"] not in ce.FAILING
+    assert "nicht gesetzt" in unset["result"] and "Entscheidung des Autors offen" in unset["result"]
+    assert row({"VITE_SHOW_OUTLIER_MONTHS": "true"}, {"VITE_SHOW_OUTLIER_MONTHS": "false"})["status"] == ce.HINT
 
 
 def test_market_window_check_separates_before_start_and_gaps():

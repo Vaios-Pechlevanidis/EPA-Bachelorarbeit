@@ -1,6 +1,6 @@
 # Evaluationsinstanz für die Interviews (DZ3) – Varianten, Einstellungen, Prüfliste
 
-Stand: 2026-10-09. Die Evaluationsinstanz ist die Ausgabe des Dashboards, die in den
+Stand: 2026-10-09, Nachtrag 2026-10-13 (Schalter für Einzelmonate, Abschnitt 1a). Die Evaluationsinstanz ist die Ausgabe des Dashboards, die in den
 Experteninterviews (DZ3) gezeigt wird: Backend und Frontend aus diesem Repository auf dem
 Rechner des Autors gegen die gehostete Datenbank (nur lesend). Dieses Dokument legt die beiden
 Varianten mit ihren Folgen vor, nennt die nötigen Einstellungen und enthält eine Prüfliste für
@@ -17,6 +17,10 @@ den Tag vor einem Interview. Beispielwerte stehen in `docs/evaluationsinstanz.en
 > `forecast_months=0` ab und zeigt weder Prognoselinie noch Trennlinie, Legendeneintrag oder
 > „Ø Prognose“; die x-Achse endet am letzten Monat mit Daten; der PDF-Export folgt demselben
 > Schalter (E28). Ohne Angabe bleibt die Prognose aus Zyklus 1 sichtbar.
+>
+> **Vorschlag (2026-10-13), Entscheidung des Autors offen:** die Evaluationsinstanz zusätzlich
+> mit `VITE_SHOW_OUTLIER_MONTHS=false` bauen, also ohne auffällige Einzelmonate (Abschnitt 1a).
+> Bis zur Entscheidung gilt der Standard (mit Einzelmonaten, gekennzeichnet als „ungeprüft“).
 
 ## 1. Die beiden Varianten (Entscheidung D3)
 
@@ -35,6 +39,38 @@ den Tag vor einem Interview. Beispielwerte stehen in `docs/evaluationsinstanz.en
 In beiden Varianten gilt: Der Kurs auf der Anomalien-Seite ist Standard aus und nur per
 Kästchen einblendbar (E15, Nachtrag 2026-10-05); Dashboard-Karte und PDF-Export bleiben ohne
 Kurs; es gibt keine Korrelation und keine Aussage über einen Zusammenhang.
+
+## 1a. Auffällige Einzelmonate: mit oder ohne (Vorschlag, Entscheidung offen)
+
+Anlass ist der Befund aus E30 (2026-10-13). In der Simulation ohne eingesetzte Veränderung
+entstehen in den 15 Reihen 8,9 Einzelmonate (Noten permutiert) bzw. 5,4 (Monate getauscht), auf
+den echten Reihen 9. Einzelmonate treten also etwa so häufig auf wie bei reinem Zufall. Ob ein
+gemeldeter Einzelmonat zutrifft, prüft auch DZ1 nicht (E14). Seit 2026-10-13 steht deshalb überall,
+wo Einzelmonate erklärt werden, „Ungeprüft: in der Simulation etwa so häufig wie bei reinem
+Zufall (E30)“ (Feature-Doku 03).
+
+| | mit Einzelmonaten (Standard) | ohne Einzelmonate (Vorschlag) |
+|---|---|---|
+| Einstellung | Frontend ohne Angabe oder `VITE_SHOW_OUTLIER_MONTHS=true` gebaut | Frontend mit `VITE_SHOW_OUTLIER_MONTHS=false` (oder `0`) gebaut (`frontend/src/config.js`) |
+| Monatsverlauf (Karte, Detailseite, vergrößerte Kurskarte in `/aktie`) | Rauten, Tooltip-Zeile und Legendeneintrag mit dem Zusatz „ungeprüft“ | keine Rauten, keine Tooltip-Zeile, kein Legendeneintrag |
+| Detailseite `/anomalies` | Karte „Markierungen“ mit Umschalter „Veränderungen“ / „Einzelmonate“; Klick auf eine Raute wählt den Einzelmonat | nur „Auffällige Veränderungen“; `?liste=einzelmonate` zeigt die Veränderungen; ein Monat aus einem älteren Link (`?from=&to=`, `?month=`) ist eine freie Auswahl (E17) |
+| Zähler in den Untertiteln | „… · 3 auffällige Einzelmonate“ | nur die Niveauwechsel |
+| PDF-Export | Kachel „Einzelmonate“, Liste „Auffällige Einzelmonate“, Legende mit Zusatz | weder Kachel noch Liste; das Inhaltsverzeichnis nennt sie nicht |
+| Backend | unverändert; `outlier_months` wird weiter berechnet und geliefert | ebenso; der Schalter wirkt nur im Frontend |
+| Folgen für die Interviews | Die Befragten sehen zwei Arten von Markierungen; die Rauten laden zum Nachfragen ein, obwohl ihre Treffsicherheit ungeprüft ist; der Zusatz muss im Gespräch erklärt werden | Das Gespräch bleibt bei den Niveauwechseln, deren Erkennung für die Gesamtbewertung der Mitarbeitenden geprüft ist (DZ1, E30); kurze Einbrüche einzelner Monate sind nur noch über den freien Drill-down (Doku 06) zu finden |
+| Folgen für die Arbeit | Das gezeigte Artefakt enthält einen Teil mit Zufallsbefund; die Auswertung der Interviews müsste Aussagen zu Rauten getrennt lesen | Gezeigt wird, was geprüft ist; E14 bleibt als Funktion des Artefakts beschrieben, aber nicht evaluiert |
+
+Unabhängig vom Schalter steht auf der Detailseite, auf der Dashboard-Karte und im PDF unter dem
+Diagramm „Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die Gesamtbewertung der
+Mitarbeitenden ohne Statusfilter (DZ1, E30)“, sobald eine Einzeldimension, die Bewerbenden oder
+eine Statusgruppe gewählt ist (Feature-Doku 01). Werden diese Reihen im Interview gezeigt, sollte
+der Leitfaden darauf eingehen.
+
+Empfehlung (Vorschlag, die Entscheidung trifft der Autor): `VITE_SHOW_OUTLIER_MONTHS=false` für die
+Interviews, mit derselben Begründung wie bei der Prognose (E28): gezeigt wird, was Zyklus 2
+geprüft hat. In der Beispieldatei steht die Zeile deshalb auskommentiert; die Abnahme
+(`scripts/check_evaluation_instance.py`) meldet einen anderen Wert nur als Hinweis, nicht als
+Lücke.
 
 ## 2. Einstellungen
 
@@ -60,6 +96,7 @@ Aktienkurs“ mit dem Grund.
 | `VITE_API_URL` | Adresse des Backends, `/api` wird angehängt (`frontend/src/config.js`) | `http://localhost:8000` |
 | `VITE_SHOW_FINANCE_EXTRAS` | `false` oder `0` blendet die Zusatzkarten aus (Variante B); jeder andere Wert oder keine Angabe: Variante A | `false` (Variante B, Entscheidung D3 vom 2026-10-08) |
 | `VITE_SHOW_FORECAST` | `false` oder `0` blendet die Prognose im Zeitverlauf und im PDF aus (`frontend/src/config.js`, E28); jeder andere Wert oder keine Angabe: mit Prognose | `false` (Entscheidung D2 vom 2026-10-09) |
+| `VITE_SHOW_OUTLIER_MONTHS` | `false` oder `0` blendet die auffälligen Einzelmonate (E14) in Verlauf, Liste, Zählern und PDF aus (`frontend/src/config.js`, Abschnitt 1a); jeder andere Wert oder keine Angabe: mit Einzelmonaten | Vorschlag `false` (2026-10-13); Entscheidung des Autors offen |
 
 Bauen und starten (Beispiele):
 
@@ -71,7 +108,10 @@ cd frontend && VITE_API_URL=http://localhost:8000 VITE_SHOW_FINANCE_EXTRAS=false
 # dasselbe mit dem Entwicklungsserver (Port 5173 ist in der CORS-Liste)
 cd frontend && VITE_SHOW_FINANCE_EXTRAS=false VITE_SHOW_FORECAST=false npm run dev -- --port 5173
 
-# Docker (beide Dienste)
+# Vorschlag, falls der Autor so entscheidet (Abschnitt 1a): zusätzlich ohne Einzelmonate
+cd frontend && VITE_API_URL=http://localhost:8000 VITE_SHOW_FINANCE_EXTRAS=false VITE_SHOW_FORECAST=false VITE_SHOW_OUTLIER_MONTHS=false npm run build
+
+# Docker (beide Dienste); mit dem Vorschlag aus Abschnitt 1a zusätzlich --build-arg VITE_SHOW_OUTLIER_MONTHS=false
 docker compose build --build-arg VITE_SHOW_FINANCE_EXTRAS=false --build-arg VITE_SHOW_FORECAST=false frontend
 
 # Abnahme der Umgebung und der Speicher (nur lesend, Exit-Code ungleich 0 bei Lücken)
@@ -157,7 +197,9 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
    `VITE_SHOW_FORECAST=false` (D2) und starten; im Browser prüfen: der Zeitverlauf zeigt keine
    Prognose; `/aktie` zeigt vier Kacheln und die Kurskarte über die ganze
    Fläche, der Link unter dem Diagramm der Anomalien-Seite lautet „Aktienkurs und Kennzahlen“,
-   der Tooltip „Aktie“ in der Seitenleiste ebenso.
+   der Tooltip „Aktie“ in der Seitenleiste ebenso. Falls `VITE_SHOW_OUTLIER_MONTHS=false`
+   entschieden ist (Abschnitt 1a): auf der Anomalien-Seite von Telekom keine Rauten und kein
+   Umschalter „Einzelmonate“, im Untertitel nur die Veränderungen.
 7. **Backend starten** und Antworten prüfen: `GET /api/analytics/company/19/market` liefert
    `available: true` aus dem Zwischenspeicher; ein Unternehmen ohne Ticker (z. B. id 4) liefert
    `available: false` mit Grund; keine Live-Abrufe im Backend-Log.
@@ -175,7 +217,7 @@ Jeden Punkt abhaken und die Ergebnisse (Commit, Werte, Zeiten) im Interviewproto
 11. **Netz:** Mit gefülltem Zwischenspeicher und `MARKET_LIVE_FETCH=0` braucht das Backend für
     Kurs und Kennzahlen kein Netz; die Datenbank (Supabase) und, in Variante A, Google News
     brauchen es. Verbindung am Interviewort vorab prüfen oder Variante B wählen.
-12. **Protokoll:** Commit-Hash, `VITE_SHOW_FINANCE_EXTRAS`, `VITE_SHOW_FORECAST`, `MARKET_LIVE_FETCH`, `CONTEXT_LIVE_FETCH`,
+12. **Protokoll:** Commit-Hash, `VITE_SHOW_FINANCE_EXTRAS`, `VITE_SHOW_FORECAST`, `VITE_SHOW_OUTLIER_MONTHS`, `MARKET_LIVE_FETCH`, `CONTEXT_LIVE_FETCH`,
     `fetched_at` der Zwischenspeicher (Kurs und Belege, Zusammenfassung von `fetch_context.py`),
     `sentiment_mode` und das Datum des Durchlaufs festhalten.
 

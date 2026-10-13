@@ -5,9 +5,11 @@ Geprüft werden
 
 1. **Umgebung:** ``MARKET_LIVE_FETCH=0`` und ``CONTEXT_LIVE_FETCH=0`` (Umgebung des
    Prozesses oder ``backend/.env``), ``VITE_SHOW_FINANCE_EXTRAS=false`` und
-   ``VITE_SHOW_FORECAST=false`` (Umgebung oder ``frontend/.env.local``). Aus den
-   Dateien werden nur diese vier Schlüssel gelesen; andere Zeilen (Zugangsdaten)
-   werden weder ausgewertet noch ausgegeben.
+   ``VITE_SHOW_FORECAST=false`` (Umgebung oder ``frontend/.env.local``). Dazu
+   ``VITE_SHOW_OUTLIER_MONTHS`` als Vorschlag (E30, Entscheidung des Autors offen):
+   ``false`` ist ok, jeder andere Wert ein Hinweis, keine Lücke. Aus den Dateien
+   werden nur diese fünf Schlüssel gelesen; andere Zeilen (Zugangsdaten) werden
+   weder ausgewertet noch ausgegeben.
 2. **Kurs-Zwischenspeicher** (``backend/data/market/``): Für jede Markierung
    (Niveauwechsel und Einzelmonate, Mitarbeitende, Gesamtbewertung,
    Standardparameter) der geeigneten Unternehmen liegen die Monate des
@@ -58,6 +60,8 @@ FRONTEND_ENV_FILE = os.path.join(REPO_DIR, "frontend", ".env.local")
 # Erwartete Werte der Evaluationsinstanz (docs/evaluationsinstanz.md, D2, D3)
 BACKEND_EXPECTED = {"MARKET_LIVE_FETCH": "0", "CONTEXT_LIVE_FETCH": "0"}
 FRONTEND_EXPECTED = {"VITE_SHOW_FINANCE_EXTRAS": "false", "VITE_SHOW_FORECAST": "false"}
+# Vorgeschlagen, nicht entschieden (E30, 2026-10-13): abweichende Werte sind nur ein Hinweis.
+FRONTEND_SUGGESTED = {"VITE_SHOW_OUTLIER_MONTHS": "false"}
 FALSE_VALUES = {"false", "0"}
 
 SLOW_SECONDS = 3.0             # Antwortzeit ab der eine Warnung erscheint (Setzung)
@@ -108,11 +112,16 @@ def env_checks(environ: Dict[str, str], backend_file: Dict[str, str], frontend_f
         ok = value is not None and value.strip() == expected
         rows.append({"area": "Umgebung", "check": key, "result": f"{value if value is not None else 'nicht gesetzt'} ({origin})",
                      "status": OK if ok else ERROR})
-    for key in FRONTEND_EXPECTED:
+    for key in (*FRONTEND_EXPECTED, *FRONTEND_SUGGESTED):
         value, origin = (environ[key], "Umgebung") if key in environ else (frontend_file.get(key), "frontend/.env.local")
         ok = value is not None and value.strip().lower() in FALSE_VALUES
-        rows.append({"area": "Umgebung", "check": key, "result": f"{value if value is not None else 'nicht gesetzt'} ({origin})",
-                     "status": OK if ok else ERROR})
+        result = f"{value if value is not None else 'nicht gesetzt'} ({origin})"
+        if key in FRONTEND_SUGGESTED:
+            rows.append({"area": "Umgebung", "check": key,
+                         "result": result if ok else f"{result}; Vorschlag false, Entscheidung des Autors offen",
+                         "status": OK if ok else HINT})
+        else:
+            rows.append({"area": "Umgebung", "check": key, "result": result, "status": OK if ok else ERROR})
     return rows
 
 
@@ -279,7 +288,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     rows = env_checks(dict(os.environ), read_env_keys(BACKEND_ENV_FILE, BACKEND_EXPECTED),
-                      read_env_keys(FRONTEND_ENV_FILE, FRONTEND_EXPECTED))
+                      read_env_keys(FRONTEND_ENV_FILE, {**FRONTEND_EXPECTED, **FRONTEND_SUGGESTED}))
     companies = eligible_companies()
     rows.append({"area": "Unternehmen", "check": "geeignet (E4)",
                  "result": f"{len(companies)}: " + ", ".join(f"{c['name']} ({c['n_anomalies']}+{c['n_outliers']})" for c in companies),

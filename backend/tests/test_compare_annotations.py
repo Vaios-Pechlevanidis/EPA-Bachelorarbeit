@@ -3,6 +3,10 @@ Tests für scripts/compare_annotations.py (DZ1, E5): Übereinstimmung zweier bel
 Annotationsdateien mit der Zuordnungsregel aus E5 (Toleranz ±1 Monat, Lücken bis 3 Monate,
 gleiche Richtung, Eins-zu-eins). Konstruierte Dateien und Reihen, ohne DB und ohne Netz.
 
+Ergänzt 2026-10-13: Cohens κ auf Monatsebene (bekannte Beispiele: vollständige Übereinstimmung
+1, Lehrbuchbeispiel 0,4, unabhängige Zufallsurteile nahe 0), die unveränderte bisherige
+Textausgabe (Text des Stands vor der Erweiterung als Vorspann) und ``--series``.
+
 Ausführen:
     cd backend
     uv run python -m pytest tests/test_compare_annotations.py -q -p no:cacheprovider
@@ -10,6 +14,7 @@ Ausführen:
 
 import json
 import os
+import random
 import sys
 
 import pytest
@@ -210,3 +215,183 @@ class TestSeriesAndCli:
         b.write_text(json.dumps(doc()), encoding="utf-8")
         assert ca.main(["--a", str(a), "--b", str(b), "--series-dir", str(tmp_path / "fehlt"), "--density", str(tmp_path / "fehlt.json")]) == 1
         assert "Schema" in capsys.readouterr().out
+
+
+# ── Cohens κ auf Monatsebene ─────────────────────────────────────────────────
+
+class TestKappa:
+
+    def test_perfect_agreement(self):
+        pairs = [("rise", "rise")] * 3 + [("fall", "fall")] * 2 + [("keine", "keine")] * 19
+        k = ca.cohens_kappa(pairs)
+        assert k["kappa"] == 1.0 and k["p_o"] == 1.0 and k["n_months"] == 24
+        assert k["matrix"]["rise"]["rise"] == 3 and k["matrix"]["keine"]["keine"] == 19
+
+    def test_textbook_example(self):
+        # 50 Urteile: 20 beide ja, 5 nur A, 10 nur B, 15 beide nein -> p_o 0,7, p_e 0,5, κ 0,4
+        pairs = [("rise", "rise")] * 20 + [("rise", "keine")] * 5 + [("keine", "rise")] * 10 + [("keine", "keine")] * 15
+        k = ca.cohens_kappa(pairs)
+        assert (k["p_o"], k["p_e"], k["kappa"]) == (0.7, 0.5, 0.4)
+
+    def test_complete_disagreement_is_negative(self):
+        pairs = [("rise", "keine")] * 10 + [("keine", "rise")] * 10
+        assert ca.cohens_kappa(pairs)["kappa"] == -1.0
+
+    def test_independent_random_judgements_near_zero(self):
+        rng = random.Random(20261013)
+        cats, weights = ["rise", "fall", "keine"], [0.1, 0.1, 0.8]
+        pairs = [(rng.choices(cats, weights)[0], rng.choices(cats, weights)[0]) for _ in range(20000)]
+        k = ca.cohens_kappa(pairs)
+        assert abs(k["kappa"]) < 0.03 and k["p_o"] > 0.6, "hohe Rohübereinstimmung, κ trotzdem nahe 0"
+
+    def test_undefined_cases(self):
+        k = ca.cohens_kappa([("keine", "keine")] * 12)
+        assert k["kappa"] is None and k["p_o"] == 1.0 and k["p_e"] == 1.0 and "nicht definiert" in k["reason"]
+        k = ca.cohens_kappa([])
+        assert k["kappa"] is None and k["n_months"] == 0 and k["reason"] == "keine bewerteten Monate"
+
+    def test_month_categories(self):
+        months_ = sorted(ALL_2020 - {"2020-06"})
+        cats = ca.month_categories([ann("2020-05", "2020-07", "fall"), ann("2020-07", "2020-08", "rise"),
+                                    ann("2020-xx", "2020-09", "rise"), ann("2020-10", "2020-10", "seitwärts")], months_)
+        assert cats["2020-05"] == "fall" and cats["2020-07"] == "fall", "früherer Zeitraum gilt bei Überschneidung"
+        assert cats["2020-08"] == "rise" and cats["2020-09"] == "keine" and cats["2020-10"] == "keine"
+        assert "2020-06" not in cats, "nicht bewertete Monate zählen nicht"
+        assert sum(1 for c in cats.values() if c == "keine") == len(months_) - 3
+
+    def test_compare_kappa_per_series_and_overall(self):
+        a = doc(ann("2020-05", "2020-06", "fall"))
+        b = doc(ann("2020-06", "2020-07", "fall"), ann("2020-03", "2020-03", "rise", company="Musterbau"))
+        r = ca.compare(a, b, SERIES)
+        rows = {s["company"]: s for s in r["series"]}
+        # Beispielwerk: 24 Monate, A fall {05, 06}, B fall {06, 07}: p_o 22/24, p_e 488/576, κ 40/88
+        kb = rows["Beispielwerk"]["kappa"]
+        assert kb["n_months"] == 24 and kb["kappa"] == round(40 / 88, 4) and kb["p_o"] == round(22 / 24, 4)
+        assert rows["Musterbau"]["kappa"]["kappa"] == 0.0, "nur B sieht einen Monat: keine Übereinstimmung über Zufall"
+        assert rows["Leerwerk"]["kappa"]["kappa"] is None
+        o = r["kappa"]["overall"]
+        assert o["n_months"] == 96 and r["kappa"]["n_series_with_months"] == 4
+        assert o["matrix"]["fall"]["fall"] == 1 and o["matrix"]["fall"]["keine"] == 1 and o["matrix"]["keine"]["fall"] == 1
+        assert o["matrix"]["keine"]["rise"] == 1 and o["matrix"]["keine"]["keine"] == 92
+        assert r["kappa"]["categories"] == ["rise", "fall", "keine"]
+
+    def test_series_without_csv_has_no_months(self):
+        r = ca.compare(doc(ann("2020-05", "2020-05", "fall", company="Fremdwerk")), doc(), SERIES)
+        rows = {s["company"]: s for s in r["series"]}
+        assert rows["Fremdwerk"]["kappa"]["n_months"] == 0 and r["kappa"]["n_series_with_months"] == 4
+
+
+# ── Bisherige Ausgabe unverändert ────────────────────────────────────────────
+
+# Text von format_report für dieses Beispiel, erzeugt mit compare_annotations.py vor der
+# Erweiterung um κ (Stand HEAD 2551300).
+OLD_REPORT = (
+    "Übereinstimmung zweier Annotationsdateien (DZ1, E5) – A: a.json, B: b.json\n"
+    "  Regel 6: Toleranz ±1 Monat, Lücken bis 3 Monate, gleiche Richtung, Eins-zu-eins-Zuordnung.\n"
+    "  Zeiträume A: 2, B: 3; übereinstimmend 1, nur bei A 1, nur bei B 2.\n"
+    "  Reihen: 5, davon beide ohne Zeitraum: 2 (40 %).\n"
+    "\n"
+    "  Reihe                                                        A   B   =  nurA  nurB\n"
+    "  Beispielwerk / employee / durchschnittsbewertung             1   2   1     0     1\n"
+    "  Fremdwerk / employee / durchschnittsbewertung                0   1   0     0     1   (ohne Serien-CSV: reine Toleranz)\n"
+    "  Leerwerk / employee / durchschnittsbewertung                 0   0   0     0     0\n"
+    "  Musterbau / employee / durchschnittsbewertung                1   0   0     1     0\n"
+    "  Stillwerk / employee / durchschnittsbewertung                0   0   0     0     0\n"
+    "  Beispielwerk / employee / durchschnittsbewertung:\n"
+    "    Übereinstimmung: A 2020-05..2020-06 fall (Fenster 2020-04..2020-07) <-> B 2020-06..2020-07\n"
+    "    Nur bei B:       2020-11..2020-11 rise\n"
+    "  Fremdwerk / employee / durchschnittsbewertung:\n"
+    "    Nur bei B:       2021-02..2021-02 fall\n"
+    "  Musterbau / employee / durchschnittsbewertung:\n"
+    "    Nur bei A:       2020-03..2020-03 rise (Fenster 2020-02..2020-04)\n"
+    "\n"
+    "Beschreibende Zahlen. Übereinstimmung nach E5, Regel 6 (Toleranz, Richtung, Eins-zu-eins); keine Aussage, "
+    "welche Datei richtig liegt."
+)
+OLD_KEYS = {
+    "report": {"generated_at", "note", "rules", "series", "totals", "versions"},
+    "totals": {"matched", "n_a", "n_b", "n_series", "only_a", "only_b", "series_both_none", "share_both_none",
+               "share_matched_of_a", "share_matched_of_b"},
+    "row": {"both_none", "company", "dimension", "evaluated_known", "matches", "n_a", "n_b", "only_a", "only_b", "series", "source"},
+}
+
+
+class TestOutputUnchanged:
+
+    def _report(self):
+        a = doc(ann("2020-05", "2020-06", "fall"), ann("2020-03", "2020-03", "rise", company="Musterbau"))
+        b = doc(ann("2020-06", "2020-07", "fall"), ann("2020-11", "2020-11", "rise"), ann("2021-02", "2021-02", "fall", company="Fremdwerk"))
+        return ca.compare(a, b, SERIES)
+
+    def test_old_text_is_unchanged_prefix(self):
+        text = ca.format_report(self._report(), "a.json", "b.json")
+        assert text.startswith(OLD_REPORT + "\n")
+        kappa_block = text[len(OLD_REPORT):]
+        assert kappa_block.startswith("\n\nCohens κ auf Monatsebene")
+        assert "Gesamt: κ " in kappa_block and "in 4 Reihen" in kappa_block
+        assert "Fremdwerk / employee / durchschnittsbewertung" in kappa_block and "(ohne Serien-CSV: keine Monate)" in kappa_block
+        assert "konstruiert" not in text
+
+    def test_old_json_keys_kept(self):
+        r = self._report()
+        assert OLD_KEYS["report"] <= set(r) and set(r) - OLD_KEYS["report"] == {"kappa"}
+        assert set(r["totals"]) == OLD_KEYS["totals"]
+        for row in r["series"]:
+            assert set(row) - OLD_KEYS["row"] == {"kappa"}
+
+
+# ── Teilmenge (--series) ─────────────────────────────────────────────────────
+
+class TestSeriesSelection:
+
+    def test_compare_only(self):
+        a = doc(ann("2020-05", "2020-05", "fall"), ann("2020-03", "2020-03", "fall", company="Musterbau"))
+        r = ca.compare(a, doc(), SERIES, only={"beispielwerk", "leerwerk"})
+        assert [s["company"] for s in r["series"]] == ["Beispielwerk", "Leerwerk"]
+        assert r["totals"]["n_a"] == 1 and r["kappa"]["overall"]["n_months"] == 48
+
+    def test_selection_from_key_and_converted_file(self):
+        key = {"reihen": {"Reihe A": {"company_id": 2, "name": "Musterbau"}, "Reihe B": {"company_id": 1, "name": "Beispielwerk"}}}
+        converted = {"hinweise": {"herkunft": {"reihen": {"Reihe A": {"company_id": 2, "company": "Musterbau"}}}}}
+        assert sorted(ca.selection_from_doc(key)) == [(1, "Beispielwerk"), (2, "Musterbau")]
+        assert ca.selection_from_doc(converted) == [(2, "Musterbau")]
+        assert ca.selection_from_doc(doc()) is None and ca.selection_from_doc([1]) is None
+
+    def test_resolve_ids_and_files(self, tmp_path):
+        names = {1: "Beispielwerk", 2: "Musterbau"}
+        assert ca.resolve_selection("1, 2", names) == ({"beispielwerk", "musterbau"}, None)
+        sel, err = ca.resolve_selection("1,9", names)
+        assert sel is None and "9" in err
+        sel, err = ca.resolve_selection("abc", names)
+        assert sel is None and "weder eine Datei" in err
+        key = tmp_path / "key.json"
+        key.write_text(json.dumps({"reihen": {"Reihe A": {"company_id": 2, "name": "Musterbau"}}}), encoding="utf-8")
+        assert ca.resolve_selection(str(key), names) == ({"musterbau"}, None)
+        other = tmp_path / "other.json"
+        other.write_text(json.dumps(doc()), encoding="utf-8")
+        sel, err = ca.resolve_selection(str(other), names)
+        assert sel is None and "herkunft" in err
+
+    def test_cli_series_and_hint(self, tmp_path, capsys):
+        series_dir = tmp_path / "series"
+        series_dir.mkdir()
+        _write_csv(series_dir / "1_beispielwerk_employee.csv", list(months(2020, 1, 24)))
+        _write_csv(series_dir / "2_leerwerk_employee.csv", list(months(2020, 1, 24)))
+        density = tmp_path / "density.json"
+        density.write_text(json.dumps({"companies": [{"id": 1, "name": "Beispielwerk"}, {"id": 2, "name": "Leerwerk"}]}), encoding="utf-8")
+        a, b = tmp_path / "a.json", tmp_path / "b.json"
+        a.write_text(json.dumps(doc(ann("2020-05", "2020-06", "fall"))), encoding="utf-8")
+        b_doc = doc(ann("2020-05", "2020-06", "fall"))
+        b_doc["hinweise"] = {"herkunft": {"reihen": {"Reihe A": {"company_id": 1, "company": "Beispielwerk"}}}}
+        b.write_text(json.dumps(b_doc), encoding="utf-8")
+        base = ["--a", str(a), "--b", str(b), "--series-dir", str(series_dir), "--density", str(density)]
+        assert ca.main(base) == 0
+        out = capsys.readouterr().out
+        assert "Datei B stammt aus der blinden Zweitannotation" in out and "Reihen: 2," in out
+        result = tmp_path / "r.json"
+        assert ca.main(base + ["--series", str(b), "--json", str(result)]) == 0
+        out = capsys.readouterr().out
+        assert "Auswahl (--series): 1 Reihen." in out and "Reihen: 1," in out
+        data = json.loads(result.read_text(encoding="utf-8"))
+        assert data["kappa"]["overall"]["kappa"] == 1.0 and data["series"][0]["kappa"]["n_months"] == 24
+        assert ca.main(base + ["--series", "7"]) == 1 and "FEHLER" in capsys.readouterr().out

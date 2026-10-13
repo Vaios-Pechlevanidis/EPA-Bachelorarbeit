@@ -5,7 +5,7 @@
 | Inkrement | Nachtrag nach Inkrement 6 |
 | Anforderungen | keine eigene Anforderung; Nähe zu FA-38 (Berechnung erklären) |
 | Entscheidungen | E28 (Prognose als Schalter beim Bauen) in `docs/entscheidungen.md`; keine neue Entscheidung |
-| Status | umgesetzt (2026-10-13), nicht committet; Begründung durch den Autor offen |
+| Status | umgesetzt (2026-10-13), Commit `b7e8326`; Begründung durch den Autor offen |
 | Stand | 2026-10-13 |
 
 ## 1. Vorstellung

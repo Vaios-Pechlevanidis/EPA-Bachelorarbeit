@@ -4,9 +4,9 @@
 |---|---|
 | Inkrement | 1 (Zyklus 2) |
 | Anforderungen | FA-01 bis FA-04, Zähler aus FA-26 |
-| Entscheidungen | E3 (Erkennungsreihe), E4 (Mindestdichte), E5 (Referenzzeiträume, aktualisiert), E9 (Verfahren und Parameter) |
+| Entscheidungen | E3 (Erkennungsreihe), E4 (Mindestdichte), E5 (Referenzzeiträume, aktualisiert), E9 (Verfahren und Parameter), E30 (semi-synthetische Prüfung; Kennzeichnung ungeprüfter Reihen) |
 | Status | Inkrement 1 abgeschlossen: Karte und Detailseite mit Dimensionsauswahl (Quelle Mitarbeitende), gestrichelt überbrückten Lücken, Eignungshinweis und Zeitfilter auf der Detailseite. Parameter **vorläufig** (E9) |
-| Stand | 2026-10-05 |
+| Stand | 2026-10-05; Nachtrag 2026-10-13 (Kennzeichnung ungeprüfter Reihen) |
 
 ## 1. Vorstellung
 
@@ -98,6 +98,17 @@ mit dem Link „Gesamten Zeitraum zeigen“. Der Zeitfilter ändert **nicht** di
 „Zurück“ führt mit derselben Firma zum Dashboard. Weil Firma, Dimension und Zeitraum in
 der Adresse stehen (`&range=5y|3y|1y`), lässt sich die Seite neu laden, als Lesezeichen
 speichern oder weitergeben. Die Karte im Dashboard zeigt immer die ganze Reihe.
+
+**Kennzeichnung ungeprüfter Reihen (Nachtrag 2026-10-13):** Geprüft ist die Erkennung nur für
+die Gesamtbewertung der Mitarbeitenden ohne Statusfilter: gegen die Referenzzeiträume (DZ1, 8
+annotierte der 15 geeigneten Reihen, E9 Aktualisierung 2026-10-10) und semi-synthetisch (E30,
+alle 15 Reihen). Zeigt die Detailseite oder die
+Dashboard-Karte eine andere Reihe, also eine Einzeldimension, die Bewerbenden oder eine
+Statusgruppe, steht unter dem Diagramm: „Erkennung für diese Auswahl nicht geprüft; geprüft ist
+nur die Gesamtbewertung der Mitarbeitenden ohne Statusfilter (DZ1, E30).“ Der PDF-Export
+übernimmt den Satz unter der Anomalien-Karte. Ohne automatische Erkennung (E4) oder im
+Fehlerfall entfällt er. Die Markierungen selbst bleiben unverändert sichtbar; der Hinweis gilt
+unabhängig vom Schalter für Einzelmonate (Doku 03).
 
 Nutzen: Statt einen langen Verlauf selbst nach Brüchen abzusuchen, sieht man sofort,
 *wann* sich die Stimmung der Mitarbeitenden spürbar verschoben hat und *wie stark*.
@@ -264,7 +275,8 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 | Teil | Datei | Aufgabe |
 |---|---|---|
 | Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
-| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), Niveaulinie (`showLevels`), Kartenvariante (`compact`: Ringe auf dem Monatswert wie in der ersten Version, ohne Niveaulinie und Markierungslegende), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis (Liste nur auf der Detailseite), Dimensionsauswahl, Zeitfilter; von Karte und Detailseite gemeinsam genutzt |
+| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`, seit 2026-10-13 `ScopeHint`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), Niveaulinie (`showLevels`), Kartenvariante (`compact`: Ringe auf dem Monatswert wie in der ersten Version, ohne Niveaulinie und Markierungslegende), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis (Liste nur auf der Detailseite), Dimensionsauswahl, Zeitfilter, Hinweis bei ungeprüften Reihen (`ScopeHint`); von Karte und Detailseite gemeinsam genutzt |
+| Prüfumfang und Schalter | `frontend/src/config.js` | `isValidatedScope` (Mitarbeitende, Gesamtbewertung, ohne Statusfilter), die Hinweistexte `UNVALIDATED_SCOPE_NOTE` und `OUTLIER_UNVALIDATED_NOTE` für Karte, Detailseite und PDF, Schalter `SHOW_OUTLIER_MONTHS` (Doku 03) |
 | Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Anzeigebereich vom ersten bis zum letzten bewerteten Monat (`trimToEvaluated`), Zeitfenster relativ zum letzten angezeigten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |
@@ -307,7 +319,8 @@ Größenordnungen aus der Literaturnotiz (`docs/referenzzeitraeume-literatur.md`
 anderem zur Standardabweichung der Quartalsänderung von etwa 0,45 Sternen bei Green et al.
 (2019) und zum Richtwert von 0,5 Sternen im Annotationsprotokoll. Die Parameterübersicht
 (`backend/scripts/explore_anomaly_params.py`) zeigt, wie stark die Zahl der Markierungen von
-ihnen abhängt (Abschnitt 5). Gegen Referenzzeiträume (DZ1) sind sie noch nicht gemessen.
+ihnen abhängt (Abschnitt 5). Gegen die Referenzzeiträume (DZ1) wurden sie am 2026-10-10 einmal
+gemessen (8 annotierte Reihen, F1 0,43) und blieben unverändert (E9, Aktualisierung 2026-10-10).
 
 **Warum ein skalierter Strafterm?** Der feste Wert 0,5 behandelte eine ruhige Reihe mit 30
 Monaten wie eine stark schwankende mit 160 Monaten. Verrauschte Reihen wurden dadurch
@@ -409,7 +422,16 @@ dringendere Anlass zum Handeln.
 - Die Abschnitte einer Veränderung reichen bis zum benachbarten *erkannten* Wechsel, auch
   wenn dieser wegen `min_delta` nicht angezeigt wird. In den aktuellen Daten betrifft das
   nur Carl Zeiss 2021-05 (+0,25), ohne Nachbarn; die Niveaulinie bleibt dort leer.
-- Die Parameter sind noch nicht gegen unabhängige Referenzzeiträume geprüft.
+- Geprüft ist die Erkennung nur für die Gesamtbewertung der Mitarbeitenden ohne Statusfilter
+  (15 geeignete Reihen): im Abgleich mit den Referenzzeiträumen (DZ1, nur die 8 annotierten
+  der 15 Reihen, 20 Zeiträume, F1 0,43; Referenz regelbasiert, ein Annotator, nicht blind,
+  E5) und in der semi-synthetischen Prüfung (E30, alle 15 Reihen). In den 15 Reihen liegen
+  28 Markierungen (19 Niveauwechsel, 9 Einzelmonate, E30). Für
+  Einzeldimensionen, Bewerbende und Statusgruppen läuft dieselbe Erkennung mit denselben
+  Parametern ungeprüft. Einzeldimensionen schwanken stärker als die Gesamtbewertung (Doku 03):
+  Über alle Dimensionen meldet die Erkennung 121 Einzelmonate in 208 geeigneten Reihen (E14),
+  in der Gesamtbewertung 9. Die Anzeige kennzeichnet diese Reihen seit 2026-10-13
+  (Abschnitt 1).
 - Der skalierte Strafterm (seit 2026-10-04) wächst mit der Streuung und der Länge der Reihe.
   Bei sehr verrauschten Reihen braucht ein Wechsel deshalb einen großen Sprung (Cancom bei
   12/12 Monaten 0,63 Sterne); echte, aber kleinere Veränderungen können dort unerkannt
@@ -448,6 +470,8 @@ dringendere Anlass zum Handeln.
 | Parameterübersicht skaliert | `backend/data/calibration/anomaly_params_scaled_employee_durchschnittsbewertung.csv`, Stand 2026-10-04, 15 geeignete Unternehmen. Gesamt (davon deutlich) bei `min_delta` 0,3: Faktor 1 → 44 (33), **Faktor 2 → 19 (15) (Standard)**, Faktor 3 → 13 (9), Faktor 4 → 10 (9); fest 0,5 → 66 (55). Synthetische Prüfung in `backend/tests/anomaly/test_changepoint_detector.py` (120 Monate, σ 0,5: ohne Sprung keine Veränderung, mit Sprung 1,0 genau dieser; höchstens 5 Fehlalarme in 50 Rauschreihen) |
 | Commits Inkrement 1 | `ffeacde` (Detektor), `10b1d50` (Tests), `5042d89` (Service), `cb5101b` (API), `4f41aa0` (Karte), `8c3af1e` (Detailseite) |
 | Commits Abschluss | `1faca39` (Lücken, Eignung, Datenbasis), `6c63607` (Bewertungen davor/danach), `ed9bc3c` (Dimensionsauswahl, `dimension=all`), `67e1377` (Service-/Routentests), `f7fedbb` (Parameterübersicht) |
+| Kennzeichnung ungeprüfter Reihen (2026-10-13) | `npx eslint` ohne Befund, `vite build` im Standard und mit `VITE_SHOW_OUTLIER_MONTHS=false`. Browser, Telekom: Gesamtbewertung der Mitarbeitenden ohne Hinweis; Dimension „Kommunikation“ mit dem Hinweis unter dem Diagramm (Standardbau und Bau mit `false`); Dashboard-Karte im Bau mit `false` ohne Einzelmonate im Untertitel. PDF-Export nur im Code und im Bau geprüft |
+| Prüfumfang DZ1 und E30 | `backend/data/calibration/dz1_ergebnis.json`: 8 Reihen in `series`, `totals.niveauwechsel.gesamt` mit `n_series` 8, `n_annotations` 20, 8 Treffer, 9 zusätzlich, 12 verfehlt (F1 0,43). `backend/data/calibration/semisynthetisch_2026-10-13.json`: alle 15 geeigneten Reihen, `series[].observed_level_shifts` summiert 19, `observed_outliers` 9 |
 | Kurs und Drill-down-Leiste (2026-10-05) | Branch `feature/korrektur-kurs-integration`, im Browser geprüft: Kästchen „Aktienkurs“ nur mit Ticker, `/market` erst nach dem Einschalten; Stufen, Rauten, Vergleichsfenster, Klick und Ziehen mit Kurs; „von / bis“ bei Telekom ab Nov. 2018 = Nov. 2018 – Jan. 2019, ab Feb. 2019 = Feb. 2019 – Juli 2019, SAP SE ab Juli 2024 = Juli 2024 – Dez. 2024 (wie die Vergleichsfenster); Kopf bei 375 px Breite ohne Überlappung. Details in Doku 04 |
 
 ## 6. Offene Punkte
@@ -455,15 +479,21 @@ dringendere Anlass zum Handeln.
 - Detailseite im selben Browser-Tab (wie der Vergleich) oder in einem neuen Tab öffnen?
 - Quellenauswahl (Bewerbende): umgesetzt in Inkrement 2 zusammen mit dem Statusfilter,
   siehe [02 – Drill-down und Vorher-Nachher-Vergleich](02-drilldown-und-vergleich.md) und E13.
-- Referenzzeiträume: Die Einträge wurden am 2026-10-03 zurückgestellt; Ersatzregel und
-  Einschränkung für DZ1 stehen in E5 (Annotation vor der Evaluation, ohne Einsicht in
-  Erkennungsergebnisse).
-- Messung gegen die Referenzzeiträume (DZ1) steht aus; bis dahin bleiben die Parameter
-  vorläufig (E9). Dabei den Faktor des skalierten Strafterms (2) prüfen; Faktor 3 und 4
-  liefern 13 bzw. 10 Markierungen.
+- Referenzzeiträume: am 2026-10-03 zurückgestellt, seit 2026-10-09 eingetragen (20 Zeiträume
+  in 8 der 15 Reihen; agentengestützt nach Regeln vorgeschlagen, vom Autor als einzigem
+  Annotator geprüft, nicht blind gegenüber der Erkennung; E5, „Grenzen für DZ1“).
+- Die Messung gegen die Referenzzeiträume (DZ1) lief einmal am 2026-10-10 (8 annotierte
+  von 15 geeigneten Reihen, F1 0,43; E9, Aktualisierung 2026-10-10). Die Parameter blieben
+  unverändert und sind festgeschrieben (E9). Der niedrige Recall bei verrauschten Reihen
+  (Cancom) wäre ein Anlass, den Faktor des skalierten Strafterms (2) zu prüfen; eine Änderung
+  dürfte nicht mit derselben Referenz bewertet werden. Faktor 3 und 4 liefern 13 bzw. 10
+  Markierungen.
 - `min_size` (3): Kurze, starke Einbrüche werden mit einem unauffälligen Nachbarmonat auf
   3 Monate aufgefüllt (Telekom 2022-10). Mit `min_size=2` läge die Markierung dort auf
   2022-11. Ob das gewünscht ist, ist eine Entscheidung des Autors (E9).
 - Trefferfläche des Tooltips: Bei langen Reihen ist eine Monatsspalte nur wenige Pixel
   breit; die Details einer Veränderung stehen immer auch in der Liste.
 - Die Anforderungstexte FA-01 bis FA-04 und FA-26 liegen nicht im Repository.
+- Ungeprüfte Reihen (Abschnitt 4): Ob Einzeldimensionen, Bewerbende und Statusgruppen in der
+  Evaluation gezeigt, nur gekennzeichnet oder ausgeblendet werden, entscheidet der Autor; eine
+  Prüfung dieser Reihen bräuchte eigene Referenzzeiträume.
