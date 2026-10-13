@@ -460,6 +460,18 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
     über mehrere Monatsabfragen.
 - **Status:** Quellen entschieden (2026-10-08); die Fragen an den Betreuer aus
   `docs/nutzungsbedingungen.md` bleiben zu klären.
+- **Nachtrag 2026-10-13 – Rollen der Quellen und Abweichung vom Exposé (Autor):** Finanzmarktdaten
+  und Nachrichten haben getrennte Rollen.
+  - **Aktienteil:** yfinance liefert Aktienkurs und Kennzahlen für die Einordnung im Dashboard
+    (`/aktie`, einblendbarer Kurs auf der Anomalien-Seite; E15, E16).
+  - **Erklärung der Anomalien:** Die Belege der Erklärungsansätze stammen aus Google News RSS und,
+    für börsennotierte Unternehmen, aus Ad-hoc- und Pflichtmitteilungen von EQS (E18–E21).
+  - **Abweichung vom Exposé:** Das Exposé sah yfinance auch als Nachrichtenquelle vor. yfinance
+    liefert aber nur aktuelle Meldungen und keine Belege für die Anomaliezeiträume: 0 im Fenster im
+    Spike vom 2026-10-02, für keinen der 17 Ticker Nachrichten am 2026-10-04 (E16).
+  - **Google News als Nachrichtenquelle:** Es stützt und erweitert die Datengrundlage der
+    Erklärungsansätze in zwei Richtungen: zeitlich auf die Anomaliezeiträume und auf die nicht
+    börsennotierten Unternehmen, für die es weder Ticker noch EQS gibt.
 
 ## E8 – Reproduzierbarkeit des Docker-Stacks
 
