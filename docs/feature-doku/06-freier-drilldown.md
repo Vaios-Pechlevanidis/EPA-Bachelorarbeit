@@ -6,7 +6,7 @@
 | Anforderungen | Wunsch des Autors vom 2026-10-05: Drill-down bei Bedarf auch für Unternehmen ohne erkannte Veränderung |
 | Entscheidungen | E17 in `docs/entscheidungen.md`; E10–E12 (Themen, Stimmung, Fenster) gelten für den Vergleich weiter |
 | Status | umgesetzt; Mindestlänge des Vergleichszeitraums **vorläufig** |
-| Stand | 2026-10-05 |
+| Stand | 2026-10-05; 2026-10-13 Monatsraster statt Auswahllisten für „von / bis“ |
 
 ## 1. Vorstellung
 
@@ -20,6 +20,11 @@ nicht nur eine erkannte Veränderung:
   bis“ und die Schnellwahl „Letzter Monat“, „Letzte 6 Monate“, „Letzte 12 Monate“. Er hilft
   auch bei Reihen, deren Monate im Diagramm nicht anklickbar sind (z. B. dünne
   Bewerberreihen ohne bewerteten Monat).
+  „von“ und „bis“ öffnen je ein **Monatsraster** (seit 2026-10-13; vorher Auswahllisten mit
+  allen Monaten der Reihe, bei langen Reihen über hundert Einträge): oben das Jahr (Pfeile
+  oder Liste), darunter die 12 Monate mit der **Zahl der Bewertungen** je Monat. Monate ohne
+  Bewertung stehen grau mit „–“, Monate außerhalb der Reihe sind nicht wählbar, der gewählte
+  Zeitraum ist hinterlegt. „Anzeigen“ übernimmt die Auswahl wie bisher.
 
 Darunter erscheinen **„Vergleich mit dem Zeitraum davor“** (gleiche Darstellung wie der
 Vorher-Nachher-Vergleich: Anzahl, Gesamtnote, Stimmung, Verschiebungen je Thema, kleine
@@ -55,6 +60,9 @@ Zeitraums und sieht, was sich gegenüber der Zeit davor in den Texten verschoben
   die Erkennung markiert nur, wo es sich besonders lohnt.
 - Klick und Ziehen im Diagramm sind der direkte Weg; das Auswahlfeld ist der Weg ohne
   Maus und für Reihen ohne anklickbare Monate.
+- Monatsraster statt Liste: Ein Jahr auf einen Blick ist schneller zu wählen als eine Liste
+  mit bis zu 200 Monaten, und die Zahl je Monat zeigt vor der Auswahl, wo überhaupt
+  Bewertungen liegen (Universität Duisburg-Essen: 112 von 211 Monaten ohne Bewertung).
 - Ein gleich langer Zeitraum davor ist die einfachste Bezugsgröße; mindestens 6 Monate wie
   die Fensterlänge in E12, damit ein einzelner Monat nicht gegen einen einzelnen Monat
   verglichen wird.
@@ -71,6 +79,7 @@ Zeitraums und sieht, was sich gegenüber der Zeit davor in den Texten verschoben
 | Was | Beleg |
 |---|---|
 | Backend | `backend/tests/drilldown/test_period_comparison.py`: Fenster (ein Monat, lange Auswahl, Jahreswechsel, ungültige Angaben), Form der Antwort, Zählung je Fenster, Demo 1 ohne Veränderung, Dimension und Status, leerer Zeitraum, 400/422 |
+| Browser (2026-10-13) | Universität Duisburg-Essen, Mitarbeitende: Raster Juni 2018 (18), Sept./Okt. 2018 „–“; „von“ Aug. 2018, „bis“ über den Pfeil ins Jahr 2019, März → „Anzeigen“ → `from=2018-08&to=2019-03`; Zeitraum hinterlegt, Fokus beim Öffnen auf dem gewählten Monat; hell und dunkel |
 | Browser (2026-10-05) | Cancom (keine erkannte Veränderung): Ziehen Feb. 2020 – Jan. 2022 → Vergleich 269 / 211 Bewertungen, Liste 211; Klick auf einen Monat → `from=to=2024-02`. Aixtron (keine automatische Erkennung): „Letzte 12 Monate“ → Aug. 2024 – Juli 2025, 28 / 25 Bewertungen |
 
 ## 6. Offene Punkte

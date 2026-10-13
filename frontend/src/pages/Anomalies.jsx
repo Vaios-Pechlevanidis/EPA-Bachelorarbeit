@@ -196,6 +196,8 @@ export default function AnomaliesPage() {
     const clearSelection = () => updateParams({ anomaly: null, month: null, from: null, to: null })
     // Monate der Reihe für das Auswahlfeld (erster bis letzter Monat mit datierter Bewertung).
     const seriesMonths = useMemo(() => (data?.series ?? []).map((m) => m.period), [data])
+    // Bewertungen je Monat für das Monatsraster des Auswahlfelds.
+    const monthCounts = useMemo(() => Object.fromEntries((data?.series ?? []).map((m) => [m.period, m.count ?? 0])), [data])
     const eligibility = data?.eligibility
     const count = anomalies.length
     // Sichtbares Fenster relativ zum letzten angezeigten (bewerteten) Monat; null = alles.
@@ -480,6 +482,7 @@ export default function AnomaliesPage() {
                                 <DrilldownPicker
                                     key={selectedAnomaly ? `anomaly:${selectedAnomaly.id}` : selectionKey ?? "none"}
                                     months={seriesMonths}
+                                    counts={monthCounts}
                                     selection={selectedAnomaly ? windows?.after ?? null : selection}
                                     onSelect={selectPeriod}
                                     onClear={selection || selectedAnomaly ? clearSelection : null}
