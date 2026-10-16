@@ -77,7 +77,7 @@ export default function RollingModal({ open, onOpenChange, data, companyName = "
           <div className="text-[12px] text-slate-600 leading-5 space-y-1.5">
             <p className="m-0">
               <span className="font-medium text-slate-800">Datenbasis:</span> Sternebewertung, Gesamtnote je Bewertung
-              (Spalte „durchschnittsbewertung“) der Mitarbeitenden, wie im Monatsverlauf der Anomalien (E3). Das Fenster mittelt
+              (Spalte „durchschnittsbewertung“) der Mitarbeitenden, wie im Monatsverlauf der Anomalien. Das Fenster mittelt
               alle Bewertungen seiner Kalendermonate; ein Monat mit vielen Bewertungen wiegt mehr als ein Monat mit wenigen.
             </p>
             <p className="m-0">
@@ -86,7 +86,7 @@ export default function RollingModal({ open, onOpenChange, data, companyName = "
             </p>
             <p className="m-0">
               <span className="font-medium text-slate-800">Kleine Basis:</span> ein Fenster mit weniger als {minReviews} Bewertungen
-              (vorläufig dieselbe Schwelle wie bei den Vergleichsfenstern, E12).
+              (vorläufig dieselbe Schwelle wie bei den Vergleichsfenstern).
             </p>
             <p className="m-0 text-slate-500">
               Die Differenz beschreibt die Lage der beiden Mittel zueinander im Datensatz; sie ist keine Prognose und keine Aussage

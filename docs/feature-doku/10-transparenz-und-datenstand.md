@@ -33,6 +33,18 @@ Inkrement 6 macht sichtbar, worauf jede Zahl des Dashboards beruht und wie aktue
 
 Der PDF-Export übernimmt alle diese Elemente (Feature-Doku 09).
 
+**Nachtrag 2026-10-16 – keine internen Kürzel im Dashboard:** Alle Texte, die das Dashboard
+oder der PDF-Export zeigen, nennen keine Kürzel aus der Arbeit mehr (E-Nummern der
+Entscheidungen, FA-/NFA-Nummern der Anforderungen, DZ1, TF, T5 u. ä.). Betroffen waren
+Tooltips des Datenstands, die Hinweise „ungeprüft“ zu Einzelmonaten und zum Prüfumfang,
+die Untertitel der Markierungsliste, das Detailfenster der rollierenden Schnitte, der
+Statushinweis bei fehlender Unterscheidung, die Fußnote der freien Auswahl, die
+Kennzahl der Einzelmonate im PDF sowie der Vermerk der allgemeinen Ereignisse aus dem
+Backend (`services/macro_events.py`). Die Kürzel bleiben in Code-Kommentaren,
+Dokumentation und API-Beschreibungen; im Dashboard steht nur noch die Aussage selbst
+(z. B. „Ungeprüft: in der Simulation etwa so häufig wie bei reinem Zufall“). Anlass:
+Rückmeldung des Autors, dass die Kürzel für Nutzende des Dashboards (DZ3) nichts bedeuten.
+
 ## 2. Erklärung
 
 **Ø Score (D1).** `GET /api/companies/{id}/ratings` liefert neben dem unveränderten `avg_overall`

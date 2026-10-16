@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { API_URL } from "../config"
+import { NO_CATEGORY } from "../lib/evidenceText"
 
 export const EVIDENCE_PAGE_SIZE = 25
 /* Seitengröße beim Laden aller Belege (Sortierung nach Relevanz, Filter nach Ereignisart; Inkrement 5);
@@ -140,4 +141,41 @@ export function useGlobalEvents(enabled) {
   }, [enabled])
 
   return { loading: enabled && !result.loaded, error: result.error, events: enabled ? result.events : [] }
+}
+
+/* Sortierung und Filter der Belegliste (Inkrement 5). evidence = Rückgabe von
+   useEvidence, scores = item_scores aus explanation_summary des Vergleichs (null,
+   solange er lädt). Für Sortierung nach Relevanz und Filter müssen alle Belege
+   des Fensters geladen sein; das übernimmt der Effekt. Ergebnis: sichtbare
+   Belege, Ereignisarten der Auswahl, Hinweis für den Untertitel, needAll. */
+export function useEvidenceList(evidence, scores, { sort, category }) {
+  const needAll = sort === "relevance" || category !== ""
+  useEffect(() => {
+    if (needAll && evidence.hasMore && !evidence.loadingMore) evidence.loadAll()
+  }, [needAll, evidence])
+  const categories = useMemo(() => {
+    const found = new Map()
+    Object.values(scores ?? {}).forEach((s) => {
+      if (s.category && !found.has(s.category)) found.set(s.category, s.category_label ?? s.category)
+    })
+    return [...found.entries()].map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label, "de"))
+  }, [scores])
+  const items = useMemo(() => {
+    let list = evidence.items
+    if (category) {
+      list = list.filter((item) => {
+        const cat = scores?.[item.id]?.category ?? null
+        return category === NO_CATEGORY ? cat == null : cat === category
+      })
+    }
+    if (sort === "relevance" && scores) {
+      list = [...list].sort((a, b) => (scores[a.id]?.rank ?? Infinity) - (scores[b.id]?.rank ?? Infinity) || String(b.date ?? "").localeCompare(String(a.date ?? "")))
+    }
+    return list
+  }, [evidence.items, category, sort, scores])
+  const listNote = [
+    sort === "relevance" ? "sortiert nach Relevanz" : null,
+    category ? `Ereignisart: ${category === NO_CATEGORY ? "ohne" : categories.find((c) => c.id === category)?.label ?? category} (${items.length} von ${evidence.items.length})` : null,
+  ].filter(Boolean).join(" · ")
+  return { items, categories, listNote, needAll }
 }

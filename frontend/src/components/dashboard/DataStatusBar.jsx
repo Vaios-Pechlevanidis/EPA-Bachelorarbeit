@@ -109,7 +109,7 @@ export function DataStatusBar({ companyId, className = "" }) {
       {expanded && data && (
         <div className="mt-1.5 pt-1.5 pb-0.5 border-t border-slate-100 space-y-1">
           <div className="flex flex-col gap-y-1">
-            <Item label="Mitarbeitende" title={`Sternebewertung und Freitexte der Mitarbeitenden; bewertet = Monat mit mindestens ${thresholds.min_reviews_per_month} Bewertungen (E4), geeignet = mindestens ${thresholds.min_evaluated_months} bewertete Monate`}>
+            <Item label="Mitarbeitende" title={`Sternebewertung und Freitexte der Mitarbeitenden; bewertet = Monat mit mindestens ${thresholds.min_reviews_per_month} Bewertungen, geeignet = mindestens ${thresholds.min_evaluated_months} bewertete Monate`}>
               {sourceLine(emp)}
             </Item>
             <Item label="Bewerbende" title="Sternebewertung und Freitexte der Bewerbenden">
@@ -122,12 +122,12 @@ export function DataStatusBar({ companyId, className = "" }) {
               {platformText(platform)}
             </Item>
             {market !== undefined && (
-              <Item label="Kurs" title="Zwischenspeicher der Monatsschlusskurse (E15); Abruf = fetched_at der Datei">
+              <Item label="Kurs" title="Zwischenspeicher der Monatsschlusskurse; Abruf = Zeitpunkt des letzten Abrufs der Datei">
                 {marketText(market)}
               </Item>
             )}
             {evidence !== undefined && (
-              <Item label="Belege" title="Belegspeicher der externen Meldungen je Monat (E18); Abruf = jüngstes fetched_at">
+              <Item label="Belege" title="Belegspeicher der externen Meldungen je Monat; Abruf = Zeitpunkt des jüngsten Abrufs">
                 {evidenceText(evidence)}
               </Item>
             )}

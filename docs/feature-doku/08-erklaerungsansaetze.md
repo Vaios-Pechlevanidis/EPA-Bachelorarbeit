@@ -68,6 +68,14 @@ Nutzen: Wer eine auffällige Veränderung betrachtet, sieht, welche der oft hund
 Fenster überhaupt einen Bezug zu dem haben, was die Bewertenden danach schreiben, und mit welcher
 Begründung; die Liste der Belege bleibt vollständig und prüfbar.
 
+**Nachtrag 2026-10-16:** „Mögliche Zusammenhänge“ ist eine **Vorschau-Karte**: Auf der Karte
+stehen die Zahl der Ansätze als Kennzahl (oder „Offen“) mit „aus 25 Belegen · 25 Bündel“
+und bis zu zwei Ansätze mit Ereignisart, Kennzeichen der Signale und Datum, ohne Titel
+der Meldung; ein Klick öffnet die
+vollständige Ansicht im Dialog mit Begründung, allen Kennzeichen, gebündelten Meldungen,
+weiteren Einträgen der Gruppe und „Wie wird eingestuft?“. Stufen, Rangfolge und Texte
+sind unverändert. Siehe [13](13-vorschau-karten-anomalien.md).
+
 ## 2. Erklärung
 
 1. **Belege und Fenster.** Grundlage sind die Belege des Ereignisfensters aus Inkrement 4 (E18:

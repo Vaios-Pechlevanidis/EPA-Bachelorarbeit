@@ -47,9 +47,9 @@ export function isValidatedScope({ source, dimension, status } = {}) {
 
 /* Hinweis bei Reihen außerhalb des geprüften Umfangs (Kopf bzw. unter dem Diagramm). */
 export const UNVALIDATED_SCOPE_NOTE =
-  "Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die Gesamtbewertung der Mitarbeitenden ohne Statusfilter (DZ1, E30)";
+  "Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die Gesamtbewertung der Mitarbeitenden ohne Statusfilter";
 
 /* Zusatz, wo auffällige Einzelmonate erklärt werden (Legende, Tooltip, Liste, PDF):
    ohne Veränderung entstehen in der Simulation 8,9 bzw. 5,4 Einzelmonate je 15
    Reihen, auf den echten Reihen sind es 9 (E30, Befund 2026-10-13). */
-export const OUTLIER_UNVALIDATED_NOTE = "Ungeprüft: in der Simulation etwa so häufig wie bei reinem Zufall (E30)";
+export const OUTLIER_UNVALIDATED_NOTE = "Ungeprüft: in der Simulation etwa so häufig wie bei reinem Zufall";

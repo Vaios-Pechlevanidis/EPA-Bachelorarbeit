@@ -584,7 +584,7 @@ export const TopicRatingCard = memo(function TopicRatingCard({ companyId, onFilt
                     {prettifyTopicKey(t)}
                   </span>
                   {topicN[t] != null && (
-                    <span className="text-[11px] tnum text-slate-500 flex-none" title="Bewertungen mit Wert in dieser Kategorie im gewählten Zeitraum (FA-26)">
+                    <span className="text-[11px] tnum text-slate-500 flex-none" title="Bewertungen mit Wert in dieser Kategorie im gewählten Zeitraum">
                       n = {Number(topicN[t]).toLocaleString("de-DE")}
                     </span>
                   )}

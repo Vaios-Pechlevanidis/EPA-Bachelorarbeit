@@ -52,6 +52,16 @@ Nutzen: Von der auffälligen Veränderung kommt man in zwei Klicks zu den Bewert
 denen sie beruht, und sieht, welche Themen in den Texten häufiger oder seltener genannt
 werden.
 
+**Nachtrag 2026-10-16:** Vergleich und Bewertungsliste stehen nicht mehr als zwei große
+Abschnitte unter der Drill-down-Leiste, sondern als zwei von vier **Vorschau-Karten**: Auf
+der Karte steht je eine Kennzahl (Verschiebung der Note mit „Abfall“ / „Anstieg“; Anzahl
+der Bewertungen mit Ø) und darunter ein kleines Diagramm (die drei größten
+Themenverschiebungen als Balken für den Betrag mit Vorzeichen in der Zahl; die Stimmung
+davor / danach als gestapelte Balken), ein
+Klick öffnet die hier beschriebene vollständige Ansicht im Dialog. Der Umschalter „davor / ab dem markierten
+Monat“ und der Themenfilter stehen im Dialog. Inhalte und Berechnung sind unverändert;
+siehe [13](13-vorschau-karten-anomalien.md).
+
 ## 2. Erklärung
 
 ### 2.1 Vergleichsfenster (E12)

@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
-import { ExternalLink, Newspaper } from "lucide-react"
-import { PageSection } from "./PageSection"
+import { ExternalLink } from "lucide-react"
 import { StageBadge } from "./ExplanationPanel"
+import { FigureRow, Headline, PreviewLabel, PreviewStatus } from "./CardPreview"
 import { fmtPeriod } from "@/lib/anomalySeries"
-import { useEvidence } from "@/hooks/useEvidence"
+import { NO_CATEGORY } from "@/lib/evidenceText"
 
 /* ============================================================================
    EvidenceSection — "Externe Berichte im Ereignisfenster" (Inkrement 4, E18;
@@ -20,13 +19,18 @@ import { useEvidence } from "@/hooks/useEvidence"
    statt nach Datum sortieren und nach Ereignisart filtern; dafür werden alle
    Belege des Fensters geladen. Je Beleg stehen dann Stufe (mit ihrer
    Bezeichnung aus rules.stage_labels, neutrale Farbe) und Ereignisart.
+   Vorschau-Karten (2026-10-16): Der Abschnitt ist eine Karte wie im
+   Haupt-Dashboard (EvidenceCard in AnomalyDetailCards). Auf der Karte steht
+   die Vorschau (EvidencePreview: Zahl der Belege als Kennzahl, Fenster, Belege
+   je Quelle), ein Klick öffnet die volle Liste im Dialog (EvidenceContent)
+   mit Sortierung und Filter (ListControls) im Dialogkopf. useEvidence wird
+   von der Karte aufgerufen, useEvidenceList bündelt Sortierung und Filter.
    ============================================================================ */
 
 const SORTS = [
     { key: "date", label: "Datum" },
     { key: "relevance", label: "Relevanz" },
 ]
-const NO_CATEGORY = "__none__"
 const selectClass =
     "h-7 rounded-md border border-slate-300 bg-white px-2 text-[12px] text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:opacity-50 max-w-[260px]"
 
@@ -62,25 +66,6 @@ const fmtStamp = (value) => {
     if (!value) return null
     const d = new Date(value)
     return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
-}
-
-/* "12 Belege: 10 Meldungen, 2 EQS" */
-function countsText(total, counts) {
-    if (!total) return "kein Beleg"
-    const parts = [
-        counts?.news ? `${counts.news} ${counts.news === 1 ? "Meldung" : "Meldungen"}` : null,
-        counts?.adhoc ? `${counts.adhoc} EQS` : null,
-        counts?.global ? `${counts.global} ${counts.global === 1 ? "allgemeines Ereignis" : "allgemeine Ereignisse"}` : null,
-    ].filter(Boolean)
-    return `${total} ${total === 1 ? "Beleg" : "Belege"}${parts.length ? `: ${parts.join(", ")}` : ""}`
-}
-
-/* "Okt. 2022 – Feb. 2023 (5 Monate: 3 vor dem Übergang, 1 danach)" */
-function windowText(window) {
-    if (!window) return ""
-    const span = window.from === window.to ? fmtPeriod(window.from) : `${fmtPeriod(window.from)} – ${fmtPeriod(window.to)}`
-    const ref = window.kind === "auswahl" ? "um die Auswahl" : window.kind === "einzelmonat" ? "um den Monat" : "um den Übergang"
-    return `${span} (${window.months} ${window.months === 1 ? "Monat" : "Monate"}: ${window.window_before} davor, ${window.window_after} danach, ${ref})`
 }
 
 /* EQS-Mitteilungen heißen nur bei der EQS-Kategorie "Ad-hoc" Ad-hoc (Korrektur 2026-10-13, E19). */
@@ -132,8 +117,8 @@ function EvidenceRow({ item, score = null, rules = null }) {
     )
 }
 
-/* Umschaltung der Sortierung und Filter nach Ereignisart (Kopf des Abschnitts). */
-function ListControls({ sort, onSort, category, onCategory, categories, enabled }) {
+/* Umschaltung der Sortierung und Filter nach Ereignisart (Kopf des Dialogs). */
+export function ListControls({ sort, onSort, category, onCategory, categories, enabled }) {
     const hint = enabled ? "" : "Relevanz und Ereignisart folgen aus den Erklärungsansätzen oben; sie werden geladen…"
     return (
         <>
@@ -181,64 +166,55 @@ function SourcesLine({ sources }) {
     return <p className="m-0 mt-2 text-[11px] text-slate-400">{parts.join(" · ")}</p>
 }
 
-/* Abschnitt auf der Detailseite. anomalyId für Veränderung oder Einzelmonat,
-   sonst selection {from, to}; group = {source, dimension, status} wie die Erkennung.
-   scores = item_scores aus explanation_summary des Vergleichs (null, solange er lädt),
-   rules = explanation_summary.rules (Tooltips der Stufen). */
-export function EvidenceSection({ companyId, anomalyId = null, selection = null, group = {}, eyebrow = "EXTERNE BERICHTE", className = "", scores = null, rules = null }) {
-    const evidence = useEvidence(companyId, { anomalyId, selection, ...group })
+/* Vorschau für die Karte (2026-10-16): Zahl der Belege als Kennzahl, das
+   Ereignisfenster und die Belege je Quelle als kleine Zahlen; keine Titel und
+   keine Links. Die volle Liste mit Sortierung und Filter steht im Dialog
+   (EvidenceContent). */
+export function EvidencePreview({ evidence }) {
     const data = evidence.data
-    const [sort, setSort] = useState("date")
-    const [category, setCategory] = useState("")
-    const hasScores = Boolean(scores)
-    const needAll = sort === "relevance" || category !== ""
-    // Für Sortierung und Filter müssen alle Belege des Fensters geladen sein.
-    useEffect(() => {
-        if (needAll && evidence.hasMore && !evidence.loadingMore) evidence.loadAll()
-    }, [needAll, evidence])
-    const categories = useMemo(() => {
-        const found = new Map()
-        Object.values(scores ?? {}).forEach((s) => {
-            if (s.category && !found.has(s.category)) found.set(s.category, s.category_label ?? s.category)
-        })
-        return [...found.entries()].map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label, "de"))
-    }, [scores])
-    const items = useMemo(() => {
-        let list = evidence.items
-        if (category) {
-            list = list.filter((item) => {
-                const cat = scores?.[item.id]?.category ?? null
-                return category === NO_CATEGORY ? cat == null : cat === category
-            })
-        }
-        if (sort === "relevance" && scores) {
-            list = [...list].sort((a, b) => (scores[a.id]?.rank ?? Infinity) - (scores[b.id]?.rank ?? Infinity) || String(b.date ?? "").localeCompare(String(a.date ?? "")))
-        }
-        return list
-    }, [evidence.items, category, sort, scores])
-    const listNote = [
-        sort === "relevance" ? "sortiert nach Relevanz" : null,
-        category ? `Ereignisart: ${category === NO_CATEGORY ? "ohne" : categories.find((c) => c.id === category)?.label ?? category} (${items.length} von ${evidence.items.length})` : null,
-    ].filter(Boolean).join(" · ")
-    const subtitle = evidence.loading
-        ? "Lade Belege…"
-        : evidence.error
-            ? "Belege konnten nicht geladen werden"
-            : data
-                ? `Ereignisfenster ${windowText(data.window)} · ${countsText(data.total, data.counts)}${listNote ? ` · ${listNote}` : ""}`
-                : ""
+    if (evidence.loading) {
+        return (
+            <PreviewStatus spinner>
+                Lade Belege…{evidence.slow ? " Die Monate werden zum ersten Mal von den Quellen geladen; das dauert einige Sekunden." : ""}
+            </PreviewStatus>
+        )
+    }
+    if (evidence.error) return <PreviewStatus>Belege konnten nicht geladen werden: {evidence.error}</PreviewStatus>
+    if (!data) return null
+    const w = data.window
+    const span = w ? (w.from === w.to ? fmtPeriod(w.from) : `${fmtPeriod(w.from)} – ${fmtPeriod(w.to)}`) : ""
+    const sub = w ? `${span} · ${w.months} ${w.months === 1 ? "Monat" : "Monate"}` : ""
+    if (!data.total) {
+        return (
+            <div>
+                <Headline value="0" unit="Belege" sub={sub} />
+                <p className="m-0 mt-2 text-[11.5px] leading-4 text-slate-500">Ein fehlender Beleg heißt nicht, dass nichts geschehen ist.</p>
+            </div>
+        )
+    }
+    const counts = data.counts ?? {}
+    const figures = [
+        { value: counts.news ?? 0, label: counts.news === 1 ? "Meldung" : "Meldungen" },
+        { value: counts.adhoc ?? 0, label: "EQS" },
+        { value: counts.global ?? 0, label: counts.global === 1 ? "Allgemeines Ereignis" : "Allgemeine Ereignisse" },
+    ].filter((f) => f.value > 0)
     return (
-        <PageSection
-            className={className}
-            icon={<Newspaper />}
-            eyebrow={eyebrow}
-            basis="external"
-            title="Externe Berichte im Ereignisfenster"
-            subtitle={subtitle}
-            actions={!evidence.loading && !evidence.error && evidence.total > 0 && (
-                <ListControls sort={sort} onSort={setSort} category={category} onCategory={setCategory} categories={categories} enabled={hasScores} />
-            )}
-        >
+        <div>
+            <Headline value={data.total} unit={data.total === 1 ? "Beleg" : "Belege"} sub={sub} />
+            <PreviewLabel>Nach Quelle</PreviewLabel>
+            <FigureRow items={figures} />
+        </div>
+    )
+}
+
+/* Volle Ansicht im Dialog: Liste der Belege (mit Stufe und Ereignisart aus den
+   Erklärungsansätzen), Nachladen, Stand je Quelle und Hinweis. items, needAll
+   aus useEvidenceList; sort und category nur, um die Liste beim Wechsel oben
+   beginnen zu lassen. */
+export function EvidenceContent({ evidence, items, needAll, sort, category, scores = null, rules = null }) {
+    const data = evidence.data
+    return (
+        <div>
             {evidence.loading ? (
                 <div className="space-y-1">
                     <p className="m-0 text-[12px] text-slate-500">Lade Belege…</p>
@@ -272,9 +248,8 @@ export function EvidenceSection({ companyId, anomalyId = null, selection = null,
                     {items.length === 0 && category ? (
                         <p className="m-0 text-[12px] text-slate-500">Kein Beleg dieser Ereignisart im Fenster.</p>
                     ) : (
-                        /* Eigener Scrollbereich (etwa acht Einträge), damit lange Listen die Seite
-                           nicht verlängern; neue Sortierung oder Ereignisart beginnt wieder oben. */
-                        <div key={`${sort}:${category}`} className="max-h-[360px] overflow-y-auto overscroll-contain pr-1 border-y border-slate-100">
+                        /* Neue Sortierung oder Ereignisart beginnt wieder oben; der Dialog scrollt als Ganzes. */
+                        <div key={`${sort}:${category}`} className="border-y border-slate-100">
                             <ul className="m-0 p-0 list-none">
                                 {items.map((item) => <EvidenceRow key={item.id} item={item} score={scores?.[item.id] ?? null} rules={rules} />)}
                             </ul>
@@ -296,6 +271,6 @@ export function EvidenceSection({ companyId, anomalyId = null, selection = null,
             <p className="m-0 mt-3 text-[11px] text-slate-400">
                 {data?.note ?? "Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie sind keine Aussage über Ursachen; interne Auslöser sind von außen nicht sichtbar."}
             </p>
-        </PageSection>
+        </div>
     )
 }

@@ -57,6 +57,12 @@ Nutzen: Wer eine auffällige Veränderung betrachtet, sieht ohne eigene Suche, w
 Monaten über das Unternehmen gemeldet wurde, und kann es bei der Einordnung im Kopf behalten,
 ohne dass das Dashboard daraus eine Ursache macht.
 
+**Nachtrag 2026-10-16:** Der Abschnitt ist eine **Vorschau-Karte**: Auf der Karte stehen die
+Zahl der Belege als Kennzahl, das Ereignisfenster und die Belege je Quelle als kleine
+Zahlen („19 Meldungen · 6 EQS“), keine Titel; ein Klick öffnet die vollständige Liste im
+Dialog, dort auch Sortierung (Datum, Relevanz), Filter nach Ereignisart, Nachladen und
+der Stand je Quelle. Siehe [13](13-vorschau-karten-anomalien.md).
+
 ## 2. Erklärung
 
 1. **Ereignisfenster (E18).** Für einen Niveauwechsel reicht das Fenster von 3 Monaten vor

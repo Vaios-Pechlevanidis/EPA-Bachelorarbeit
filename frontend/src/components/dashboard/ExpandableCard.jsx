@@ -10,13 +10,15 @@ import { DataBasisTags } from "./DataBasis"
    Karte öffnet einen Dialog mit 90 % der Breite und 85 % der Höhe des Fensters.
    Schalter stehen rechts neben dem Titel (bei Platzmangel darunter).
 
-   children und actions sind Funktionen ({ modal, height }) => Knoten, damit
-   die Karte im Dialog größer gezeichnet wird. height ist die Höhe, die der
-   Inhalt einnehmen darf (Diagramm samt Legende):
+   children, actions und subtitle sind Funktionen ({ modal, height }) => Knoten,
+   damit die Karte im Dialog größer gezeichnet wird (Vorschau auf der Karte,
+   volle Ansicht im Dialog; Anomalien-Seite seit 2026-10-16). height ist die
+   Höhe, die der Inhalt einnehmen darf (Diagramm samt Legende):
    - fill=true: gemessene Höhe des Inhaltsbereichs; die Karte füllt dann die
      Fläche, die ihr das Raster gibt (Aktien-Dashboard ab 1280 px Breite),
    - sonst cardHeight,
    - im Dialog die verfügbare Höhe unter dem Kopf.
+   hint: Fußzeile der Karte (Standard "Karte anklicken zum Vergrößern").
    ============================================================================ */
 
 const MODAL_RESERVE = 120 // Kopf und Innenabstand des Dialogs in Pixeln
@@ -61,10 +63,13 @@ export function ExpandableCard({
     icon, eyebrow, title, subtitle, actions = null, children,
     cardHeight = 220, fill = false, accent = "bg-violet-500", className = "",
     basis = null,   // Datenbasis (DataBasis-Schlüssel oder Liste), Inkrement 6, FA-25
+    hint = "Karte anklicken zum Vergrößern",
 }) {
     const [open, setOpen] = useState(false)
     const modalHeight = useModalHeight(open)
     const render = (fn, ctx) => (typeof fn === "function" ? fn(ctx) : fn)
+    const cardSubtitle = render(subtitle, { modal: false })
+    const modalSubtitle = render(subtitle, { modal: true })
 
     return (
         <>
@@ -90,7 +95,11 @@ export function ExpandableCard({
                                 <span className="truncate">{title}</span>
                                 <Maximize2 aria-hidden="true" className="h-3 w-3 flex-none text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </h3>
-                            {subtitle && <p className="m-0 mt-0.5 text-[11px] leading-4 text-slate-500 truncate" title={subtitle}>{subtitle}</p>}
+                            {cardSubtitle && (
+                                <p className="m-0 mt-0.5 text-[11px] leading-4 text-slate-500 truncate" title={typeof cardSubtitle === "string" ? cardSubtitle : undefined}>
+                                    {cardSubtitle}
+                                </p>
+                            )}
                         </div>
                     </div>
                     {actions && (
@@ -106,7 +115,7 @@ export function ExpandableCard({
                 </div>
                 <p className="m-0 px-4 pt-1.5 pb-2 text-[11px] text-slate-400 text-center inline-flex w-full items-center justify-center gap-1 flex-none">
                     <Maximize2 aria-hidden="true" className="w-3 h-3" />
-                    Karte anklicken zum Vergrößern
+                    {hint}
                 </p>
             </div>
 
@@ -128,7 +137,7 @@ export function ExpandableCard({
                                     <DataBasisTags basis={basis} small />
                                 </p>
                                 <DialogTitle className="m-0 text-[18px] leading-6 font-semibold tracking-tight text-slate-900">{title}</DialogTitle>
-                                {subtitle && <p className="m-0 mt-0.5 text-[11px] text-slate-500">{subtitle}</p>}
+                                {modalSubtitle && <p className="m-0 mt-0.5 text-[11px] text-slate-500">{modalSubtitle}</p>}
                             </div>
                         </div>
                         {actions && (

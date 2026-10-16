@@ -71,7 +71,7 @@ export function groupLabel(source, status) {
  * sourceStatus = sources.employee aus GET /companies/{id}/data-status
  * (status_counts, status_distinction). Liefert den Text oder null. */
 export const STATUS_NO_DISTINCTION_HINT =
-  "Für dieses Unternehmen liegt keine Unterscheidung zwischen aktuellen und ehemaligen Mitarbeitenden vor (Export ohne diesen Wert, E13). „Angestellt“ heißt hier „Bewertung mit Typangabe“ und entspricht bis auf die Bewertungen ohne Angabe der Gruppe „Alle“."
+  "Für dieses Unternehmen liegt keine Unterscheidung zwischen aktuellen und ehemaligen Mitarbeitenden vor (Export ohne diesen Wert). „Angestellt“ heißt hier „Bewertung mit Typangabe“ und entspricht bis auf die Bewertungen ohne Angabe der Gruppe „Alle“."
 
 export function statusDistinctionHint(source, sourceStatus) {
   if (source !== "employee" || !sourceStatus || sourceStatus.n_reviews === 0) return null

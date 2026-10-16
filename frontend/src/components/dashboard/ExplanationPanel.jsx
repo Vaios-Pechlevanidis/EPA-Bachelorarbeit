@@ -1,6 +1,7 @@
 import { useState } from "react"
-import { ChevronDown, ChevronRight, ExternalLink, Lightbulb } from "lucide-react"
-import { PageSection } from "./PageSection"
+import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react"
+import { Headline, PreviewStatus } from "./CardPreview"
+import { stageLabel } from "@/lib/explanationText"
 
 /* ============================================================================
    ExplanationPanel — "Mögliche Zusammenhänge" (Inkrement 5, Erklärungsansätze).
@@ -26,22 +27,17 @@ import { PageSection } from "./PageSection"
    vorhandenen Signale (signal_label: Wortbezug, Ereignisart, Themenverschiebung,
    ohne Arbeitgeberbezug); Schlüssel, Bezeichnung und Regel der Stufe stehen im
    Tooltip. Stufen und Sortierung bleiben unverändert.
+   Vorschau-Karten (2026-10-16): Der Abschnitt ist eine Karte wie im
+   Haupt-Dashboard. Auf der Karte steht die Vorschau (ExplanationPreview:
+   Zahl der Ansätze als Kennzahl, die ersten Ansätze knapp), ein Klick öffnet die volle
+   Ansicht im Dialog (ExplanationContent). Der Untertitel kommt aus
+   explanationSubtitle, kurz auf der Karte, vollständig im Dialog.
    ============================================================================ */
 
 export const EXPLANATION_NOTE = "Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine Ursachen."
 
-/* Bezeichnung je Stufe (Rückfall, wenn die Antwort keine rules.stage_labels trägt). */
-const STAGE_LABELS = {
-    hoch: "Wortbezug und Ereignisart",
-    mittel: "Wortbezug oder Themenbezug",
-    niedrig: "nur Ereignisart",
-    keine: "kein Bezug",
-}
-const STAGE_ORDER = ["hoch", "mittel", "niedrig"]
 /* Eine neutrale Farbe für alle Stufen: die Bezeichnung trägt die Aussage, nicht die Farbe. */
 const STAGE_CLASS = "bg-slate-100 text-slate-700 border border-slate-300"
-
-const stageLabel = (stage, rules = null) => rules?.stage_labels?.[stage] ?? STAGE_LABELS[stage] ?? stage
 
 const TYPE_LABELS = { news: "Meldung", adhoc: "EQS-Mitteilung", global: "Allgemeines Ereignis" }
 /* EQS-Mitteilungen heißen nur bei der EQS-Kategorie "Ad-hoc" Ad-hoc (Korrektur 2026-10-13, E19). */
@@ -261,37 +257,53 @@ function ExplanationEntry({ entry, rules }) {
     )
 }
 
-function stageCounts(n, rules) {
-    if (!n) return ""
-    return STAGE_ORDER.filter((s) => n[s]).map((s) => `${stageLabel(s, rules)} ${n[s]}`).join(", ")
+/* Vorschau für die Karte (2026-10-16): Kennzahl (Zahl der Ansätze oder "Offen")
+   und die ersten Ansätze mit Ereignisart, Signalen und Datum, ohne Titel und
+   Links; die volle Liste steht im Dialog (ExplanationContent). */
+export function ExplanationPreview({ data, loading, error, max = 2 }) {
+    const summary = data?.explanation_summary ?? null
+    const entries = data?.explanations ?? []
+    const rules = summary?.rules ?? null
+    if (loading) return <PreviewStatus spinner>Erklärungsansätze werden berechnet…</PreviewStatus>
+    if (error) return <PreviewStatus>Erklärungsansätze konnten nicht geladen werden: {error}</PreviewStatus>
+    if (!summary) return null
+    if (summary.error) return <PreviewStatus>Erklärungsansätze konnten nicht berechnet werden: {summary.error}</PreviewStatus>
+    const belege = `${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"}`
+    if (summary.state === "offen") {
+        return <Headline value="Offen" sub={`${belege} im Ereignisfenster · keiner erreicht die Stufe niedrig`} />
+    }
+    const shown = entries.slice(0, max)
+    const rest = entries.length - shown.length
+    return (
+        <div>
+            <Headline value={entries.length} unit={entries.length === 1 ? "Ansatz" : "Ansätze"} sub={`aus ${belege} · ${summary.n_bundles} Bündel`} />
+            <ul className="m-0 mt-2 p-0 list-none">
+                {shown.map((entry) => (
+                    <li key={entry.id ?? entry.rank} className="border-t border-slate-100 py-1.5 min-w-0">
+                        <span className="block text-[12px] leading-4 text-slate-800 truncate" title={entry.event}>
+                            {entry.category?.label ? `Ereignisart ${entry.category.label}` : entry.event}
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-1.5 min-w-0">
+                            <StageBadge stage={entry.confidence} signalLabel={entry.signal_label} rules={rules} small />
+                            <span className="flex-none text-[11px] text-slate-500 tnum">{fmtDay(entry.date)}</span>
+                        </span>
+                    </li>
+                ))}
+            </ul>
+            {rest > 0 && <p className="m-0 text-[11px] text-slate-500">+ {rest} {rest === 1 ? "weiterer" : "weitere"}</p>}
+        </div>
+    )
 }
 
-/* Kopfzeile: Bündel (Stufe mindestens niedrig) je Bezeichnung nach Signalen. */
-function signalCounts(n) {
-    if (!n) return ""
-    return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([label, count]) => `${label} ${count}`).join(", ")
-}
-
-/* Abschnitt über der Belegliste. data = Antwort des Vergleichs (explanations, explanation_summary). */
-export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSANSÄTZE", className = "" }) {
+/* Volle Ansicht im Dialog: Liste der Ansätze, "Wie wird eingestuft?" und Hinweis. */
+export function ExplanationContent({ data, loading, error }) {
     const [showRules, setShowRules] = useState(false)
     const summary = data?.explanation_summary ?? null
     const entries = data?.explanations ?? []
     const rules = summary?.rules ?? null
     const open = summary?.state === "offen"
-    const subtitle = loading
-        ? "Erklärungsansätze werden berechnet…"
-        : error
-            ? "Erklärungsansätze konnten nicht geladen werden"
-            : summary
-                ? open
-                    ? `offen · ${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"} im Ereignisfenster, keiner erreicht die Stufe niedrig`
-                    : `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen (${summary.n_bundles} Bündel${summary.n_groups != null ? `, ${summary.n_groups} ${summary.n_groups === 1 ? "Gruppe" : "Gruppen"} nach Ereignisart` : ""})${signalCounts(summary.n_by_signal_label)
-                        ? ` · Bündel nach Signalen: ${signalCounts(summary.n_by_signal_label)}`
-                        : stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
-                : ""
     return (
-        <PageSection className={className} icon={<Lightbulb />} eyebrow={eyebrow} title="Mögliche Zusammenhänge" subtitle={subtitle} basis={["external", "text"]}>
+        <div>
             {loading ? (
                 <div className="flex items-center gap-2 py-1">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-200 border-t-slate-600"></div>
@@ -352,6 +364,6 @@ export function ExplanationPanel({ data, loading, error, eyebrow = "ERKLÄRUNGSA
                 </div>
             )}
             <p className="m-0 mt-3 text-[11px] text-slate-400">{summary?.note ?? EXPLANATION_NOTE}</p>
-        </PageSection>
+        </div>
     )
 }

@@ -66,7 +66,9 @@ class TestRules:
         assert event["title"] == "Konjunktureinbruch (Wirtschaftsstimmung fällt von 100,0 auf 70,0 Punkte)"
         assert event["confirmed"] is True and event["id"] == "auto-2020-04"
         assert event["scope"] == me.SCOPE and "ei_bssi_m_r2" in event["url"]
-        assert "abgerufen 2026-10-13" in event["note"] and "E29" in event["note"]
+        # Der Vermerk nennt Quelle und Abruf, aber kein internes Kürzel (seit 2026-10-16).
+        assert "abgerufen 2026-10-13" in event["note"] and "Automatisch aus Wirtschaftsdaten ermittelt" in event["note"]
+        assert "E29" not in event["note"]
 
     def test_hicp_rise_needs_minimum_rate(self):
         hicp = flat(1.0)

@@ -324,8 +324,8 @@ def derive_events(record: Optional[Dict[str, Any]], max_months: int = 6,
         )
         note = " ".join(p["note"] for p in parts)
         if shortened:
-            note += f" Auf die ersten {max_months} Monate gekürzt (Dauerregel E20)."
-        note += f" Automatisch ermittelt (E29); Quelle: {source_text}, abgerufen {fetched}."
+            note += f" Auf die ersten {max_months} Monate gekürzt (Dauerregel)."
+        note += f" Automatisch aus Wirtschaftsdaten ermittelt; Quelle: {source_text}, abgerufen {fetched}."
         events.append({
             "id": f"auto-{date_from}",
             "date_from": date_from,

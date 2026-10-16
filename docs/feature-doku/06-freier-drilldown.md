@@ -40,6 +40,13 @@ Nutzen: Auch bei Unternehmen ohne erkannte Veränderung (z. B. Cancom) oder ohne
 automatische Erkennung (z. B. Aixtron) kommt man direkt zu den Bewertungen eines
 Zeitraums und sieht, was sich gegenüber der Zeit davor in den Texten verschoben hat.
 
+**Nachtrag 2026-10-16:** „Vergleich mit dem Zeitraum davor“ und „Bewertungen der Auswahl“
+sind wie bei der ausgewählten Veränderung **Vorschau-Karten** mit je einer Kennzahl und
+einem kleinen Diagramm; der Klick öffnet die vollständige Ansicht im Dialog, dort auch der
+Umschalter „Zeitraum davor / Auswahl“. Beim Einzelmonat steht der Hinweis auf die
+Abweichung als Warnzeile über der Kennzahl.
+Siehe [13](13-vorschau-karten-anomalien.md).
+
 ## 2. Erklärung
 
 - **Auswahl:** Kalendermonate `from` bis `to` einschließlich; in die Liste gehen alle

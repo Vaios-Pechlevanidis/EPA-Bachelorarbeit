@@ -80,7 +80,7 @@ export function evidenceText(evidence) {
 /* Schwellen der Eignung (E4), wie im Tooltip der Leiste. */
 export function thresholdsNote(thresholds) {
   const t = thresholds ?? { min_reviews_per_month: 5, min_evaluated_months: 12 }
-  return `bewertet = Monat mit mindestens ${t.min_reviews_per_month} Bewertungen (E4), geeignet = mindestens ${t.min_evaluated_months} bewertete Monate`
+  return `bewertet = Monat mit mindestens ${t.min_reviews_per_month} Bewertungen, geeignet = mindestens ${t.min_evaluated_months} bewertete Monate`
 }
 
 /* Zelle der Zeitstempel-Tabelle: ältester – jüngster Wert (n) oder "leer". */

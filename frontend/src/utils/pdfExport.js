@@ -1785,7 +1785,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
         },
         { label: 'Veränderungen', value: String(anomalies.length), sub: 'auffällige Niveauwechsel', tone: anomalies.length ? 'warn' : 'neutral' },
         ...(SHOW_OUTLIER_MONTHS
-            ? [{ label: 'Einzelmonate', value: String(outliers.length), sub: 'auffällig, ungeprüft (E30)', tone: outliers.length ? 'warn' : 'neutral' }]
+            ? [{ label: 'Einzelmonate', value: String(outliers.length), sub: 'auffällig, ungeprüft', tone: outliers.length ? 'warn' : 'neutral' }]
             : []),
         {
             label: 'Erkennung',
@@ -1884,7 +1884,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
     }
     if (outliers.length) {
         y = ensureSpace(y + 5, 24);
-        y = drawListTitle(doc, y, 'Auffällige Einzelmonate', `${outliers.length} ${outliers.length === 1 ? 'Monat' : 'Monate'} · Abweichung vom Niveau der Nachbarmonate, kein neues Niveau · ungeprüft (E30)`);
+        y = drawListTitle(doc, y, 'Auffällige Einzelmonate', `${outliers.length} ${outliers.length === 1 ? 'Monat' : 'Monate'} · Abweichung vom Niveau der Nachbarmonate, kein neues Niveau · ungeprüft`);
         y = drawMiniTable(doc, y, {
             cols: [
                 { label: 'Monat', w: 22 },
