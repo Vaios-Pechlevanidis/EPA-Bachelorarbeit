@@ -8,8 +8,28 @@ import { fmtDe, fmtMonthKey, fmtSigned } from "@/lib/forecastText"
    backend/routes/analytics.py → forecast_with_details), wie die Prognose
    entsteht: Holts exponentielle Glättung mit Trend (Holt 1957), geschätzte
    Gewichte α und β, geglättetes Niveau und Steigung am Ende der Reihe.
-   Nur Beschreibung des Verfahrens, keine Bewertung der Prognose.
+   Seit 2026-10-17 (Prüfung, docs/feature-doku/16-report-qualitaet.md) zusätzlich:
+   Datenstand (Monate seit dem letzten Datenmonat), Backtest mit rollierendem
+   Ursprung gegen einfache Vergleichsverfahren (MAE), Bandbreite (80 %) aus den
+   Backtest-Fehlern und Monate mit weniger als 5 Bewertungen.
    ============================================================================ */
+
+const METHOD_LABELS = {
+  holt: "Holt (diese Prognose)",
+  naive: "letzter Wert",
+  mean: "Mittel aller Monate",
+  ma6: "Mittel der letzten 6 Monate",
+  snaive12: "Wert 12 Monate zuvor",
+}
+
+/* Backtest-Zeilen: MAE je Verfahren, bestes zuerst; null ohne Backtest. */
+function backtestRows(backtest) {
+  if (!backtest?.methods) return null
+  return Object.entries(backtest.methods)
+    .filter(([, m]) => m?.mae != null)
+    .sort((a, b) => a[1].mae - b[1].mae)
+    .map(([key, m]) => ({ key, label: METHOD_LABELS[key] ?? key, mae: m.mae }))
+}
 
 function Row({ title, children }) {
   return (
@@ -83,9 +103,46 @@ export function ForecastExplanation({ info, sourceLabel, lastCount = null }) {
           </Row>
         )}
 
+        <Row title="Datenstand">
+          Letzter Datenmonat {fmtMonthKey(info.last_month)}; die Prognose beginnt dort, nicht beim heutigen Datum
+          {info.months_since_last_data != null && info.months_since_last_data > 0
+            ? ` (${info.months_since_last_data} ${info.months_since_last_data === 1 ? "Monat" : "Monate"} vor heute, keine neueren Bewertungen im Datensatz)`
+            : ""}.
+          {info.months_below_min_reviews > 0 && (
+            <> {info.months_below_min_reviews} der {info.n_months} Monate haben weniger als {info.min_reviews_per_month ?? 5} Bewertungen; sie zählen hier voll mit, anders als in der Erkennung auffälliger Veränderungen.</>
+          )}
+        </Row>
+
+        {backtestRows(info.backtest) ? (
+          <Row title={`Prüfung: Backtest mit rollierendem Ursprung (${info.backtest.origins} Ursprünge, ${info.backtest.horizon} Monate voraus)`}>
+            Mittlerer absoluter Fehler (MAE) in Sternen, nur mit Daten vor dem jeweiligen Ursprung:
+            <ul className="m-0 mt-1 pl-4 list-disc">
+              {backtestRows(info.backtest).map((r) => (
+                <li key={r.key} className={r.key === "holt" ? "font-semibold" : ""}>
+                  {r.label}: {fmtDe(r.mae)}
+                </li>
+              ))}
+            </ul>
+            {info.backtest.best_method && info.backtest.best_method !== "holt" && (
+              <span className="block mt-1 text-amber-700">
+                Auf dieser Reihe war ein einfacheres Verfahren ({METHOD_LABELS[info.backtest.best_method] ?? info.backtest.best_method}) genauer als diese Prognose.
+              </span>
+            )}
+          </Row>
+        ) : (
+          <Row title="Prüfung">Für einen Backtest ist die Reihe zu kurz (mindestens 25 Monate).</Row>
+        )}
+
+        <Row title="Bandbreite">
+          {info.interval?.available
+            ? "Die helle Fläche um die Prognose ist die Bandbreite (80 %): In 80 % der Backtest-Fälle lag der tatsächliche Monatswert so nah an der Prognose. Sie folgt aus den Fehlern dieser Reihe, nicht aus einer Verteilungsannahme."
+            : "Für eine Bandbreite liegen zu wenige Backtest-Fehler vor."}
+        </Row>
+
         <Row title="Grenzen">
-          Die Prognose schreibt die bisherige Entwicklung fort. Sie kennt keine Ursachen und gibt keinen
-          Unsicherheitsbereich an.
+          Die Prognose schreibt die bisherige Entwicklung fort; sie kennt keine Ursachen. Holt setzt gleich
+          lange Abstände voraus, übersprungene Monate verletzen das. Die Werte sind auf eine Nachkommastelle zu
+          lesen; der Backtest zeigt, wie genau sie in der Vergangenheit waren.
         </Row>
       </PopoverContent>
     </Popover>

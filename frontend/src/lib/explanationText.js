@@ -33,14 +33,17 @@ export function explanationSubtitle({ data, loading, error }, { short = false } 
     if (loading) return "Erklärungsansätze werden berechnet…"
     if (error) return "Erklärungsansätze konnten nicht geladen werden"
     if (!summary) return ""
+    // Allgemeine Ereignisse im Fenster (Hypothese, außerhalb der Rangfolge; Nachtrag zu E29, 2026-10-17)
+    const nGlobal = summary.global_events?.length ?? 0
+    const globalText = nGlobal ? ` · ${nGlobal} ${nGlobal === 1 ? "allgemeines Ereignis" : "allgemeine Ereignisse"} (Hypothese)` : ""
     if (summary.state === "offen") {
         return short
             ? `offen · ${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"} im Ereignisfenster`
-            : `offen · ${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"} im Ereignisfenster, keiner erreicht die Stufe niedrig`
+            : `offen · ${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"} im Ereignisfenster, keiner erreicht die Stufe niedrig${globalText}`
     }
     const head = `${entries.length} ${entries.length === 1 ? "Ansatz" : "Ansätze"} aus ${summary.n_items} Belegen`
     if (short) return head
     return `${head} (${summary.n_bundles} Bündel${summary.n_groups != null ? `, ${summary.n_groups} ${summary.n_groups === 1 ? "Gruppe" : "Gruppen"} nach Ereignisart` : ""})${signalCounts(summary.n_by_signal_label)
         ? ` · Bündel nach Signalen: ${signalCounts(summary.n_by_signal_label)}`
-        : stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}`
+        : stageCounts(summary.n_by_stage, rules) ? ` · Bündel je Stufe: ${stageCounts(summary.n_by_stage, rules)}` : ""}${globalText}`
 }

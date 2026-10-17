@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowDown, ArrowUp, Filter, Search, TrendingDown, TrendingUp, Minus, X } from "lucide-react";
 import ModalShell, { ModalLoader, ModalError, ModalEmpty } from "./ModalShell";
 import { TrendUp as TrendUpIcon } from "../../../icons";
-import { CATEGORY_MEAN_TITLE, scoreTrendWindowsText } from "@/lib/scoreText";
+import { CATEGORY_MEAN_TITLE, UNCERTAINTY_NOTE, scoreTrendWindowsText, scoreUncertaintyText } from "@/lib/scoreText";
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000") + "/api";
 
@@ -60,6 +60,9 @@ function ScoreTrendSummary({ trend }) {
       </div>
       <span className="block text-[12px] text-slate-600 tnum">
         Ø {f2(trend.current?.mean)} vs. Ø {f2(trend.previous?.mean)} · {scoreTrendWindowsText(trend)}
+        {trend.difference_ci95 != null && (
+          <span title={UNCERTAINTY_NOTE}> · Differenz {scoreUncertaintyText(trend.difference_ci95)}{Math.abs(Number(trend.difference ?? 0)) <= Number(trend.difference_ci95) ? " (Null liegt im Intervall: statistisch nicht von 0 unterscheidbar)" : ""}</span>
+        )}
       </span>
       <span className="block text-[11.5px] text-slate-500">
         Letzter voller Monat mit Bewertungen als Bezug; Mittel aller Bewertungen je Fenster, Mitarbeitende.

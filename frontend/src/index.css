@@ -36,6 +36,7 @@
      (OKLab ΔE×100, auch bei Rot-Grün-Schwäche) gegen Bewertung, Abfall, Anstieg und
      Grau; Kontrast zur Karte ≥ 3:1, auch auf den Auswahl- und Ereignisflächen. */
   --market-price: #ea580c;   /* orange-600 */
+  --user-event:   #7e22ce;   /* purple-700: eigene Ereignisse (E32), Markierung im Monatsverlauf */
   /* Aktien-Dashboard (E16): Empfehlungsstufen von stark kaufen bis stark verkaufen, Umsatz und Gewinn */
   --rating-strong-buy:   #15803d;
   --rating-buy:          #4ade80;
@@ -151,6 +152,7 @@
   --anomaly-fall:        #fb7185;   /* rose-400 */
   --anomaly-rise:        #34d399;   /* emerald-400 */
   --market-price:        #f0abfc;   /* fuchsia-300 */
+  --user-event:          #c084fc;   /* purple-400 */
   --rating-strong-buy:   #22c55e;
   --rating-buy:          #86efac;
   --rating-hold:         #fde047;
@@ -320,6 +322,7 @@
 .dark .bg-slate-900.text-white,
 .dark .bg-slate-900 .text-white { color: #0b1220 !important; }
 .dark .bg-slate-900 .text-amber-300 { color: #b45309 !important; }
+.dark .bg-slate-900 .text-purple-300 { color: #7e22ce !important; }
 
 /* bg-slate-200 als Hintergrund (z. B. Trennlinie) */
 .dark .bg-slate-200   { background-color: #334155 !important; }

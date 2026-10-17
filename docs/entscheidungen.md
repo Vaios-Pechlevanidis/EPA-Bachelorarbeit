@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-13 (E23 Korrektur vorab festgelegt und E10, E11, E18, E19, E22 ergänzt am 2026-10-13; E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-17 (E32 neu und E29 um einen Nachtrag ergänzt am 2026-10-17 mit den eigenen Ereignissen und den anklickbaren allgemeinen Ereignissen; E23 Korrektur vorab festgelegt und E10, E11, E18, E19, E22 ergänzt am 2026-10-13; E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -1892,6 +1892,27 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   seither die automatischen Ereignisse statt der Liste vom 2026-10-08.
 - **Status:** umgesetzt am 2026-10-13 (Commit `b7e8326`); Schwellen vorläufig.
 
+### E29 – Nachtrag 2026-10-17: anklickbar im Verlauf, sichtbar in den Erklärungsansätzen
+
+- **Kontext:** Der Autor will die allgemeinen Ereignisse im Anomalien-Diagramm anklicken können,
+  mit Drill-down in ihren Zeitraum, und sie sollen in der Erklärung einer Veränderung mit
+  auftauchen. Bisher standen sie nur im abschaltbaren Overlay und als Beleg vom Typ `global` in
+  der Belegliste; die Karte „Mögliche Zusammenhänge“ kannte sie nicht.
+- **Entscheidung (2026-10-17):** (1) Ein Klick auf einen Monat in der Fläche eines eingeblendeten
+  Ereignisses wählt den ganzen Zeitraum des Ereignisses als freie Auswahl (E17); Stufe und Raute
+  im selben Monat behalten Vorrang. (2) `rank_evidence` gibt die Ereignisse im Fenster als
+  `global_events` zurück, `explanation_summary.global_events` trägt sie in die Karte „Mögliche
+  Zusammenhänge“: auf der Karte eine Zeile, im Dialog ein Block „Hypothese“ mit Titel, Zeitraum,
+  Lage zum Fenster, Vermerk, Eurostat-Link und dem Knopf „Zeitraum wählen“ (freie Auswahl).
+  Keine Stufe, kein Rang, keine Zählung als Beleg; `n_items`, `item_scores`, Bündel und die
+  Auswertung E23 bleiben unverändert (`tests/explanations/test_explanation_ranking.py`,
+  `TestGlobalEventsInSummary`).
+- **Begründung:** Wer eine Veränderung liest, soll sehen, ob sie in einen Zeitraum fällt, der alle
+  Arbeitgeber betrifft, ohne das Overlay einschalten oder die Belegliste durchsuchen zu müssen;
+  die Hypothese bleibt als solche gekennzeichnet. Der Klick nutzt die freie Auswahl, weil damit
+  alle Karten für genau diese Monate vorliegen.
+- **Status:** umgesetzt am 2026-10-17, nicht committet.
+
 ## E30 – Semi-synthetische Prüfung der Erkennung (DZ1, Ergänzung)
 
 - **Kontext:** Die Referenzzeiträume aus E5 sind regelbasiert und agentengestützt (ein Annotator,
@@ -2114,3 +2135,40 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Datenstand.
 - **Status:** Vorschlag; die Entscheidung über die Lesart trifft der Autor. Parameter unverändert
   (E5, E30).
+
+## E32 – Eigene Ereignisse im Monatsverlauf (2026-10-17)
+
+- **Kontext:** Externe Belege (E18) und allgemeine Ereignisse (E29) kommen automatisch von
+  außen; der feste Hinweis der Belege sagt, dass interne Auslöser von außen nicht sichtbar sind.
+  Der Autor will, dass Nutzerinnen und Nutzer eigene Ereignisse (Führungswechsel,
+  Umstrukturierung, Standortschließung) im Anomalien-Diagramm eintragen können, damit sie
+  Markierungen der Erkennung und ihr eigenes Wissen im selben Bild sehen.
+- **Entscheidung (2026-10-17):** Tabelle `user_events` je Unternehmen (Migration
+  `backend/migrations/007_create_user_events.sql`: `date_from`, `date_to` als „JJJJ-MM“, `title`
+  1–120 Zeichen, `note` bis 1000 Zeichen, Zugriff wie Migration 005), Routen
+  `GET/POST /api/companies/{id}/events` und `PUT/DELETE /api/companies/{id}/events/{eventId}`
+  (`backend/routes/user_events.py`, Prüfung in `services/user_events_service.py`). Auf der
+  Detailseite: Knopf „Ereignis eintragen“ im Kopf des Monatsverlaufs, Formular mit Titel, von,
+  bis (Monatsraster der Drill-down-Leiste) und Vermerk; nummerierte violette Marken am oberen
+  Rand mit Linie am Startmonat und getöntem Zeitraum; dritter Reiter „Eigene Ereignisse“ der
+  Karte „Markierungen“ (`?liste=ereignisse`) mit Ändern und Löschen; Klick auf Marke oder Zeile
+  wählt den Zeitraum als freie Auswahl (E17). Fester Hinweis: „Eigene Ereignisse sind von
+  Nutzerinnen und Nutzern eingetragene Zeiträume zur Einordnung. Sie sind keine Aussage über
+  Ursachen und gehen nicht in Erkennung, Erklärungsansätze oder Belege ein.“ Der In-Memory-Store
+  führt `delete` seit diesem Datum wirklich aus (vorher No-op), damit Löschen ohne Zugangsdaten
+  und in den Tests wirkt. Ohne die Tabelle antworten die Routen mit 503 und nennen die
+  Migrationsdatei. Feature-Doku: `docs/feature-doku/15-eigene-ereignisse.md`.
+- **Begründung:** Speicherung je Unternehmen in der Datenbank statt im Browser, weil es keine
+  Anmeldung gibt, die Einträge zum Unternehmen gehören und sie Neuladen, Gerätewechsel und die
+  Evaluationsinstanz überdauern sollen; monatsgenau wie der Verlauf (E18, E20); Nummer statt
+  Beschriftung, weil Titel am Diagramm überlappen und die Nummer Diagramm und Liste verbindet
+  (wie die allgemeinen Ereignisse seit 2026-10-13: Name beim Überfahren); Klick wählt den
+  Zeitraum, weil jeder Klick im Diagramm einen Zeitraum wählt (E17). Kein Eingang in die
+  Rangfolge der Erklärungsansätze (E21) und keine Zählung als Beleg, damit E23 unberührt bleibt
+  und die Erkennung (E9) datengetrieben bleibt. Keine Dauergrenze wie in E20: Ein eigenes
+  Ereignis trägt jemand bewusst ein und kennt seine Dauer.
+- **Grenzen:** keine Anmeldung, keine Zuordnung zu Personen, keine Historie; nur auf der
+  Detailseite (nicht in der Karte des Haupt-Dashboards, nicht im PDF-Export, nicht in Belegliste
+  und Erklärungsansätzen); ein zeitliches Zusammentreffen mit einer Markierung ist keine Erklärung.
+- **Status:** umgesetzt am 2026-10-17, nicht committet; Migration 007 in der gehosteten
+  Datenbank steht aus (Autor); Feldgrenzen vorläufig.

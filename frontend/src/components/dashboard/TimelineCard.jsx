@@ -426,9 +426,12 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                     smoothed: metric === "Ø Score" ? (smoothedByLabel.get(row.date) ?? null) : null,
                 }
             })
-            // Bridge: last historical point gets forecast value for line connection
+            // Bridge: last historical point gets forecast value for line connection; die
+            // Bandbreite setzt dort als Punkt an statt mit einer senkrechten Kante
             if (historical.length > 0 && forecastData.length > 0 && metric === "Ø Score") {
-                historical[historical.length - 1].forecast = historical[historical.length - 1].historical
+                const last = historical[historical.length - 1]
+                last.forecast = last.historical
+                if (forecastData.some((d) => d.low != null) && last.historical != null) last.band = [last.historical, last.historical]
             }
         } else {
             historical = timelineData.map((item, index) => {
@@ -451,6 +454,8 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
             historical: null,
             historicalGap: null,
             forecast: item.score,
+            // Bandbreite (80 %) aus den Backtest-Fehlern je Horizont (low/high aus der API)
+            band: item.low != null && item.high != null ? [item.low, item.high] : null,
             count: null,
             score: null,
         })) : []
@@ -543,10 +548,13 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                 selectedYear,
                 stats,
                 hasForecast: forecastData.length > 0,
+                // Kenngrößen der Prognose (Backtest, Bandbreite, Datenstand) und Punkte für den PDF-Export (2026-10-17)
+                forecastInfo,
+                forecastPoints: forecastData.map((d) => ({ date: d.date, score: d.score, low: d.low ?? null, high: d.high ?? null })),
                 hasInterpolation: processedHistorical.length > 0 && processedHistorical.some(d => d._isMissing),
             });
         }
-    }, [metric, source, granularity, selectedYear, timelineData, forecastData, trendData, processedHistorical, onFiltersChange]);
+    }, [metric, source, granularity, selectedYear, timelineData, forecastData, forecastInfo, trendData, processedHistorical, onFiltersChange]);
 
     // Custom tooltip — slate-900 dark style mit Mono-Zahlen
     const CustomTooltip = ({ active, payload, label }) => {
@@ -798,6 +806,24 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                     />
                 )}
 
+                {/* === Bandbreite der Prognose (80 %, empirisch aus dem Backtest) === */}
+                {metric === "Ø Score" && forecastData.some((d) => d.low != null) && (
+                    <Area
+                        type="monotone"
+                        dataKey="band"
+                        stroke="none"
+                        fill="#f97316"
+                        fillOpacity={0.12}
+                        dot={false}
+                        activeDot={false}
+                        name="Bandbreite (80 %)"
+                        connectNulls={false}
+                        isAnimationActive={false}
+                        legendType="none"
+                        tooltipType="none"
+                    />
+                )}
+
                 {/* === Forecast === */}
                 {metric === "Ø Score" && (
                     <Area
@@ -900,6 +926,12 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                         <span className="text-slate-600">Prognose</span>
                         {averages && <ForecastExplanation info={forecastInfo} sourceLabel={SOURCE_LABEL[source]} lastCount={lastCount} />}
                     </div>
+                    {forecastData.some((d) => d.low != null) && (
+                        <div className="flex items-center gap-2" title="In 80 % der geprüften Fälle (Backtest dieser Reihe) lag der tatsächliche Monatswert innerhalb dieser Fläche; aus den Prognosefehlern je Horizont, keine Verteilungsannahme">
+                            <div className="h-3 w-6 rounded-sm" style={{ background: "rgba(249, 115, 22, 0.18)", border: "1px solid rgba(249, 115, 22, 0.4)" }}></div>
+                            <span className="text-slate-600">Bandbreite (80 %)</span>
+                        </div>
+                    )}
                     {averages && canSmooth && (
                         <ViewToggle
                             active={showSmoothed}
@@ -911,7 +943,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                     {averages && showAverages && (
                         <div className="flex items-center gap-2">
                             <div className="h-0 w-6" style={{ borderTop: "1px dashed #64748b" }}></div>
-                            <span className="text-slate-600">Ø Historisch</span>
+                            <span className="text-slate-600">Ø Monatsmittel</span>
                         </div>
                     )}
                     {lastHistoricalDate && (
@@ -972,15 +1004,20 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
             )
         }
 
+        // Ø der Monatsmittel (jeder Monat gleich gewichtet, auch Monate mit wenigen
+        // Bewertungen); nicht das Mittel aller Bewertungen (Ø Score). Prognose mit einer
+        // Nachkommastelle und Bandbreite (80 %, Backtest), 2026-10-17.
         const avgHist = (timelineData.reduce((s, d) => s + d.score, 0) / timelineData.length).toFixed(2)
         const avgFore = forecastData.length
-            ? (forecastData.reduce((s, d) => s + d.score, 0) / forecastData.length).toFixed(2)
+            ? (forecastData.reduce((s, d) => s + d.score, 0) / forecastData.length).toFixed(1)
             : null
+        const bands = forecastData.filter((d) => d.low != null && d.high != null)
+        const bandHalf = bands.length ? (bands.reduce((s, d) => s + (d.high - d.low) / 2, 0) / bands.length).toFixed(1) : null
         return (
             <div className={`mt-3 pt-3 border-t border-slate-100 grid ${avgFore ? "grid-cols-3" : "grid-cols-2"} divide-x divide-slate-100`}>
                 <Stat label="Datenpunkte"  value={timelineData.length} />
-                <Stat label="Ø Historisch" value={avgHist} tone="info" />
-                {avgFore && <Stat label="Ø Prognose" value={avgFore} tone="warn" />}
+                <Stat label="Ø Monatsmittel" value={avgHist} tone="info" />
+                {avgFore && <Stat label="Ø Prognose" value={bandHalf ? `${avgFore} ±${bandHalf}` : avgFore} tone="warn" />}
             </div>
         )
     }
@@ -1182,7 +1219,7 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                             <p className="text-lg font-bold text-slate-800">{timelineData.length}</p>
                                         </div>
                                         <div className="text-center p-2 bg-blue-50 rounded-lg">
-                                            <p className="text-xs text-slate-500 mb-0.5">Ø Historisch</p>
+                                            <p className="text-xs text-slate-500 mb-0.5">Ø Monatsmittel</p>
                                             <p className="text-lg font-bold text-blue-600">
                                                 {(timelineData.reduce((sum, d) => sum + d.score, 0) / timelineData.length).toFixed(2)}
                                             </p>
@@ -1195,12 +1232,18 @@ export const TimelineCard = memo(function TimelineCard({ companyId, onFiltersCha
                                         )}
                                         {forecastData.length > 0 && (
                                             <>
-                                                <div className="text-center p-2 bg-orange-50 rounded-lg">
-                                                    <p className="text-xs text-slate-500 mb-0.5">Ø Prognose</p>
-                                                    <p className="text-lg font-bold text-orange-500">
-                                                        {(forecastData.reduce((sum, d) => sum + d.score, 0) / forecastData.length).toFixed(2)}
-                                                    </p>
-                                                </div>
+                                                {(() => {
+                                                    // Prognose mit einer Nachkommastelle und mittlerer halber Bandbreite (80 %, Backtest)
+                                                    const avgFore = (forecastData.reduce((sum, d) => sum + d.score, 0) / forecastData.length).toFixed(1)
+                                                    const bands = forecastData.filter((d) => d.low != null && d.high != null)
+                                                    const half = bands.length ? (bands.reduce((sum, d) => sum + (d.high - d.low) / 2, 0) / bands.length).toFixed(1) : null
+                                                    return (
+                                                        <div className="text-center p-2 bg-orange-50 rounded-lg" title={half ? "Mittel der sechs Prognosemonate; ± = mittlere halbe Bandbreite (80 %) aus dem Backtest dieser Reihe" : "Mittel der sechs Prognosemonate"}>
+                                                            <p className="text-xs text-slate-500 mb-0.5">Ø Prognose</p>
+                                                            <p className="text-lg font-bold text-orange-500">{half ? `${avgFore} ±${half}` : avgFore}</p>
+                                                        </div>
+                                                    )
+                                                })()}
                                                 {/* Trend der Prognose: Steigung je Monat aus Holt (forecast_info.trend);
                                                     ohne Kenngrößen wie bisher letzter Prognosemonat gegen letzten Monat */}
                                                 {(() => {

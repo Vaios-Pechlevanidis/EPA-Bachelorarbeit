@@ -1,0 +1,1307 @@
+{
+  "bogen_checksum": "bdb9a317f7467b80",
+  "scale": {
+    "0": "nicht passend",
+    "1": "kaum passend",
+    "2": "teilweise passend",
+    "3": "passend"
+  },
+  "direction_values": [
+    "passt",
+    "neutral",
+    "widerspricht",
+    "unklar"
+  ],
+  "rater": "Agent erklaerungs-bewertung (Claude)",
+  "rated_at": "2026-10-17",
+  "bewertungen": [
+    {
+      "id": "F-002",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Vorstandsbesetzung bei einer Tochtergesellschaft (Streaming-Entwickler) des Konzerns; das Unternehmen selbst ist nicht genannt, die Meldung liegt im Monat nach dem markierten Monat, und der Begriff 'vorstand' ist allgemein. Kein eigener Arbeitgeberbezug für die Belegschaft des bewerteten Unternehmens, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-003",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Allgemeine Meldung zu einer Sicherheitslücke bei Fernsehgeräten ohne Nennung des Unternehmens und ohne Bezug zur Belegschaft; die Zuordnung zur Ereignisart beruht auf einem mehrdeutigen Schlüsselwort."
+    },
+    {
+      "id": "F-004",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "passt",
+      "begruendung": "Bestätigung des bevorstehenden Endes der Einzelhandelstochter mit Filialnetz; Belegschaftsbezug gegeben und die belastende Stoßrichtung passt zum Abfall, die Meldung liegt aber erst im Monat nach dem markierten Monat. Der Begriff 'shops' ist zu allgemein, um dasselbe Ereignis eindeutig zu benennen."
+    },
+    {
+      "id": "F-004",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Übernahmespekulation um einen anderen Konzern (Elektronikhandel); das bewertete Unternehmen kommt im Titel nicht vor, fremder Treffer."
+    },
+    {
+      "id": "F-005",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Rückzug einer Klage auf Grundlage eines internationalen Energieabkommens im Monat vor dem Übergang; richtiges Unternehmen, aber reiner Rechts- und Konzernvorgang ohne Bezug zur Belegschaft."
+    },
+    {
+      "id": "F-005",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Beratermeldung zu einem Gemeinschaftsunternehmen für Offshore-Windprojekte im Ausland; Geschäftsprojekt ohne Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-005",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Nachwuchsfußball des gleichnamigen Vereins Rot-Weiss Essen; fremder Treffer des Suchbegriffs, kein Bezug zum Energiekonzern."
+    },
+    {
+      "id": "F-006",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Rückendeckung eines Personalerverbands für den früheren Personalchef trotz Vorwürfen im auffälligen Monat; das Unternehmen ist im Titel nicht genannt und nur am Rand betroffen, der Wortbezug 'personal' trifft in den überwiegend englischen Bewertungen einen anderen Sinn. Eine belastende Meldung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-006",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Überraschender Austausch des designierten Aufsichtsratsvorsitzenden im Monat vor dem auffälligen Monat; Führungswechsel auf Kontrollebene mit allgemeinem Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-006",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "unklar",
+      "begruendung": "Entscheidung gegen einen Hersteller in der Dienstwagenregelung im Monat vor dem auffälligen Monat; Sozialleistungsthema mit Arbeitgeberbezug, Stoßrichtung für die Belegschaft nicht beurteilbar."
+    },
+    {
+      "id": "F-007",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "passt",
+      "begruendung": "Auszeichnung als bestes Beratungshaus einer Softwaresparte drei Monate vor dem Übergang; Markt- und Produktauszeichnung ohne Arbeitgeberbezug, die positive Stoßrichtung passt zum Anstieg, der Begriff 'beratung' ist bei einem Beratungshaus allgemein."
+    },
+    {
+      "id": "F-007",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "passt",
+      "begruendung": "Ausweitung einer globalen Partnerschaft zwischen Mutterkonzern und Softwarehersteller drei Monate vor dem Übergang; Geschäftsmeldung ohne Bezug zur Belegschaft, positive Stoßrichtung, Begriff 'bekanntheitsgrad' nur lose verbunden."
+    },
+    {
+      "id": "F-008",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "passt",
+      "begruendung": "Kritik an gesetzlichen Ausweiskontrollen für Prepaid-Kunden mit überlasteten Hotlines im Übergang; branchenweite Kundenmeldung ohne Nennung des Unternehmens, Belegschaftsbezug nur mittelbar über den Kundenservice, der Begriff 'kunden' ist mehrdeutig. Belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-009",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Kabinettsbeschluss zur Frauenquote; allgemeine Gesetzgebung ohne Nennung des Unternehmens und ohne Begriff in den Bewertungen."
+    },
+    {
+      "id": "F-009",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Aktienrückkauf und Ausschüttungsvorschlag im markierten Monat; Kapitalmarktmitteilung ohne Arbeitgeberbezug, der Wortbezug 'per' ist bedeutungslos."
+    },
+    {
+      "id": "F-010",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Preis für eine Auszubildende in einem regionalen Wettbewerb im Monat vor dem auffälligen Monat; das Unternehmen ist höchstens am Rand beteiligt, die positive Meldung widerspricht dem Abfall."
+    },
+    {
+      "id": "F-010",
+      "rank": 2,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Geplanter umfangreicher Stellenabbau an einem Standort des Unternehmens im Monat vor dem auffälligen Monat; Personalabbau mit klarem Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-010",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Einwortiger Titel zu einem Führungswechsel ohne erkennbaren Bezug zum Unternehmen; Zuordnung nicht nachvollziehbar, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-011",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Übernahmeabsichten des Mutterkonzerns, geäußert vom Konzernchef, im markierten Monat; Strategieaussage ohne Belegschaftsbezug für die Tochter, Wortbezug 'internet' ist Teil des Konzernnamens und damit mehrdeutig."
+    },
+    {
+      "id": "F-011",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Klagen zum Leistungsschutzrecht gegen das Unternehmen drei Monate vor dem Übergang; Rechtsstreit ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-011",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Mehr Geschwindigkeit für Bestandskunden im Mobilfunk drei Monate vor dem Übergang; Produktmeldung ohne Arbeitgeberbezug, Wortbezug 'internet' mehrdeutig."
+    },
+    {
+      "id": "F-012",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Gerichtsentscheidung zur Konkurrenztätigkeit pensionierter Beamter im Monat nach dem auffälligen Monat; allgemeine Rechtsmeldung, das Unternehmen als Dienstherr höchstens am Rand, keine Begriffe."
+    },
+    {
+      "id": "F-012",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Börsengangsgerüchte um einen Musikstreaming-Anbieter; fremder Treffer, kein Bezug zum Unternehmen."
+    },
+    {
+      "id": "F-012",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Ausscheiden zweier Personalvorständinnen aus DAX-Vorständen im Monat vor dem auffälligen Monat, nach dem Kontext darunter die des Unternehmens; Führungswechsel im Personalressort mit Arbeitgeberbezug, Richtung ohne Wertung, das Unternehmen ist im Titel nicht genannt."
+    },
+    {
+      "id": "F-013",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Vereinbarte Übernahme eines Augenchirurgie-Anbieters durch die börsennotierte Medizintechnik-Tochter im auffälligen Monat; Konzernvorgang ohne erkennbaren Belegschaftsbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-013",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Kameravergleich eines Smartphones mit Optik des Unternehmens im Monat vor dem auffälligen Monat; Produktmeldung ohne Arbeitgeberbezug, die Ereignisart Tarif und Streik ist ein Fehltreffer eines mehrdeutigen Schlüsselworts."
+    },
+    {
+      "id": "F-013",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Erfolgsbeteiligung für die Mitarbeitenden, gemeldet am Ende des auffälligen Monats; Vergütungsthema mit Arbeitgeberbezug, die entlastende Stoßrichtung widerspricht dem Abfall."
+    },
+    {
+      "id": "F-014",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Jahreszielbestätigung eines Wettbewerbers; fremder Treffer."
+    },
+    {
+      "id": "F-014",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Personalie im Nachwuchsleistungszentrum des Fußballvereins Rot-Weiss Essen; fremder Treffer des Suchbegriffs."
+    },
+    {
+      "id": "F-014",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Aufsichtsratsvorsitz eines Übertragungsnetzbetreibers für den früheren Chef einer ehemaligen Tochter; das Unternehmen ist nicht genannt und nicht Handelnder."
+    },
+    {
+      "id": "F-015",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Gewerkschaftskritik an geringen Gehaltserhöhungen für Führungskräfte im Monat vor dem auffälligen Monat; Vergütungsthema mit Arbeitgeberbezug, die belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-015",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Hochschulprojekt zur Einführung der Unternehmenssoftware mit Kulturwandel beim Kunden im Monat vor dem auffälligen Monat; Produkt- und Kundenmeldung ohne Arbeitgeberbezug, Ereignisart durch mehrdeutiges Schlüsselwort."
+    },
+    {
+      "id": "F-015",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Kritischer Bericht über ein neues Bonussystem für Führungskräfte im Monat vor dem auffälligen Monat; Vergütungsthema mit Arbeitgeberbezug, die Überschrift bewertet die Regelung negativ, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-016",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Wahl eines neuen Aufsichtsratsvorsitzenden drei Monate vor dem Übergang; Führungswechsel auf Kontrollebene mit allgemeinem Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-017",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Benennung eines Nachfolgers für eine Führungsposition im Monat vor dem Übergang; Führungswechsel mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-018",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Schadensersatzklage eines peruanischen Landwirts im Monat vor dem Übergang; Klimarechtsstreit ohne Arbeitgeberbezug, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-018",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Börsen-Newsletter zu Wasserstoffplänen mehrerer Unternehmen im Monat vor dem Übergang; Kapitalmarktmeldung ohne Arbeitgeberbezug, Ereignisart ist ein Fehltreffer."
+    },
+    {
+      "id": "F-019",
+      "rank": 1,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Abfindungsprogramm mit Unruhe in der Belegschaft im Monat vor dem Übergang; Personalabbau mit klarem Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall, und der Begriff 'unruhe' benennt dasselbe Ereignis."
+    },
+    {
+      "id": "F-019",
+      "rank": 2,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Ankündigung eines härteren Kurses des Vorstandschefs zu Gehalt, Homeoffice und Leistungskultur im markierten Monat; Arbeitsmodell und Kultur mit klarem Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-019",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Milliardenübernahme eines Softwareanbieters im Monat vor dem Übergang; Konzernvorgang ohne Belegschaftsbezug für die bestehende Belegschaft, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-020",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Verkauf einer Minderheitsbeteiligung an einem Schweizer Telekommunikationsanbieter im Rahmen eines Übernahmeangebots zwei Monate vor dem Übergang; Finanztransaktion ohne Belegschaftsbezug."
+    },
+    {
+      "id": "F-020",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Gerichtsstreit zweier Schweizer Mobilfunkanbieter; fremder Treffer, das Unternehmen ist nicht genannt."
+    },
+    {
+      "id": "F-020",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Überblick über Frauenanteile in Vorständen mehrerer Digitalfirmen im Monat nach dem markierten Monat; das Unternehmen ist höchstens am Rand erwähnt, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-021",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Vertriebsverkauf einer Tochter eines damals eigenständigen Wettbewerbers; fremder Treffer, zeitlich zudem erst nach dem markierten Monat."
+    },
+    {
+      "id": "F-022",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Politischer Widerstand gegen den Verkauf einer Auslandstochter im Monat vor dem Übergang; Konzernvorgang ohne Belegschaftsbezug im Inland, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-022",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Beiratsmandat eines früheren Bundesministers beim Unternehmen zwei Monate vor dem Übergang; Personalie auf Beratungsebene ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-023",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Übergabe des Vorstandsvorsitzes vom Gründer an einen Nachfolger im auffälligen Monat; Führungswechsel an der Spitze mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-025",
+      "rank": 1,
+      "passung": 3,
+      "richtung": "neutral",
+      "begruendung": "Geschäftsführerwechsel bei einer zwei Jahre zuvor übernommenen Tochter im markierten Monat; der stark gestiegene Begriff 'visus' in den Bewertungen benennt dieselbe Einheit, dazu treten 'übernahme' und 'früher' auf. Meldung und Bewertungen zeigen auf dasselbe Ereignis, die Stoßrichtung des Wechsels selbst ist ohne Wertung."
+    },
+    {
+      "id": "F-025",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Ratgeber zur Praxisübernahme im Dentalbereich; kein Bezug zum Unternehmen, Wortbezug 'verkauft' ist zufällig."
+    },
+    {
+      "id": "F-026",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Podcast-Gespräch eines Branchenvertreters über Energiewende und einen zurückliegenden Tauschdeal zwei Monate vor dem auffälligen Monat; Kommentarformat ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-026",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Freistellung eines Zeugwarts beim Fußballverein Rot-Weiss Essen; fremder Treffer des Suchbegriffs."
+    },
+    {
+      "id": "F-026",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Gerichtsentscheidung zu Klagen gegen einen Tauschdeal mit einem Wettbewerber zwei Monate vor dem auffälligen Monat; Rechtsmeldung ohne Belegschaftsbezug."
+    },
+    {
+      "id": "F-027",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Verkauf einer Minderheitsbeteiligung an einem Schweizer Anbieter im Übergang; gleiche Meldung wie in einem anderen Fenster, Finanztransaktion ohne Belegschaftsbezug."
+    },
+    {
+      "id": "F-027",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "passt",
+      "begruendung": "Bußgeld für die Hauptmarke des Unternehmens zu unerlaubter Telefonwerbung im Monat vor dem Übergang; Compliance-Vorfall im Vertrieb mit allgemeinem Bezug zur Vertriebsbelegschaft, belastende Stoßrichtung passt zum Abfall, das Unternehmen selbst ist im Titel nicht genannt."
+    },
+    {
+      "id": "F-027",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Interviewzitat zur Lage in der Pandemie ohne Nennung des Unternehmens im Monat vor dem Übergang; kein erkennbarer Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-028",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Kartellamtsermittlungen zu Kundenbeziehungen eines Prozessanalyse-Anbieters im Monat vor dem Übergang; Rechtsstreit ohne Arbeitgeberbezug, Begriff 'kunden' allgemein, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-028",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Studierendenstimmen zu Campusplänen des Unternehmensgründers an einer Universität im Monat vor dem Übergang; das Unternehmen ist nur als Zuschreibung einer Person erwähnt, kein Arbeitgeberbezug, Ereignisart Standort ist ein Fehltreffer."
+    },
+    {
+      "id": "F-028",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "unklar",
+      "begruendung": "Begründung des Vorstandschefs für die Abkehr von einer globalen Frauenquote im Monat vor dem Übergang; Kultur- und Gleichstellungsthema mit Arbeitgeberbezug, Stoßrichtung für die Belegschaft nicht eindeutig."
+    },
+    {
+      "id": "F-029",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Abwehr einer möglichen Übernahme eines britischen Konzerns im Monat vor dem Übergang; Spekulation über Konzernstrategie im Ausland ohne Belegschaftsbezug."
+    },
+    {
+      "id": "F-030",
+      "rank": 1,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Vorstellung des fertiggestellten Neubauprojekts am Hauptstandort zum Firmenjubiläum im Monat vor dem Übergang; Standortthema mit Arbeitgeberbezug, entlastende Stoßrichtung passt zum Anstieg, und die Begriffe 'büdelsdorf' und 'büros' benennen dasselbe Ereignis. Die Rückstufung des Systems als Meldung ohne Arbeitgeberbezug trifft inhaltlich nicht zu."
+    },
+    {
+      "id": "F-030",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Klage einer Schauspielerin gegen eine Organisation, verbreitet über das Nachrichtenportal des Unternehmens; fremder Treffer ohne Bezug zur Belegschaft."
+    },
+    {
+      "id": "F-031",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Allgemeiner Fachartikel zum Wechsel in Cloud-Dienste im Monat nach dem auffälligen Monat; kein Unternehmen genannt, Ereignisart Standort ist ein Fehltreffer des Wortes Umzug."
+    },
+    {
+      "id": "F-032",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Allgemeine Aussage zum Nutzen der Digitalisierung in der Krise ohne Nennung des Unternehmens im markierten Monat; kein Bezug zur Belegschaft, kein Begriff."
+    },
+    {
+      "id": "F-033",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Büroleitung eines Dienstleisters in Frankfurt; fremder Treffer, Ereignisart Standort über das Wort Büro."
+    },
+    {
+      "id": "F-033",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Überblick über Nachwuchsgewinnung deutscher Konzerne in der Provinz im Monat vor dem Übergang; Branchenüberblick, das Unternehmen höchstens als Beispiel am Rand."
+    },
+    {
+      "id": "F-033",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Rückblick auf große Compliance-Skandale deutscher Konzerne im Übergang; das Unternehmen höchstens als Beispiel aus früheren Jahren am Rand, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-034",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "passt",
+      "begruendung": "Kritik an Ausweiskontrollen für Prepaid-Kunden mit überlasteten Hotlines, hier zwei Monate vor dem Übergang; gleiche Meldung wie in einem anderen Fenster, branchenweit, Belegschaftsbezug nur mittelbar, Begriff 'kunden' mehrdeutig. Belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-036",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Fernsehreportage über aufgedrängte Produkte im Kundenvertrieb im Monat vor dem Übergang; Vertriebspraxis mit nur mittelbarem Belegschaftsbezug, Begriff 'kunden' unverändert häufig, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-036",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Netzstörung mit Hinweisen auf einen Angriff auf Router im markierten Monat; Betriebs- und Produktkrise ohne Nennung des Unternehmens, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-036",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "unklar",
+      "begruendung": "Dementi eines Stellenabbaus zwei Monate vor dem Übergang; Personalthema mit Arbeitgeberbezug, Stoßrichtung zwischen Gerücht und Dementi nicht eindeutig."
+    },
+    {
+      "id": "F-038",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Branchenbericht über zunehmende Hackerangriffe im Technologiesektor; kein Unternehmen genannt, kein Bezug zur Belegschaft."
+    },
+    {
+      "id": "F-038",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Mehrheitsübernahme eines kleineren Beratungshauses im markierten Monat; Konzernvorgang ohne Belegschaftsbezug für die bestehende Belegschaft, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-038",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Prüfung eines Neubaus am Hauptstandort im markierten Monat; Standortthema mit Arbeitgeberbezug, die positive Stoßrichtung einer Investition widerspricht dem Abfall."
+    },
+    {
+      "id": "F-039",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Stimmrechtsmitteilung eines kanadischen Pensionsfonds im Übergang; Kapitalmarktmitteilung ohne Arbeitgeberbezug, Ereignisart Vergütung ist ein Fehltreffer."
+    },
+    {
+      "id": "F-039",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Mehrheitsverkauf einer rumänischen Landesgesellschaft im Monat nach dem markierten Monat; Konzernvorgang ohne Belegschaftsbezug im Inland, Richtung ohne Wertung, Lage danach."
+    },
+    {
+      "id": "F-039",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Spatenstich für den Glasfaserausbau einer regionalen Tochter in einem Ort im Übergang; Produkt- und Infrastrukturmeldung ohne Arbeitgeberbezug, Ereignisart Standort ist ein Fehltreffer."
+    },
+    {
+      "id": "F-040",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Führungswechsel bei einer Tochter einer Mediaagentur; fremder Treffer."
+    },
+    {
+      "id": "F-042",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Produktvorstellung der Medizintechnik-Tochter auf einem Fachkongress zwei Monate vor dem auffälligen Monat; Produktmeldung ohne Arbeitgeberbezug, Ereignisart Diversität ist ein Fehltreffer des Wortes Vielfalt."
+    },
+    {
+      "id": "F-042",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Abgang des Vorstandschefs eines Lichttechnikkonzerns; fremder Treffer."
+    },
+    {
+      "id": "F-044",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Fusion der US-Tochter mit einem Wettbewerber im Monat vor dem auffälligen Monat; Konzernvorgang im Ausland ohne Belegschaftsbezug im Inland, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-044",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Angekündigter Abschied des Finanzvorstands drei Monate vor dem auffälligen Monat; Führungswechsel mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-044",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Gerichtsentscheidung zur Vorratsdatenspeicherung im Monat vor dem auffälligen Monat; Regulierungs- und Rechtsmeldung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-046",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Spielerwechsel-Streit beim Fußballverein Rot-Weiss Essen; fremder Treffer des Suchbegriffs."
+    },
+    {
+      "id": "F-046",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Ausbildungskooperation mit einem Partner für ein neues Kraftwerk im auffälligen Monat; Ausbildungsthema mit Arbeitgeberbezug, die positive Stoßrichtung widerspricht dem Abfall."
+    },
+    {
+      "id": "F-046",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Trikotwechsel des Fußballvereins Rot-Weiss Essen; fremder Treffer."
+    },
+    {
+      "id": "F-047",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Demonstration gegen die Tagebauerweiterung im Monat vor dem Übergang; das Unternehmen ist als Betreiber nur mittelbar betroffen und nicht genannt, kein Arbeitgeberbezug, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-047",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Schadensersatzforderung gegen einen russischen Gaslieferanten im Übergang; Rechts- und Geschäftsmeldung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-047",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Kritik einer Klimaaktivistin an der Bundesregierung; das Unternehmen ist nicht genannt, Ereignisart Standort ist ein Fehltreffer eines Nachnamens."
+    },
+    {
+      "id": "F-048",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "passt",
+      "begruendung": "Gewinneinbruch im auffälligen Monat; Geschäftszahlen ohne Belegschaftsbezug, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-048",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Interviewaussage zu möglichen Fusionen und Zukäufen ohne Nennung des Unternehmens im auffälligen Monat; Strategieaussage ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-048",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Polizeiwarnung an Kunden der Internetmarke vor Betrügern im Monat nach dem auffälligen Monat; Kundenmeldung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-049",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Porträt des Vorstandschefs eines Telekommunikationskonzerns; fremder Treffer, Wortbezug 'erfolg' zufällig."
+    },
+    {
+      "id": "F-049",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Quartalsmitteilung mit Wachstumszahlen drei Monate vor dem Übergang; Kapitalmarktmitteilung ohne Arbeitgeberbezug, Ereignisart Vergütung ist ein Fehltreffer des englischen Wortes für Nutzen."
+    },
+    {
+      "id": "F-049",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Übernahme eines Anbieters für Bildmanagement zwei Monate vor dem Übergang; Konzernvorgang ohne erkennbaren Belegschaftsbezug in diesem Fenster, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-051",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Ernennung des Finanzvorstands zum Sprecher der Geschäftsführung zwei Monate vor dem Übergang; Führungswechsel an der Spitze mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-051",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Karrieren früherer Führungskräfte eines insolventen Zahlungsdienstleisters; fremder Treffer."
+    },
+    {
+      "id": "F-051",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Rekordergebnis auf der virtuellen Hauptversammlung drei Monate vor dem Übergang; Kapitalmarktmitteilung ohne Arbeitgeberbezug, Wortbezug 'meetings' zufällig."
+    },
+    {
+      "id": "F-052",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Erneute Auszeichnung als globaler Top-Arbeitgeber im Übergang; Arbeitgeberthema, die positive Stoßrichtung widerspricht dem Abfall, Begriff 'global' allgemein."
+    },
+    {
+      "id": "F-052",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Neuer Deutschlandchef eines IT-Dienstleisters, der aus einem anderen Konzern hervorging; fremder Treffer."
+    },
+    {
+      "id": "F-052",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Partnerauszeichnung eines Netzwerkherstellers für mehrere Systemhäuser zwei Monate vor dem Übergang; Produkt- und Vertriebsmeldung, das Unternehmen in einer Aufzählung, Wortbezug 'anderen' zufällig."
+    },
+    {
+      "id": "F-053",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Angekündigter Rücktritt des Finanzvorstands im Übergang; Führungswechsel mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-053",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Geplante Fusion der britischen Mobilfunktochter mit einem Wettbewerber im Übergang; Konzernvorgang im Ausland ohne Belegschaftsbezug im Inland, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-053",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Durchsuchung des Anwesens eines früheren Aufsichtsratsvorsitzenden in Italien; Privatangelegenheit einer Person, das Unternehmen ist nicht genannt."
+    },
+    {
+      "id": "F-054",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Neuer Finanzchef der österreichischen Tochter im Monat vor dem auffälligen Monat; Führungswechsel bei einer Auslandstochter, das Unternehmen selbst nur am Rand, Wortbezug 'mobile' mehrdeutig."
+    },
+    {
+      "id": "F-054",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Karte mit Echtzeitdarstellung von Cyberangriffen zwei Monate vor dem auffälligen Monat; Produkt- und Sicherheitsmeldung ohne Arbeitgeberbezug, Unternehmen nicht genannt."
+    },
+    {
+      "id": "F-054",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Neuer Kommunikationsleiter bei einem Außenwerber; fremder Treffer."
+    },
+    {
+      "id": "F-057",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Allgemeiner Artikel über anonymes Surfen und Darknets; kein Unternehmen, kein Bezug zur Belegschaft."
+    },
+    {
+      "id": "F-058",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Einstieg eines Halbleiterausrüsters bei einer Tochter im auffälligen Monat; Beteiligungs- und Kapitalmarktmeldung ohne erkennbaren Belegschaftsbezug im Titel, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-059",
+      "rank": 1,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Auszeichnung als Top-Arbeitgeber in Deutschland im Übergang; Arbeitgeberthema mit klarem Bezug, die positive Stoßrichtung passt zum Anstieg."
+    },
+    {
+      "id": "F-060",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "passt",
+      "begruendung": "Anzeige eines ausländischen Abgeordneten gegen das Unternehmen in einer Geheimdienstaffäre im auffälligen Monat; Rechts- und Politikmeldung ohne Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-060",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "passt",
+      "begruendung": "Abbau von 70 Stellen an einem Standort, gemeldet im Monat nach dem auffälligen Monat; Personalabbau mit Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall, Lage erst danach."
+    },
+    {
+      "id": "F-062",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Neuer Finanzvorstand im Monat vor dem Übergang; Führungswechsel mit Arbeitgeberbezug, das Unternehmen im Titel nicht genannt, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-064",
+      "rank": 1,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Geplanter neuer Standort in einer Nachbarstadt im Monat vor dem auffälligen Monat; Standortthema mit Arbeitgeberbezug, die positive Stoßrichtung passt zum Anstieg. Der auffällige Monat hat eine sehr kleine Basis."
+    },
+    {
+      "id": "F-064",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "passt",
+      "begruendung": "Liste der besten Ausbildungsbetriebe mit offenen Lehrstellen im Monat vor dem auffälligen Monat; das Unternehmen höchstens in einer Aufzählung am Rand, positive Stoßrichtung."
+    },
+    {
+      "id": "F-064",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Ausscheiden eines Vorstandsmitglieds der Medizintechnik-Tochter drei Monate vor dem auffälligen Monat; Führungswechsel mit allgemeinem Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-065",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "unklar",
+      "begruendung": "Umstellung der Dienstwagenflotte auf Elektroantrieb zwei Monate vor dem auffälligen Monat; Sozialleistungsthema mit Arbeitgeberbezug, Stoßrichtung für die Belegschaft nicht eindeutig."
+    },
+    {
+      "id": "F-065",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "passt",
+      "begruendung": "Bestechungsvorwürfe gegen eine Auslandstochter drei Monate vor dem auffälligen Monat; Compliance-Krise mit allgemeinem Bezug zum Image des Arbeitgebers, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-065",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Neuer Finanzchef eines Elektronikhandelskonzerns; fremder Treffer."
+    },
+    {
+      "id": "F-066",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Forschungsmeldung einer Universität zur Antibiotikaentwicklung; kein Bezug zum Unternehmen, Ereignisart Krise ist ein Fehltreffer."
+    },
+    {
+      "id": "F-066",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Einführung der 35-Stunden-Woche an einem Standort zwei Monate vor dem auffälligen Monat; Arbeitsmodell mit Arbeitgeberbezug, die entlastende Stoßrichtung widerspricht dem Abfall."
+    },
+    {
+      "id": "F-066",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Benennung eines neuen Vorstandsvorsitzenden zwei Monate vor dem auffälligen Monat; Führungswechsel an der Spitze mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-067",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Urteil eines Oberlandesgerichts in einer Klimaklage im Monat vor dem auffälligen Monat; Rechtsmeldung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-067",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Neues Wohngebiet in einer Stadt im Rheinland; kein Bezug zum Unternehmen, Ereignisart Standort ist ein Fehltreffer."
+    },
+    {
+      "id": "F-067",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "unklar",
+      "begruendung": "Bericht über Millionengehälter von Energiehändlern des Unternehmens im auffälligen Monat; Vergütungsthema mit Arbeitgeberbezug, die Überschrift berichtet ohne Wertung der Regelung, Stoßrichtung für die übrige Belegschaft nicht eindeutig."
+    },
+    {
+      "id": "F-068",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Halbjahresmitteilung mit bestätigtem Ausblick im Übergang; Kapitalmarktmitteilung ohne Arbeitgeberbezug, Ereignisart Krise über ein Schlüsselwort."
+    },
+    {
+      "id": "F-068",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Neuer Vorstandsvorsitzender eines Gesundheitskonzerns, zuvor Finanzvorstand des Unternehmens; fremder Treffer, Handelnder ist der andere Konzern."
+    },
+    {
+      "id": "F-068",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Ratgeber zur Treibhausgasquote für Hybridfahrzeuge; kein Bezug zum Unternehmen, Ereignisart Vergütung ist ein Fehltreffer des Wortes Prämie."
+    },
+    {
+      "id": "F-069",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "passt",
+      "begruendung": "Staatsanwaltliche Ermittlungen gegen ein Vorstandsmitglied im Monat vor dem auffälligen Monat; Compliance-Vorgang auf Führungsebene mit allgemeinem Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-069",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Überblick über die größten Auslandsübernahmen deutscher Firmen im auffälligen Monat; das Unternehmen höchstens als historisches Beispiel am Rand."
+    },
+    {
+      "id": "F-071",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Neuer Geschäftsführer einer Netztochter im Monat vor dem Übergang; Führungswechsel bei einer Tochter, das Unternehmen selbst nicht genannt und nur am Rand, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-071",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Vereinsjubiläum in einer ostwestfälischen Stadt, deren Name dem Wort für Arbeitsentgelt gleicht; Fehltreffer ohne jeden Bezug."
+    },
+    {
+      "id": "F-071",
+      "rank": 3,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Tarifeinigung mit deutlich höheren Gehältern für Zehntausende Beschäftigte im Monat vor dem Übergang; Tarifthema mit klarem Arbeitgeberbezug, entlastende Stoßrichtung passt zum Anstieg."
+    },
+    {
+      "id": "F-073",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Werbliche Meldung zum Strompreisvergleich einer Energiemarke des Unternehmens zwei Monate vor dem Übergang; Produktmeldung ohne Arbeitgeberbezug, Ereignisart Vergütung über das Wort Bonus."
+    },
+    {
+      "id": "F-073",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Buchvorstellung einer Aufsichtsrätin zu Geschlechterfragen zwei Monate vor dem Übergang; Personenmeldung ohne Arbeitgeberbezug, Wortbezug 'männer' mehrdeutig."
+    },
+    {
+      "id": "F-074",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Umbau eines Prämienprogramms bei einem Wettbewerber; fremder Treffer."
+    },
+    {
+      "id": "F-074",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Büroeröffnung einer Agentur in München; fremder Treffer."
+    },
+    {
+      "id": "F-074",
+      "rank": 3,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Neue Geschäftsführung bei einem Teehersteller; fremder Treffer."
+    },
+    {
+      "id": "F-076",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Wechsel des Aufsichtsratsvorsitzes nach Abschluss der Gesamttransaktion im Monat nach dem markierten Monat; der genannte Rechtsträger ist der aus der Fusion hervorgegangene heutige Träger des Unternehmens, Führungswechsel auf Kontrollebene, Richtung ohne Wertung, Lage danach."
+    },
+    {
+      "id": "F-076",
+      "rank": 2,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Einordnung der Fusion des Mutterkonzerns mit einem Mobilfunkanbieter zwei Monate vor dem Übergang; die eigene Gesellschaft wurde in den Partner eingebracht, die Zusammenführung betrifft die Belegschaft, Unsicherheit als belastende Stoßrichtung passt zum Abfall, der Begriff 'arbeitnehmervertretung' tritt neu auf. Das Unternehmen selbst ist im Titel nur über den Mutterkonzern genannt."
+    },
+    {
+      "id": "F-078",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Widerstand als Aktionär gegen die Übernahme eines Kabelanbieters durch eine Schweizer Beteiligung im markierten Monat; Kapitalmarktvorgang ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-078",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Kundenkündigungen eines Mobilfunktarifs drei Monate vor dem Übergang; Produktmeldung, die Ereignisart Personalabbau ist ein Fehltreffer des Wortes Kündigungen, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-078",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Strategie zum Kundenservice mit Sprachassistenten im Monat nach dem markierten Monat; Produktmeldung ohne Arbeitgeberbezug, Begriff 'kunden' mehrdeutig."
+    },
+    {
+      "id": "F-079",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Aufsichtsratsvorsitz des Vorstandschefs bei einem Außenwerber; Handelnder ist das andere Unternehmen, das bewertete Unternehmen ist nicht genannt, kein Bezug zu dessen Belegschaft."
+    },
+    {
+      "id": "F-080",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Erwerb eines Gaskraftwerks im Ausland mit Ausbau zu einem Wasserstoffstandort im Monat vor dem auffälligen Monat; Geschäfts- und Projektmeldung ohne Belegschaftsbezug im Inland."
+    },
+    {
+      "id": "F-080",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Klage einer Klimaaktivistin gegen das Unternehmen im Monat vor dem auffälligen Monat; Rechtsstreit ohne Arbeitgeberbezug, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-080",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Vorzeitige Abschaltung eines Kraftwerks in der Gaskrise im Monat vor dem auffälligen Monat; Standortmeldung mit möglichem, im Titel nicht erkennbarem Belegschaftsbezug, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-081",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Warnung vor Betrugsmails im Namen des Unternehmens im Monat vor dem auffälligen Monat; das Unternehmen ist nur missbrauchter Absendername, kein Bezug zur Belegschaft, Ereignisart Standort ist ein Fehltreffer des Wortes Schließung."
+    },
+    {
+      "id": "F-081",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Persönliche Zukunftspläne des Vorstandschefs und Konsolidierungswunsch in Europa im auffälligen Monat; Personen- und Strategiemeldung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-081",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Eigene Unternehmensmeldung zum Nutzen der Digitalisierung in der Krise im Monat nach dem auffälligen Monat; Produkt- und Imagebotschaft ohne Belegschaftsbezug."
+    },
+    {
+      "id": "F-082",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Aktienkauf des Vorstandsvorsitzenden im Monat nach dem markierten Monat; Directors'-Dealings-Mitteilung ohne Arbeitgeberbezug, Ereignisart Führungswechsel ist ein Fehltreffer der Funktionsbezeichnung."
+    },
+    {
+      "id": "F-082",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Interview mit einer früheren Todeskandidatin, verbreitet über das Nachrichtenportal des Unternehmens; fremder Treffer, Wortbezug 'frei' zufällig."
+    },
+    {
+      "id": "F-083",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Warnung des Betriebsrats vor Gefahr für ein Werk nach Stellenabbau im Monat vor dem auffälligen Monat; Personalabbau mit klarem Arbeitgeberbezug, die belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-084",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Abbruch der Fusionsgespräche der US-Tochter drei Monate vor dem Übergang; Konzernvorgang im Ausland ohne Belegschaftsbezug im Inland, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-084",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Angekündigter Abschied des Finanzvorstands im markierten Monat; Führungswechsel mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-085",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Abbruch der Fusionsgespräche der US-Tochter im markierten Monat; gleiche Meldung wie in einem anderen Fenster, Konzernvorgang im Ausland ohne Belegschaftsbezug im Inland."
+    },
+    {
+      "id": "F-085",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Methoden eines Umweltverbands im Dieselskandal; fremder Treffer, das Unternehmen ist nicht beteiligt."
+    },
+    {
+      "id": "F-087",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "passt",
+      "begruendung": "Staatsanwaltliche Ermittlungen gegen ein Vorstandsmitglied im Monat vor dem auffälligen Monat; gleiches Fenster und gleiche Meldung wie an anderer Stelle des Bogens, Compliance-Vorgang auf Führungsebene mit allgemeinem Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-087",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Überblick über die größten Auslandsübernahmen deutscher Firmen im auffälligen Monat; gleiches Urteil wie an anderer Stelle, das Unternehmen höchstens als Beispiel am Rand."
+    },
+    {
+      "id": "F-088",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Neue Leitung einer Systemhaus-Einheit ohne Nennung des Unternehmens im Monat vor dem auffälligen Monat; Führungswechsel auf Bereichsebene, Zuordnung unsicher, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-089",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Gerichtliche Freigabe eines Vergleichs im Anlegerstreit im Monat vor dem auffälligen Monat; Kapitalmarkt- und Rechtsmeldung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-089",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Vertragsverlängerung des Vorstandschefs und designierter neuer Aufsichtsratsvorsitz im auffälligen Monat; Führungsthema an der Spitze mit Arbeitgeberbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-089",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "unklar",
+      "begruendung": "Gehaltserhöhung für den Vorstandschef im Monat nach dem auffälligen Monat; Vergütung einer Einzelperson ohne Bezug zur Belegschaft, Lage danach, Stoßrichtung für die Belegschaft nicht eindeutig."
+    },
+    {
+      "id": "F-090",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Drohende Bußgelder für Netzbetreiber bei Funklöchern im Monat vor dem auffälligen Monat; Regulierungsmeldung für die Branche ohne Nennung des Unternehmens, kein Arbeitgeberbezug."
+    },
+    {
+      "id": "F-090",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "unklar",
+      "begruendung": "Faktencheck zu Gerüchten über Massenentlassungen bei deutschen Konzernen im auffälligen Monat; das Unternehmen höchstens in einer Aufzählung, Stoßrichtung zwischen Gerücht und Richtigstellung nicht eindeutig."
+    },
+    {
+      "id": "F-090",
+      "rank": 3,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Rückruf der Mitarbeitenden ins Büro durch den Vorstandschef trotz Zufriedenheit mit Homeoffice zwei Monate vor dem auffälligen Monat; Arbeitsmodell mit klarem Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall. Der Begriff 'büro' ist danach seltener und trägt nicht."
+    },
+    {
+      "id": "F-091",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "unklar",
+      "begruendung": "Einigung mit dem Betriebsrat über den Umbau der IT-Tochter zwei Monate vor dem Übergang; Restrukturierung mit Arbeitgeberbezug, Stoßrichtung zwischen Stellenabbau und erzielter Einigung nicht eindeutig."
+    },
+    {
+      "id": "F-091",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Folgen der Pandemie für Hauptversammlungen mehrerer Konzerne im Monat nach dem markierten Monat; Kapitalmarktmeldung ohne Arbeitgeberbezug, der starke Begriff 'corona' benennt die Pandemie allgemein und nicht dieses Ereignis."
+    },
+    {
+      "id": "F-091",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Offener Brief beamteter Beschäftigter mit Vorwurf der Altersdiskriminierung im Monat vor dem Übergang; Belegschaftsthema mit Arbeitgeberbezug, belastende Stoßrichtung widerspricht dem Anstieg."
+    },
+    {
+      "id": "F-093",
+      "rank": 1,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Warnung vor Betrugsmails im Namen des Unternehmens drei Monate vor dem Übergang; gleiche Meldung wie in einem anderen Fenster, das Unternehmen nur missbrauchter Absendername."
+    },
+    {
+      "id": "F-093",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Eigene Unternehmensmeldung zum Nutzen der Digitalisierung in der Krise im Monat vor dem Übergang; gleiche Meldung wie in einem anderen Fenster, Imagebotschaft ohne Belegschaftsbezug."
+    },
+    {
+      "id": "F-093",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Barometer zu Frauenanteilen in Vorständen mehrerer Unternehmen im Monat vor dem Übergang; das Unternehmen höchstens in einer Aufzählung am Rand, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-094",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Markenrechtsstreit um eine Farbmarke im markierten Monat; Rechtsmeldung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-094",
+      "rank": 2,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Mögliche Kürzung eines Kundenbonus zwei Monate vor dem Übergang; Produktmeldung, Ereignisart Vergütung ist ein Fehltreffer des Wortes Bonus."
+    },
+    {
+      "id": "F-094",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Neuer Leiter der TV-Sparte zwei Monate vor dem Übergang; Führungswechsel auf Bereichsebene mit geringem Bezug zur Gesamtbelegschaft, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-095",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Junges Führungsduo aus dem eigenen Nachwuchs an einem kleinen Standort im Monat vor dem auffälligen Monat; lokale Personalie mit Arbeitgeberbezug, die positive Stoßrichtung widerspricht dem Abfall."
+    },
+    {
+      "id": "F-095",
+      "rank": 2,
+      "passung": 3,
+      "richtung": "passt",
+      "begruendung": "Scharfe Kritik des Betriebsrats an einer als zu gering empfundenen Gehaltserhöhung im Monat vor dem auffälligen Monat; Vergütungsthema mit klarem Arbeitgeberbezug, belastende Stoßrichtung passt zum Abfall."
+    },
+    {
+      "id": "F-095",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Überblick über Homeoffice-Regeln von 51 Konzernen im Monat vor dem auffälligen Monat; das Unternehmen höchstens in einer Aufzählung, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-097",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Gemeinschaftsunternehmen eines Autokonzerns mit einer rumänischen Schwestergesellschaft im markierten Monat; Geschäftsprojekt im Ausland ohne Bezug zur Belegschaft im Inland, Wortbezug 'entwicklung' zufällig."
+    },
+    {
+      "id": "F-097",
+      "rank": 2,
+      "passung": 0,
+      "richtung": "unklar",
+      "begruendung": "Porträt eines anderen Beratungshauses; fremder Treffer, Ereignisart Standort ist ein Fehltreffer des Wortes Umzug."
+    },
+    {
+      "id": "F-097",
+      "rank": 3,
+      "passung": 1,
+      "richtung": "widerspricht",
+      "begruendung": "Auszeichnung als globaler Top-Arbeitgeber im Übergang; Arbeitgeberthema, die positive Stoßrichtung widerspricht dem Abfall."
+    },
+    {
+      "id": "F-098",
+      "rank": 1,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Abschluss der Übernahme von Teilen des europäischen Krankenhaus-IT-Geschäfts eines US-Anbieters im Monat vor dem Übergang; Konzernvorgang ohne erkennbaren Belegschaftsbezug im Titel, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-099",
+      "rank": 1,
+      "passung": 1,
+      "richtung": "neutral",
+      "begruendung": "Halbjahresmitteilung mit starkem Ergebnis und Krisenmanagement in Flutgebieten im Übergang; Kapitalmarktmitteilung ohne Arbeitgeberbezug."
+    },
+    {
+      "id": "F-099",
+      "rank": 2,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Mehrheitsübernahme eines Energiesoftware-Start-ups im Übergang; kleiner Konzernvorgang ohne Belegschaftsbezug, Richtung ohne Wertung."
+    },
+    {
+      "id": "F-099",
+      "rank": 3,
+      "passung": 2,
+      "richtung": "neutral",
+      "begruendung": "Wechsel an der Konzernspitze im Monat vor dem Übergang; Führungswechsel mit Arbeitgeberbezug, Richtung ohne Wertung."
+    }
+  ]
+}

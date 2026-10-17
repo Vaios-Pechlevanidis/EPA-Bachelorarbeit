@@ -365,6 +365,7 @@ export default function Dashboard() {
         dataStatus,
         avgScore: data?.score ?? "-",
         avgCount: data?.score_n ?? null,
+        scoreCi95: data?.score_ci95 ?? null,       // halbe Breite des 95-%-Intervalls (2026-10-17)
         categoryMean: data?.avg_overall ?? null,
         trend: trendData,
         rolling: rollingData,

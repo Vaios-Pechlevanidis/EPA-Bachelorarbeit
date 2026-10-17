@@ -52,6 +52,12 @@ Seit 2026-10-13 nennt die Legende nur noch das Kennzeichen und die Zahl der Erei
 Zeitraum eines Ereignisses erscheinen im Tooltip, sobald die Maus über einen Monat innerhalb
 seiner Fläche fährt (vorher stand die vollständige Liste unter dem Diagramm und war
 unübersichtlich). Der PDF-Export enthält die allgemeinen Ereignisse nicht.
+Seit 2026-10-17 ist jede Fläche **anklickbar**: Ein Klick auf einen Monat innerhalb der Fläche
+wählt den ganzen Zeitraum des Ereignisses als freie Auswahl (`?from=&to=`, [06](06-freier-drilldown.md)),
+sodass darunter Vergleich, Bewertungen, Erklärungsansätze und externe Berichte dieser Monate
+stehen; liegt im Monat eine Stufe oder Raute, gilt weiter diese. Die Legende nennt den Klick. Die
+Ereignisse stehen außerdem als Hypothese in der Karte „Mögliche Zusammenhänge“
+([08](08-erklaerungsansaetze.md), Nachtrag 2026-10-17).
 
 Nutzen: Wer eine auffällige Veränderung betrachtet, sieht ohne eigene Suche, was in diesen
 Monaten über das Unternehmen gemeldet wurde, und kann es bei der Einordnung im Kopf behalten,
@@ -311,6 +317,12 @@ fünf Ereignisse (Liste in E29). Tests: `backend/tests/evidence/test_macro_event
 Zusammenfassen, Dauerregel, Zwischenspeicher, Abruf ohne Netz) und
 `backend/tests/evidence/test_global_events.py`; im Browser die Route
 `GET /api/analytics/global-events` mit erstem Abruf bei Eurostat.
+
+**Prüfung 2026-10-17 (anklickbare Flächen):** Browser, In-Memory-Store, Demo 1 mit Overlay:
+Klick in die Fläche Sept. – Nov. 2022 setzt `?from=2022-09&to=2022-11` (Auswahl und
+Vergleichszeitraum erscheinen, die vier Karten gelten für diese Monate); Klick auf März 2024
+außerhalb der Flächen wählt wie bisher nur den Monat. Die Legende nennt den Klick. Unverändert:
+Belegliste, Abdeckung, Auswertung.
 
 ## 6. Offene Punkte
 

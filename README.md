@@ -170,6 +170,21 @@ Every figure names its definition, its data basis and its state. Feature doc: [d
 
 ---
 
+## 🚩 Cycle 2 – "Eigene Ereignisse" (2026-10-17)
+
+Dashboard users record their own events (management change, restructuring, site closure) per company; they appear as numbered marks in the anomalies chart of the detail page and in a third list "Eigene Ereignisse". No causal claim, no input to detection, explanations or evidence. Feature doc: [docs/feature-doku/15-eigene-ereignisse.md](docs/feature-doku/15-eigene-ereignisse.md); decision E32 in `docs/entscheidungen.md`.
+
+| Part | Where | Notes |
+|---|---|---|
+| Table `user_events` | `backend/migrations/007_create_user_events.sql` | Run in the Supabase SQL editor (idempotent): month-exact `date_from`/`date_to` (`YYYY-MM`), `title` 1–120 chars, `note` ≤ 1000 chars, RLS as in migration 005. Until it is applied the routes answer 503 and name this file |
+| Service | `backend/services/user_events_service.py` | input check with German messages (`normalize_event`), CRUD against the Supabase client or the in-memory store (whose `delete` now really removes rows) |
+| API | `backend/routes/user_events.py` | `GET/POST /api/companies/{id}/events`, `PUT/DELETE /api/companies/{id}/events/{eventId}`; 400 on invalid input, 404 unknown company or event, 503 missing table |
+| Detail page | `frontend/src/pages/Anomalies.jsx`, `frontend/src/components/dashboard/UserEvents.jsx`, `AnomalyCard.jsx` (`userEventShape`), `frontend/src/hooks/useUserEvents.js`, `frontend/src/lib/userEvents.js` | button "Ereignis eintragen" in the chart header, dialog with title / from / to (month grid) / note, purple numbered marks with a line at the start month and a tinted span, tooltip section, legend; tab "Eigene Ereignisse" (`?liste=ereignisse`) with edit and delete; click on mark or row selects the span (`?from=&to=`). Colour token `--user-event` in `index.css` |
+| Tests | `backend/tests/test_user_events.py` | `cd backend && uv run python -m pytest tests/test_user_events.py -q` — input check, routes, company scoping, 404/503, in-memory delete, migration file |
+| General events clickable and in the explanations (E29 addendum, 2026-10-17) | `frontend/src/components/dashboard/AnomalyCard.jsx` (`selectMonth`, `eventAreaShape`), `ExplanationPanel.jsx` (`GlobalEventList`), `backend/services/explanation_ranking.py` (`global_events_in_window`) | a click on a month inside a shown general-event area selects the whole event span (`?from=&to=`); `explanation_summary.global_events` lists the events of the window and the card "Mögliche Zusammenhänge" shows them as a hypothesis block with "Zeitraum wählen" and the Eurostat link; no stage, no rank, `n_items` and E23 unchanged (`tests/explanations/test_explanation_ranking.py::TestGlobalEventsInSummary`) |
+
+---
+
 ## ⚡ Quick Start
 
 ```bash

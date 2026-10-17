@@ -225,3 +225,36 @@ def test_metadata_file_lists_platform_fields_for_every_company():
     with open(path, "r", encoding="utf-8") as fh:
         entries = json.load(fh)
     assert all(set(ds.PLATFORM_FIELDS) <= set(e) for e in entries)
+
+
+# ---------------------------------------------------------------------------
+# Datenqualität (2026-10-17, docs/feature-doku/16-report-qualitaet.md, B8):
+# Duplikate und Zeilen ohne Gesamtnote je Quelle
+# ---------------------------------------------------------------------------
+
+def test_count_duplicates_counts_surplus_rows_only():
+    base = {"datum": "2024-01-15T00:00:00+00:00", "titel": "Gut", "durchschnittsbewertung": 4.0, "status": "Angestellt"}
+    rows = [dict(base, id=1), dict(base, id=2), dict(base, id=3), dict(base, id=4, titel="Anders"),
+            {"id": 5, "datum": None, "titel": "Gut", "durchschnittsbewertung": 4.0, "status": "Angestellt"},
+            {"id": 6, "datum": None, "titel": "Gut", "durchschnittsbewertung": 4.0, "status": "Angestellt"}]
+    assert ds.count_duplicates(rows) == 2  # drei gleiche Zeilen = zwei überzählige; ohne Datum nicht verglichen
+
+
+def test_source_status_reports_duplicates_and_missing_values():
+    rows = [
+        {"id": 1, "datum": "2024-01-15T00:00:00+00:00", "titel": "A", "durchschnittsbewertung": 4.0, "status": "Angestellt", "gut_am_arbeitgeber_finde_ich": "x"},
+        {"id": 2, "datum": "2024-01-15T00:00:00+00:00", "titel": "A", "durchschnittsbewertung": 4.0, "status": "Angestellt", "gut_am_arbeitgeber_finde_ich": "x"},
+        # gleicher Tag, Titel und Note, aber anderer Freitext: kein Duplikat
+        {"id": 4, "datum": "2024-01-15T00:00:00+00:00", "titel": "A", "durchschnittsbewertung": 4.0, "status": "Angestellt", "gut_am_arbeitgeber_finde_ich": "y"},
+        {"id": 3, "datum": "2024-02-10T00:00:00+00:00", "titel": "B", "durchschnittsbewertung": None, "status": "Angestellt"},
+    ]
+    out = ds.source_status(rows, "employee")
+    assert out["n_reviews"] == 4
+    assert out["n_duplicates"] == 1
+    assert out["n_without_value"] == 1
+
+
+def test_row_columns_add_text_fields_per_source():
+    assert ds.row_columns("employee").endswith("gut_am_arbeitgeber_finde_ich,schlecht_am_arbeitgeber_finde_ich")
+    assert ds.row_columns("candidates").endswith("verbesserungsvorschlaege")
+    assert "titel" in ds.row_columns("employee")

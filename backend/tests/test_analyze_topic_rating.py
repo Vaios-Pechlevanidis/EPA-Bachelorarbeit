@@ -227,3 +227,41 @@ class TestRatingDistribution:
         for value, label in [(2.4, "Negativ"), (2.5, "Neutral"), (3.4, "Neutral"), (3.5, "Positiv")]:
             result = self._run([_make_employee_review(durchschnittsbewertung=3.0, topic_rating=value)])
             assert result["sentiment"] == label, (value, result["sentiment"])
+
+
+# ---------------------------------------------------------------------------
+# Prüfung 2026-10-17 (docs/feature-doku/16-report-qualitaet.md, B1/B2): Einstufung auf
+# dem ungerundeten Mittel, zwei Nachkommastellen, Nenner und Basis je Topic
+# ---------------------------------------------------------------------------
+
+def _salary_reviews(values, with_category=True):
+    rows = []
+    for i, v in enumerate(values):
+        row = {"id": i, "datum": "2024-01-15T00:00:00+00:00", "gut_am_arbeitgeber_finde_ich": "Das Gehalt ist Thema.",
+               "durchschnittsbewertung": 5.0}
+        if with_category:
+            row["sternebewertung_gehalt_sozialleistungen"] = v
+        else:
+            row["durchschnittsbewertung"] = v
+        rows.append(row)
+    return rows
+
+
+def test_classification_uses_unrounded_mean():
+    from services.keyword_topic_service import analyze_topic
+    # Mittel 3,45: gerundet 3,5 wäre „Positiv“, ungerundet ist es „Neutral“
+    result = analyze_topic("Gehalt", [r"\bgehalt\b"], ["sternebewertung_gehalt_sozialleistungen"], _salary_reviews([3.4, 3.5]))
+    assert result["avgRating"] == 3.45
+    assert result["sentiment"] == "Neutral"
+
+
+def test_avg_rating_two_decimals_and_basis_counts():
+    from services.keyword_topic_service import analyze_topic
+    rows = _salary_reviews([2.0, 3.0, 4.0]) + _salary_reviews([1.0], with_category=False)
+    result = analyze_topic("Gehalt", [r"\bgehalt\b"], ["sternebewertung_gehalt_sozialleistungen"], rows)
+    assert result["frequency"] == 4 and result["n_rated"] == 4
+    assert result["avgRating"] == 2.5
+    assert result["rating_basis"]["n_category"] == 3
+    assert result["rating_basis"]["n_overall_fallback"] == 1
+    assert result["rating_basis"]["fields"] == ["sternebewertung_gehalt_sozialleistungen"]
+    assert "keine Textanalyse" in result["rating_basis"]["classification"]

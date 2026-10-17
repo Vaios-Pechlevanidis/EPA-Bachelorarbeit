@@ -76,6 +76,20 @@ vollständige Ansicht im Dialog mit Begründung, allen Kennzeichen, gebündelten
 weiteren Einträgen der Gruppe und „Wie wird eingestuft?“. Stufen, Rangfolge und Texte
 sind unverändert. Siehe [13](13-vorschau-karten-anomalien.md).
 
+**Nachtrag 2026-10-17 (allgemeine Ereignisse als Hypothese):** Die Karte zeigt zusätzlich die
+**allgemeinen Ereignisse im Ereignisfenster** (E29: Konjunktureinbruch, Inflationsschub aus
+Eurostat-Daten). Auf der Karte steht unter den Ansätzen eine Zeile mit dem Kennzeichen der
+gestrichelten bernsteinfarbenen Fläche, der Zahl und dem ersten Titel („1 allgemeines Ereignis,
+Hypothese: Konjunktureinbruch … (Sept. 2022 – Nov. 2022)“), auch im Zustand „Offen“. Im Dialog
+folgt unter der Liste der Block **„Allgemeines Ereignis im Ereignisfenster · Hypothese“** mit
+Titel, Zeitraum, Zahl der Monate, Lage zum Fenster (wie bei den Belegen: „im Monat vor dem
+Übergang“), Reichweite, Vermerk mit den Messwerten, dem Link zur Eurostat-Tabelle und dem Knopf
+**„Zeitraum … wählen“**, der den Zeitraum des Ereignisses als freie Auswahl setzt (Drill-down in
+das Ereignis, [06](06-freier-drilldown.md)). Der Untertitel des Dialogs zählt die Ereignisse mit
+(„· 1 allgemeines Ereignis (Hypothese)“). Die Ereignisse haben keine Stufe, zählen nicht als
+Beleg und gehen nicht in die Rangfolge ein; Ansätze, Zahlen und die Auswertung (E23) bleiben
+unverändert. Dieselben Flächen sind im Monatsverlauf anklickbar ([07](07-externe-belege.md)).
+
 ## 2. Erklärung
 
 1. **Belege und Fenster.** Grundlage sind die Belege des Ereignisfensters aus Inkrement 4 (E18:
@@ -146,6 +160,15 @@ sind unverändert. Siehe [13](13-vorschau-karten-anomalien.md).
     Stimmung; Anteil der Fenster mit Ansatz je Stufe, oberste Stufe, Abdeckungsquote nach
     NFA-05 (`--json`, `--md`). Genau einmal gelaufen (Abschnitt 5).
 
+**Nachtrag 2026-10-17:** `rank_evidence` gibt neben den Ansätzen `global_events` zurück
+(`global_events_in_window` in `backend/services/explanation_ranking.py`): je Ereignis Kennung,
+Titel, `from`/`to`, Monate, Reichweite, Vermerk, Adresse und `time_phrase`; die Belege vom Typ
+`global` bleiben wie bisher aus der Bewertung ausgeschlossen (`n_items`, `item_scores`,
+Bündel unverändert). `explanations_for` reicht die Liste als `explanation_summary.global_events`
+mit dem festen Hinweis `global_event_note` durch, für Veränderungen, Einzelmonate und die freie
+Auswahl gleichermaßen. Im Frontend zeigt `GlobalEventList` (ExplanationPanel.jsx) den Block,
+`ExplanationCard` reicht `onSelectPeriod` der Seite durch.
+
 ## 3. Begründung
 
 - **Thematische statt zeitlicher Korrespondenz:** Nach E18 hat fast jedes Fenster Belege; nur
@@ -177,6 +200,15 @@ sind unverändert. Siehe [13](13-vorschau-karten-anomalien.md).
 - **Eine Zeile je Ereignisart (Iteration 2):** Die Bündelung nach Titelähnlichkeit fasste kaum
   zusammen; mehrere Einträge zum selben Ereignis verdrängten andere Ereignisarten aus der
   obersten Liste.
+
+**Nachtrag 2026-10-17:** Die allgemeinen Ereignisse stehen in der Karte, weil die Nutzenden
+beim Lesen der Ansätze sonst nicht sehen, dass die Veränderung in einen gesamtwirtschaftlichen
+Zeitraum fällt; bisher stand das nur in der Belegliste und im abschaltbaren Overlay. Sie
+bleiben Hypothese ohne Stufe, damit die Rangfolge datengetrieben bleibt und die Auswertung
+gegen Vergleichsfenster (E23) nicht nachträglich verändert wird; ein zeitliches
+Zusammentreffen mit einem Zeitraum, der alle Arbeitgeber betrifft, ist keine Erklärung für ein
+Unternehmen. Der Knopf „Zeitraum wählen“ nutzt die freie Auswahl, weil damit alle vier Karten
+für genau diese Monate vorliegen, ohne eine neue Ansicht zu bauen.
 
 ## 4. Grenzen
 
@@ -347,6 +379,19 @@ Zusatzauswertung nach Referenzzeiträumen (E5): nicht verfügbar, Annotationsdat
 Markierungs- und Vergleichsfenstern in derselben Größenordnung (mit Stufe hoch 7 % gegen 4 %,
 mittel 32 % gegen 29 %, niedrig 75 % gegen 74 %); die Rangfolge unterscheidet Markierungen nicht
 erkennbar von Vergleichsfenstern, und keine der beiden Fassungen wird als „besser“ bewertet (E23).
+
+**Prüfung des Nachtrags 2026-10-17:** `tests/explanations/test_explanation_ranking.py::TestGlobalEventsInSummary`
+(kompakte Liste, Sortierung, Lage zum Fenster; Ereignisse zählen nicht in `n_items` und
+`item_scores`), `SUMMARY_FIELDS` in `test_explanations_in_responses.py` um `global_events` und
+`global_event_note` erweitert; `tests/explanations`, `tests/drilldown`, `tests/evidence`
+zusammen 540 Tests ohne Fehler. Browser (In-Memory-Store, Eurostat-Zwischenspeicher vom
+2026-10-13): Demo 3, Veränderung ab Jan. 2023, Overlay an: Vorschau-Karte zeigt „1 allgemeines
+Ereignis, Hypothese: Konjunktureinbruch …“, der Dialog den Block mit Titel, „Sept. 2022 –
+Nov. 2022 · 3 Monate · 4 Monate vor dem Übergang · Deutschland; gesamte Wirtschaft“, Vermerk,
+Eurostat-Link und Untertitel „… · 1 allgemeines Ereignis (Hypothese)“; „Zeitraum Sept. 2022 –
+Nov. 2022 wählen“ setzt `?from=2022-09&to=2022-11`, der offene Dialog wechselt auf „Auswahl“
+und „in der Auswahl“. Demo 1: Klick in die Fläche Sept. – Nov. 2022 im Verlauf wählt denselben
+Zeitraum; ein Klick auf einen Monat außerhalb der Flächen wählt wie bisher nur den Monat.
 
 ## 6. Offene Punkte
 

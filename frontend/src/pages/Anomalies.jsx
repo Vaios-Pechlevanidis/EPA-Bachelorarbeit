@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowLeft, Building2, Diamond, ListOrdered, MousePointerClick } from "lucide-react"
+import { ArrowLeft, Building2, Diamond, Flag, ListOrdered, MousePointerClick } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
 import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, ScopeHint, StatusHint, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
@@ -9,6 +9,7 @@ import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
 import { EventsToggle } from "@/components/dashboard/EvidenceSection"
 import { MarketSourceNote, PriceToggle } from "@/components/dashboard/MarketContext"
+import { AddUserEventButton, UserEventDialog, UserEventList } from "@/components/dashboard/UserEvents"
 import { PageSection } from "@/components/dashboard/PageSection"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isPeriod, isTimeRangeKey, outlierCountText, periodIndex, periodWindows, selectionLabel, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
@@ -21,8 +22,10 @@ import { useDataStatus } from "@/hooks/useDataStatus"
 import { useGlobalEvents } from "@/hooks/useEvidence"
 import { useReviewPages } from "@/hooks/useReviewPages"
 import { useTheme } from "@/hooks/useTheme"
+import { useUserEvents } from "@/hooks/useUserEvents"
 import { OUTLIER_UNVALIDATED_NOTE, SHOW_FINANCE_EXTRAS, SHOW_OUTLIER_MONTHS } from "@/config"
 import { loadCompany, loadCompanyName } from "@/lib/companies"
+import { USER_EVENT_NOTE } from "@/lib/userEvents"
 
 /* ============================================================================
    Anomalies — Detailseite "Anomalien im Verlauf" (Inkrement 1).
@@ -70,6 +73,13 @@ import { loadCompany, loadCompanyName } from "@/lib/companies"
    Erkenntnisse als Stichpunkte, ein Klick öffnet die volle Ansicht im Dialog.
    Dieselben Karten gelten für die Veränderung, die freie Auswahl und den
    Einzelmonat; nur Bezeichnungen, Fenster und Datenquelle unterscheiden sich.
+   Eigene Ereignisse (2026-10-17, E32): "Ereignis eintragen" im Kopf des
+   Monatsverlaufs öffnet ein Formular (Titel, von, bis, Vermerk); die Einträge
+   liegen je Unternehmen in der Datenbank (useUserEvents) und erscheinen als
+   nummerierte Marken im Verlauf und als dritte Liste der Karte "Markierungen"
+   (?liste=ereignisse). Klick auf Marke oder Zeile wählt den Zeitraum als
+   freie Auswahl (?from=&to=); der Stift in der Zeile ändert oder löscht.
+   Keine Aussage über Ursachen, kein Eingang in Erkennung oder Erklärungen.
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -146,6 +156,11 @@ export default function AnomaliesPage() {
     // Allgemeine Ereignisse als Overlay (Inkrement 4, E20): Standard aus, Zustand in der URL.
     const showEvents = searchParams.get("ereignisse") === "an"
     const globalEvents = useGlobalEvents(showEvents)
+    // Eigene Ereignisse des Unternehmens (E32), mit Nummer nach Beginn wie im Diagramm.
+    const userEvents = useUserEvents(companyId)
+    const numberedUserEvents = useMemo(() => userEvents.events.map((e, i) => ({ ...e, number: i + 1 })), [userEvents.events])
+    // Formular: null = zu, sonst {event: bestehender Eintrag | null, initial: {from, to} | null}
+    const [eventDialog, setEventDialog] = useState(null)
 
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
     // Datenstand: n je Statusgruppe und Hinweis, wenn aktuell/ehemalig nicht unterschieden wird (A4, E13)
@@ -257,13 +272,36 @@ export default function AnomaliesPage() {
                 evidence: { anomalyId: selectedOutlier?.id ?? null, selection: selectedOutlier ? null : selection },
             }
             : null
-    // Karte "Markierungen": Veränderungen oder Einzelmonate (?liste=einzelmonate, nur mit SHOW_OUTLIER_MONTHS).
-    const markerTab = SHOW_OUTLIER_MONTHS && searchParams.get("liste") === "einzelmonate" ? "outliers" : "changes"
-    const setMarkerTab = (key) => updateParams({ liste: key === "outliers" ? "einzelmonate" : null })
+    // Karte "Markierungen": Veränderungen, Einzelmonate (?liste=einzelmonate, nur mit
+    // SHOW_OUTLIER_MONTHS) oder eigene Ereignisse (?liste=ereignisse, E32).
+    const listParam = searchParams.get("liste")
+    const markerTab = listParam === "ereignisse" ? "events" : SHOW_OUTLIER_MONTHS && listParam === "einzelmonate" ? "outliers" : "changes"
+    const setMarkerTab = (key) => updateParams({ liste: key === "outliers" ? "einzelmonate" : key === "events" ? "ereignisse" : null })
     const selectAnomaly = (id) => updateParams({ anomaly: id, month: null, from: null, to: null })
     const selectPeriod = (from, to) => updateParams({ from, to, month: null, anomaly: null })
     const selectOutlier = (period) => selectPeriod(period, period)
     const clearSelection = () => updateParams({ anomaly: null, month: null, from: null, to: null })
+    // Eigenes Ereignis (E32): Zeitraum als freie Auswahl, Liste "Eigene Ereignisse" aufklappen.
+    const selectUserEvent = (e) => updateParams({ from: e.date_from, to: e.date_to, month: null, anomaly: null, liste: "ereignisse" })
+    // Formular öffnen: neu mit der aktuellen Auswahl bzw. dem Monat der Veränderung als Vorbelegung.
+    const openNewUserEvent = () => setEventDialog({
+        event: null,
+        initial: selection ?? (selectedAnomaly ? { from: selectedAnomaly.date, to: selectedAnomaly.date } : null),
+    })
+    const openEditUserEvent = (e) => setEventDialog({ event: e, initial: null })
+    // Löschen aus der Zeile (Papierkorb mit Rückfrage); war der Zeitraum ausgewählt, Auswahl aufheben.
+    const deleteUserEvent = async (e) => {
+        await userEvents.remove(e.id)
+        if (selection && selection.from === e.date_from && selection.to === e.date_to) clearSelection()
+    }
+    const saveUserEvent = async (payload) => {
+        if (eventDialog?.event) {
+            await userEvents.update(eventDialog.event.id, payload)
+        } else {
+            const created = await userEvents.add(payload)
+            selectUserEvent(created)
+        }
+    }
     // Monate der Reihe für das Auswahlfeld (erster bis letzter Monat mit datierter Bewertung).
     const seriesMonths = useMemo(() => (data?.series ?? []).map((m) => m.period), [data])
     // Bewertungen je Monat für das Monatsraster des Auswahlfelds.
@@ -275,6 +313,12 @@ export default function AnomaliesPage() {
     const visibleAnomalies = useMemo(() => anomalies.filter((a) => inWindow(a.date, range)), [anomalies, range])
     const hiddenCount = count - visibleAnomalies.length
     const visibleOutliers = useMemo(() => outliers.filter((o) => inWindow(o.date, range)), [outliers, range])
+    // Eigene Ereignisse, die den sichtbaren Ausschnitt berühren (Nummern bleiben die der ganzen Liste).
+    const visibleUserEvents = useMemo(
+        () => (range ? numberedUserEvents.filter((e) => periodIndex(e.date_to) >= periodIndex(range.from) && periodIndex(e.date_from) <= periodIndex(range.to)) : numberedUserEvents),
+        [numberedUserEvents, range],
+    )
+    const hiddenUserEvents = numberedUserEvents.length - visibleUserEvents.length
     const countText = `${count} ${count === 1 ? "auffällige Veränderung" : "auffällige Veränderungen"}`
     // Im Fehlerfall und beim Laden kein Zähler: "0" wäre dort eine falsche Aussage.
     const chartSubtitle = error || loading
@@ -389,6 +433,7 @@ export default function AnomaliesPage() {
                                 ]}
                                 actions={
                                     <>
+                                        <AddUserEventButton onClick={openNewUserEvent} disabled={Boolean(error) || !seriesMonths.length} />
                                         <EventsToggle
                                             checked={showEvents}
                                             onChange={(on) => updateParams({ ereignisse: on ? "an" : null })}
@@ -423,6 +468,8 @@ export default function AnomaliesPage() {
                                     onSelectPeriod={selectPeriod}
                                     market={showPrice ? marketData : null}
                                     events={showEvents ? globalEvents.events : null}
+                                    userEvents={numberedUserEvents}
+                                    onSelectUserEvent={selectUserEvent}
                                 />
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
                                     <StatusHint hint={statusHint} />
@@ -461,20 +508,23 @@ export default function AnomaliesPage() {
 
                             <PageSection
                                 className="flex flex-col"
-                                icon={markerTab === "outliers" ? <Diamond /> : <ListOrdered />}
+                                icon={markerTab === "outliers" ? <Diamond /> : markerTab === "events" ? <Flag /> : <ListOrdered />}
                                 eyebrow={range ? `MARKIERUNGEN · ${fmtPeriod(range.from).toUpperCase()} – ${fmtPeriod(range.to).toUpperCase()}` : "MARKIERUNGEN"}
-                                basis="stars"
-                                title={markerTab === "outliers" ? "Auffällige Einzelmonate" : "Auffällige Veränderungen"}
+                                basis={markerTab === "events" ? null : "stars"}
+                                title={markerTab === "outliers" ? "Auffällige Einzelmonate" : markerTab === "events" ? "Eigene Ereignisse" : "Auffällige Veränderungen"}
                                 subtitle={markerTab === "outliers"
                                     ? "Starke Abweichung von den Nachbarmonaten, kein neues Niveau; größte zuerst"
-                                    : "Niveauwechsel; Abfälle zuerst, innerhalb nach Größe"}
+                                    : markerTab === "events"
+                                        ? "Von Nutzerinnen und Nutzern eingetragene Zeiträume zur Einordnung; nach Beginn sortiert"
+                                        : "Niveauwechsel; Abfälle zuerst, innerhalb nach Größe"}
                                 bodyClassName="px-4 pt-2 pb-3 flex-1 min-h-0 flex flex-col"
                             >
-                                {eligibility?.eligible && SHOW_OUTLIER_MONTHS && (
+                                {!loading && !error && data && (
                                     <div className="ds-time-filter self-start mb-2" role="group" aria-label="Markierungen">
                                         {[
-                                            { key: "changes", label: `Veränderungen (${visibleAnomalies.length})` },
-                                            { key: "outliers", label: `Einzelmonate (${visibleOutliers.length})` },
+                                            { key: "changes", label: `Veränderungen (${eligibility?.eligible ? visibleAnomalies.length : "–"})` },
+                                            ...(eligibility?.eligible && SHOW_OUTLIER_MONTHS ? [{ key: "outliers", label: `Einzelmonate (${visibleOutliers.length})` }] : []),
+                                            { key: "events", label: `Eigene Ereignisse (${userEvents.error ? "–" : visibleUserEvents.length})` },
                                         ].map((t) => (
                                             <button key={t.key} type="button" aria-pressed={markerTab === t.key}
                                                 className={`ds-time-btn${markerTab === t.key ? " active" : ""}`} onClick={() => setMarkerTab(t.key)}>
@@ -490,6 +540,23 @@ export default function AnomaliesPage() {
                                             <p className="m-0 text-[12px] text-slate-500">Lade Markierungen…</p>
                                         ) : error ? (
                                             <p className="m-0 text-[12px] text-slate-500">Keine Markierungen: {error}</p>
+                                        ) : markerTab === "events" ? (
+                                            userEvents.loading ? (
+                                                <p className="m-0 text-[12px] text-slate-500">Lade eigene Ereignisse…</p>
+                                            ) : userEvents.error ? (
+                                                <p className="m-0 text-[12px] text-slate-500">Eigene Ereignisse konnten nicht geladen werden: {userEvents.error}</p>
+                                            ) : (
+                                                <UserEventList
+                                                    events={visibleUserEvents}
+                                                    selection={selection}
+                                                    onSelect={selectUserEvent}
+                                                    onEdit={openEditUserEvent}
+                                                    onDelete={deleteUserEvent}
+                                                    emptyText={range && numberedUserEvents.length
+                                                        ? "Im gewählten Zeitraum keine eigenen Ereignisse."
+                                                        : "Noch keine eigenen Ereignisse. „Ereignis eintragen“ legt einen Zeitraum mit Titel an, z. B. einen Führungswechsel; die Marke erscheint im Verlauf."}
+                                                />
+                                            )
                                         ) : markerTab === "outliers" && eligibility?.eligible ? (
                                             <OutlierList
                                                 compact
@@ -512,6 +579,21 @@ export default function AnomaliesPage() {
                                 </div>
                                 {!loading && !error && markerTab === "outliers" && eligibility?.eligible && visibleOutliers.length > 0 && (
                                     <p className="m-0 mt-2 text-[11px] text-slate-500">{OUTLIER_UNVALIDATED_NOTE}.</p>
+                                )}
+                                {!loading && !error && markerTab === "events" && (
+                                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-1.5">
+                                        {range && hiddenUserEvents > 0 && (
+                                            <p className="m-0 text-[11px] text-slate-500">
+                                                {hiddenUserEvents} weitere außerhalb des Zeitraums.{" "}
+                                                <button type="button" className="underline underline-offset-2 text-slate-700 hover:text-slate-900"
+                                                    onClick={() => updateParams({ range: null })}>
+                                                    Gesamten Zeitraum zeigen
+                                                </button>
+                                            </p>
+                                        )}
+                                        <AddUserEventButton onClick={openNewUserEvent} disabled={!seriesMonths.length} />
+                                        <p className="m-0 text-[11px] text-slate-500">{USER_EVENT_NOTE}</p>
+                                    </div>
                                 )}
                                 {!loading && !error && range && markerTab !== "outliers" && hiddenCount > 0 && (
                                     <p className="m-0 mt-2 text-[11px] text-slate-500">
@@ -572,6 +654,19 @@ export default function AnomaliesPage() {
                         {/* Vier Karten zur Auswahl (2026-10-16): Vorschau mit Stichpunkten, Klick öffnet die
                             Detailansicht im Dialog. Für eine ausgewählte Veränderung (Inkrement 2, 4, 5) ebenso
                             wie für die freie Auswahl und den Einzelmonat (E14, E17). */}
+                        {/* Formular für eigene Ereignisse (E32): neu oder ändern/löschen */}
+                        <UserEventDialog
+                            open={Boolean(eventDialog)}
+                            onOpenChange={(open) => { if (!open) setEventDialog(null) }}
+                            event={eventDialog?.event ?? null}
+                            initial={eventDialog?.initial ?? null}
+                            months={seriesMonths}
+                            counts={monthCounts}
+                            saving={userEvents.saving}
+                            onSave={saveUserEvent}
+                            onDelete={eventDialog?.event ? () => userEvents.remove(eventDialog.event.id) : null}
+                        />
+
                         {detail && (
                             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                                 <ComparisonCard
@@ -602,6 +697,7 @@ export default function AnomaliesPage() {
                                     eyebrow={`ERKLÄRUNGSANSÄTZE · ${detail.tag}`}
                                     subtitle={group}
                                     comparison={detail.comparison}
+                                    onSelectPeriod={selectPeriod}
                                 />
                                 <EvidenceCard
                                     eyebrow={`EXTERNE BERICHTE · ${detail.tag}`}

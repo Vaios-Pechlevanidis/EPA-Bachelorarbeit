@@ -229,8 +229,15 @@ def calculate_forecast(historical_data: List[Dict[str, Any]], months: int) -> Li
     return forecast_with_details(historical_data, months)[0]
 
 
+def _months_since(last_month: str, today: Optional[datetime] = None) -> int:
+    """Kalendermonate vom letzten Datenmonat bis zum laufenden Monat (0 = gleicher Monat)."""
+    now = today or datetime.now()
+    y, m = (int(x) for x in last_month.split("-"))
+    return (now.year - y) * 12 + (now.month - m)
+
+
 def forecast_with_details(
-    historical_data: List[Dict[str, Any]], months: int
+    historical_data: List[Dict[str, Any]], months: int, today: Optional[datetime] = None
 ) -> tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """
     Prognose wie ``calculate_forecast`` und dazu ihre Kenngrößen für die Erklärung
@@ -239,11 +246,29 @@ def forecast_with_details(
     (Steigung), das geglättete Niveau und die Steigung am Ende der Reihe sowie das
     geglättete Niveau je Monat (``smoothed``). Ohne Prognose: ``([], None)``.
     Holt (1957/2004): Prognose für Monat h = Niveau + h * Steigung.
+
+    Seit 2026-10-17 (Prüfung, docs/feature-doku/16-report-qualitaet.md, B5/B6) zusätzlich:
+
+    - ``months_since_last_data``: Kalendermonate zwischen letztem Datenmonat und heute;
+      die Prognose beginnt immer am letzten Datenmonat, nicht am heutigen Datum.
+    - ``months_below_min_reviews``: Monate der Reihe mit weniger als 5 Bewertungen
+      (sie zählen in Holt voll mit, anders als in der Erkennung nach E4).
+    - ``backtest``: Backtest mit rollierendem Ursprung (``services.forecast_service``)
+      gegen die Baselines letzter Wert, Mittel, Mittel der letzten 6 Monate und Wert
+      12 Monate zuvor; MAE und RMSE je Verfahren; None, wenn die Reihe zu kurz ist.
+    - je Prognosepunkt ``low``/``high``: empirische Bandbreite (80 %) aus den
+      Backtest-Fehlern desselben Horizonts, auf 0 bis 5 begrenzt; fehlt bei zu wenigen
+      Fehlern. ``interval`` in ``info`` nennt Niveau und Grundlage.
     """
     if months <= 0:
         return [], None
     if len(historical_data) < 2:
         return [], None
+
+    from services.forecast_service import (
+        INTERVAL_LEVEL, MIN_TRAIN, interval_offsets, public_backtest, rolling_origin_backtest,
+    )
+    from services.rating_series_service import MIN_REVIEWS_PER_MONTH
 
     y_values = [point["score"] for point in historical_data]
     last_date = datetime.strptime(historical_data[-1]["date"], "%Y-%m")
@@ -252,6 +277,20 @@ def forecast_with_details(
         "first_month": historical_data[0]["date"],
         "last_month": historical_data[-1]["date"],
         "historical_mean": round(sum(y_values) / len(y_values), 4),
+        "months_since_last_data": _months_since(historical_data[-1]["date"], today),
+        "months_below_min_reviews": sum(
+            1 for point in historical_data
+            if point.get("count") is not None and int(point["count"]) < MIN_REVIEWS_PER_MONTH
+        ),
+        "min_reviews_per_month": MIN_REVIEWS_PER_MONTH,
+    }
+    backtest = rolling_origin_backtest(y_values, horizon=months, min_train=MIN_TRAIN)
+    info["backtest"] = public_backtest(backtest)
+    offsets = interval_offsets(backtest, method="holt", level=INTERVAL_LEVEL)
+    info["interval"] = {
+        "level": INTERVAL_LEVEL,
+        "basis": "empirische Quantile der Backtest-Fehler je Horizont (Beobachtung minus Prognose)",
+        "available": bool(offsets),
     }
 
     try:
@@ -298,11 +337,15 @@ def forecast_with_details(
         raw = float(preds[i])
         score = max(0.0, min(5.0, raw))
         clamped = clamped or score != raw
+        band = offsets.get(i + 1)
         forecast.append({
             "date": next_month.strftime("%Y-%m"),
             "date_display": next_month.strftime("%b %Y"),
             "score": round(score, 2),
-            "is_forecast": True
+            "is_forecast": True,
+            # Bandbreite (80 %) aus den Backtest-Fehlern dieses Horizonts (2026-10-17)
+            "low": round(max(0.0, min(5.0, score + band["low"])), 2) if band else None,
+            "high": round(max(0.0, min(5.0, score + band["high"])), 2) if band else None
         })
     info["clamped"] = clamped
     return forecast, info
@@ -738,10 +781,16 @@ def get_topic_overview(
         total_reviews = len(reviews_to_analyze)
         enriched_topics = enrich_topic_analysis_with_metadata(topics_data, total_reviews)
         
-        # Add overall statistical assessment
+        # Add overall statistical assessment. ``total_by_source`` (2026-10-17): ohne
+        # Quellenfilter mischt die Übersicht Mitarbeitende und Bewerbende; die
+        # Oberfläche nennt beide Anteile (docs/feature-doku/16-report-qualitaet.md, B10).
         result = {
             "topics": enriched_topics,
             "total_reviews": total_reviews,
+            "total_by_source": {
+                "employee": len(employee_data) if source in (None, "employee") else 0,
+                "candidates": len(candidates_data) if source in (None, "candidates") else 0,
+            },
             "total_topics": len(enriched_topics)
         }
         

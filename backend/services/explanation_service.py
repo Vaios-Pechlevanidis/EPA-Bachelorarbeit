@@ -374,7 +374,7 @@ def explanations_for(
     ``summary["state"]`` ist ``ansaetze`` oder ``offen``. ``info`` und ``evidence``
     ersetzen Unternehmensdaten und Belege (Tests, Auswertung). Wirft nicht."""
     from services import evidence_service as ev
-    from services.explanation_ranking import OPEN_NOTE, STATE_OPEN, rank_evidence, rules
+    from services.explanation_ranking import GLOBAL_EVENT_NOTE, OPEN_NOTE, STATE_OPEN, rank_evidence, rules
     from services.review_terms import company_terms, distinctive_terms
 
     base: Dict[str, Any] = {
@@ -382,6 +382,7 @@ def explanations_for(
             "kind", "from", "to", "months", "transition_from", "anchor_from", "anchor_to", "window_before", "window_after")},
         "n_items": 0, "n_bundles": 0, "n_groups": 0, "n_by_stage": None, "n_by_signal_label": None, "terms": [], "item_scores": {}, "sources": {},
         "coverage": False, "reason": None, "error": None, "note": None, "open_note": OPEN_NOTE, "rules": rules(),
+        "global_events": [], "global_event_note": GLOBAL_EVENT_NOTE,   # Hypothesen neben den Ansätzen (Nachtrag zu E29, 2026-10-17)
     }
     try:
         info = info if info is not None else ev.company_context_info(company_id)
@@ -404,6 +405,7 @@ def explanations_for(
         "sources": evidence.get("sources", {}), "coverage": evidence.get("coverage", False), "reason": evidence.get("reason"),
         "note": ranked["note"], "open_note": ranked["open_note"], "search_term": info.get("search_term"),
         "direction": direction,
+        "global_events": ranked.get("global_events", []),
     }
     return {"explanations": ranked["explanations"], "summary": summary}
 

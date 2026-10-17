@@ -39,7 +39,8 @@ ENTRY_FIELDS = {"id", "rank", "confidence", "stage_label", "event", "date", "sou
                 "issuer", "n_items", "publishers", "time_match", "topic_match", "term_match", "terms", "category",
                 "time_phrase", "sentiment", "text", "items", "group"}
 SUMMARY_FIELDS = {"state", "kind", "window", "n_items", "n_bundles", "n_groups", "n_by_stage", "terms", "item_scores", "sources",
-                  "coverage", "reason", "error", "note", "open_note", "rules"}
+                  "coverage", "reason", "error", "note", "open_note", "rules",
+                  "global_events", "global_event_note"}   # allgemeine Ereignisse als Hypothese (Nachtrag zu E29, 2026-10-17)
 
 
 @pytest.fixture(scope="module")

@@ -670,8 +670,10 @@ class QueryBuilder:
         return _NotProxy(self)
 
     # ---- mutations ----
-    # insert/update wirken auf den In-Memory-Store (wie PostgREST mit
-    # returning=representation); delete bleibt im Demo-Modus ein No-op.
+    # insert/update/delete wirken auf den In-Memory-Store (wie PostgREST mit
+    # returning=representation). delete entfernt die gefilterten Zeilen aus der
+    # Tabelle und gibt sie zurück (seit 2026-10-17, eigene Ereignisse E32; bis
+    # dahin ein No-op).
 
     def insert(self, data: Any) -> "QueryBuilder":
         self._insert_rows = data if isinstance(data, list) else [data]
@@ -714,7 +716,14 @@ class QueryBuilder:
                 r.update(self._update_data)
             return Response(self._project(self._rows))
         if self._is_delete:
-            return Response([])
+            # Filter (eq etc.) wurden bereits auf self._rows angewendet; die Dicts
+            # sind dieselben Objekte wie im Store. In-place entfernen, damit auch
+            # Modulvariablen wie _EMPLOYEES (RPC-Nachbildung) den Stand sehen.
+            table = _TABLES.get(self._table_name)
+            if table is not None and self._rows:
+                doomed = {id(r) for r in self._rows}
+                table[:] = [r for r in table if id(r) not in doomed]
+            return Response(self._project(self._rows))
 
         # Gesamtzahl der gefilterten Zeilen VOR limit/range (für count="exact",
         # wie PostgREST: Content-Range zählt alle Treffer, nicht nur die Seite)

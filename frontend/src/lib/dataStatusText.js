@@ -29,7 +29,23 @@ export function sourceLine(s) {
     ? `${s.evaluated_months} bewertete Monate, geeignet für die Erkennung`
     : `${s.evaluated_months} bewertete ${s.evaluated_months === 1 ? "Monat" : "Monate"}, keine automatische Erkennung`
   return `${fmtN(s.n_reviews)} ${s.n_reviews === 1 ? "Bewertung" : "Bewertungen"} · ${span} · ${eligible}${
-    s.n_undated ? ` · ${s.n_undated} ohne Datum` : ""}`
+    s.n_undated ? ` · ${s.n_undated} ohne Datum` : ""}${
+    s.n_without_value ? ` · ${s.n_without_value} ohne Gesamtnote` : ""}${
+    s.n_duplicates ? ` · ${s.n_duplicates} exakte ${s.n_duplicates === 1 ? "Duplikat" : "Duplikate"} (gezählt, nicht entfernt)` : ""}`
+}
+
+/* Datenqualität als Liste für den Kurzbericht (Prüfung 2026-10-17): Duplikate, Zeilen
+ * ohne Datum oder Gesamtnote je Quelle; leer, wenn nichts auffällt. */
+export function dataQualityNotes(data) {
+  const out = []
+  for (const [key, label] of [["employee", "Mitarbeitende"], ["candidates", "Bewerbende"]]) {
+    const s = data?.sources?.[key]
+    if (!s) continue
+    if (s.n_duplicates) out.push(`${label}: ${s.n_duplicates} exakte ${s.n_duplicates === 1 ? "Duplikat" : "Duplikate"} (gleiches Datum, Titel, Gesamtnote, Status) im Datensatz, in allen Mitteln enthalten`)
+    if (s.n_undated) out.push(`${label}: ${s.n_undated} ${s.n_undated === 1 ? "Bewertung" : "Bewertungen"} ohne Datum, nicht in Zeitreihen und Fenstern`)
+    if (s.n_without_value) out.push(`${label}: ${s.n_without_value} ${s.n_without_value === 1 ? "Bewertung" : "Bewertungen"} ohne Gesamtnote, in keinem Mittel`)
+  }
+  return out
 }
 
 /* Kurzfassung für die zugeklappte Leiste: Bewertungen je Quelle und jüngste Bewertung

@@ -1,0 +1,2071 @@
+{
+  "generated_at": "2026-10-17T12:46:36+00:00",
+  "series": "Monatsmittel der Gesamtnote, Mitarbeitende, letzte 10 Jahre, Monate ohne Bewertung übersprungen (wie GET /analytics/company/{id}/timeline)",
+  "horizon": 6,
+  "min_train": 24,
+  "methods": [
+    "holt",
+    "naive",
+    "mean",
+    "ma6",
+    "snaive12"
+  ],
+  "pooled": {
+    "holt": {
+      "mae": 0.7339,
+      "rmse": 1.0232,
+      "n": 4071
+    },
+    "naive": {
+      "mae": 0.6707,
+      "rmse": 0.9277,
+      "n": 4071
+    },
+    "mean": {
+      "mae": 0.5621,
+      "rmse": 0.7243,
+      "n": 4071
+    },
+    "ma6": {
+      "mae": 0.5213,
+      "rmse": 0.7177,
+      "n": 4071
+    },
+    "snaive12": {
+      "mae": 0.6933,
+      "rmse": 0.9566,
+      "n": 4071
+    }
+  },
+  "best_pooled": "ma6",
+  "companies": [
+    {
+      "company_id": 3,
+      "name": "Thyssenkrupp",
+      "months": 42,
+      "first_month": "2022-10",
+      "last_month": "2026-03",
+      "months_below_5": 10,
+      "backtest": {
+        "origins": 18,
+        "first_origin": 24,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.453,
+            "rmse": 0.5579,
+            "n": 93,
+            "mae_by_horizon": [
+              0.4662,
+              0.4946,
+              0.4988,
+              0.4595,
+              0.3604,
+              0.4165
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.6039,
+            "rmse": 0.7408,
+            "n": 93,
+            "mae_by_horizon": [
+              0.6094,
+              0.6394,
+              0.6638,
+              0.7547,
+              0.535,
+              0.3762
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.4329,
+            "rmse": 0.5233,
+            "n": 93,
+            "mae_by_horizon": [
+              0.4332,
+              0.4319,
+              0.4491,
+              0.4189,
+              0.4249,
+              0.4388
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.4303,
+            "rmse": 0.5234,
+            "n": 93,
+            "mae_by_horizon": [
+              0.4415,
+              0.445,
+              0.4345,
+              0.4334,
+              0.3946,
+              0.4249
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.4313,
+            "rmse": 0.5325,
+            "n": 93,
+            "mae_by_horizon": [
+              0.44,
+              0.4582,
+              0.4694,
+              0.45,
+              0.3929,
+              0.3569
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 4,
+      "name": "Open Grid Europe",
+      "months": 92,
+      "first_month": "2017-01",
+      "last_month": "2026-03",
+      "months_below_5": 70,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 56,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.4138,
+            "rmse": 0.5224,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3993,
+              0.4217,
+              0.3835,
+              0.3793,
+              0.4437,
+              0.461
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.4331,
+            "rmse": 0.5566,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4503,
+              0.5003,
+              0.4232,
+              0.4261,
+              0.4166,
+              0.3729
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.3304,
+            "rmse": 0.4133,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3249,
+              0.3285,
+              0.3227,
+              0.327,
+              0.3362,
+              0.3453
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.3343,
+            "rmse": 0.4207,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3295,
+              0.3301,
+              0.3251,
+              0.3266,
+              0.3338,
+              0.3632
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.3931,
+            "rmse": 0.5071,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3789,
+              0.3897,
+              0.3924,
+              0.3942,
+              0.3966,
+              0.4094
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 5,
+      "name": "PLEdoc GmbH",
+      "months": 43,
+      "first_month": "2018-04",
+      "last_month": "2026-02",
+      "months_below_5": 38,
+      "backtest": {
+        "origins": 19,
+        "first_origin": 24,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.2262,
+            "rmse": 0.2835,
+            "n": 99,
+            "mae_by_horizon": [
+              0.1808,
+              0.2199,
+              0.2324,
+              0.2208,
+              0.2704,
+              0.2472
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.2272,
+            "rmse": 0.2866,
+            "n": 99,
+            "mae_by_horizon": [
+              0.2253,
+              0.2517,
+              0.2859,
+              0.1806,
+              0.2287,
+              0.1786
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.3539,
+            "rmse": 0.4035,
+            "n": 99,
+            "mae_by_horizon": [
+              0.3569,
+              0.3544,
+              0.3548,
+              0.3468,
+              0.3421,
+              0.3687
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.1761,
+            "rmse": 0.2102,
+            "n": 99,
+            "mae_by_horizon": [
+              0.1748,
+              0.1786,
+              0.1809,
+              0.1726,
+              0.1789,
+              0.1695
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.2877,
+            "rmse": 0.4845,
+            "n": 99,
+            "mae_by_horizon": [
+              0.3747,
+              0.3528,
+              0.35,
+              0.2387,
+              0.188,
+              0.1729
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 6,
+      "name": "E.ON Digital Technology",
+      "months": 8,
+      "first_month": "2025-02",
+      "last_month": "2026-04",
+      "months_below_5": 8,
+      "backtest": null
+    },
+    {
+      "company_id": 7,
+      "name": "E.ON",
+      "months": 84,
+      "first_month": "2018-01",
+      "last_month": "2026-04",
+      "months_below_5": 46,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 48,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.885,
+            "rmse": 1.1873,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6894,
+              0.8067,
+              0.8749,
+              0.9437,
+              0.9529,
+              1.0793
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.6357,
+            "rmse": 0.8624,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6314,
+              0.686,
+              0.63,
+              0.6845,
+              0.5856,
+              0.5897
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.6445,
+            "rmse": 0.7363,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6399,
+              0.6304,
+              0.6378,
+              0.6506,
+              0.6698,
+              0.6406
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.5143,
+            "rmse": 0.632,
+            "n": 201,
+            "mae_by_horizon": [
+              0.512,
+              0.5394,
+              0.5118,
+              0.5276,
+              0.5123,
+              0.4795
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.6491,
+            "rmse": 0.8548,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6758,
+              0.6346,
+              0.6503,
+              0.6427,
+              0.6609,
+              0.6274
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 8,
+      "name": "RWE",
+      "months": 97,
+      "first_month": "2016-11",
+      "last_month": "2026-03",
+      "months_below_5": 72,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 61,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.8791,
+            "rmse": 1.1308,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6766,
+              0.6967,
+              0.8477,
+              1.037,
+              0.979,
+              1.0834
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.7438,
+            "rmse": 0.9404,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7997,
+              0.7437,
+              0.6503,
+              0.8494,
+              0.6906,
+              0.7242
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.5516,
+            "rmse": 0.6524,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5686,
+              0.5528,
+              0.5542,
+              0.5559,
+              0.5333,
+              0.5417
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.5487,
+            "rmse": 0.6869,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5816,
+              0.5836,
+              0.5771,
+              0.5597,
+              0.4927,
+              0.4863
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.8685,
+            "rmse": 1.0626,
+            "n": 201,
+            "mae_by_horizon": [
+              0.8911,
+              0.8934,
+              0.8756,
+              0.8873,
+              0.8228,
+              0.8332
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 9,
+      "name": "Thyssengas GmbH",
+      "months": 64,
+      "first_month": "2017-03",
+      "last_month": "2026-04",
+      "months_below_5": 55,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 28,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.529,
+            "rmse": 0.906,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4389,
+              0.5352,
+              0.5155,
+              0.5197,
+              0.58,
+              0.5988
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.5051,
+            "rmse": 0.8717,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4722,
+              0.5569,
+              0.5062,
+              0.4642,
+              0.52,
+              0.5119
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.4777,
+            "rmse": 0.7494,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4668,
+              0.4677,
+              0.4797,
+              0.4768,
+              0.4807,
+              0.4975
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.4176,
+            "rmse": 0.7606,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3944,
+              0.407,
+              0.4148,
+              0.4166,
+              0.4281,
+              0.4501
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.6027,
+            "rmse": 1.033,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5897,
+              0.5974,
+              0.6091,
+              0.6018,
+              0.6144,
+              0.6058
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 13,
+      "name": "Universität Duisburg-Essen",
+      "months": 71,
+      "first_month": "2016-12",
+      "last_month": "2026-04",
+      "months_below_5": 60,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 35,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.9706,
+            "rmse": 1.2707,
+            "n": 201,
+            "mae_by_horizon": [
+              0.798,
+              0.8831,
+              0.9091,
+              1.0101,
+              1.1139,
+              1.1474
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.8123,
+            "rmse": 1.0924,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7822,
+              0.9094,
+              0.7774,
+              0.7827,
+              0.8534,
+              0.7648
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.7502,
+            "rmse": 0.8509,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7586,
+              0.7584,
+              0.7529,
+              0.7544,
+              0.7568,
+              0.7169
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.6777,
+            "rmse": 0.8443,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6533,
+              0.6763,
+              0.6664,
+              0.6905,
+              0.7353,
+              0.6468
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.7812,
+            "rmse": 1.0345,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7661,
+              0.7709,
+              0.7847,
+              0.7958,
+              0.8181,
+              0.7532
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 14,
+      "name": "Karlsruher Institut für Technologie",
+      "months": 89,
+      "first_month": "2016-12",
+      "last_month": "2026-04",
+      "months_below_5": 63,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 53,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.8031,
+            "rmse": 1.0615,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6412,
+              0.6875,
+              0.7303,
+              0.8423,
+              1.0333,
+              0.9221
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.672,
+            "rmse": 0.9525,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7017,
+              0.7109,
+              0.6624,
+              0.6385,
+              0.7466,
+              0.5629
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.4863,
+            "rmse": 0.6614,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5103,
+              0.4957,
+              0.4828,
+              0.4959,
+              0.4973,
+              0.4301
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.4953,
+            "rmse": 0.7028,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5499,
+              0.5167,
+              0.5006,
+              0.5027,
+              0.4859,
+              0.4037
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.7021,
+            "rmse": 1.0019,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7467,
+              0.7194,
+              0.7003,
+              0.7197,
+              0.6937,
+              0.6226
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 15,
+      "name": "Technische Universität München",
+      "months": 93,
+      "first_month": "2016-11",
+      "last_month": "2026-03",
+      "months_below_5": 80,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 57,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 1.0241,
+            "rmse": 1.2464,
+            "n": 201,
+            "mae_by_horizon": [
+              0.8846,
+              0.9837,
+              0.9373,
+              1.0467,
+              1.0563,
+              1.2698
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.9768,
+            "rmse": 1.2344,
+            "n": 201,
+            "mae_by_horizon": [
+              1.0122,
+              1.0857,
+              0.9159,
+              0.9961,
+              0.8603,
+              0.9794
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.7438,
+            "rmse": 0.8904,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7565,
+              0.7332,
+              0.7344,
+              0.74,
+              0.7558,
+              0.7426
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.8225,
+            "rmse": 0.9796,
+            "n": 201,
+            "mae_by_horizon": [
+              0.8092,
+              0.81,
+              0.773,
+              0.8411,
+              0.8233,
+              0.8855
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 1.1233,
+            "rmse": 1.4042,
+            "n": 201,
+            "mae_by_horizon": [
+              1.175,
+              1.1314,
+              1.1132,
+              1.1085,
+              1.0966,
+              1.1084
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 16,
+      "name": "Universität zu Köln",
+      "months": 70,
+      "first_month": "2016-11",
+      "last_month": "2026-03",
+      "months_below_5": 63,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 34,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.8924,
+            "rmse": 1.0921,
+            "n": 201,
+            "mae_by_horizon": [
+              0.8716,
+              0.8731,
+              0.8536,
+              0.9074,
+              0.9956,
+              0.8586
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 1.055,
+            "rmse": 1.2886,
+            "n": 201,
+            "mae_by_horizon": [
+              1.005,
+              1.1506,
+              1.0221,
+              0.9673,
+              1.2275,
+              0.9568
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.7692,
+            "rmse": 0.8773,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7882,
+              0.7772,
+              0.7793,
+              0.7684,
+              0.7514,
+              0.7465
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.7536,
+            "rmse": 0.8978,
+            "n": 201,
+            "mae_by_horizon": [
+              0.8249,
+              0.7835,
+              0.7711,
+              0.7627,
+              0.7303,
+              0.6325
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 1.1109,
+            "rmse": 1.3276,
+            "n": 201,
+            "mae_by_horizon": [
+              1.16,
+              1.1417,
+              1.1135,
+              1.1027,
+              1.0737,
+              1.0632
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 19,
+      "name": "SAP SE",
+      "months": 35,
+      "first_month": "2020-07",
+      "last_month": "2026-06",
+      "months_below_5": 9,
+      "backtest": {
+        "origins": 11,
+        "first_origin": 24,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.7911,
+            "rmse": 0.9911,
+            "n": 51,
+            "mae_by_horizon": [
+              0.7066,
+              0.9329,
+              0.8361,
+              0.6717,
+              0.7583,
+              0.8397
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.8012,
+            "rmse": 1.0425,
+            "n": 51,
+            "mae_by_horizon": [
+              0.7818,
+              0.963,
+              0.93,
+              0.605,
+              0.7586,
+              0.685
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.7552,
+            "rmse": 0.8475,
+            "n": 51,
+            "mae_by_horizon": [
+              0.7277,
+              0.7141,
+              0.7175,
+              0.7718,
+              0.8545,
+              0.7931
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.5894,
+            "rmse": 0.7807,
+            "n": 51,
+            "mae_by_horizon": [
+              0.5964,
+              0.629,
+              0.5813,
+              0.5252,
+              0.616,
+              0.5772
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.7218,
+            "rmse": 0.9029,
+            "n": 51,
+            "mae_by_horizon": [
+              0.6945,
+              0.716,
+              0.7933,
+              0.7913,
+              0.7,
+              0.6067
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 20,
+      "name": "NTT DATA SE",
+      "months": 109,
+      "first_month": "2016-10",
+      "last_month": "2026-07",
+      "months_below_5": 71,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 73,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 1.3324,
+            "rmse": 1.636,
+            "n": 201,
+            "mae_by_horizon": [
+              0.9605,
+              1.1375,
+              1.288,
+              1.3461,
+              1.4864,
+              1.8596
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.9515,
+            "rmse": 1.1748,
+            "n": 201,
+            "mae_by_horizon": [
+              0.9256,
+              0.9017,
+              1.0341,
+              0.9242,
+              0.8209,
+              1.1113
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.6893,
+            "rmse": 0.8535,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6628,
+              0.6713,
+              0.6909,
+              0.7039,
+              0.7104,
+              0.7014
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.7482,
+            "rmse": 0.9381,
+            "n": 201,
+            "mae_by_horizon": [
+              0.7383,
+              0.7594,
+              0.7468,
+              0.7596,
+              0.7491,
+              0.7354
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.8161,
+            "rmse": 0.967,
+            "n": 201,
+            "mae_by_horizon": [
+              0.8092,
+              0.8206,
+              0.8182,
+              0.8158,
+              0.8109,
+              0.8226
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 21,
+      "name": "1&1 AG",
+      "months": 106,
+      "first_month": "2016-10",
+      "last_month": "2025-07",
+      "months_below_5": 33,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 70,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.6389,
+            "rmse": 0.79,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5492,
+              0.6235,
+              0.6562,
+              0.6059,
+              0.6876,
+              0.7264
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.6324,
+            "rmse": 0.7661,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5625,
+              0.6631,
+              0.7059,
+              0.6085,
+              0.6156,
+              0.6413
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.4928,
+            "rmse": 0.5908,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4859,
+              0.4802,
+              0.4946,
+              0.5044,
+              0.5029,
+              0.4901
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.4831,
+            "rmse": 0.5897,
+            "n": 201,
+            "mae_by_horizon": [
+              0.495,
+              0.4837,
+              0.4878,
+              0.4728,
+              0.4711,
+              0.4866
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.6355,
+            "rmse": 0.7866,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6139,
+              0.612,
+              0.6282,
+              0.6433,
+              0.6519,
+              0.6697
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 22,
+      "name": "Aixtron",
+      "months": 53,
+      "first_month": "2017-07",
+      "last_month": "2025-07",
+      "months_below_5": 50,
+      "backtest": {
+        "origins": 29,
+        "first_origin": 24,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 1.1521,
+            "rmse": 1.4738,
+            "n": 159,
+            "mae_by_horizon": [
+              0.8177,
+              0.8622,
+              1.0288,
+              1.2356,
+              1.5102,
+              1.5698
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.8082,
+            "rmse": 1.0474,
+            "n": 159,
+            "mae_by_horizon": [
+              0.7659,
+              0.7993,
+              0.7781,
+              0.7588,
+              0.9112,
+              0.85
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.6911,
+            "rmse": 0.8748,
+            "n": 159,
+            "mae_by_horizon": [
+              0.6513,
+              0.6607,
+              0.6811,
+              0.7057,
+              0.735,
+              0.7241
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.7202,
+            "rmse": 0.9406,
+            "n": 159,
+            "mae_by_horizon": [
+              0.624,
+              0.6761,
+              0.7225,
+              0.752,
+              0.7875,
+              0.7807
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.8347,
+            "rmse": 1.0876,
+            "n": 159,
+            "mae_by_horizon": [
+              0.8176,
+              0.845,
+              0.8559,
+              0.8465,
+              0.8444,
+              0.7963
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 23,
+      "name": "Atoss",
+      "months": 59,
+      "first_month": "2016-11",
+      "last_month": "2025-03",
+      "months_below_5": 56,
+      "backtest": {
+        "origins": 35,
+        "first_origin": 24,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.8753,
+            "rmse": 1.1622,
+            "n": 195,
+            "mae_by_horizon": [
+              0.8253,
+              0.829,
+              0.9075,
+              0.9052,
+              0.9209,
+              0.8715
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.9365,
+            "rmse": 1.2662,
+            "n": 195,
+            "mae_by_horizon": [
+              0.9651,
+              0.9241,
+              0.9667,
+              0.9178,
+              0.9352,
+              0.905
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.7082,
+            "rmse": 0.9098,
+            "n": 195,
+            "mae_by_horizon": [
+              0.7028,
+              0.6903,
+              0.7084,
+              0.7148,
+              0.7144,
+              0.7214
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.7101,
+            "rmse": 0.9567,
+            "n": 195,
+            "mae_by_horizon": [
+              0.73,
+              0.6872,
+              0.6988,
+              0.703,
+              0.6868,
+              0.7567
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 1.0179,
+            "rmse": 1.3959,
+            "n": 195,
+            "mae_by_horizon": [
+              1.002,
+              0.9874,
+              1.0148,
+              1.0137,
+              1.039,
+              1.057
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 24,
+      "name": "Bechtle",
+      "months": 105,
+      "first_month": "2016-10",
+      "last_month": "2025-07",
+      "months_below_5": 3,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 69,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.4483,
+            "rmse": 0.5741,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3719,
+              0.3979,
+              0.4263,
+              0.435,
+              0.5154,
+              0.5632
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.4376,
+            "rmse": 0.5676,
+            "n": 201,
+            "mae_by_horizon": [
+              0.435,
+              0.3937,
+              0.4432,
+              0.4006,
+              0.4747,
+              0.4852
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.3153,
+            "rmse": 0.3994,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3098,
+              0.3164,
+              0.3085,
+              0.3138,
+              0.321,
+              0.3234
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.3089,
+            "rmse": 0.424,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3151,
+              0.3154,
+              0.3057,
+              0.2997,
+              0.2993,
+              0.3173
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.4662,
+            "rmse": 0.591,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4714,
+              0.4551,
+              0.4488,
+              0.4618,
+              0.4759,
+              0.4865
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 25,
+      "name": "Cancom",
+      "months": 106,
+      "first_month": "2016-10",
+      "last_month": "2025-07",
+      "months_below_5": 14,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 70,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.6326,
+            "rmse": 0.7565,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5108,
+              0.6403,
+              0.6478,
+              0.6923,
+              0.6825,
+              0.6339
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.6822,
+            "rmse": 0.8516,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4817,
+              0.7111,
+              0.6779,
+              0.7367,
+              0.7881,
+              0.72
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.458,
+            "rmse": 0.5663,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4529,
+              0.4613,
+              0.47,
+              0.481,
+              0.4483,
+              0.4329
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.5647,
+            "rmse": 0.6664,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5571,
+              0.5891,
+              0.595,
+              0.6001,
+              0.5596,
+              0.48
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.5563,
+            "rmse": 0.717,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5661,
+              0.5714,
+              0.5776,
+              0.5758,
+              0.5356,
+              0.5052
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 26,
+      "name": "Carl Zeiss",
+      "months": 105,
+      "first_month": "2016-10",
+      "last_month": "2025-07",
+      "months_below_5": 20,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 69,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.4167,
+            "rmse": 0.5932,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3738,
+              0.3917,
+              0.3733,
+              0.3934,
+              0.4465,
+              0.5362
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.3725,
+            "rmse": 0.5073,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3767,
+              0.4311,
+              0.3806,
+              0.3173,
+              0.3409,
+              0.3839
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.2922,
+            "rmse": 0.3826,
+            "n": 201,
+            "mae_by_horizon": [
+              0.2971,
+              0.2942,
+              0.2944,
+              0.3009,
+              0.2914,
+              0.2736
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.2652,
+            "rmse": 0.3697,
+            "n": 201,
+            "mae_by_horizon": [
+              0.2782,
+              0.2616,
+              0.2603,
+              0.2577,
+              0.2732,
+              0.2593
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.3674,
+            "rmse": 0.4827,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3733,
+              0.3731,
+              0.3785,
+              0.3645,
+              0.3659,
+              0.3465
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 27,
+      "name": "Compugroup Medical Deutschland",
+      "months": 103,
+      "first_month": "2016-10",
+      "last_month": "2025-07",
+      "months_below_5": 36,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 67,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.4208,
+            "rmse": 0.5471,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3941,
+              0.4268,
+              0.4201,
+              0.3627,
+              0.3967,
+              0.5325
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.5028,
+            "rmse": 0.6451,
+            "n": 201,
+            "mae_by_horizon": [
+              0.5089,
+              0.5523,
+              0.5391,
+              0.4888,
+              0.4053,
+              0.5155
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.8726,
+            "rmse": 0.9346,
+            "n": 201,
+            "mae_by_horizon": [
+              0.8483,
+              0.8539,
+              0.8735,
+              0.8944,
+              0.8863,
+              0.884
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.3683,
+            "rmse": 0.4995,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3485,
+              0.3505,
+              0.3612,
+              0.3855,
+              0.3757,
+              0.3932
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.6422,
+            "rmse": 0.7823,
+            "n": 201,
+            "mae_by_horizon": [
+              0.6597,
+              0.6351,
+              0.6397,
+              0.6573,
+              0.6291,
+              0.63
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 28,
+      "name": "Telekom",
+      "months": 105,
+      "first_month": "2016-11",
+      "last_month": "2025-07",
+      "months_below_5": 1,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 69,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.3234,
+            "rmse": 0.4446,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3061,
+              0.3094,
+              0.3328,
+              0.3354,
+              0.3384,
+              0.3209
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.3543,
+            "rmse": 0.4796,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3489,
+              0.3486,
+              0.3626,
+              0.3942,
+              0.3569,
+              0.3126
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.2366,
+            "rmse": 0.3271,
+            "n": 201,
+            "mae_by_horizon": [
+              0.2375,
+              0.2387,
+              0.2412,
+              0.2463,
+              0.2439,
+              0.21
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.2604,
+            "rmse": 0.3507,
+            "n": 201,
+            "mae_by_horizon": [
+              0.2617,
+              0.2607,
+              0.2626,
+              0.2782,
+              0.2583,
+              0.2392
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.348,
+            "rmse": 0.44,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3367,
+              0.3406,
+              0.3497,
+              0.3603,
+              0.3647,
+              0.3371
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 29,
+      "name": "Eckert Ziegler",
+      "months": 13,
+      "first_month": "2021-01",
+      "last_month": "2025-07",
+      "months_below_5": 13,
+      "backtest": null
+    },
+    {
+      "company_id": 30,
+      "name": "Elmos Semiconductor",
+      "months": 41,
+      "first_month": "2016-11",
+      "last_month": "2025-07",
+      "months_below_5": 41,
+      "backtest": {
+        "origins": 17,
+        "first_origin": 24,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 1.0534,
+            "rmse": 1.4495,
+            "n": 87,
+            "mae_by_horizon": [
+              0.9224,
+              0.8774,
+              1.0344,
+              1.0257,
+              1.3661,
+              1.1912
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.9006,
+            "rmse": 1.2423,
+            "n": 87,
+            "mae_by_horizon": [
+              0.9471,
+              0.8225,
+              1.0013,
+              0.7907,
+              1.0246,
+              0.8067
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.7002,
+            "rmse": 1.0068,
+            "n": 87,
+            "mae_by_horizon": [
+              0.6611,
+              0.7001,
+              0.7187,
+              0.7111,
+              0.6919,
+              0.7288
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.7181,
+            "rmse": 1.059,
+            "n": 87,
+            "mae_by_horizon": [
+              0.71,
+              0.7657,
+              0.7693,
+              0.6975,
+              0.6633,
+              0.6853
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.9275,
+            "rmse": 1.3522,
+            "n": 87,
+            "mae_by_horizon": [
+              0.8982,
+              0.9062,
+              0.9387,
+              0.97,
+              0.9138,
+              0.9483
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "mean"
+      }
+    },
+    {
+      "company_id": 31,
+      "name": "Evotec",
+      "months": 55,
+      "first_month": "2017-07",
+      "last_month": "2025-07",
+      "months_below_5": 54,
+      "backtest": {
+        "origins": 31,
+        "first_origin": 24,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 1.2645,
+            "rmse": 1.6025,
+            "n": 171,
+            "mae_by_horizon": [
+              1.1607,
+              1.0409,
+              1.1194,
+              1.1891,
+              1.4173,
+              1.7309
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 1.0872,
+            "rmse": 1.3939,
+            "n": 171,
+            "mae_by_horizon": [
+              1.2868,
+              1.0703,
+              1.0548,
+              0.8646,
+              1.0452,
+              1.1881
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.8483,
+            "rmse": 1.0881,
+            "n": 171,
+            "mae_by_horizon": [
+              0.8426,
+              0.8218,
+              0.8427,
+              0.8446,
+              0.8641,
+              0.8797
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.8369,
+            "rmse": 1.0525,
+            "n": 171,
+            "mae_by_horizon": [
+              0.8648,
+              0.8211,
+              0.8078,
+              0.8139,
+              0.8657,
+              0.8495
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 1.1054,
+            "rmse": 1.376,
+            "n": 171,
+            "mae_by_horizon": [
+              1.1006,
+              1.1257,
+              1.1266,
+              1.0846,
+              1.09,
+              1.1023
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    },
+    {
+      "company_id": 32,
+      "name": "Formycon",
+      "months": 14,
+      "first_month": "2016-11",
+      "last_month": "2025-01",
+      "months_below_5": 14,
+      "backtest": null
+    },
+    {
+      "company_id": 33,
+      "name": "Freenet",
+      "months": 103,
+      "first_month": "2016-10",
+      "last_month": "2025-08",
+      "months_below_5": 35,
+      "backtest": {
+        "origins": 36,
+        "first_origin": 67,
+        "horizon": 6,
+        "min_train": 24,
+        "methods": {
+          "holt": {
+            "mae": 0.4402,
+            "rmse": 0.5722,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3261,
+              0.4204,
+              0.4246,
+              0.4298,
+              0.497,
+              0.5646
+            ],
+            "label": "Holt (exponentielle Glättung mit Trend)"
+          },
+          "naive": {
+            "mae": 0.3607,
+            "rmse": 0.467,
+            "n": 201,
+            "mae_by_horizon": [
+              0.3461,
+              0.3934,
+              0.3935,
+              0.3224,
+              0.3591,
+              0.3471
+            ],
+            "label": "letzter Wert"
+          },
+          "mean": {
+            "mae": 0.4486,
+            "rmse": 0.5229,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4452,
+              0.4594,
+              0.4685,
+              0.4513,
+              0.424,
+              0.4412
+            ],
+            "label": "Mittel aller Monate"
+          },
+          "ma6": {
+            "mae": 0.279,
+            "rmse": 0.3913,
+            "n": 201,
+            "mae_by_horizon": [
+              0.2792,
+              0.2851,
+              0.2858,
+              0.2731,
+              0.2668,
+              0.283
+            ],
+            "label": "Mittel der letzten 6 Monate"
+          },
+          "snaive12": {
+            "mae": 0.4659,
+            "rmse": 0.6362,
+            "n": 201,
+            "mae_by_horizon": [
+              0.4861,
+              0.498,
+              0.5003,
+              0.4761,
+              0.4141,
+              0.4113
+            ],
+            "label": "Wert 12 Monate zuvor"
+          }
+        },
+        "best_method": "ma6"
+      }
+    }
+  ]
+}

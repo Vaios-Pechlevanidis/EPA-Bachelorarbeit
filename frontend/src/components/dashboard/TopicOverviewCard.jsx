@@ -41,6 +41,9 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
 ) {
   const [topicsData,       setTopicsData]       = useState([])
   const [totalReviews,     setTotalReviews]     = useState(null)
+  // Anteile je Quelle (GET …/topic-overview total_by_source, 2026-10-17): „Alle Quellen“
+  // mischt Mitarbeitende und Bewerbende; Kopf und PDF nennen beide Anteile.
+  const [totalBySource,    setTotalBySource]    = useState(null)
   const [loading,          setLoading]          = useState(true)
   const [refreshing,       setRefreshing]       = useState(false)
   const [error,            setError]            = useState(null)
@@ -82,6 +85,7 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
         const data = await fetchJsonShared(url)
         setTopicsData(data.topics || [])
         setTotalReviews(data.total_reviews ?? null)
+        setTotalBySource(data.total_by_source ?? null)
         hasTopicsRef.current = (data.topics || []).length > 0
       } catch (err) {
         console.error("Error fetching topics:", err)
@@ -114,16 +118,17 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
         topics: topicsData,
         sourceFilter: sourceFilter === "all" ? null : sourceFilter,
         totalReviews,
+        totalBySource,
         stats: stats ? {
           totalTopics:   stats.total,
-          avgRating:     stats.avg.toFixed(1),
+          avgRating:     stats.avg.toFixed(2),
           totalMentions: stats.mentions,
           limited:       stats.limited,
         } : { totalTopics: 0, avgRating: 0, totalMentions: 0, limited: 0 }
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topicsData, sourceFilter, loading, totalReviews])
+  }, [topicsData, sourceFilter, loading, totalReviews, totalBySource])
 
   useEffect(() => { setIsModalOpen(tableModalOpen || detailModalOpen) }, [tableModalOpen, detailModalOpen])
 
@@ -189,7 +194,12 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
           icon={<Tag />}
           eyebrow="TOPIC-ÜBERSICHT"
           title="Themenbereiche"
-          subtitle={`${SOURCE_LABEL[sourceFilter] ?? "Alle Quellen"}${stats ? ` · ${stats.total} Topics` : ""}${totalReviews != null ? ` · n = ${Number(totalReviews).toLocaleString("de-DE")} Bewertungen` : ""}`}
+          subtitle={`${SOURCE_LABEL[sourceFilter] ?? "Alle Quellen"}${stats ? ` · ${stats.total} Topics` : ""}${
+            totalReviews != null
+              ? sourceFilter === "all" && totalBySource?.employee != null && totalBySource?.candidates != null
+                ? ` · n = ${Number(totalBySource.employee).toLocaleString("de-DE")} Mitarbeitende + ${Number(totalBySource.candidates).toLocaleString("de-DE")} Bewerbende`
+                : ` · n = ${Number(totalReviews).toLocaleString("de-DE")} Bewertungen`
+              : ""}`}
           expandable
           basis="text"
           actions={
@@ -234,15 +244,13 @@ export const TopicOverviewCard = memo(forwardRef(function TopicOverviewCard(
                     <p className="text-[20px] font-semibold tnum text-slate-900">{stats.total}</p>
                   </div>
                   <div className={`text-center px-3 py-2.5 rounded-md border ${scoreBoxClass(stats.avg)}`}>
-                    <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1">Ø Rating</p>
+                    <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1" title="Mittel der Topic-Mittel, jedes Topic gleich gewichtet; kein Mittel über Bewertungen">Ø Topic-Mittel</p>
                     <p className={`text-[20px] font-semibold tnum ${scoreColorClass(stats.avg)}`}>
                       {fmt(stats.avg, 2)}
                     </p>
-                    {totalReviews != null && (
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        {Number(totalReviews).toLocaleString("de-DE")} Bew.
-                      </p>
-                    )}
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      {stats.total} Topics · ungewichtet
+                    </p>
                   </div>
                   <div className="text-center px-3 py-2.5 bg-slate-50 rounded-md border border-slate-200">
                     <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1">Erwähnungen</p>

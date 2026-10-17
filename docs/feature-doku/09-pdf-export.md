@@ -23,10 +23,12 @@ Der Bericht hat fünf Abschnitte (bei vielen Topics mehr Seiten):
 | Seite | Abschnitt | Elemente des Dashboards |
 |---|---|---|
 | 1 | Cover | Firmenname, Erstellungszeit, Meta-Band mit Zeitfilter (Standard, 1 Jahr, 3 Jahre), Zeitraum der Timeline, Bewertungen im Datensatz (Mitarbeitende, Bewerbende), Zahl der Topics und Erwähnungen; Inhaltsverzeichnis mit Seitenzahlen |
-| 2 | Datenstand und Kennzahlen | Datenstand-Leiste (FA-37) mit allen Zeilen (Mitarbeitende, Bewerbende, letzter Import, Plattform, Kurs, Belege), der Schwellen-Erklärung und der aufklappbaren Zeitstempel-Tabelle; die fünf Kacheln (Ø Score, Trend, 12- vs. 24-Monats-Schnitt, Most Critical, Negative Topic) mit Wert, Badge, n, Warnung bei kleiner Basis und Kennzeichen der Datenbasis; ein Satz, welche Elemente der Zeitfilter betrifft |
-| 3 | Timeline und Topics im Detail | beide Diagramm-Karten der Diagrammzeile mit Kopf (Quelle, Metrik, Datenbasis), Diagramm, Legende und den Kennzahlen unter dem Diagramm (je Metrik wie in der Karte) |
-| 4 | Anomalien im Verlauf | Diagramm-Karte mit Auswahl (Quelle, Status, Dimension), Zähler, Legende (Monatsmittel, interpolierte Monate, Ring, Raute), Kennzahlen (bewertete Monate, Veränderungen, Einzelmonate, Eignung), Eignungshinweis, Statushinweis (E13) und – neu gegenüber der Karte – die markierten Veränderungen und Einzelmonate als Liste, weil ein Tooltip im Druck fehlt. Seit 2026-10-13 tragen Einzelmonate in Legende, Kachel und Listenkopf den Zusatz „ungeprüft“ (E30); mit `VITE_SHOW_OUTLIER_MONTHS=false` entfallen Kachel und Liste, und außerhalb des geprüften Umfangs steht der Vermerk „Erkennung für diese Auswahl nicht geprüft“ (E27, Nachtrag 2026-10-13) |
-| 5 ff. | Topic-Übersicht | Kopf mit n, Warnbanner „Begrenzte Datenbasis“, Stats-Strip, Sentiment-Verteilung und die Tabelle aller Topics mit Beispielzitat; die Tabelle läuft über mehrere Seiten, nichts wird gekürzt |
+| 2 (seit 2026-10-17) | Kurzbericht | Lage der Bewertung, die jüngsten auffälligen Veränderungen mit ihrer Folge für das Niveau, zwei Spalten „Was gut läuft“ / „Was verbessert werden sollte“ nach festen Regeln; siehe [14](14-kurzbericht-pdf.md). Die folgenden Seiten rücken um eine Seite nach hinten |
+| 3 | Kennzahlen (bis 2026-10-17 „Datenstand und Kennzahlen“) | Datenstand-Leiste (FA-37) mit allen Zeilen (Mitarbeitende, Bewerbende, letzter Import, Plattform, Kurs, Belege), der Schwellen-Erklärung und der aufklappbaren Zeitstempel-Tabelle; die fünf Kacheln (Ø Score, Trend, 12- vs. 24-Monats-Schnitt, Most Critical, Negative Topic) mit Wert, Badge, n, Warnung bei kleiner Basis und Kennzeichen der Datenbasis; ein Satz, welche Elemente der Zeitfilter betrifft — seit 2026-10-17 zeigt die Seite nur die fünf Kacheln (n in der Kachel, Zeitfenster-Daten auf der letzten Seite) und den Satz zum Zeitfilter; Datenstand-Leiste, Berechnungshinweis und Kategorienmittel stehen auf der letzten Seite |
+| 4 | Timeline und Topics im Detail | beide Diagramm-Karten der Diagrammzeile mit Kopf (Quelle, Metrik, Datenbasis), Diagramm, Legende und den Kennzahlen unter dem Diagramm (je Metrik wie in der Karte) |
+| 5 | Anomalien im Verlauf | Diagramm-Karte mit Auswahl (Quelle, Status, Dimension), Zähler, Legende (Monatsmittel, interpolierte Monate, Ring, Raute), Kennzahlen (bewertete Monate, Veränderungen, Einzelmonate, Eignung), Eignungshinweis, Statushinweis (E13) und – neu gegenüber der Karte – die markierten Veränderungen und Einzelmonate als Liste, weil ein Tooltip im Druck fehlt. Seit 2026-10-13 tragen Einzelmonate in Legende, Kachel und Listenkopf den Zusatz „ungeprüft“ (E30); mit `VITE_SHOW_OUTLIER_MONTHS=false` entfallen Kachel und Liste, und außerhalb des geprüften Umfangs steht der Vermerk „Erkennung für diese Auswahl nicht geprüft“ (E27, Nachtrag 2026-10-13) — seit 2026-10-17 mit kurzer Legende; Schwellen, Status-Hinweis, voller Prüfumfang-Hinweis, Erklärung „ungeprüft“ und der Verweis auf die Detailseite stehen auf der letzten Seite, auf der Seite bleibt nur „nicht geprüft“ bzw. „ungeprüft“ als Vermerk |
+| 6 ff. | Topic-Übersicht | Kopf mit n, Warnbanner „Begrenzte Datenbasis“, Stats-Strip, Sentiment-Verteilung und die Tabelle aller Topics mit Beispielzitat; die Tabelle läuft über mehrere Seiten, nichts wird gekürzt — seit 2026-10-17 ohne Warnbanner und ohne Hinweis auf nicht gelieferte Topics (beides auf der letzten Seite); die Markierung je Zeile bleibt |
+| letzte Seite (seit 2026-10-17) | Technische Hinweise | Kennzeichen der Datenbasis; Datenstand-Leiste mit Zeitstempel-Tabelle; Berechnung und Zeitfenster der Kacheln (Berechnungshinweis zum Ø Score, Kategorienmittel, Trend- und Schnitt-Fenster mit n, Zeitfilter, Schwelle der kleinen Basis); Schwellen und Prüfumfang der Erkennung, Status-Hinweis, Erklärung der Einzelmonate; Hinweise zur Topic-Übersicht (Herkunft, begrenzte Datenbasis, nicht gelieferte Topics); Regeln des Kurzberichts |
 
 Der Firmenvergleich (`/compare`) hat einen eigenen Export, der unverändert bleibt.
 
@@ -64,6 +66,8 @@ So kann der Bericht nicht von der Oberfläche abweichen.
 | Zeilenhöhe der Kacheln | höchste Kachel der Zeile | mehrzeilige Fußnoten (rollierende Schnitte) bleiben lesbar |
 | Tabellenzeile Topic-Übersicht | 10,5 mm mit Beispiel, 7 mm ohne | Beispielzitat wie in der Tabelle der Web-App |
 | Seitenumbruch | unterhalb von 278 mm | Fußzeile bleibt frei; Tabellenkopf wird auf Folgeseiten wiederholt |
+| Kennzahlen-Streifen unter Diagrammen und Karten | 20 mm je Zelle (bis 2026-10-17: 16 mm) | Bezeichnung, Wert (14 pt) und Unterzeile (7 pt) auf drei getrennten Grundlinien; bei 16 mm überlappte die Unterzeile den Wert (Rückmeldung des Autors am 2026-10-17) |
+| Höhe des Diagrammbereichs | höchstens der feste Wert der Karte (58 bzw. 78 mm), sonst Breite × Seitenverhältnis des Bildes + 4 mm, mindestens 24 mm | breite Diagramme (Anomalien-Karte, 220 px hoch im DOM) standen sonst mit Leerraum ober- und unterhalb im Rahmen (seit 2026-10-17) |
 
 ## 3. Begründung
 
@@ -102,7 +106,9 @@ im ersten Export nur als Rückfall genutzt).
   zählt die übrigen („+ n weitere“).
 - Die Topic-Tabelle ist nach Erwähnungen sortiert (Standard der Tabelle in der Web-App);
   Sortierung und Sentiment-Filter der Web-App werden nicht übernommen.
-- Der Bericht beschreibt; er enthält keine Bewertung und keine Aussage über Ursachen.
+- Der Bericht beschreibt; er enthält keine Aussage über Ursachen. Seit dem 2026-10-17
+  enthält die Seite „Kurzbericht“ Stärken und Handlungsfelder, die nach festen,
+  auf der Seite genannten Regeln aus den Bewertungen abgeleitet sind ([14](14-kurzbericht-pdf.md)).
 - Es gibt keine automatischen Tests für das Frontend; die Prüfung ist manuell.
 
 ## 5. Prüfung und Belege
@@ -128,3 +134,74 @@ im ersten Export nur als Rückfall genutzt).
   zeichnen oder den Export auf das helle Theme beschränken.
 - Ob der Bericht die Detailseiten (Anomalien, Aktie) aufnehmen soll; derzeit bewusst nur
   das Dashboard.
+
+## 7. Nachtrag 2026-10-17: Technische Hinweise auf der letzten Seite
+
+**Anlass.** Rückmeldung des Autors am 2026-10-17: Die Inhaltsseiten sollen nur die
+Elemente zeigen, die auf den ersten Blick sichtbar sein müssen; die technischen Angaben
+(Datengrundlage, Berechnung, Schwellen) sollen gesammelt auf der letzten Seite stehen.
+
+**Was sich ändert.** Der Bericht bekommt als letzten Abschnitt die Seite „Technische
+Hinweise“ (im Inhalt 06, in der Zählung der Überschriften 7). Dorthin wandern,
+wortgleich wie bisher: die Kennzeichen der Datenbasis (FA-25), die Datenstand-Leiste
+mit Zeitstempel-Tabelle (FA-37), der Berechnungshinweis zum Ø Score und das
+Kategorienmittel (FA-38), die Zeitfenster von Trend und rollierenden Schnitten mit n
+(FA-08, FA-26), der Satz zum Zeitfilter, die Schwelle der kleinen Basis, die Schwellen
+der Erkennung (bewertete Monate, Mindestzahl, Abschnittslänge), der Status-Hinweis und
+der volle Hinweis zum Prüfumfang (E27), die Erklärung „ungeprüft“ der Einzelmonate (E30),
+der Verweis auf die Detailseite, die Hinweise der Topic-Übersicht (Herkunft, begrenzte
+Datenbasis, nicht gelieferte Topics) und die Regeln des Kurzberichts ([14](14-kurzbericht-pdf.md)).
+
+**Was auf den Inhaltsseiten bleibt.** Werte, Badges, n und die Warnung bei kleiner
+Basis in den Kacheln; Legenden mit einem Satz je Element; die Kennzahlen unter den
+Diagrammen; die Tabellen der Veränderungen und Einzelmonate; die Markierung begrenzter
+Datenbasis je Topic-Zeile; die kurzen Vermerke „ungeprüft“ (Einzelmonate), „Erkennung
+für diese Auswahl nicht geprüft“ und „Keine automatische Erkennung“ mit Grund. Jede
+Seite, von der etwas verschoben wurde, verweist mit „Technische Hinweise (letzte Seite)“
+dorthin. Die Kachel-Fußnoten nennen statt der Fensterdaten nur noch n („n = 88 vs. 76“,
+„n = 88 (12 M) · 164 (24 M)“); die Daten der Fenster stehen auf der letzten Seite.
+
+**Begründung.** Die Transparenz-Angaben aus Inkrement 6 bleiben vollständig im Bericht,
+nur an einer Stelle statt verteilt; n und Warnungen bleiben neben den Werten, weil sie
+die Einordnung einer Zahl sind (FA-26), nicht ihre Erklärung. Die Texte kommen weiter
+aus denselben Bibliotheken wie das Dashboard, der Wortlaut bleibt gleich.
+
+**Darstellung.** Die letzte Seite setzt die Blöcke als Zwischenüberschrift mit Absätzen
+(7 pt). Ein Block bleibt zusammen, wenn er auf die Seite passt, sonst bricht er zwischen
+zwei Absätzen um; bei vielen Veränderungen oder langen Hinweisen umfasst die Seite zwei
+Blätter.
+
+**Prüfung (2026-10-17).** `npm run lint` 0/0, `npm run build` erfolgreich; Rendern in
+Node gegen das laufende Backend (1&1 AG: 8 Seiten, Telekom, Formycon) mit Sichtung von
+Kurzbericht, Kennzahlen, Anomalien und Technische Hinweise; Export-Knopf im Dashboard
+(Vite auf Port 5173, Backend auf Port 8000, heller Modus, 1&1 AG): 8 Seiten ohne Fehler,
+Konsole meldet „PDF gespeichert“, letzte Seite „Technische Hinweise“ auf einem Blatt.
+
+## 8. Nachtrag 2026-10-17: Überlappende Beschriftungen
+
+Rückmeldung des Autors anhand eines exportierten Berichts: In den Kennzahlen-Streifen
+(„Lage der Bewertung“, unter Zeitverlauf, Topics im Detail und Anomalien, Stats-Strip
+der Topic-Übersicht) überlappte die Unterzeile („Okt. 2016 – Juli 2025“, „1.486
+Bewertungen“) den großen Wert. Ursache: 16 mm Zellhöhe mit Wert-Grundlinie bei 11 mm und
+Unterzeile bei 13 mm. Korrektur: Zellhöhe 20 mm, Wert bei 11,5 mm, Unterzeile bei 17 mm
+(Tabelle der Parameter oben); die Kartenhöhe folgt automatisch. In den Kacheln rücken
+Badge und Kennzeichen um 1 mm nach unten, damit das Komma des Werts die Pille nicht
+berührt. Zusätzlich richtet sich die Höhe des Diagrammbereichs nach dem Seitenverhältnis
+des Bildes; die Anomalien-Karte stand vorher mit großem Leerraum im 78-mm-Rahmen.
+Geprüft am 2026-10-17 mit Node-Render (Streifen) und Export-Knopf im Dashboard
+(Diagramme, 1&1 AG, 8 Seiten ohne Fehler).
+
+## 9. Nachtrag 2026-10-17: Prüfung der Berichtsqualität
+
+Mit der Prüfung in [16](16-report-qualitaet.md) änderte sich der Bericht an diesen Stellen:
+Mittel durchgängig mit zwei Nachkommastellen; Ø Score und Trend-Differenz mit 95-%-Intervall
+(Kachel-Fußnote, Kurzbericht, Technische Hinweise); „Ø Historisch“ heißt „Ø Monatsmittel“;
+die Prognose steht mit einer Nachkommastelle und ±Bandbreite (80 %, aus dem Backtest), die
+Bildunterschrift nennt die helle Fläche; „Sentiment“ heißt „Einstufung“ (nach Ø Sternen);
+„Ø Rating“ der Topic-Übersicht heißt „Ø Topic-Mittel“ (n Topics, ungewichtet), der Kopf
+nennt bei „Alle Quellen“ Mitarbeitende und Bewerbende getrennt; die Legende von „Topics im
+Detail“ nennt die Kategorien-Sterne; die Tabellen der Veränderungen (Kurzbericht und Seite
+„Anomalien“) tragen die Spalte „Stabilität“ (Treffer/Varianten); die Datenstand-Leiste nennt
+Duplikate und Zeilen ohne Gesamtnote; der Kurzbericht hat Datenstand, Warnungen und nächste
+Analyseschritte; die Technischen Hinweise haben die Blöcke Zeitverlauf (mit Backtest) und
+Grenzen. Der Bericht umfasst bei 1&1 AG und Telekom 9 Seiten.

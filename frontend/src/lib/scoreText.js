@@ -22,6 +22,20 @@ export const CRITICAL_NOTE = "niedrigstes Kategorienmittel, Mitarbeitende"
 
 const fmtN = (n) => (n == null ? "–" : Number(n).toLocaleString("de-DE"))
 
+/* Unsicherheit (Prüfung 2026-10-17): halbe Breite des 95-%-Intervalls des Mittels aus
+ * GET …/ratings (score_ci95) bzw. der Differenz aus GET …/ratings/trend (difference_ci95).
+ * Kurzform für Kacheln und PDF; null → "". */
+export function scoreUncertaintyText(ci) {
+  if (ci == null || !Number.isFinite(Number(ci))) return ""
+  return `95-%-Intervall ±${Number(ci).toFixed(2).replace(".", ",")}`
+}
+
+/* Satz zur Einordnung der Intervalle (Detailfenster, PDF). */
+export const UNCERTAINTY_NOTE =
+  "Die Intervalle (95 %) sind aus den Bewertungen gerechnet (t-Verteilung bzw. Welch für Differenzen) und setzen " +
+  "unabhängige Bewertungen voraus; Mehrfachbewertungen derselben Person sind in den Daten nicht erkennbar. " +
+  "Kununu-Bewertungen sind freiwillig und selektiv; die Intervalle beschreiben die Streuung im Datensatz, keine Repräsentativität."
+
 /* "n = 1.234 Bewertungen mit Gesamtnote" */
 export function scoreCountText(n) {
   return n == null ? "Mitarbeitende" : `n = ${fmtN(n)} ${n === 1 ? "Bewertung" : "Bewertungen"} mit Gesamtnote, Mitarbeitende`

@@ -46,39 +46,51 @@ TOPIC_OVERVIEW_BASE = {
 # ohne diese drei Felder, erzeugt auf Commit ef05ca6 (vor der Änderung, dort
 # stimmte die volle Antwort mit TOPIC_OVERVIEW_BASE überein).
 TOPIC_QUOTE_KEYS = ("example", "typicalStatements", "reviewDetails")
+# Stand 2026-10-17 (avgRating mit zwei Nachkommastellen, Einstufung auf dem ungerundeten
+# Mittel; siehe without_quotes). Die Werte davor stehen in der Git-Historie.
 TOPIC_OVERVIEW_CALC_BASE = {
-    (1, None, '2024-01-01'): "cbade695fb94a621",
-    (1, None, None): "a2f448f3498dd220",
-    (1, 'candidates', '2024-01-01'): "1b457c9d537004b9",
-    (1, 'candidates', None): "873a5c91136fad5c",
-    (1, 'employee', '2024-01-01'): "48c4b2bd6acb130d",
-    (1, 'employee', None): "66c05ad3e85148f8",
-    (2, None, '2024-01-01'): "23f3c62694554e17",
-    (2, None, None): "a1a187053a03b64a",
-    (2, 'candidates', '2024-01-01'): "32c1473aa64e235a",
-    (2, 'candidates', None): "070d9383cd341060",
-    (2, 'employee', '2024-01-01'): "ead869c6a8468177",
-    (2, 'employee', None): "ef633afb13c1ab4f",
-    (3, None, '2024-01-01'): "3227012fb9cf30f3",
-    (3, None, None): "129c1a3a08371c35",
-    (3, 'candidates', '2024-01-01'): "5e298fb29a0f8b62",
-    (3, 'candidates', None): "4697a59833978e32",
-    (3, 'employee', '2024-01-01'): "becc13c227b56b97",
-    (3, 'employee', None): "5dffc7f9bdad1f6a",
+    (1, 'candidates', '2024-01-01'): "e9e6d4eeba2a3633",
+    (1, 'candidates', None): "f821b7497674eab1",
+    (1, 'employee', '2024-01-01'): "8a3e57f8db514f6e",
+    (1, 'employee', None): "4502ff860ad5732d",
+    (1, None, '2024-01-01'): "4ec04dcb25365432",
+    (1, None, None): "2adab7b47f9bdd1a",
+    (2, 'candidates', '2024-01-01'): "8631ff6da74d48bd",
+    (2, 'candidates', None): "48ae3ae040a97be6",
+    (2, 'employee', '2024-01-01'): "78093933967e32dd",
+    (2, 'employee', None): "f16e4656cdffb44b",
+    (2, None, '2024-01-01'): "2ab3429b1b22df45",
+    (2, None, None): "1c2bb41b80dc24c9",
+    (3, 'candidates', '2024-01-01'): "55729028750354b2",
+    (3, 'candidates', None): "5cb2328d70faafbe",
+    (3, 'employee', '2024-01-01'): "849fa977ffc2cf61",
+    (3, 'employee', None): "24836ee9a73df368",
+    (3, None, '2024-01-01'): "1ae63c6991ee5b48",
+    (3, None, None): "09ed9626b7f5770d",
 }
 
 
 # Felder, die nach dem Stand der Hashes hinzukamen; ihre Werte prüfen eigene Tests
-# (ratingDistribution seit 2026-10-13: tests/test_analyze_topic_rating.py).
-TOPIC_ADDED_KEYS = ("ratingDistribution",)
+# (ratingDistribution seit 2026-10-13, n_rated und rating_basis seit 2026-10-17:
+# tests/test_analyze_topic_rating.py; total_by_source seit 2026-10-17).
+TOPIC_ADDED_KEYS = ("ratingDistribution", "n_rated", "rating_basis")
+BODY_ADDED_KEYS = ("total_by_source",)
 
 
 def without_quotes(body):
     """Antwort von topic-overview ohne die Zitatfelder (NFA-07) und ohne die später
-    hinzugekommenen Felder; die übrige Berechnung muss unverändert bleiben."""
+    hinzugekommenen Felder; die übrige Berechnung muss unverändert bleiben.
+
+    Stand der Hashes (``TOPIC_OVERVIEW_CALC_BASE``) seit 2026-10-17: ``avgRating`` mit
+    zwei Nachkommastellen und Einstufung auf dem ungerundeten Mittel
+    (docs/feature-doku/16-report-qualitaet.md, B2). Der Abgleich alt gegen neu auf den
+    Demo-Daten ergab am 2026-10-17 ausschließlich Rundungsunterschiede (13 Topics mit
+    einem Mittel auf x,x5), keine andere Abweichung."""
     import copy
 
     body = copy.deepcopy(body)
+    for key in BODY_ADDED_KEYS:
+        body.pop(key, None)
     for topic in body.get("topics", []):
         for key in (*TOPIC_QUOTE_KEYS, *TOPIC_ADDED_KEYS):
             topic.pop(key, None)

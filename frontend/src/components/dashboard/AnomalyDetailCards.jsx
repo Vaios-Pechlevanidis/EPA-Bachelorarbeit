@@ -187,7 +187,9 @@ export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side,
 
 /* comparison = Antwort des Vergleichs mit explanations und explanation_summary;
    subtitle = Kurzform für die Karte (im Dialog steht die vollständige Zählung). */
-export function ExplanationCard({ eyebrow, subtitle, comparison }) {
+/* onSelectPeriod(from, to): "Zeitraum wählen" bei den allgemeinen Ereignissen im Dialog
+   (Drill-down in das Ereignis, Nachtrag zu E29, 2026-10-17). */
+export function ExplanationCard({ eyebrow, subtitle, comparison, onSelectPeriod = null }) {
     return (
         <ExpandableCard
             icon={<Lightbulb />}
@@ -199,7 +201,7 @@ export function ExplanationCard({ eyebrow, subtitle, comparison }) {
             hint={HINT}
         >
             {({ modal }) => (modal
-                ? <ExplanationContent data={comparison.data} loading={comparison.loading} error={comparison.error} />
+                ? <ExplanationContent data={comparison.data} loading={comparison.loading} error={comparison.error} onSelectPeriod={onSelectPeriod} />
                 : <ExplanationPreview data={comparison.data} loading={comparison.loading} error={comparison.error} />)}
         </ExpandableCard>
     )

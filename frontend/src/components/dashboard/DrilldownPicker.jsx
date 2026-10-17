@@ -28,8 +28,9 @@ const fmtCount = (n) => (n === 1 ? "1 Bewertung" : `${n.toLocaleString("de-DE")}
 
 /* Ein Monat der Reihe: Knopf mit dem Monat; das Fenster zeigt ein Jahr als Raster
    mit 12 Monaten. months: Set der wählbaren Monate; counts: {YYYY-MM: Anzahl} oder
-   null; range: {from, to} der aktuellen Auswahl, wird hinterlegt. */
-function MonthPicker({ label, value, months, first, last, counts, range, onChange }) {
+   null; range: {from, to} der aktuellen Auswahl, wird hinterlegt. Exportiert, weil
+   das Formular für eigene Ereignisse (UserEvents.jsx) dieselbe Auswahl nutzt. */
+export function MonthPicker({ label, value, months, first, last, counts, range, onChange }) {
     const [open, setOpen] = useState(false)
     const [viewYear, setViewYear] = useState(yearOf(value))
     const minYear = yearOf(first)

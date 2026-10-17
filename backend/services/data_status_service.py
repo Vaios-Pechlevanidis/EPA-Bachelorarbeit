@@ -49,6 +49,21 @@ logger = logging.getLogger(__name__)
 SOURCES = ("employee", "candidates")
 SOURCE_LABELS = {"employee": "Mitarbeitende", "candidates": "Bewerbende"}
 ROW_COLUMNS = f"id,datum,update_datum,created_at,status,{OVERALL_DIMENSION}"
+# Duplikatzählung (2026-10-17, docs/feature-doku/16-report-qualitaet.md, B8): zwei Zeilen
+# gelten als exakte Duplikate, wenn Datum, Titel, Gesamtnote, Status und die Freitexte
+# der Quelle übereinstimmen. Duplikate werden gezählt, nicht entfernt; ob sie aus dem
+# Datensatz fallen, entscheidet der Autor. Die Textfelder werden nur dafür gelesen.
+DUPLICATE_KEY_FIELDS_BY_SOURCE = {
+    "employee": ("datum", "titel", OVERALL_DIMENSION, "status", "gut_am_arbeitgeber_finde_ich", "schlecht_am_arbeitgeber_finde_ich"),
+    "candidates": ("datum", "titel", OVERALL_DIMENSION, "status", "verbesserungsvorschlaege"),
+}
+DUPLICATE_KEY_FIELDS = DUPLICATE_KEY_FIELDS_BY_SOURCE["employee"]
+
+
+def row_columns(source: str) -> str:
+    """Spalten des Datenstands je Quelle (Grundspalten plus Felder der Duplikatzählung)."""
+    extra = [f for f in DUPLICATE_KEY_FIELDS_BY_SOURCE.get(source, ()) if f not in ("datum", OVERALL_DIMENSION, "status")]
+    return ",".join([ROW_COLUMNS, *extra])
 
 TIMESTAMP_FIELDS = ("datum", "update_datum", "created_at")
 TIMESTAMP_MEANING = {
@@ -94,6 +109,18 @@ def _months_between(first: Optional[str], last: Optional[str]) -> int:
 
 # ── Je Quelle ───────────────────────────────────────────────────────────────
 
+def count_duplicates(rows: List[Dict[str, Any]], fields: tuple = DUPLICATE_KEY_FIELDS) -> int:
+    """Überzählige Zeilen, die in allen ``fields`` mit einer anderen Zeile übereinstimmen
+    (zwei gleiche Zeilen zählen als 1). Zeilen ohne Datum werden nicht verglichen."""
+    seen: Dict[tuple, int] = {}
+    for r in rows:
+        if not r.get("datum"):
+            continue
+        key = tuple(str(r.get(f)) for f in fields)
+        seen[key] = seen.get(key, 0) + 1
+    return sum(c - 1 for c in seen.values() if c > 1)
+
+
 def source_status(rows: List[Dict[str, Any]], source: str) -> Dict[str, Any]:
     """Datenstand einer Quelle aus ihren Zeilen (reine Funktion)."""
     series = build_monthly_series(rows, OVERALL_DIMENSION)
@@ -109,6 +136,10 @@ def source_status(rows: List[Dict[str, Any]], source: str) -> Dict[str, Any]:
         "n_reviews": len(rows),
         "n_dated": len(dated),
         "n_undated": len(rows) - len(dated),
+        # Datenqualität (2026-10-17): Zeilen ohne Gesamtnote fließen in kein Mittel ein;
+        # exakte Duplikate bleiben im Datensatz und werden hier nur gezählt.
+        "n_without_value": sum(1 for r in rows if r.get(OVERALL_DIMENSION) is None),
+        "n_duplicates": count_duplicates(rows, DUPLICATE_KEY_FIELDS_BY_SOURCE.get(source, DUPLICATE_KEY_FIELDS)),
         "first_review": _day(datum["min"]),
         "last_review": _day(datum["max"]),
         "first_month": series[0]["period"] if series else None,
@@ -267,7 +298,7 @@ def assemble_status(
 def _fetch_rows(source: str, company_id: int) -> List[Dict[str, Any]]:
     from database.supabase_client import get_supabase_client  # lazy, je Thread eigener Client
 
-    query = get_supabase_client().table(source).select(ROW_COLUMNS).eq("company_id", company_id).order("id")
+    query = get_supabase_client().table(source).select(row_columns(source)).eq("company_id", company_id).order("id")
     return _fetch_all_rows(query, page_size=1000)
 
 

@@ -212,7 +212,7 @@ export default function KPIGrid({
         label="Ø Score"
         icon={<Star />}
         tone={avgT}
-        value={avgScore != null ? fmt(avgScore) : "—"}
+        value={avgScore != null ? fmt(avgScore, 2) : "—"}
         delta={avgDelta}
         title={SCORE_HINT}
         footer={avgCount != null ? <SmallBasisWarning n={avgCount} min={MIN_REVIEWS_PER_WINDOW} /> : null}
@@ -269,7 +269,7 @@ export default function KPIGrid({
         valueSize="sm"
         delta={mostCriticalData ? (
           <Delta tone={criticalT === "good" ? "pos" : criticalT === "warn" ? "warn" : "neg"}>
-            {fmt(mostCriticalData.score)} / 5
+            {fmt(mostCriticalData.score, 2)} / 5
           </Delta>
         ) : null}
         footer={mostCriticalData?.n != null ? <SmallBasisWarning n={mostCriticalData.n} min={MIN_REVIEWS_PER_WINDOW} /> : null}

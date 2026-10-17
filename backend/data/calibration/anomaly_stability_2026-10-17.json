@@ -1,0 +1,369 @@
+{
+  "generated_at": "2026-10-17T12:47:30+00:00",
+  "scope": "employee, durchschnittsbewertung, ohne Statusfilter; Standardparameter gegen das Raster",
+  "grid": {
+    "penalty_factor": [
+      1.0,
+      2.0,
+      3.0,
+      4.0
+    ],
+    "min_size": [
+      2,
+      3,
+      4,
+      6
+    ],
+    "min_reviews_per_month": [
+      3,
+      5,
+      8
+    ]
+  },
+  "tolerance_months": 3,
+  "summary": {
+    "n_anomalies": 19,
+    "share_mean": 0.531,
+    "share_min": 0.12,
+    "n_share_at_least_0_75": 4,
+    "n_share_below_0_5": 9
+  },
+  "companies": [
+    {
+      "company_id": 3,
+      "name": "Thyssenkrupp",
+      "eligible": true,
+      "anomalies": []
+    },
+    {
+      "company_id": 4,
+      "name": "Open Grid Europe",
+      "eligible": true,
+      "anomalies": []
+    },
+    {
+      "company_id": 5,
+      "name": "PLEdoc GmbH",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 6,
+      "name": "E.ON Digital Technology",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 7,
+      "name": "E.ON",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2023-11",
+          "direction": "rise",
+          "delta": 0.406,
+          "severity": "medium",
+          "variants": 48,
+          "matches": 18,
+          "share": 0.38
+        }
+      ]
+    },
+    {
+      "company_id": 8,
+      "name": "RWE",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2023-02",
+          "direction": "rise",
+          "delta": 0.42,
+          "severity": "medium",
+          "variants": 48,
+          "matches": 17,
+          "share": 0.35
+        }
+      ]
+    },
+    {
+      "company_id": 9,
+      "name": "Thyssengas GmbH",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 13,
+      "name": "Universität Duisburg-Essen",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 14,
+      "name": "Karlsruher Institut für Technologie",
+      "eligible": true,
+      "anomalies": []
+    },
+    {
+      "company_id": 15,
+      "name": "Technische Universität München",
+      "eligible": true,
+      "anomalies": []
+    },
+    {
+      "company_id": 16,
+      "name": "Universität zu Köln",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 19,
+      "name": "SAP SE",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2024-07",
+          "direction": "rise",
+          "delta": 0.667,
+          "severity": "high",
+          "variants": 48,
+          "matches": 35,
+          "share": 0.73
+        }
+      ]
+    },
+    {
+      "company_id": 20,
+      "name": "NTT DATA SE",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2019-07",
+          "direction": "fall",
+          "delta": -0.755,
+          "severity": "high",
+          "variants": 32,
+          "matches": 16,
+          "share": 0.5
+        },
+        {
+          "date": "2017-11",
+          "direction": "fall",
+          "delta": -0.617,
+          "severity": "high",
+          "variants": 32,
+          "matches": 4,
+          "share": 0.12
+        },
+        {
+          "date": "2024-03",
+          "direction": "fall",
+          "delta": -0.502,
+          "severity": "high",
+          "variants": 32,
+          "matches": 16,
+          "share": 0.5
+        },
+        {
+          "date": "2020-06",
+          "direction": "rise",
+          "delta": 1.45,
+          "severity": "high",
+          "variants": 32,
+          "matches": 24,
+          "share": 0.75
+        }
+      ]
+    },
+    {
+      "company_id": 21,
+      "name": "1&1 AG",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2016-10",
+          "direction": "fall",
+          "delta": -0.393,
+          "severity": "medium",
+          "variants": 48,
+          "matches": 20,
+          "share": 0.42
+        }
+      ]
+    },
+    {
+      "company_id": 22,
+      "name": "Aixtron",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 23,
+      "name": "Atoss",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 24,
+      "name": "Bechtle",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2016-02",
+          "direction": "rise",
+          "delta": 0.443,
+          "severity": "medium",
+          "variants": 48,
+          "matches": 35,
+          "share": 0.73
+        }
+      ]
+    },
+    {
+      "company_id": 25,
+      "name": "Cancom",
+      "eligible": true,
+      "anomalies": []
+    },
+    {
+      "company_id": 26,
+      "name": "Carl Zeiss",
+      "eligible": true,
+      "anomalies": []
+    },
+    {
+      "company_id": 27,
+      "name": "Compugroup Medical Deutschland",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2022-08",
+          "direction": "fall",
+          "delta": -0.866,
+          "severity": "high",
+          "variants": 48,
+          "matches": 48,
+          "share": 1.0
+        }
+      ]
+    },
+    {
+      "company_id": 28,
+      "name": "Telekom",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2010-07",
+          "direction": "fall",
+          "delta": -0.65,
+          "severity": "high",
+          "variants": 48,
+          "matches": 22,
+          "share": 0.46
+        },
+        {
+          "date": "2018-11",
+          "direction": "fall",
+          "delta": -0.638,
+          "severity": "high",
+          "variants": 48,
+          "matches": 19,
+          "share": 0.4
+        },
+        {
+          "date": "2019-02",
+          "direction": "rise",
+          "delta": 1.013,
+          "severity": "high",
+          "variants": 48,
+          "matches": 36,
+          "share": 0.75
+        },
+        {
+          "date": "2009-12",
+          "direction": "rise",
+          "delta": 0.948,
+          "severity": "high",
+          "variants": 48,
+          "matches": 7,
+          "share": 0.15
+        }
+      ]
+    },
+    {
+      "company_id": 29,
+      "name": "Eckert Ziegler",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 30,
+      "name": "Elmos Semiconductor",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 31,
+      "name": "Evotec",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 32,
+      "name": "Formycon",
+      "eligible": false,
+      "anomalies": []
+    },
+    {
+      "company_id": 33,
+      "name": "Freenet",
+      "eligible": true,
+      "anomalies": [
+        {
+          "date": "2021-09",
+          "direction": "fall",
+          "delta": -1.06,
+          "severity": "high",
+          "variants": 48,
+          "matches": 30,
+          "share": 0.62
+        },
+        {
+          "date": "2015-10",
+          "direction": "fall",
+          "delta": -0.803,
+          "severity": "high",
+          "variants": 48,
+          "matches": 25,
+          "share": 0.52
+        },
+        {
+          "date": "2016-04",
+          "direction": "rise",
+          "delta": 0.967,
+          "severity": "high",
+          "variants": 48,
+          "matches": 44,
+          "share": 0.92
+        },
+        {
+          "date": "2022-02",
+          "direction": "rise",
+          "delta": 0.845,
+          "severity": "high",
+          "variants": 48,
+          "matches": 21,
+          "share": 0.44
+        },
+        {
+          "date": "2019-10",
+          "direction": "rise",
+          "delta": 0.739,
+          "severity": "high",
+          "variants": 48,
+          "matches": 17,
+          "share": 0.35
+        }
+      ]
+    }
+  ]
+}

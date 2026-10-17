@@ -28,6 +28,12 @@ TODAY = datetime(2026, 10, 9, 12, 0, tzinfo=timezone.utc)
 CATEGORY_COLUMNS = list(CATEGORY_COLUMN_MAP.values())
 
 
+def _core(out):
+    """Nur Mittel und n; Streuung und Intervall (seit 2026-10-17) prüft
+    tests/test_score_uncertainty.py."""
+    return {k: out[k] for k in ("score", "score_n")}
+
+
 def review(datum, overall, category_value=None, company_id=28, i=0):
     row = {"id": i, "company_id": company_id, "datum": datum, "durchschnittsbewertung": overall}
     for col in CATEGORY_COLUMNS:
@@ -48,12 +54,12 @@ def month_rows(spec, company_id=28):
 
 def test_score_is_unweighted_mean_of_overall_rating():
     rows = [review("2024-01-15", 5.0), review("2024-02-15", 2.0), review("2024-03-15", 2.0), review("2024-03-20", None)]
-    assert sc.score_from_rows(rows) == {"score": 3.0, "score_n": 3}
+    assert _core(sc.score_from_rows(rows)) == {"score": 3.0, "score_n": 3}
 
 
 def test_score_empty():
-    assert sc.score_from_rows([]) == {"score": None, "score_n": 0}
-    assert sc.score_from_rows([{"durchschnittsbewertung": "x"}]) == {"score": None, "score_n": 0}
+    assert _core(sc.score_from_rows([])) == {"score": None, "score_n": 0}
+    assert _core(sc.score_from_rows([{"durchschnittsbewertung": "x"}])) == {"score": None, "score_n": 0}
 
 
 def test_overall_and_category_mean_can_differ_strongly():
@@ -68,7 +74,7 @@ def test_overall_and_category_mean_can_differ_strongly():
     rows[0][CATEGORY_COLUMNS[12]] = 5.0          # 13. Kategorie nur einmal, Wert 5
     score = sc.score_from_rows(rows)
     cats = avg_overall_from_rows(rows)
-    assert score == {"score": 4.8, "score_n": 10}
+    assert _core(score) == {"score": 4.8, "score_n": 10}
     # 12 Kategorien mit 2,0 und eine mit 5,0 → (12 × 2 + 5) / 13 = 2,23
     assert cats["avg_overall"] == pytest.approx(2.23)
     assert score["score"] - cats["avg_overall"] > 2.5
@@ -149,7 +155,7 @@ def test_ratings_with_start_date_adds_score_and_keeps_avg_overall(capped):
 
 
 def test_compute_score_reads_all_pages(capped):
-    assert companies_module._compute_score(28) == {"score": 4.0, "score_n": 2400}
+    assert _core(companies_module._compute_score(28)) == {"score": 4.0, "score_n": 2400}
 
 
 def test_ratings_without_start_date_in_memory(in_memory_db, monkeypatch):

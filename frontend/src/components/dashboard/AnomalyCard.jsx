@@ -22,6 +22,8 @@ import { useDataStatus } from "@/hooks/useDataStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, periodWindows, trimToEvaluated } from "@/lib/anomalySeries"
 import { PARENT_SCOPE, GROUP_COMPANY_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
 import { OUTLIER_UNVALIDATED_NOTE, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, isValidatedScope } from "@/config"
+import { eventCoversPeriod, eventSpanLabel } from "@/lib/userEvents"
+import { UserEventGlyph } from "./UserEvents"
 
 /* ============================================================================
    AnomalyCard — Monatsverlauf mit auffälligen Veränderungen (Inkrement 1).
@@ -37,6 +39,12 @@ import { OUTLIER_UNVALIDATED_NOTE, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, 
    Tooltip den Zusatz "ungeprüft"; mit VITE_SHOW_OUTLIER_MONTHS=false entfallen
    sie ganz (config.js). Außerhalb des geprüften Umfangs (Mitarbeitende,
    Gesamtbewertung, ohne Statusfilter) steht unter dem Diagramm ScopeHint.
+   Eigene Ereignisse (2026-10-17, E32): Die Detailseite übergibt die vom
+   Nutzer eingetragenen Zeiträume (prop "userEvents"); sie erscheinen als
+   nummerierte Marke am oberen Rand mit senkrechter Linie am Startmonat, bei
+   mehreren Monaten mit getönter Fläche, im Tooltip mit Titel und Vermerk.
+   Ein Klick auf die Marke wählt den Zeitraum (onSelectUserEvent). Die Karte
+   im Haupt-Dashboard (compact) zeigt sie nicht.
    ============================================================================ */
 
 // Farbe je Richtung als Theme-Token (index.css: hell 700er-, dunkel 400er-Töne).
@@ -110,6 +118,56 @@ function diamondShape(outlier, { selected = false, onSelect = null, size = 5 } =
     return OutlierMarker
 }
 
+/* Fläche eines allgemeinen Ereignisses (E20/E29); mit interactive zeigt der Zeiger an,
+   dass ein Klick den Zeitraum des Ereignisses wählt (2026-10-17). Dieselben Farben wie
+   das Kennzeichen in der Legende. */
+function eventAreaShape(interactive) {
+    function EventArea({ x, y, width, height }) {
+        if (![x, y, width, height].every(Number.isFinite)) return <g />
+        return (
+            <rect
+                x={x} y={y} width={width} height={height}
+                fill="var(--event-fill, #d97706)" fillOpacity={0.1}
+                stroke="var(--event-fill, #d97706)" strokeOpacity={0.5} strokeDasharray="3 3"
+                style={interactive ? { cursor: "pointer" } : undefined}
+            />
+        )
+    }
+    return EventArea
+}
+
+/* Marke eines eigenen Ereignisses (E32): senkrechte Linie am Startmonat vom
+   oberen Rand bis zur Achse, oben ein Kreis mit der Nummer aus der Liste; bei
+   mehreren Ereignissen im selben Startmonat rücken die Kreise nach unten
+   (slot). Maus-Ereignisse bleiben an der Marke, damit die freie Auswahl
+   (Ziehen) nicht zugleich startet. */
+const USER_EVENT_PIN = 7
+function userEventShape(mark, { selected = false, onSelect = null } = {}) {
+    function UserEventMarker({ x1, y1, x2, y2 }) {
+        if (![x1, y1, x2, y2].every(Number.isFinite)) return <g />
+        const top = Math.min(y1, y2)
+        const bottom = Math.max(y1, y2)
+        const cy = top + USER_EVENT_PIN + mark.slot * (2 * USER_EVENT_PIN + 2)
+        const stop = (e) => e.stopPropagation()
+        return (
+            <g
+                onMouseDown={stop}
+                onMouseUp={stop}
+                onClick={onSelect ? (e) => { stop(e); onSelect(mark) } : undefined}
+                style={onSelect ? { cursor: "pointer" } : undefined}
+                aria-label={`Eigenes Ereignis ${mark.number}: ${mark.title}`}
+            >
+                <line x1={x1} x2={x1} y1={cy} y2={bottom} stroke="var(--user-event)" strokeWidth={selected ? 2 : 1.25} strokeOpacity={0.9} />
+                <circle cx={x1} cy={cy} r={USER_EVENT_PIN} fill="var(--user-event)" stroke="var(--color-bg-card)" strokeWidth={selected ? 2.5 : 1.5} />
+                <text x={x1} y={cy + 0.5} textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={600} fill="var(--color-bg-card)">
+                    {mark.number}
+                </text>
+            </g>
+        )
+    }
+    return UserEventMarker
+}
+
 /* Markierung im Diagramm: Stufe am markierten Monat von Ø davor (links) zu
    Ø danach (rechts). Höhe = Ausmaß im Maßstab der Y-Achse, Form = Richtung,
    Strichstärke = Schweregrad. Der Monatswert selbst bleibt auf der Linie. */
@@ -147,12 +205,16 @@ const fmtDelta = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(v))
 
 const fmtSpan = (from, to) => (from && to && from !== to ? `${fmtPeriod(from)} – ${fmtPeriod(to)}` : fmtPeriod(from ?? to))
 
-function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod = {}, priceCurrency = null, eventAreas = [] }) {
+const TOOLTIP_NOTE_MAX = 140
+
+function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod = {}, priceCurrency = null, eventAreas = [], userEventMarks = [] }) {
     if (!active || !payload?.length) return null
     const point = payload[0].payload
     // Allgemeine Ereignisse, deren Zeitraum diesen Monat enthält (Name nur beim Überfahren, 2026-10-13)
     const pointIdx = periodIndex(point.period)
     const events = eventAreas.filter((e) => periodIndex(e.from) <= pointIdx && pointIdx <= periodIndex(e.to))
+    // Eigene Ereignisse (E32), deren Zeitraum diesen Monat enthält
+    const ownEvents = userEventMarks.filter((e) => eventCoversPeriod(e, point.period))
     const anomaly = anomaliesByPeriod[point.period]
     const outlier = outliersByPeriod[point.period]
     return (
@@ -237,6 +299,26 @@ function AnomalyTooltip({ active, payload, anomaliesByPeriod, outliersByPeriod =
                         Einzelner Monat, kein neues Niveau; beruht auf {outlier.n_values} Bewertungen mit Wert.
                     </p>
                     <p className="m-0 mt-1 text-[11px] text-slate-400">{OUTLIER_UNVALIDATED_NOTE}.</p>
+                </div>
+            )}
+            {ownEvents.length > 0 && (
+                <div className="mt-1.5 pt-1.5 border-t border-slate-700 max-w-[280px]">
+                    <p className="mb-1 inline-flex items-center gap-1.5 text-purple-300 font-medium">
+                        <UserEventGlyph size={12} />
+                        {ownEvents.length === 1 ? "Eigenes Ereignis" : "Eigene Ereignisse"}
+                    </p>
+                    {ownEvents.map((e) => (
+                        <p key={e.id} className="m-0 text-white">
+                            <span className="text-slate-400 tnum">{e.number}.</span> {e.title}{" "}
+                            <span className="text-slate-400">({eventSpanLabel(e)})</span>
+                            {e.note && (
+                                <span className="block text-[11px] text-slate-400 whitespace-pre-line">
+                                    {e.note.length > TOOLTIP_NOTE_MAX ? `${e.note.slice(0, TOOLTIP_NOTE_MAX)}…` : e.note}
+                                </span>
+                            )}
+                        </p>
+                    ))}
+                    <p className="m-0 mt-1 text-[11px] text-slate-400">Eingetragen von Nutzenden; keine Aussage über Ursachen.</p>
                 </div>
             )}
             {events.length > 0 && (
@@ -418,7 +500,9 @@ function isolatedDot(chartData, opacity = 1) {
    kein Zusammenhang mit den Bewertungen berechnet.
    showLegend=false blendet die Zeilen unter dem Diagramm aus (kleine Karte im
    Aktien-Dashboard; die vergrößerte Ansicht zeigt sie). */
-export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null, showLegend = true, selection = null, onSelectPeriod = null, events = null }) {
+/* userEvents (Detailseite, E32): eigene Ereignisse des Unternehmens, sortiert nach
+   Beginn, je mit "number"; onSelectUserEvent(event) beim Klick auf die Marke. */
+export function AnomalyChart({ data, anomalies, loading, error, height = 220, range = null, showLevels = false, compact = false, selectedId = null, onSelect = null, selectedOutlier = null, onSelectOutlier = null, market = null, showLegend = true, selection = null, onSelectPeriod = null, events = null, userEvents = null, onSelectUserEvent = null }) {
     // Freie Auswahl (E17): Ziehen mit gedrückter Maustaste, {start, end} als "YYYY-MM".
     const [drag, setDrag] = useState(null)
     const minReviews = data?.params?.min_reviews_per_month
@@ -545,17 +629,49 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
             return x1 && x2 ? [{ key: `event-${e.id}`, x1, x2, title: e.title, from: e.date_from, to: e.date_to }] : []
         })
     }, [events, chartData])
+    // Eigene Ereignisse (E32) im sichtbaren Ausschnitt: Marke am (ggf. auf den Ausschnitt
+    // begrenzten) Startmonat, Fläche bis zum Endmonat; Nummer wie in der Liste. Nicht in
+    // der kompakten Karte.
+    const userEventMarks = useMemo(() => {
+        if (compact || !userEvents?.length || !chartData.length) return []
+        const first = periodIndex(chartData[0].period)
+        const last = periodIndex(chartData[chartData.length - 1].period)
+        const period = (i) => chartData.find((m) => periodIndex(m.period) === i)?.period
+        const slots = {}
+        return userEvents.flatMap((e, idx) => {
+            const a = Math.max(periodIndex(e.date_from), first)
+            const b = Math.min(periodIndex(e.date_to), last)
+            if (a > b) return []
+            const x1 = period(a)
+            const x2 = period(b)
+            if (!x1 || !x2) return []
+            const slot = slots[x1] ?? 0
+            slots[x1] = slot + 1
+            return [{ ...e, key: `user-event-${e.id}`, number: e.number ?? idx + 1, x1, x2, slot }]
+        })
+    }, [compact, userEvents, chartData])
+    const isSelectedUserEvent = (m) => Boolean(selection && selection.from === m.date_from && selection.to === m.date_to)
     const periodAt = (state) => {
         const idx = Number(state?.activeTooltipIndex)
         return state?.activeLabel ?? (Number.isInteger(idx) ? chartData[idx]?.period : null)
     }
     // Klick auf einen Monat: Veränderung (wie die Stufe selbst), sonst auffälliger
-    // Einzelmonat, sonst – mit onSelectPeriod – der Monat als freie Auswahl.
+    // Einzelmonat, sonst – mit onSelectPeriod – der Monat als freie Auswahl; liegt er in
+    // der Fläche eines eingeblendeten allgemeinen Ereignisses, dessen ganzer Zeitraum
+    // (Nachtrag zu E29, 2026-10-17: Drill-down in das Ereignis).
+    const globalEventAt = (period) => {
+        const idx = periodIndex(period)
+        return eventAreas.find((e) => periodIndex(e.from) <= idx && idx <= periodIndex(e.to)) ?? null
+    }
     const selectMonth = (period) => {
         if (!period) return
         if (onSelect && anomaliesByPeriod[period]) onSelect(anomaliesByPeriod[period].id)
         else if (onSelectOutlier && outliersByPeriod[period]) onSelectOutlier(period)
-        else if (onSelectPeriod) onSelectPeriod(period, period)
+        else if (onSelectPeriod) {
+            const hit = globalEventAt(period)
+            if (hit) onSelectPeriod(hit.from, hit.to)
+            else onSelectPeriod(period, period)
+        }
     }
     const handleChartClick = (state) => selectMonth(periodAt(state))
     const dragHandlers = onSelectPeriod ? {
@@ -613,7 +729,11 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                         ))}
                         {eventAreas.map((a) => (
                             <ReferenceArea key={a.key} x1={a.x1} x2={a.x2} fill="var(--event-fill, #d97706)" fillOpacity={0.1}
-                                stroke="var(--event-fill, #d97706)" strokeOpacity={0.5} strokeDasharray="3 3" ifOverflow="hidden" />
+                                stroke="var(--event-fill, #d97706)" strokeOpacity={0.5} strokeDasharray="3 3" ifOverflow="hidden"
+                                shape={eventAreaShape(Boolean(onSelectPeriod))} />
+                        ))}
+                        {userEventMarks.filter((m) => m.x1 !== m.x2).map((m) => (
+                            <ReferenceArea key={`${m.key}-area`} x1={m.x1} x2={m.x2} fill="var(--user-event)" fillOpacity={isSelectedUserEvent(m) ? 0.14 : 0.07} stroke="none" ifOverflow="hidden" />
                         ))}
                         <XAxis
                             dataKey="period"
@@ -648,7 +768,7 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                             />
                         )}
                         <Tooltip
-                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} outliersByPeriod={outliersByPeriod} priceCurrency={showPrice ? market.currency ?? "" : null} eventAreas={eventAreas} />}
+                            content={<AnomalyTooltip anomaliesByPeriod={anomaliesByPeriod} outliersByPeriod={outliersByPeriod} priceCurrency={showPrice ? market.currency ?? "" : null} eventAreas={eventAreas} userEventMarks={userEventMarks} />}
                             cursor={{ stroke: "var(--color-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
                             filterNull={false}
                         />
@@ -737,6 +857,14 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
                                 y={o.month_mean}
                                 ifOverflow="visible"
                                 shape={diamondShape(o, { selected: o.date === selectedOutlier, onSelect: onSelectOutlier, size: compact ? 4 : 5 })}
+                            />
+                        ))}
+                        {userEventMarks.map((m) => (
+                            <ReferenceLine
+                                key={m.key}
+                                x={m.x1}
+                                shape={userEventShape(m, { selected: isSelectedUserEvent(m), onSelect: onSelectUserEvent })}
+                                ifOverflow="visible"
                             />
                         ))}
                     </LineChart>
@@ -829,7 +957,17 @@ export function AnomalyChart({ data, anomalies, loading, error, height = 220, ra
             <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span className="inline-flex items-center gap-1.5">
                     <span className="inline-block w-3 h-2.5 rounded-[2px] border border-dashed border-amber-600 bg-amber-100" />
-                    Allgemeines Ereignis, Hypothese ({eventAreas.length}; Name und Zeitraum beim Überfahren der Fläche)
+                    Allgemeines Ereignis, Hypothese ({eventAreas.length}; Name und Zeitraum beim Überfahren der Fläche
+                    {onSelectPeriod ? ", Klick auf die Fläche wählt ihren Zeitraum" : ""})
+                </span>
+            </p>
+        )}
+        {showLegend && !error && userEventMarks.length > 0 && (
+            <p className="m-0 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span className="inline-flex items-center gap-1.5">
+                    <UserEventGlyph number={1} size={12} />
+                    Eigenes Ereignis ({userEventMarks.length}; Nummer wie in der Liste „Eigene Ereignisse“, Titel beim Überfahren
+                    {onSelectUserEvent ? ", Klick auf die Marke wählt den Zeitraum" : ""}; keine Aussage über Ursachen)
                 </span>
             </p>
         )}

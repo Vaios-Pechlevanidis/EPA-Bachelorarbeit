@@ -386,7 +386,7 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
                 )}
               </DialogTitle>
               <p className="m-0 mt-1 text-[11px] text-slate-500">
-                {topic.frequency} Erwähnungen · Ø {fmt(topic.avgRating, 1)} / 5
+                {topic.frequency} Erwähnungen · Ø {fmt(topic.avgRating, 2)} / 5
                 {topic.statistical_meta?.review_count != null && ` · n=${topic.statistical_meta.review_count}`}
               </p>
             </div>
@@ -467,7 +467,7 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
               <div className={`bg-white border rounded-md px-4 py-3.5 text-center ${tone.border}`}>
                 <p className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 mb-1">Ø Rating</p>
                 <p className={`text-[26px] font-semibold tnum leading-tight ${tone.text}`}>
-                  {fmt(topic.avgRating, 1)}
+                  {fmt(topic.avgRating, 2)}
                 </p>
                 <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                   <div className={`h-full ${tone.bar}`} style={{ width: `${(Number(topic.avgRating) / 5) * 100}%` }} />
@@ -594,7 +594,7 @@ export default function TopicDetailModal({ open, onOpenChange, topic, onBackToTa
                 {/* Ø Sterne des Topics und seine Einstufung */}
                 <div className="text-center mb-4">
                   <p className={`text-[36px] font-semibold tnum tracking-tight leading-none ${meta.text}`}>
-                    Ø {fmt(topic.avgRating, 1)}
+                    Ø {fmt(topic.avgRating, 2)}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1">
                     Sterne · Einstufung <span className={`font-semibold ${meta.text}`}>{meta.label}</span>

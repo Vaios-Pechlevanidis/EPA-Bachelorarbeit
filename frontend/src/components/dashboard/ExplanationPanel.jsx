@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react"
+import { ChevronDown, ChevronRight, ExternalLink, MousePointerClick } from "lucide-react"
 import { Headline, PreviewStatus } from "./CardPreview"
 import { stageLabel } from "@/lib/explanationText"
+import { fmtPeriod } from "@/lib/anomalySeries"
 
 /* ============================================================================
    ExplanationPanel — "Mögliche Zusammenhänge" (Inkrement 5, Erklärungsansätze).
@@ -32,6 +33,11 @@ import { stageLabel } from "@/lib/explanationText"
    Zahl der Ansätze als Kennzahl, die ersten Ansätze knapp), ein Klick öffnet die volle
    Ansicht im Dialog (ExplanationContent). Der Untertitel kommt aus
    explanationSubtitle, kurz auf der Karte, vollständig im Dialog.
+   Allgemeine Ereignisse (Nachtrag zu E29, 2026-10-17): Die Zusammenfassung trägt
+   die allgemeinen Ereignisse im Ereignisfenster (explanation_summary.global_events).
+   Sie stehen als eigener Block "Hypothese" unter den Ansätzen, ohne Stufe und
+   ohne Eingang in die Rangfolge; "Zeitraum wählen" setzt den Zeitraum des
+   Ereignisses als Auswahl (onSelectPeriod), also den Drill-down in das Ereignis.
    ============================================================================ */
 
 export const EXPLANATION_NOTE = "Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine Ursachen."
@@ -257,6 +263,76 @@ function ExplanationEntry({ entry, rules }) {
     )
 }
 
+const spanLabel = (g) => (g.from === g.to ? fmtPeriod(g.from) : `${fmtPeriod(g.from)} – ${fmtPeriod(g.to)}`)
+const globalCountText = (n) => `${n} ${n === 1 ? "allgemeines Ereignis" : "allgemeine Ereignisse"}`
+
+/* Kennzeichen wie in Legende und Belegliste: gestrichelte bernsteinfarbene Fläche. */
+function GlobalEventMark() {
+    return <span aria-hidden="true" className="inline-block w-3 h-2.5 rounded-[2px] border border-dashed border-amber-600 bg-amber-100 flex-none" />
+}
+
+/* Allgemeine Ereignisse im Ereignisfenster als Hypothese (Nachtrag zu E29, 2026-10-17):
+   Titel, Zeitraum, Lage zum Fenster, Vermerk, Quelle; "Zeitraum wählen" setzt den
+   Zeitraum des Ereignisses als Auswahl (Drill-down). Ohne Stufe, zählt nicht als Beleg. */
+export function GlobalEventList({ events, note = null, onSelectPeriod = null }) {
+    if (!events?.length) return null
+    return (
+        <div className="mt-3 pt-3 border-t border-slate-100">
+            <p className="m-0 text-[11px] font-medium text-slate-700 flex items-center gap-1.5">
+                <GlobalEventMark />
+                {events.length === 1 ? "Allgemeines Ereignis im Ereignisfenster" : `${events.length} allgemeine Ereignisse im Ereignisfenster`} · Hypothese
+            </p>
+            <ul className="m-0 mt-1.5 p-0 list-none space-y-2">
+                {events.map((g) => (
+                    <li key={g.id} className="text-[11.5px] min-w-0">
+                        <p className="m-0 text-slate-800 break-words">
+                            <span className="font-medium">{g.title}</span>
+                            <span className="text-slate-500 tnum">
+                                {" "}· {spanLabel(g)}{g.months ? ` · ${g.months} ${g.months === 1 ? "Monat" : "Monate"}` : ""}{g.time_phrase ? ` · ${g.time_phrase}` : ""}
+                                {g.scope ? ` · ${g.scope}` : ""}
+                            </span>
+                        </p>
+                        {g.note && <p className="m-0 mt-0.5 text-[11px] text-slate-500 break-words">{g.note}</p>}
+                        <p className="m-0 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                            {onSelectPeriod && (
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 text-slate-700 hover:text-slate-900 underline underline-offset-2"
+                                    onClick={() => onSelectPeriod(g.from, g.to)}
+                                    title="Zeitraum des Ereignisses als Auswahl setzen: Vergleich, Bewertungen, Erklärungsansätze und Berichte dieser Monate"
+                                >
+                                    <MousePointerClick className="w-3 h-3" aria-hidden="true" />
+                                    Zeitraum {spanLabel(g)} wählen
+                                </button>
+                            )}
+                            {g.url && (
+                                <a href={g.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 hover:underline underline-offset-2">
+                                    Quelle (Eurostat) <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                                </a>
+                            )}
+                        </p>
+                    </li>
+                ))}
+            </ul>
+            {note && <p className="m-0 mt-1.5 text-[11px] text-slate-400">{note}</p>}
+        </div>
+    )
+}
+
+/* Eine Zeile für die Vorschau-Karte: Zahl und erster Titel. */
+function GlobalEventPreviewLine({ events }) {
+    if (!events?.length) return null
+    const first = events[0]
+    return (
+        <p className="m-0 mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-600 flex items-start gap-1.5 min-w-0" title={events.map((g) => `${g.title} (${spanLabel(g)})`).join("; ")}>
+            <GlobalEventMark />
+            <span className="min-w-0 truncate">
+                {globalCountText(events.length)}, Hypothese: {first.title} ({spanLabel(first)}){events.length > 1 ? " …" : ""}
+            </span>
+        </p>
+    )
+}
+
 /* Vorschau für die Karte (2026-10-16): Kennzahl (Zahl der Ansätze oder "Offen")
    und die ersten Ansätze mit Ereignisart, Signalen und Datum, ohne Titel und
    Links; die volle Liste steht im Dialog (ExplanationContent). */
@@ -269,8 +345,14 @@ export function ExplanationPreview({ data, loading, error, max = 2 }) {
     if (!summary) return null
     if (summary.error) return <PreviewStatus>Erklärungsansätze konnten nicht berechnet werden: {summary.error}</PreviewStatus>
     const belege = `${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"}`
+    const globals = summary.global_events ?? []
     if (summary.state === "offen") {
-        return <Headline value="Offen" sub={`${belege} im Ereignisfenster · keiner erreicht die Stufe niedrig`} />
+        return (
+            <div>
+                <Headline value="Offen" sub={`${belege} im Ereignisfenster · keiner erreicht die Stufe niedrig`} />
+                <GlobalEventPreviewLine events={globals} />
+            </div>
+        )
     }
     const shown = entries.slice(0, max)
     const rest = entries.length - shown.length
@@ -291,12 +373,14 @@ export function ExplanationPreview({ data, loading, error, max = 2 }) {
                 ))}
             </ul>
             {rest > 0 && <p className="m-0 text-[11px] text-slate-500">+ {rest} {rest === 1 ? "weiterer" : "weitere"}</p>}
+            <GlobalEventPreviewLine events={globals} />
         </div>
     )
 }
 
-/* Volle Ansicht im Dialog: Liste der Ansätze, "Wie wird eingestuft?" und Hinweis. */
-export function ExplanationContent({ data, loading, error }) {
+/* Volle Ansicht im Dialog: Liste der Ansätze, allgemeine Ereignisse als Hypothese
+   (onSelectPeriod: "Zeitraum wählen"), "Wie wird eingestuft?" und Hinweis. */
+export function ExplanationContent({ data, loading, error, onSelectPeriod = null }) {
     const [showRules, setShowRules] = useState(false)
     const summary = data?.explanation_summary ?? null
     const entries = data?.explanations ?? []
@@ -323,6 +407,9 @@ export function ExplanationContent({ data, loading, error }) {
                 <ul className="m-0 p-0 list-none">
                     {entries.map((entry) => <ExplanationEntry key={entry.id ?? entry.rank} entry={entry} rules={rules} />)}
                 </ul>
+            )}
+            {summary && !loading && !error && !summary.error && (
+                <GlobalEventList events={summary.global_events} note={summary.global_event_note} onSelectPeriod={onSelectPeriod} />
             )}
             {rules && !loading && !error && (
                 <div className="mt-3">

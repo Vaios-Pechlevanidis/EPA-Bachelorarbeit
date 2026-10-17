@@ -3,17 +3,30 @@
  *
  * Seiten im Dashboard-Stil (A4 Portrait, helles Theme), in der Reihenfolge der Seite:
  *   01 Cover                       — Brand-Bar, Hero (Firmenname + Datum), Meta-Band, Inhalt
- *   02 Datenstand + Kennzahlen     — Datenstand-Karte (FA-37) und die fünf Kacheln mit n,
- *                                    Warnung bei kleiner Basis und Datenbasis (FA-25, FA-26)
- *   03 Zeitverlauf + Topics im Detail — zwei Diagramm-Karten mit Legende und Kennzahlen
- *   04 Anomalien im Verlauf        — Diagramm-Karte, Eignung, markierte Veränderungen und Einzelmonate
- *                                    (Einzelmonate nur mit SHOW_OUTLIER_MONTHS; Hinweise „ungeprüft“
- *                                    und Prüfumfang aus config.js, E30)
- *   05 Topic-Übersicht             — Stats-Strip, Sentiment-Tabs, Tabelle aller Topics (mehrseitig)
+ *   02 Kurzbericht                 — Lage der Bewertung, jüngste auffällige Veränderungen mit Folge
+ *                                    für das Niveau, „Was gut läuft“ / „Was verbessert werden sollte“
+ *                                    nach festen Regeln (lib/reportSummary.js, Nachtrag 2026-10-17)
+ *   03 Kennzahlen                  — die fünf Kacheln mit n, Warnung bei kleiner Basis und
+ *                                    Datenbasis (FA-25, FA-26)
+ *   04 Zeitverlauf + Topics im Detail — zwei Diagramm-Karten mit Legende und Kennzahlen
+ *   05 Anomalien im Verlauf        — Diagramm-Karte, Eignung, markierte Veränderungen und Einzelmonate
+ *                                    (Einzelmonate nur mit SHOW_OUTLIER_MONTHS)
+ *   06 Topic-Übersicht             — Stats-Strip, Sentiment-Tabs, Tabelle aller Topics (mehrseitig)
+ *   07 Technische Hinweise         — letzte Seite (Nachtrag 2026-10-17): Datenstand-Karte (FA-37),
+ *                                    Berechnung und Zeitfenster der Kacheln (FA-38), Schwellen der
+ *                                    Erkennung, Hinweise „ungeprüft“ und Prüfumfang (config.js, E30),
+ *                                    Hinweise zur Topic-Übersicht, Regeln des Kurzberichts,
+ *                                    Datenbasis-Kennzeichen. Die Inhaltsseiten zeigen nur die
+ *                                    Kernelemente und verweisen hierher.
  *
  * Chart-Extraktion: SVG → PNG (html2canvas als Rückfall), Diagramme aus dem DOM des Dashboards.
  * Texte und Schwellen kommen aus denselben Bibliotheken wie das Dashboard
- * (lib/dataStatusText.js, lib/rollingAverage.js, lib/dataBasis.js, lib/scoreText.js).
+ * (lib/dataStatusText.js, lib/rollingAverage.js, lib/dataBasis.js, lib/scoreText.js, lib/reportSummary.js).
+ *
+ * Prüfung 2026-10-17 (docs/feature-doku/16-report-qualitaet.md): zwei Nachkommastellen für Mittel,
+ * 95-%-Intervalle (Ø Score, Trend-Differenz), Stabilität je Veränderung, „Einstufung“ statt
+ * „Sentiment“, Quellenaufteilung der Topic-Übersicht, Prognose mit Bandbreite und Backtest,
+ * Kurzbericht mit Datenstand, Warnungen und nächsten Schritten.
  *
  * Hauptexport: exportKPIsAsPDF(kpiData); Firmenvergleich: exportCompareAsPDF(compareData)
  */
@@ -26,7 +39,8 @@ import { evidenceText, fmtN, lastImportText, marketText, platformText, sourceLin
 import { fmtPeriod } from '../lib/anomalySeries';
 import { OUTLIER_UNVALIDATED_NOTE, SHOW_FORECAST, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, isValidatedScope } from '../config';
 import { NEGATIVE_TOPIC_LABEL, TIMELINE_LABEL } from '../lib/labels';
-import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, scoreCountText, scoreTrendWindowsText } from '../lib/scoreText';
+import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, UNCERTAINTY_NOTE, scoreCountText, scoreTrendWindowsText, scoreUncertaintyText } from '../lib/scoreText';
+import { buildReportSummary } from '../lib/reportSummary';
 // ═══════════════════════════════════════════════════════════════════════════
 // COLORS — gleiche Tokens wie das Frontend (colors_and_type.css)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -589,7 +603,7 @@ const kpiFooterLines = (doc, card, innerW) => {
 
 const kpiCardHeight = (doc, card, w) => {
     const n = kpiFooterLines(doc, card, w - 8).length;
-    return 26 + n * KPI_FOOTER_LH + (card.warning ? KPI_FOOTER_LH : 0) + 2.5;
+    return 27 + n * KPI_FOOTER_LH + (card.warning ? KPI_FOOTER_LH : 0) + 2.5;
 };
 
 const drawKPICard = (doc, x, y, w, h, opts) => {
@@ -617,7 +631,7 @@ const drawKPICard = (doc, x, y, w, h, opts) => {
     doc.text(fitText(doc, String(label), innerW), ix, y + 6);
 
     // Datenbasis-Kennzeichen rechts in der Badge-Zeile (unter dem Wert)
-    if (basis) drawBasisPill(doc, x + w - 3, y + 18.4, basis, { align: 'right', small: true });
+    if (basis) drawBasisPill(doc, x + w - 3, y + 19.4, basis, { align: 'right', small: true });
 
     // Wert: Text (Topic-Name) kleiner, Zahl groß
     const valStr = String(value);
@@ -638,9 +652,9 @@ const drawKPICard = (doc, x, y, w, h, opts) => {
     }
 
     // Badge (Pille unter dem Wert); die Zeile bleibt auch ohne Badge frei (Kennzeichen rechts)
-    const fy = y + 26;
+    const fy = y + 27;
     if (badge) {
-        const badgeY = y + 18.2;
+        const badgeY = y + 19.2;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7);
         const bText = fitText(doc, String(badge), innerW - 4);
@@ -675,11 +689,6 @@ const kpiGridRows = (doc, cards, perRow, cardW) => {
     return rows;
 };
 
-const kpiGridHeight = (doc, cards, { perRow = 3, gap = 3 } = {}) => {
-    const cardW = (PAGE.cw - (perRow - 1) * gap) / perRow;
-    const rows = kpiGridRows(doc, cards, perRow, cardW);
-    return rows.reduce((s, r) => s + r.h, 0) + Math.max(0, rows.length - 1) * gap;
-};
 
 const drawKPIGrid = (doc, y, cards, { perRow = 3, gap = 3 } = {}) => {
     const cardW = (PAGE.cw - (perRow - 1) * gap) / perRow;
@@ -769,9 +778,12 @@ const drawCardChart = (doc, x, y, w, h, imgResult, emptyText = 'Chart nicht verf
     doc.addImage(imgResult.dataUrl, 'PNG', ix, iy, iw, ih, undefined, 'FAST');
 };
 
-// Stats-Footer-Grid (4 Zellen, jede mit optionalem Tone)
+// Stats-Footer-Grid (4 Zellen, jede mit optionalem Tone). Höhe 20 mm: Bezeichnung,
+// Wert (14 pt) und Unterzeile (7 pt) brauchen drei getrennte Grundlinien (Korrektur
+// 2026-10-17, vorher 16 mm mit überlappender Unterzeile).
+const STATS_H = 20;
 const drawStatsFooter = (doc, x, y, w, cells) => {
-    const h = 16;
+    const h = STATS_H;
     const cellW = w / cells.length;
 
     cells.forEach((cell, i) => {
@@ -803,7 +815,7 @@ const drawStatsFooter = (doc, x, y, w, cells) => {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(isText ? 10 : 14);
         doc.setTextColor(...(cell.tone ? t.value : C.s900));
-        doc.text(fitText(doc, valStr, cellW - 6), cx + 4, y + 11);
+        doc.text(fitText(doc, valStr, cellW - 6), cx + 4, y + 11.5);
 
         // Sub
         if (cell.sub) {
@@ -887,13 +899,18 @@ const drawLegendSwatch = (doc, item, x, y) => {
 //         legend: [{label, color, dashed, shape, fill, sourceNote}], stats: [{label, value, sub, tone}],
 //         caption: string }
 const drawDashboardCard = (doc, y, opts) => {
-    const { header, chart, chartH = 70, legend = [], stats = [], caption, emptyText } = opts;
+    const { header, chart, chartH: chartHMax = 70, legend = [], stats = [], caption, emptyText } = opts;
     const cardX = PAGE.mx;
     const cardW = PAGE.cw;
 
+    // Höhe des Diagrammbereichs: höchstens chartH, sonst das Seitenverhältnis des Bildes
+    // (breite Diagramme stehen sonst mit Leerraum ober- und unterhalb im Rahmen)
+    const chartH = chart?.dataUrl && chart.w > 0 && chart.h > 0
+        ? Math.max(24, Math.min(chartHMax, ((cardW - 8) * chart.h) / chart.w + 4))
+        : chartHMax;
     const headerH = 18;
     const lg = layoutLegend(doc, legend, cardW - 12);
-    const statsH = stats.length ? 16 : 0;
+    const statsH = stats.length ? STATS_H : 0;
     const cardH = headerH + chartH + lg.height + statsH;
 
     // Karten-Rahmen
@@ -1006,7 +1023,7 @@ const ratingTone = (r) => {
     return C.rose500;
 };
 
-// Tabelle: Topic (+ Beispiel) | Erwähnungen | Ø Rating | Sentiment | Datenqualität,
+// Tabelle: Topic (+ Beispiel) | Erwähnungen | Ø Rating | Einstufung (Ø Sterne) | Datenqualität,
 // Spalten wie TopicTableModal. Kopf und Zeilen getrennt, damit die Tabelle über
 // mehrere Seiten laufen kann (alle Topics, keine Kürzung).
 const TOPIC_ROW_H = 7;        // ohne Beispielzeile
@@ -1049,7 +1066,7 @@ const drawTopicTableHead = (doc, x, y, w) => {
     drawSortChevrons(doc, cols.ment + 1.5, y, 'down');
     doc.text('Ø RATING', cols.rating, y);
     drawSortChevrons(doc, cols.rating + doc.getTextWidth('Ø RATING') + 1, y, 'none');
-    doc.text('SENTIMENT', cols.sentiment, y);
+    doc.text('EINSTUFUNG', cols.sentiment, y);
     doc.text('DATENQUALITÄT', cols.quality, y);
     return y + TOPIC_HEAD_H;
 };
@@ -1079,7 +1096,7 @@ const drawTopicRow = (doc, x, curY, w, topic, idx, rowH) => {
     doc.setTextColor(...C.s900);
     let name = String(topic.topic ?? '');
     let tagW = 0;
-    const n = topic.statistical_meta?.review_count;
+    const n = topic.statistical_meta?.sample_size ?? topic.statistical_meta?.review_count;
     if (limited && n != null) {
         doc.setFont('courier', 'normal');
         doc.setFontSize(6);
@@ -1127,7 +1144,7 @@ const drawTopicRow = (doc, x, curY, w, topic, idx, rowH) => {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
         doc.setTextColor(...C.s900);
-        doc.text(rating.toFixed(1).replace('.', ','), barX + barW + 2.5, curY);
+        doc.text(rating.toFixed(2).replace('.', ','), barX + barW + 2.5, curY);
     } else {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...C.s400);
@@ -1331,18 +1348,18 @@ const drawDataStatusCard = (doc, y, status, { lastImportLocal = null } = {}) => 
 // Kritischste Kategorie, Negativstes Topic), mit n, Warnung bei kleiner Basis und Datenbasis
 // ═══════════════════════════════════════════════════════════════════════════
 
-const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negativeTopic, negativeTopicItem }) => {
+const buildKpiCards = ({ avgScore, avgCount, scoreCi95 = null, trend, rolling, mostCritical, negativeTopic, negativeTopicItem }) => {
     const cards = [];
 
     // Ø Score: Mittel der Gesamtnote, Mitarbeitende, ungewichtet (D1, FA-38)
     const scoreNum = avgScore !== '-' && avgScore != null ? Number(avgScore) : NaN;
     cards.push({
         label: 'Ø Score',
-        value: Number.isFinite(scoreNum) ? fmtNum(scoreNum, 1) : '–',
+        value: Number.isFinite(scoreNum) ? fmtNum(scoreNum, 2) : '–',
         badge: '/ 5',
         tone: Number.isFinite(scoreNum) ? scoreTone(scoreNum) : 'neutral',
         basis: 'stars',
-        footer: [scoreCountText(avgCount)],
+        footer: [scoreCountText(avgCount), ...(scoreCi95 != null ? [scoreUncertaintyText(scoreCi95)] : [])],
         warning: smallBasisText(avgCount, MIN_REVIEWS_PER_WINDOW),
     });
 
@@ -1359,7 +1376,7 @@ const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negat
         basis: 'stars',
         footer: [
             months ? `Gesamtnote, ${months} volle Monate vs. ${months} davor` : 'Gesamtnote, Mitarbeitende',
-            ...(trend?.raw ? [scoreTrendWindowsText(trend.raw)] : []),
+            ...(nCur != null && nPrev != null ? [`n = ${fmtInt(nCur)} vs. ${fmtInt(nPrev)}${trend?.raw?.difference_ci95 != null ? ` · Differenz ±${fmtNum(trend.raw.difference_ci95, 2)} (95 %)` : ''}`] : []),
         ],
         warning: trend?.nReviews
             ? smallBasisText(Math.min(nCur ?? Infinity, nPrev ?? Infinity), MIN_REVIEWS_PER_WINDOW, 'Bewertungen', 'in einem Fenster')
@@ -1372,8 +1389,8 @@ const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negat
     if (!rolling) rFooter.push('Sternebewertung, Mitarbeitende');
     else if (!rolling.anchor) rFooter.push('keine datierten Bewertungen mit Gesamtnote');
     else {
-        rFooter.push(`12 M: ${fmtRollingMonth(rolling.short.from)} – ${fmtRollingMonth(rolling.short.to)}, n = ${fmtInt(rolling.short.n)} · 24 M: ab ${fmtRollingMonth(rolling.long.from)}, n = ${fmtInt(rolling.long.n)}`);
         rFooter.push(`12-Monats-Schnitt ${rollingPhrase(rolling)}.`);
+        rFooter.push(`n = ${fmtInt(rolling.short.n)} (12 M) · ${fmtInt(rolling.long.n)} (24 M)`);
     }
     const rWarn = rolling?.anchor ? rollingWarnings(rolling) : [];
     cards.push({
@@ -1392,7 +1409,7 @@ const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negat
     cards.push({
         label: CRITICAL_LABEL,
         value: mc ? mc.topicName : '–',
-        badge: mc ? `${fmtNum(mcScore, 1)} / 5` : null,
+        badge: mc ? `${fmtNum(mcScore, 2)} / 5` : null,
         tone: mc ? scoreTone(mcScore) : 'neutral',
         basis: 'stars',
         footer: [
@@ -1421,6 +1438,12 @@ const buildKpiCards = ({ avgScore, avgCount, trend, rolling, mostCritical, negat
     return cards;
 };
 
+// Mittlere halbe Bandbreite (80 %, Backtest) der Prognosepunkte oder null (2026-10-17)
+const forecastBand = (tf) => {
+    const pts = (tf?.forecastPoints || []).filter((d) => d.low != null && d.high != null);
+    return pts.length ? pts.reduce((s, d) => s + (d.high - d.low) / 2, 0) / pts.length : null;
+};
+
 // Kennzahlen unter der Timeline je Metrik, wie SummaryStats der Karte
 const timelineStats = (tf) => {
     const st = tf?.stats || {};
@@ -1441,8 +1464,17 @@ const timelineStats = (tf) => {
             out.push({ label: 'Max / Min', value: `${fmtSigned(parseFloat(st.maxTrend), 2)} / ${fmtNum(parseFloat(st.minTrend), 2)}`, sub: 'Spanne' });
         }
     } else {
-        if (st.avgHistorical != null) out.push({ label: 'Ø Historisch', value: fmtNum(st.avgHistorical, 2), sub: st.dateRange || 'gesamte Historie', tone: 'info' });
-        if (SHOW_FORECAST && st.avgForecast != null) out.push({ label: 'Ø Prognose', value: fmtNum(st.avgForecast, 2), sub: st.forecastRange || 'kommende Monate', tone: 'warn' });
+        // Ø der Monatsmittel (jeder Monat gleich gewichtet), nicht das Mittel aller Bewertungen (Ø Score)
+        if (st.avgHistorical != null) out.push({ label: 'Ø Monatsmittel', value: fmtNum(st.avgHistorical, 2), sub: `${st.dataPoints != null ? `${st.dataPoints} Monate, ` : ''}ungewichtet`, tone: 'info' });
+        if (SHOW_FORECAST && st.avgForecast != null) {
+            const band = forecastBand(tf);
+            out.push({
+                label: 'Ø Prognose',
+                value: `${fmtNum(st.avgForecast, 1)}${band != null ? ` ±${fmtNum(band, 1)}` : ''}`,
+                sub: `${st.forecastRange || 'kommende Monate'}${band != null ? ' · Bandbreite 80 %' : ''}`,
+                tone: 'warn',
+            });
+        }
     }
     return out;
 };
@@ -1534,6 +1566,115 @@ const DIRECTION_LABEL = { fall: 'Abfall', rise: 'Anstieg' };
 const SEVERITY_LABEL  = { high: 'deutlich', medium: 'mäßig' };
 
 // ═══════════════════════════════════════════════════════════════════════════
+// KURZBERICHT — zwei Spalten „Was gut läuft“ / „Was verbessert werden sollte“
+// (Einträge aus lib/reportSummary.js: {title, detail, warning, basis})
+// ═══════════════════════════════════════════════════════════════════════════
+
+const REPORT_COL = { headH: 12, pad: 4, titleFs: 7.5, titleLh: 3.4, detailFs: 6.8, lineH: 3.1, gap: 2.2 };
+
+const basisPillWidth = (doc, key) => {
+    const label = BASIS[key]?.label;
+    if (!label) return 0;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    return doc.getTextWidth(label) + 4;
+};
+
+// Titel eines Eintrags, höchstens zwei Zeilen neben dem Kennzeichen der Datenbasis
+const reportTitleLines = (doc, item, innerW) => {
+    const pillW = basisPillWidth(doc, item.basis);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(REPORT_COL.titleFs);
+    return doc.splitTextToSize(String(item.title ?? ''), innerW - pillW - 3).slice(0, 2);
+};
+
+const reportEntryHeight = (doc, item, innerW) => {
+    const titleLines = reportTitleLines(doc, item, innerW).length;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(REPORT_COL.detailFs);
+    const lines = doc.splitTextToSize(String(item.detail ?? ''), innerW).length;
+    return 4 + (titleLines - 1) * REPORT_COL.titleLh + lines * REPORT_COL.lineH + (item.warning ? REPORT_COL.lineH : 0) + REPORT_COL.gap;
+};
+
+// Höhe einer Spalte bei Breite w (für gleich hohe Spalten nebeneinander)
+const reportColumnHeight = (doc, w, items) => {
+    const innerW = w - 2 * REPORT_COL.pad - 4;
+    const body = items.length ? items.reduce((sum, it) => sum + reportEntryHeight(doc, it, innerW), 0) : 8;
+    return REPORT_COL.headH + REPORT_COL.pad + body + 1;
+};
+
+const drawReportColumn = (doc, x, y, w, h, { title, sub, tone, items, emptyText }) => {
+    const t = TONE[tone] || TONE.neutral;
+    doc.setFillColor(...C.s0);
+    doc.setDrawColor(...t.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, w, h, 2, 2, 'FD');
+
+    // Kopfband in der Farbe der Spalte (untere Ecken eckig)
+    doc.setFillColor(...t.bg);
+    doc.roundedRect(x, y, w, REPORT_COL.headH, 2, 2, 'F');
+    doc.rect(x, y + REPORT_COL.headH - 2.5, w, 2.5, 'F');
+    doc.setDrawColor(...t.border);
+    doc.setLineWidth(0.2);
+    doc.line(x, y + REPORT_COL.headH, x + w, y + REPORT_COL.headH);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...t.text);
+    doc.text(title, x + REPORT_COL.pad, y + 5.4);
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(6.5);
+    doc.text(String(sub).toUpperCase(), x + REPORT_COL.pad, y + 9.6);
+
+    const innerX = x + REPORT_COL.pad + 4;
+    const innerW = w - 2 * REPORT_COL.pad - 4;
+    let cy = y + REPORT_COL.headH + REPORT_COL.pad + 1;
+    if (!items.length) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s500);
+        doc.text(fitText(doc, emptyText, innerW + 4), x + REPORT_COL.pad, cy + 1);
+        return;
+    }
+    items.forEach((it) => {
+        doc.setFillColor(...t.accent);
+        doc.circle(x + REPORT_COL.pad + 1.2, cy - 1, 0.9, 'F');
+        drawBasisPill(doc, x + w - REPORT_COL.pad, cy - 2.8, it.basis, { align: 'right', small: true });
+        const titleLines = reportTitleLines(doc, it, innerW);
+        doc.setTextColor(...C.s900);
+        titleLines.forEach((line, i) => doc.text(line, innerX, cy + i * REPORT_COL.titleLh));
+        cy += 4 + (titleLines.length - 1) * REPORT_COL.titleLh;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(REPORT_COL.detailFs);
+        doc.setTextColor(...C.s600);
+        cy = drawWrapped(doc, it.detail, innerX, cy, innerW, { lineH: REPORT_COL.lineH });
+        if (it.warning) cy = drawWarningLine(doc, it.warning, innerX, cy, innerW, REPORT_COL.lineH);
+        cy += REPORT_COL.gap;
+    });
+};
+
+// Liste kurzer Hinweise (Warnungen in Bernstein mit Dreieck, sonst nummeriert oder mit Punkt),
+// jeder Eintrag umbrechend; gibt die nächste freie Grundlinie zurück.
+const drawNoteList = (doc, y, items, { tone = null, numbered = false, ensureSpace = (v) => v } = {}) => {
+    let curY = y;
+    items.forEach((text, i) => {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.8);
+        const lines = doc.splitTextToSize(String(text), PAGE.cw - 5).length;
+        curY = ensureSpace(curY, lines * 3 + 1.5);
+        if (tone === 'warn') {
+            doc.setFillColor(...C.amber500);
+            doc.triangle(PAGE.mx, curY, PAGE.mx + 2.2, curY, PAGE.mx + 1.1, curY - 2, 'F');
+            doc.setTextColor(...C.amber700);
+        } else {
+            doc.setTextColor(...C.s600);
+            doc.text(numbered ? `${i + 1}.` : '•', PAGE.mx, curY);
+        }
+        curY = drawWrapped(doc, text, PAGE.mx + 5, curY, PAGE.cw - 5, { lineH: 3 }) + 0.8;
+    });
+    return curY;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 // HAUPT-EXPORT — alle Elemente des Dashboards in der Reihenfolge der Seite
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1546,6 +1687,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
         dataStatus = null,             // GET /companies/{id}/data-status
         avgScore = '-',                // Ø Score: Mittel der Gesamtnote (score, D1)
         avgCount = null,               // score_n
+        scoreCi95 = null,              // halbe Breite des 95-%-Intervalls (2026-10-17)
         categoryMean = null,           // avg_overall: Mittel der Kategorienmittel
         trend = null,
         rolling = null,                // GET /companies/{id}/ratings/trend?mode=rolling
@@ -1581,6 +1723,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
     const headerLabel = `WorkPulse · ${companyName} — Analytics Report`;
     const footerLeft  = `WorkPulse · ${companyName}`;
     const limit = PAGE.h - 19;   // unterste Grundlinie des Inhalts, über der Fußzeile
+    const TECH_PAGE_REF = '„Technische Hinweise“ (letzte Seite)';
 
     // Seitenverwaltung: Inhaltsseiten mit Kopfzeile; das Inhaltsverzeichnis entsteht
     // am Ende aus den Startseiten der Abschnitte.
@@ -1637,41 +1780,157 @@ export const exportKPIsAsPDF = async (kpiData) => {
     });
 
     // ───────────────────────────────────────────────────────────────────────
-    // SEITE 2 — DATENSTAND + KENNZAHLEN
+    // SEITE 2 — KURZBERICHT (Nachtrag 2026-10-17): Lage, jüngste Veränderungen mit
+    // Folge für das Niveau, Stärken und Handlungsfelder nach festen Regeln
+    // (lib/reportSummary.js); nur aus Daten, die der Export ohnehin erhält.
     // ───────────────────────────────────────────────────────────────────────
-    let y = startSection('Datenstand & Kennzahlen', 'Abdeckung des Datensatzes, fünf Kacheln mit n und Datenbasis');
-    y = drawSectionTitle(doc, y, 1, 'Datenstand', 'Datensatz · Abdeckung · Zeitstempel');
-    y = drawDataStatusCard(doc, y, dataStatus, { lastImportLocal });
+    const an = anomalyData;
+    const anomalies = an?.anomalies || [];
+    // Einzelmonate (E14) nur mit SHOW_OUTLIER_MONTHS: sonst weder Legende noch Kachel noch Liste.
+    const outliers = SHOW_OUTLIER_MONTHS ? (an?.outliers || []) : [];
+    const elig = an?.eligibility || null;
+    const minReviews = an?.minReviews ?? dataStatus?.thresholds?.min_reviews_per_month ?? 5;
+    const unvalidatedScope = Boolean(an && !an.error && !(elig && !elig.eligible) && !isValidatedScope(an));
+    const report = buildReportSummary({
+        avgScore, avgCount, scoreCi95, trend, rolling, mostCritical, negativeTopic, negativeTopicItem, topics, anomalyData,
+        dataStatus, timelineFilters, unvalidatedScope, now,
+    });
+    let y = startSection('Kurzbericht', 'Lage, jüngste Veränderungen, Stärken und Handlungsfelder');
+    y = drawSectionTitle(doc, y, 1, 'Kurzbericht', 'Zusammenfassung · nach festen Regeln');
 
-    const kpis = buildKpiCards({ avgScore, avgCount, trend, rolling, mostCritical, negativeTopic, negativeTopicItem });
-    y = ensureSpace(y + 8, 8 + kpiGridHeight(doc, kpis) + 12);
-    y = drawSectionTitle(doc, y, 2, 'Kennzahlen', `Skala 1 – 5 · Zeitfilter ${range.value}`);
-    y = drawKPIGrid(doc, y, kpis, { perRow: 3 });
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...C.s500);
+    y = drawWrapped(
+        doc,
+        `Nach festen Regeln aus den Bewertungen · keine Aussage über Ursachen · Regeln und Datengrundlage: ${TECH_PAGE_REF}.`,
+        PAGE.mx, y, PAGE.cw, { lineH: 3.3 },
+    ) + 4;
 
-    // Berechnungshinweis (FA-38), wortgleich mit Kachel und Detailfenster (lib/scoreText.js)
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...C.s600);
-    y = drawWrapped(doc, SCORE_HINT, PAGE.mx, y + 5, PAGE.cw, { lineH: 3.1 });
-    if (categoryMean != null) {
-        y = drawWrapped(
-            doc,
-            `${CATEGORY_MEAN_TITLE}: ${fmtNum(categoryMean, 2)} / 5. ${CATEGORY_MEAN_NOTE}`,
-            PAGE.mx, y + 1.5, PAGE.cw, { lineH: 3.1 },
-        );
+    // Lage der Bewertung: drei Zellen wie der Kennzahlen-Streifen der Karten
+    y = drawListTitle(doc, y, 'Lage der Bewertung', 'Ø Score, Trend, 12- vs. 24-Monats-Schnitt');
+    y = drawStatsFooter(doc, PAGE.mx, y - 2, PAGE.cw, report.cells);
+    doc.setDrawColor(...C.s100);
+    doc.setLineWidth(0.3);
+    doc.line(PAGE.mx, y, PAGE.cr, y);
+    if (report.series) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s600);
+        y = drawWrapped(doc, report.series, PAGE.mx, y + 4, PAGE.cw, { lineH: 3.1 });
     }
+    if (report.datenstand.length) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s600);
+        y = drawWrapped(doc, report.datenstand.join(' '), PAGE.mx, y + 1.5, PAGE.cw, { lineH: 3.1 });
+    }
+
+    // Jüngste auffällige Veränderungen und ihre Folge für das Niveau
+    const ch = report.changes;
+    y = ensureSpace(y + 6, 30);
+    y = drawListTitle(doc, y, 'Jüngste auffällige Veränderungen und ihre Folge', ch.state === 'ok'
+        ? `${ch.shown} von ${ch.total} ${ch.total === 1 ? 'Wechsel' : 'Wechseln'}, jüngste zuerst · alle auf der Seite „Anomalien im Verlauf“`
+        : null);
+    if (ch.state !== 'ok') {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...C.s600);
+        y = drawWrapped(doc, ch.note, PAGE.mx, y, PAGE.cw, { lineH: 3.3 }) + 1;
+    } else {
+        y = drawMiniTable(doc, y, {
+            cols: [
+                { label: 'ab Monat', w: 20 },
+                { label: 'Richtung', w: 16 },
+                { label: 'Veränderung', w: 30 },
+                { label: 'Niveau', w: 38 },
+                { label: 'n davor / danach', w: 24 },
+                { label: 'Ausmaß', w: 16 },
+                { label: 'Stabilität', w: 16 },
+                { label: 'Stand', w: 18 },
+            ],
+            rows: ch.items.map((it) => {
+                const color = ANOMALY_COLOR[it.direction] || C.s700;
+                return {
+                    cells: [
+                        `ab ${fmtPeriod(it.date)}`,
+                        { text: it.directionWord, color, bold: true },
+                        { text: it.deltaText, color, bold: true },
+                        it.levelText,
+                        it.countText,
+                        SEVERITY_LABEL[it.severity] || it.severity || '–',
+                        it.stabilityText,
+                        it.current ? 'aktuell' : 'abgelöst',
+                    ],
+                    note: it.consequence,
+                };
+            }),
+            newPage,
+            limit,
+        });
+        if (ch.net) {
+            y = ensureSpace(y + 3, 8);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...C.s700);
+            y = drawWrapped(doc, ch.net.text, PAGE.mx, y + 1, PAGE.cw, { lineH: 3.3 });
+        }
+    }
+    if (SHOW_OUTLIER_MONTHS && report.outliers) {
+        y = ensureSpace(y + 2, 8);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.s500);
+        y = drawWrapped(doc, report.outliers, PAGE.mx, y + 1, PAGE.cw, { lineH: 3.1 });
+    }
+
+    // Zwei Spalten: Stärken und Handlungsfelder laut Bewertungen, gleich hoch
+    const colGap = 6;
+    const colW = (PAGE.cw - colGap) / 2;
+    const colH = Math.max(reportColumnHeight(doc, colW, report.strengths), reportColumnHeight(doc, colW, report.issues));
+    y = ensureSpace(y + 6, colH + 4);
+    drawReportColumn(doc, PAGE.mx, y, colW, colH, {
+        title: 'Was gut läuft', sub: 'Stärken laut Bewertungen', tone: 'good', items: report.strengths,
+        emptyText: 'Keine Stärke nach den Regeln dieses Berichts.',
+    });
+    drawReportColumn(doc, PAGE.mx + colW + colGap, y, colW, colH, {
+        title: 'Was verbessert werden sollte', sub: 'Handlungsfelder laut Bewertungen', tone: 'bad', items: report.issues,
+        emptyText: 'Kein Handlungsfeld nach den Regeln dieses Berichts.',
+    });
+    y += colH + 5;
+
+    // Warnungen zur Datenqualität und Aussagekraft, nächste Schritte (Prüfung 2026-10-17)
+    if (report.warnings.length) {
+        y = ensureSpace(y, 20);
+        y = drawListTitle(doc, y, 'Warnungen', 'Datenqualität und Aussagekraft');
+        y = drawNoteList(doc, y, report.warnings, { tone: 'warn', ensureSpace });
+    }
+    if (report.nextSteps.length) {
+        y = ensureSpace(y + 2, 20);
+        y = drawListTitle(doc, y, 'Nächste Analyseschritte', 'Vorschläge für Untersuchungsfragen, keine Maßnahmen');
+        y = drawNoteList(doc, y, report.nextSteps, { numbered: true, ensureSpace });
+    }
+
+    // ───────────────────────────────────────────────────────────────────────
+    // SEITE 3 — KENNZAHLEN (Datenstand, Berechnung und Zeitfenster: letzte Seite)
+    // ───────────────────────────────────────────────────────────────────────
+    y = startSection('Kennzahlen', 'fünf Kacheln mit n, Warnung bei kleiner Basis und Datenbasis');
+    y = drawSectionTitle(doc, y, 2, 'Kennzahlen', `Skala 1 – 5 · Zeitfilter ${range.value}`);
+
+    const kpis = buildKpiCards({ avgScore, avgCount, scoreCi95, trend, rolling, mostCritical, negativeTopic, negativeTopicItem });
+    y = drawKPIGrid(doc, y, kpis, { perRow: 3 });
 
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(7);
     doc.setTextColor(...C.s500);
     y = drawWrapped(
         doc,
-        `Zeitfilter „${range.value}“ gilt für Ø Score, Trend, ${CRITICAL_LABEL}, ${NEGATIVE_TOPIC_LABEL}, ${TIMELINE_LABEL}, Topics im Detail und Topic-Übersicht. Der 12- vs. 24-Monats-Schnitt und die Anomalien beziehen sich immer auf die ganze Reihe. Kennzeichen: Sternebewertung = Sterne der Kununu-Bewertungen, Freitextanalyse = Freitexte der Bewertungen.`,
+        `Zeitfilter „${range.value}“ gilt für Ø Score, Trend, ${CRITICAL_LABEL} und ${NEGATIVE_TOPIC_LABEL}; der 12- vs. 24-Monats-Schnitt bezieht sich auf die ganze Reihe. Berechnung, Zeitfenster und Datenstand: ${TECH_PAGE_REF}.`,
         PAGE.mx, y + 5, PAGE.cw, { lineH: 3.1 },
     );
 
     // ───────────────────────────────────────────────────────────────────────
-    // SEITE 3 — ZEITVERLAUF + TOPICS IM DETAIL (Diagrammzeile des Dashboards)
+    // SEITE 4 — ZEITVERLAUF + TOPICS IM DETAIL (Diagrammzeile des Dashboards)
     // ───────────────────────────────────────────────────────────────────────
     y = startSection(`${TIMELINE_LABEL} & Topics im Detail`, 'Bewertungsverlauf und Bewertungen je Topic über Zeit');
     y = drawSectionTitle(doc, y, 3, TIMELINE_LABEL, tlEyebrow);
@@ -1700,7 +1959,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
         legend: tlLegend,
         stats: timelineStats(timelineFilters),
         caption: showForecast
-            ? 'Abb. 1 · Bewertungsverlauf mit Prognose · gestrichelte Linien = interpolierte bzw. prognostizierte Werte'
+            ? `Abb. 1 · Bewertungsverlauf mit Prognose · gestrichelte Linien = interpolierte bzw. prognostizierte Werte${forecastBand(timelineFilters) != null ? ' · helle Fläche = Bandbreite 80 %' : ''}`
             : 'Abb. 1 · Bewertungsverlauf · gestrichelte Linien = interpolierte Werte',
     });
 
@@ -1729,7 +1988,9 @@ export const exportKPIsAsPDF = async (kpiData) => {
         color: topicLineColor(allTopics.indexOf(topic)),
     }));
     if (visibleTopics.length > 6) trLegend.push({ label: `+ ${visibleTopics.length - 6} weitere`, color: C.s400, shape: 'none' });
-    trLegend.push({ label: `Quelle: ${trSource} · Themen aus Freitexten, Bewertung aus Sternen`, sourceNote: true });
+    // Datenbasis (Korrektur 2026-10-17, B15): Kategorien der Sternebewertung je Monat über alle
+    // Bewertungen der Quelle, keine Schlüsselwort-Zuordnung wie in der Topic-Übersicht
+    trLegend.push({ label: `Quelle: ${trSource} · Sterne je Kategorie, Monatsmittel aller Bewertungen`, sourceNote: true });
 
     y = drawDashboardCard(doc, y, {
         header: {
@@ -1749,33 +2010,26 @@ export const exportKPIsAsPDF = async (kpiData) => {
     });
 
     // ───────────────────────────────────────────────────────────────────────
-    // SEITE 4 — ANOMALIEN IM VERLAUF (Inkrement 1, Karte unter der Diagrammzeile)
+    // SEITE 5 — ANOMALIEN IM VERLAUF (Inkrement 1, Karte unter der Diagrammzeile)
     // ───────────────────────────────────────────────────────────────────────
     y = startSection('Anomalien im Verlauf', SHOW_OUTLIER_MONTHS
         ? 'auffällige Veränderungen, Einzelmonate, Eignung der Reihe'
         : 'auffällige Veränderungen, Eignung der Reihe');
     y = drawSectionTitle(doc, y, 5, 'Anomalien im Verlauf', 'Verlauf · auffällige Veränderungen');
 
-    const an = anomalyData;
-    const anomalies = an?.anomalies || [];
-    // Einzelmonate (E14) nur mit SHOW_OUTLIER_MONTHS: sonst weder Legende noch Kachel noch Liste.
-    const outliers = SHOW_OUTLIER_MONTHS ? (an?.outliers || []) : [];
-    const elig = an?.eligibility || null;
-    const minReviews = an?.minReviews ?? dataStatus?.thresholds?.min_reviews_per_month ?? 5;
 
     const anLegend = [{ label: 'Monatsmittel (bewertete Monate)', color: C.blue500 }];
     if (an?.hasInterpolation) {
-        anLegend.push({ label: `interpoliert (Monat mit weniger als ${minReviews} Bewertungen mit Wert, nicht in der Erkennung)`, color: C.s400, dashed: true });
+        anLegend.push({ label: 'interpoliert (nicht in der Erkennung)', color: C.s400, dashed: true });
     }
     if (anomalies.length) {
         anLegend.push({ label: 'Ring = auffällige Veränderung ab diesem Monat: Abfall', color: ANOMALY_COLOR.fall, fill: ANOMALY_FILL.fall, shape: 'ring' });
         anLegend.push({ label: 'Anstieg', color: ANOMALY_COLOR.rise, fill: ANOMALY_FILL.rise, shape: 'ring' });
     }
     if (outliers.length) {
-        anLegend.push({ label: 'Raute = auffälliger Einzelmonat (unter bzw. über den Nachbarmonaten, kein neues Niveau)', color: C.s500, shape: 'diamond' });
-        anLegend.push({ label: OUTLIER_UNVALIDATED_NOTE, shape: 'none' });
+        anLegend.push({ label: 'Raute = auffälliger Einzelmonat (kein neues Niveau, ungeprüft)', color: C.s500, shape: 'diamond' });
     }
-    anLegend.push({ label: `Sternebewertung, Monatsmittel, Monate mit mindestens ${minReviews} Bewertungen mit Wert`, sourceNote: true });
+    anLegend.push({ label: `Monatsmittel der Sternebewertung · Schwellen: ${TECH_PAGE_REF}`, sourceNote: true });
 
     const anStats = [
         {
@@ -1826,35 +2080,30 @@ export const exportKPIsAsPDF = async (kpiData) => {
         doc.setTextColor(...C.s600);
         y = drawWrapped(doc, elig.reason || '', PAGE.mx + lw, y + 2, PAGE.cw - lw, { lineH: 3.4 }) + 1;
     }
-    if (an?.statusHint) {
+    // Reihe außerhalb des geprüften Umfangs (DZ1, E30): kurzer Vermerk wie im Dashboard,
+    // der volle Hinweis und der Status-Hinweis stehen auf der letzten Seite
+    if (unvalidatedScope) {
         y = ensureSpace(y, 12);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7.5);
         doc.setTextColor(...C.s500);
-        y = drawWrapped(doc, `Hinweis zum Status: ${an.statusHint}`, PAGE.mx, y + 2, PAGE.cw, { lineH: 3.2 }) + 1;
-    }
-    // Reihe außerhalb des geprüften Umfangs (DZ1, E30), wie ScopeHint im Dashboard
-    if (an && !an.error && !(elig && !elig.eligible) && !isValidatedScope(an)) {
-        y = ensureSpace(y, 12);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor(...C.s500);
-        y = drawWrapped(doc, `${UNVALIDATED_SCOPE_NOTE}.`, PAGE.mx, y + 2, PAGE.cw, { lineH: 3.2 }) + 1;
+        y = drawWrapped(doc, `Erkennung für diese Auswahl nicht geprüft (${TECH_PAGE_REF}).`, PAGE.mx, y + 2, PAGE.cw, { lineH: 3.2 }) + 1;
     }
 
     // Markierungen als Liste: im Dashboard als Tooltip, im PDF ausgeschrieben
     if (anomalies.length) {
         y = ensureSpace(y + 4, 24);
-        y = drawListTitle(doc, y, 'Auffällige Veränderungen', `${anomalies.length} Niveauwechsel · Stufe von Ø davor zu Ø danach, Bewertungen mit Wert je Abschnitt`);
+        y = drawListTitle(doc, y, 'Auffällige Veränderungen', `${anomalies.length} Niveauwechsel · Delta in Sternen · Stabilität = Varianten mit gleicher Markierung`);
         y = drawMiniTable(doc, y, {
             cols: [
                 { label: 'ab Monat', w: 20 },
                 { label: 'Richtung', w: 16 },
-                { label: 'Delta', w: 20 },
-                { label: 'Ø davor (Zeitraum)', w: 40 },
-                { label: 'Ø danach (Zeitraum)', w: 40 },
-                { label: 'n davor / danach', w: 26 },
-                { label: 'Ausmaß', w: 14 },
+                { label: 'Delta', w: 14 },
+                { label: 'Ø davor (Zeitraum)', w: 39 },
+                { label: 'Ø danach (Zeitraum)', w: 39 },
+                { label: 'n davor/danach', w: 22 },
+                { label: 'Ausmaß', w: 13 },
+                { label: 'Stabilität', w: 15 },
             ],
             rows: anomalies.map((a) => {
                 const color = ANOMALY_COLOR[a.direction] || C.s700;
@@ -1863,17 +2112,18 @@ export const exportKPIsAsPDF = async (kpiData) => {
                     notes.push(`Davor ${a.gap_months} ${a.gap_months === 1 ? 'Monat' : 'Monate'} nicht bewertet (seit ${fmtPeriod(a.previous_period)}); der Übergang kann in dieser Lücke liegen.`);
                 }
                 if (a.month_near_previous_level) {
-                    notes.push('Das Monatsmittel liegt noch nahe am alten Niveau. Ein Abschnitt umfasst mindestens 3 Monate, der sichtbare Übergang folgt daher später.');
+                    notes.push('Das Monatsmittel liegt noch nahe am alten Niveau; der sichtbare Übergang folgt später.');
                 }
                 return {
                     cells: [
                         `ab ${fmtPeriod(a.date)}`,
                         { text: DIRECTION_LABEL[a.direction] || a.direction, color, bold: true },
-                        { text: `${fmtSigned(a.delta)} Sterne`, color, bold: true },
+                        { text: fmtSigned(a.delta), color, bold: true },
                         `${fmtNum(a.before_mean)} (${fmtSpan(a.before_from, a.previous_period)})`,
                         `${fmtNum(a.after_mean)} (${fmtSpan(a.date, a.after_to)})`,
                         `${fmtInt(a.n_reviews_before)} / ${fmtInt(a.n_reviews_after)}`,
                         SEVERITY_LABEL[a.severity] || a.severity || '–',
+                        a.stability?.variants != null ? `${a.stability.matches}/${a.stability.variants}` : '–',
                     ],
                     note: notes.length ? notes.join(' ') : null,
                 };
@@ -1909,16 +2159,8 @@ export const exportKPIsAsPDF = async (kpiData) => {
             limit,
         });
     }
-    if (an && !an.error && an.monthsInSpan > 0) {
-        y = ensureSpace(y + 4, 8);
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(7);
-        doc.setTextColor(...C.s400);
-        doc.text('Die Detailseite „Anomalien“ zeigt zu jeder Markierung die Bewertungen des Zeitraums, den Vorher-Nachher-Vergleich und die Belege.', PAGE.mx, y + 2);
-    }
-
     // ───────────────────────────────────────────────────────────────────────
-    // SEITE 5+ — TOPIC-ÜBERSICHT (alle Topics, Tabelle mehrseitig)
+    // SEITE 6+ — TOPIC-ÜBERSICHT (alle Topics, Tabelle mehrseitig)
     // ───────────────────────────────────────────────────────────────────────
     if (topics.length > 0) {
         y = startSection('Topic-Übersicht', `Tabelle aller ${topics.length} Topics mit Beispiel`);
@@ -1927,7 +2169,6 @@ export const exportKPIsAsPDF = async (kpiData) => {
         const ovSource = sourceName(topicOverviewData.sourceFilter);
         const totalReviews = topicOverviewData.totalReviews ?? null;
         const avgRating = topics.reduce((s, t) => s + (Number(t.avgRating) || 0), 0) / topics.length;
-        const limited = ovStats.limited ?? topics.filter((t) => t.statistical_meta?.risk_level === 'limited').length;
         const sentCounts = {
             total: topics.length,
             pos: topics.filter((t) => t.sentiment === 'Positiv').length,
@@ -1943,7 +2184,12 @@ export const exportKPIsAsPDF = async (kpiData) => {
         drawCardHeader(doc, y, {
             eyebrow: 'Topic-Übersicht',
             title: 'Themenbereiche',
-            subtitle: `${ovSource} · ${topics.length} Topics${totalReviews != null ? ` · n = ${fmtInt(totalReviews)} Bewertungen` : ''} · ${fmtInt(ovStats.totalMentions ?? null)} Erwähnungen`,
+            subtitle: `${ovSource} · ${topics.length} Topics${
+                totalReviews != null
+                    ? (!topicOverviewData.sourceFilter && topicOverviewData.totalBySource?.employee != null && topicOverviewData.totalBySource?.candidates != null
+                        ? ` · n = ${fmtInt(topicOverviewData.totalBySource.employee)} Mitarbeitende + ${fmtInt(topicOverviewData.totalBySource.candidates)} Bewerbende`
+                        : ` · n = ${fmtInt(totalReviews)} Bewertungen`)
+                    : ''} · ${fmtInt(ovStats.totalMentions ?? null)} Erwähnungen`,
             iconTone: 'info',
             controlsText: ovSource,
             basis: 'text',
@@ -1953,28 +2199,12 @@ export const exportKPIsAsPDF = async (kpiData) => {
         doc.setLineWidth(0.2);
         doc.line(cardX + 2, cy, cardX + cardW - 2, cy);
 
-        // Warnbanner (wie die Karte): Topics mit begrenzter Datenbasis
-        if (limited > 0) {
-            doc.setFillColor(...C.rose50);
-            doc.setDrawColor(...C.rose300);
-            doc.setLineWidth(0.2);
-            doc.roundedRect(cardX + 3, cy + 2.5, cardW - 6, 9.5, 1.5, 1.5, 'FD');
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.5);
-            doc.setTextColor(...C.rose700);
-            doc.text(`Begrenzte Datenbasis bei ${limited} Topic${limited !== 1 ? 's' : ''}`, cardX + 7, cy + 6.3);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6.8);
-            doc.text('Weniger als 30 Reviews — Ergebnisse mit Vorsicht interpretieren', cardX + 7, cy + 9.8);
-            cy += 14;
-        }
-
         // Stats-Strip (Topics, Ø Rating mit n, Erwähnungen) und Sentiment-Verteilung
         cy = drawStatsFooter(doc, cardX, cy, cardW, [
             { label: 'Topics',      value: String(topics.length), sub: 'identifiziert' },
-            { label: 'Ø Rating',    value: fmtNum(avgRating, 2), sub: totalReviews != null ? `${fmtInt(totalReviews)} Bewertungen` : 'ungewichtet', tone: scoreTone(avgRating) },
+            { label: 'Ø Topic-Mittel', value: fmtNum(avgRating, 2), sub: `${topics.length} Topics · ungewichtet`, tone: scoreTone(avgRating) },
             { label: 'Erwähnungen', value: fmtInt(ovStats.totalMentions ?? null), sub: 'über alle Topics' },
-            { label: 'Sentiment',   value: `${sentCounts.pos} · ${sentCounts.neu} · ${sentCounts.neg}`, sub: 'Positiv · Neutral · Negativ' },
+            { label: 'Einstufung',  value: `${sentCounts.pos} · ${sentCounts.neu} · ${sentCounts.neg}`, sub: 'positiv · neutral · negativ (Ø Sterne)' },
         ]);
 
         // Sentiment-Tabs
@@ -2004,18 +2234,122 @@ export const exportKPIsAsPDF = async (kpiData) => {
         });
         closeSegment(curY - 4.5 + 1.5);
         y = curY + 2;
-
-        // Hinweis, falls die API mehr Topics zählt als sie liefert
-        const totalTopicCount = ovStats.totalTopics || topics.length;
-        const hiddenCount = Math.max(0, totalTopicCount - topics.length);
-        if (hiddenCount > 0) {
-            y = ensureSpace(y, 10);
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(7);
-            doc.setTextColor(...C.s500);
-            doc.text(`${topics.length} von ${totalTopicCount} Topics · weitere ${hiddenCount} Topics in der Web-App einsehbar`, PAGE.mx, y + 4);
-        }
     }
+
+    // ───────────────────────────────────────────────────────────────────────
+    // LETZTE SEITE — TECHNISCHE HINWEISE (Nachtrag 2026-10-17): Datenstand-Karte,
+    // Berechnung und Zeitfenster der Kacheln, Schwellen der Erkennung, Hinweise zur
+    // Topic-Übersicht, Regeln des Kurzberichts, Datenbasis-Kennzeichen. Die
+    // Inhaltsseiten zeigen nur die Kernelemente; die Texte hier sind dieselben wie
+    // im Dashboard (lib/scoreText.js, lib/dataStatusText.js, lib/rollingAverage.js,
+    // config.js, lib/reportSummary.js).
+    // ───────────────────────────────────────────────────────────────────────
+    y = startSection('Technische Hinweise', 'Datenstand, Berechnung, Schwellen, Regeln, Kennzeichen');
+    y = drawSectionTitle(doc, y, 7, 'Technische Hinweise', 'Datengrundlage · Berechnung · Regeln');
+
+    // Absätze eines Blocks (7 pt); ein Block bleibt zusammen, wenn er auf eine Seite
+    // passt, sonst bricht er zwischen zwei Absätzen um
+    const TECH_LH = 3;
+    const techLines = (p) => {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        return doc.splitTextToSize(String(p), PAGE.cw).length;
+    };
+    const techBlock = (title, sub, paragraphs) => {
+        const items = paragraphs.filter(Boolean);
+        if (!items.length) return;
+        const height = 6 + items.reduce((sum, p) => sum + techLines(p) * TECH_LH + 1.5, 0);
+        y = ensureSpace(y + 4, Math.min(height, limit - 30));
+        y = drawListTitle(doc, y, title, sub);
+        items.forEach((p) => {
+            y = ensureSpace(y, techLines(p) * TECH_LH + 2);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(...C.s600);
+            y = drawWrapped(doc, p, PAGE.mx, y, PAGE.cw, { lineH: TECH_LH }) + 1.5;
+        });
+    };
+
+    // Datenbasis-Kennzeichen (FA-25) als Einleitung, dann der Datenstand (FA-37) wie
+    // die Leiste im Dashboard, mit Zeitstempel-Tabelle
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.s600);
+    y = drawWrapped(
+        doc,
+        `Kennzeichen der Datenbasis an Karten und Kacheln: ${BASIS.stars.label} = ${BASIS.stars.title.replace(/^Datenbasis: /, '')}; ${BASIS.text.label} = ${BASIS.text.title.replace(/^Datenbasis: /, '')}.`,
+        PAGE.mx, y, PAGE.cw, { lineH: TECH_LH },
+    ) + 4;
+    y = drawListTitle(doc, y, 'Datenstand', 'Datensatz · Abdeckung · Zeitstempel, wie die Leiste im Dashboard');
+    y = drawDataStatusCard(doc, y, dataStatus, { lastImportLocal });
+
+    // Kennzahlen: Berechnung (FA-38) und Zeitfenster mit n (FA-26)
+    const trendMonths = trend?.windowMonths;
+    techBlock('Kennzahlen', 'Berechnung und Zeitfenster der fünf Kacheln', [
+        SCORE_HINT,
+        categoryMean != null ? `${CATEGORY_MEAN_TITLE}: ${fmtNum(categoryMean, 2)} / 5. ${CATEGORY_MEAN_NOTE}` : null,
+        trendMonths
+            ? `Trend ${trendMonths} M: Gesamtnote, ${trendMonths} volle Monate gegen die ${trendMonths} Monate davor; Fenster ${scoreTrendWindowsText(trend?.raw)}.`
+            : 'Trend: keine datierten Bewertungen mit Gesamtnote.',
+        rolling?.anchor
+            ? `12- vs. 24-Monats-Schnitt: Sternebewertung, Mitarbeitende, fester Anker am letzten vollen Monat mit Daten, unabhängig vom Zeitfilter. 12 M: ${fmtRollingMonth(rolling.short?.from)} – ${fmtRollingMonth(rolling.short?.to)}, n = ${fmtInt(rolling.short?.n)}; 24 M: ab ${fmtRollingMonth(rolling.long?.from)}, n = ${fmtInt(rolling.long?.n)}. Der 12-Monats-Schnitt ${rollingPhrase(rolling)}.${rollingWarnings(rolling).length ? ` Warnung: ${rollingWarnings(rolling).join(' · ')}.` : ''}`
+            : '12- vs. 24-Monats-Schnitt: keine datierten Bewertungen mit Gesamtnote.',
+        `${CRITICAL_LABEL}: ${CRITICAL_NOTE}. ${NEGATIVE_TOPIC_LABEL}: höchste Negativrate in den Freitexten.`,
+        `Unsicherheit: ${scoreCi95 != null ? `Ø Score ${scoreUncertaintyText(scoreCi95)}` : 'Ø Score ohne Intervall'}${trend?.raw?.difference_ci95 != null ? `; Trend-Differenz ±${fmtNum(trend.raw.difference_ci95, 2)} (95 %, Welch)` : ''}. ${UNCERTAINTY_NOTE}`,
+        `Zeitfilter „${range.value}“ gilt für Ø Score, Trend, ${CRITICAL_LABEL}, ${NEGATIVE_TOPIC_LABEL}, ${TIMELINE_LABEL}, Topics im Detail und Topic-Übersicht. Der 12- vs. 24-Monats-Schnitt und die Anomalien beziehen sich immer auf die ganze Reihe.`,
+        `Warnung „kleine Basis“: unter ${MIN_REVIEWS_PER_WINDOW} Bewertungen in einem Fenster oder einer Kategorie.`,
+    ]);
+
+    // Zeitverlauf und Prognose: Reihe, Verfahren, Backtest, Bandbreite (2026-10-17)
+    const fi = timelineFilters?.forecastInfo || null;
+    const btRows = fi?.backtest?.methods
+        ? Object.entries(fi.backtest.methods).filter(([, m]) => m?.mae != null).sort((a, b) => a[1].mae - b[1].mae)
+        : [];
+    techBlock(TIMELINE_LABEL, 'Monatsmittel, Prognose, Backtest', [
+        `Zeitverlauf: Monatsmittel der Gesamtnote (${sourceName(timelineFilters?.source)}), jeder Monat gleich gewichtet, auch Monate mit wenigen Bewertungen; Monate ohne Bewertung werden übersprungen; höchstens die letzten 10 Jahre. „Ø Monatsmittel“ ist deshalb nicht der Ø Score (Mittel aller Bewertungen).`,
+        `Topics im Detail: Monatsmittel der Sterne je Kategorie (z. B. Gehalt/Sozialleistungen) über alle Bewertungen der Quelle; die Linien tragen die Namen der Kategorien, nicht der Schlüsselwort-Themen der Topic-Übersicht, und mitteln über alle Bewertungen, nicht nur über Bewertungen, die das Thema nennen.`,
+        showForecast && fi
+            ? `Prognose: ${fi.method === 'holt' ? `Holts exponentielle Glättung mit Trend (statsmodels), Gewichte aus den Daten geschätzt (alpha ${fmtNum(fi.alpha, 2)} für das Niveau, beta ${fmtNum(fi.beta, 2)} für die Steigung)` : 'Mittel aller Monate (Glättung nicht schätzbar)'}, ${fi.n_months} Monate von ${fmtPeriod(fi.first_month)} bis ${fmtPeriod(fi.last_month)}, 6 Monate voraus ab dem letzten Datenmonat${fi.months_since_last_data > 0 ? ` (${fi.months_since_last_data} Monate vor dem Berichtsdatum; keine neueren Bewertungen im Datensatz)` : ''}.${fi.months_below_min_reviews > 0 ? ` ${fi.months_below_min_reviews} der Monate haben weniger als ${fi.min_reviews_per_month ?? 5} Bewertungen.` : ''}`
+            : null,
+        showForecast && btRows.length
+            ? `Prüfung der Prognose (Backtest mit rollierendem Ursprung, ${fi.backtest.origins} Ursprünge, ${fi.backtest.horizon} Monate voraus, nur Daten vor dem Ursprung): mittlerer absoluter Fehler in Sternen ${btRows.map(([k, m]) => `${m.label || k} ${fmtNum(m.mae, 2)}`).join('; ')}.${fi.backtest.best_method && fi.backtest.best_method !== 'holt' ? ` Ein einfacheres Verfahren war genauer als die Prognose; die Prognose ist eine grobe Fortschreibung.` : ''}`
+            : showForecast && fi ? 'Prüfung der Prognose: Für einen Backtest ist die Reihe zu kurz (mindestens 25 Monate).' : null,
+        showForecast && fi?.interval?.available
+            ? `Bandbreite (80 %): aus den Quantilen der Backtest-Fehler je Horizont; in 80 % der geprüften Fälle lag der tatsächliche Monatswert innerhalb. Kein Modellintervall unter Verteilungsannahmen. Prognosewerte sind auf eine Nachkommastelle zu lesen.`
+            : null,
+    ]);
+
+    // Anomalien: Schwellen der Erkennung, Status, Prüfumfang, Einzelmonate, Stabilität
+    const stabGrid = anomalies.find((a) => a.stability?.grid)?.stability;
+    techBlock('Anomalien im Verlauf', 'Erkennung, Schwellen, Prüfumfang, Stabilität', [
+        an && !an.error
+            ? `Reihe: ${an.group} · ${an.dimensionName}, Monatsmittel der Sternebewertung. Bewertet ist ein Monat mit mindestens ${minReviews} Bewertungen mit Wert; Monate darunter sind zur Anzeige gestrichelt interpoliert und gehen nicht in die Erkennung ein. Die Erkennung läuft auf der ganzen Reihe, unabhängig vom Zeitfilter${elig?.min_evaluated_months ? `, ab ${elig.min_evaluated_months} bewerteten Monaten` : ''}. Ein Abschnitt umfasst mindestens 3 Monate; eine auffällige Veränderung ist die Stufe zwischen den Mitteln zweier Abschnitte.`
+            : an?.error ? `Anomalien konnten nicht geladen werden: ${an.error}` : 'Die Anomalien-Karte war beim Export nicht geladen.',
+        elig && !elig.eligible ? `Keine automatische Erkennung: ${elig.reason || ''}` : null,
+        an?.statusHint ? `Hinweis zum Status: ${an.statusHint}` : null,
+        unvalidatedScope ? `${UNVALIDATED_SCOPE_NOTE}.` : null,
+        outliers.length ? `Auffällige Einzelmonate: Abweichung vom Niveau der Nachbarmonate ohne neues Niveau. ${OUTLIER_UNVALIDATED_NOTE}.` : null,
+        stabGrid
+            ? `Stabilität je Veränderung: Anteil der Parametervarianten (Strafterm-Faktor ${stabGrid.grid.penalty_factor.join(' / ')}, Mindestlänge ${stabGrid.grid.min_size.join(' / ')} Monate, Mindestdichte ${stabGrid.grid.min_reviews_per_month.join(' / ')} Bewertungen je Monat; ${stabGrid.variants} Varianten), in denen eine Veränderung derselben Richtung innerhalb von ${stabGrid.tolerance_months} Monaten ebenfalls erkannt wird. Die Standardparameter bleiben unverändert; ein niedriger Anteil heißt, dass die Markierung von den Schwellen abhängt.`
+            : null,
+        an && !an.error && an.monthsInSpan > 0 ? 'Die Detailseite „Anomalien“ zeigt zu jeder Markierung die Bewertungen des Zeitraums, den Vorher-Nachher-Vergleich und die Belege.' : null,
+    ]);
+
+    // Topic-Übersicht: Herkunft, begrenzte Datenbasis, Sortierung, nicht gelieferte Topics
+    const limitedTopics = ovStats.limited ?? topics.filter((t) => t.statistical_meta?.risk_level === 'limited').length;
+    const totalTopicCount = ovStats.totalTopics || topics.length;
+    const hiddenTopics = Math.max(0, totalTopicCount - topics.length);
+    techBlock('Topic-Übersicht', 'Herkunft der Topics, begrenzte Datenbasis', topics.length ? [
+        `Themen aus den Freitexten der Bewertungen (deutsche Schlüsselwörter je Thema, Beispielzitat). „Erwähnungen“ zählt Bewertungen, deren Text das Thema nennt (je Bewertung höchstens einmal). Ø Rating ist der Stern der zugehörigen Kategorie, gemittelt nur über diese Bewertungen (ohne Kategoriewert: die Gesamtnote); das Kategorienmittel der Kacheln mittelt denselben Stern über alle Bewertungen. Beide können abweichen, weil Bewertungen, die ein Thema ansprechen, es anders bewerten als alle. Die Einstufung positiv / neutral / negativ folgt dem Ø der Sterne (ab 3,5 positiv, unter 2,5 negativ); sie ist keine Textanalyse. „Ø Topic-Mittel“ ist das ungewichtete Mittel der Topic-Mittel, kein Mittel über Bewertungen. Sortierung nach Erwähnungen; Sortierung und Filter der Web-App werden nicht übernommen. Die Stufen der Datenqualität (Solide ab 100, Akzeptabel ab 65, Eingeschränkt ab 30, Begrenzt darunter) sind Heuristiken nach der Zahl der Bewertungen, keine berechnete Unsicherheit.`,
+        limitedTopics > 0 ? `Begrenzte Datenbasis bei ${limitedTopics} Topic${limitedTopics !== 1 ? 's' : ''} (weniger als 30 Bewertungen): in der Tabelle mit rotem Balken und n gekennzeichnet; Ergebnisse mit Vorsicht interpretieren.` : null,
+        hiddenTopics > 0 ? `${topics.length} von ${totalTopicCount} Topics im Bericht; weitere ${hiddenTopics} Topics in der Web-App einsehbar.` : null,
+    ] : ['Keine Topics geladen.']);
+
+    // Grenzen der Aussagen (Prüfung 2026-10-17)
+    techBlock('Grenzen', 'was die Daten nicht leisten', report.limits);
+
+    // Kurzbericht: Regeln (Setzungen des Autors, vorläufig)
+    techBlock('Kurzbericht', 'Regeln der Seite 2', [report.rules]);
 
     // ───────────────────────────────────────────────────────────────────────
     // Inhaltsverzeichnis auf dem Cover, Fußzeilen auf allen Seiten

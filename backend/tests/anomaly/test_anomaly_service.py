@@ -228,7 +228,11 @@ class TestAllDimensions:
         result = svc.company_anomalies_all(DEMO_3, "employee")
         for entry in result["dimensions"][:3]:
             single = svc.company_anomalies(DEMO_3, "employee", entry["dimension"])
-            assert entry["anomalies"] == single["anomalies"]
+            # Die Einzelabfrage trägt seit 2026-10-17 je Veränderung ``stability``
+            # (tests/anomaly/test_stability.py); die Antwort für alle Dimensionen nicht.
+            without_stability = [{k: v for k, v in a.items() if k != "stability"} for a in single["anomalies"]]
+            assert entry["anomalies"] == without_stability
+            assert all("stability" in a for a in single["anomalies"])
             assert entry["eligibility"] == single["eligibility"]
 
     def test_invalid_source_raises(self, in_memory_db):

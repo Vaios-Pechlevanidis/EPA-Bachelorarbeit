@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowDown, ArrowUp, Filter, Search, Star as StarIcon, X } from "lucide-react";
 import ModalShell, { ModalLoader, ModalError } from "./ModalShell";
 import { Star } from "../../../icons";
-import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, SCORE_HINT, scoreCountText } from "@/lib/scoreText";
+import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, SCORE_HINT, UNCERTAINTY_NOTE, scoreCountText, scoreUncertaintyText } from "@/lib/scoreText";
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000") + "/api";
 
@@ -199,6 +199,11 @@ export default function SorceModal({ open, onOpenChange, companyId, scoreData = 
           </span>
         </div>
         <span className="block text-[12px] text-slate-600 tnum">{scoreCountText(scoreData?.score_n)}</span>
+        {scoreData?.score_ci95 != null && (
+          <span className="block text-[12px] text-slate-500 tnum" title={UNCERTAINTY_NOTE}>
+            {scoreUncertaintyText(scoreData.score_ci95)} · Streuung {Number(scoreData.score_sd).toFixed(2).replace(".", ",")} (Standardabweichung)
+          </span>
+        )}
         <p className="mt-1.5 text-[11.5px] leading-4 text-slate-500">{SCORE_HINT}</p>
       </div>
 

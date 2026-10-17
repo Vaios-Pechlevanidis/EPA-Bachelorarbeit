@@ -52,11 +52,12 @@ const fmt = (n, d = 1) => Number.isFinite(Number(n)) ? Number(n).toFixed(d).repl
 
 /* Sortierkopf der Tabelle; Zustand kommt als Props, damit die Komponente nicht
    bei jedem Render neu entsteht (gleiches Verhalten). */
-function SortHeader({ label, sortable, keyName, align = "left", sortKey, sortDir, onToggle }) {
+function SortHeader({ label, sortable, keyName, align = "left", sortKey, sortDir, onToggle, title }) {
   const isActive = sortKey === keyName
   return (
     <button
       type="button"
+      title={title}
       onClick={sortable ? () => onToggle(keyName) : undefined}
       className={[
         "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.06em] uppercase",
@@ -196,7 +197,7 @@ export default function TopicTableModal({
             </div>
 
             {/* Sentiment-Filter (Segmented Control mit farbigen Punkten + Counts) */}
-            <div role="tablist" aria-label="Sentiment-Filter" className="inline-flex bg-white border border-slate-300 rounded-md p-0.5">
+            <div role="tablist" aria-label="Filter nach Einstufung (Ø Sterne)" title="Einstufung nach dem Ø der Sterne der nennenden Bewertungen; keine Textanalyse" className="inline-flex bg-white border border-slate-300 rounded-md p-0.5">
               {[
                 { value: "all",      label: "Alle",     dot: null,             count: sentimentCounts.all },
                 { value: "positive", label: "Positiv",  dot: "bg-emerald-500", count: sentimentCounts.positive },
@@ -291,7 +292,7 @@ export default function TopicTableModal({
                   <th className="text-left px-4 py-2.5 font-medium text-slate-500"><SortHeader {...sortHeaderProps} label="Topic"      sortable keyName="topic" /></th>
                   <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[100px]"><SortHeader {...sortHeaderProps} label="Erwähnungen" sortable keyName="frequency" align="center" /></th>
                   <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[110px]"><SortHeader {...sortHeaderProps} label="Ø Rating"   sortable keyName="rating"    align="center" /></th>
-                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[110px]"><SortHeader {...sortHeaderProps} label="Sentiment"  align="center" /></th>
+                  <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[110px]"><SortHeader {...sortHeaderProps} label="Einstufung" align="center" title="Einstufung nach dem Ø der Sterne der Bewertungen, die das Thema nennen (ab 3,5 positiv, unter 2,5 negativ); keine Textanalyse" /></th>
                   <th className="text-center px-3 py-2.5 font-medium text-slate-500 w-[120px]"><SortHeader {...sortHeaderProps} label="Datenqualität" align="center" /></th>
                   <th className="text-left px-4 py-2.5 font-medium text-slate-500"><SortHeader {...sortHeaderProps} label="Beispiel" /></th>
                 </tr>
@@ -350,7 +351,7 @@ export default function TopicTableModal({
                             />
                           </div>
                           <span className={`font-semibold tnum text-[13px] ${tone.text} w-[32px] text-right`}>
-                            {fmt(topic.avgRating, 1)}
+                            {fmt(topic.avgRating, 2)}
                           </span>
                         </div>
                       </td>

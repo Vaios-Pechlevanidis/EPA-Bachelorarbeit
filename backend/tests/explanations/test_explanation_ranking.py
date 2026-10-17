@@ -531,3 +531,40 @@ class TestGroupByCategory:
             assert g[key] == u[key], key
         assert g["explanations"][0]["confidence"] == u["explanations"][0]["confidence"]
         assert len(g["explanations"]) <= len(u["explanations"])
+
+
+class TestGlobalEventsInSummary:
+    """Nachtrag zu E29 (2026-10-17): Allgemeine Ereignisse stehen als Hypothese neben den
+    Ansätzen (``global_events``), bleiben aber außerhalb von Rangfolge, n_items und item_scores."""
+
+    EVENTS = [
+        {"id": "herbst", "date_from": "2023-02", "date_to": "2023-04", "title": "Konjunktureinbruch", "scope": "Deutschland",
+         "note": "ESI fällt", "url": "https://eurostat/esi", "confirmed": True},
+        {"id": "frueh", "date_from": "2022-11", "date_to": "2022-12", "title": "Inflationsschub", "scope": "Deutschland",
+         "note": "HVPI steigt", "url": "https://eurostat/hicp", "confirmed": True},
+        {"id": "weit_weg", "date_from": "2020-01", "date_to": "2020-02", "title": "Außerhalb", "scope": "x", "note": "", "url": "", "confirmed": True},
+    ]
+
+    def test_global_events_in_window_is_compact_and_sorted(self):
+        items = ev.global_event_items(self.EVENTS, WINDOW)   # nur die beiden, die das Fenster berühren
+        out = er.global_events_in_window(items, WINDOW)
+        assert [g["id"] for g in out] == ["frueh", "herbst"], "nach Beginn sortiert"
+        herbst = out[1]
+        assert herbst["title"] == "Konjunktureinbruch" and (herbst["from"], herbst["to"], herbst["months"]) == ("2023-02", "2023-04", 3)
+        assert herbst["scope"] == "Deutschland" and herbst["note"] == "ESI fällt" and herbst["url"] == "https://eurostat/esi"
+        assert herbst["item_id"] == "global:herbst"
+        assert herbst["time_phrase"] == er.time_phrase("2023-02", WINDOW)
+        assert out[0]["months"] == 2
+        assert er.global_events_in_window([], WINDOW) == []
+
+    def test_rank_evidence_lists_global_events_without_ranking_them(self):
+        items = [item("Beispielwerk kündigt Stellenabbau an", "2023-02-11", publisher="B")]
+        items += ev.global_event_items(self.EVENTS, WINDOW)
+        result = er.rank_evidence(items, WINDOW, terms=[], topics=[], direction="fall", exclude={"beispielwerk"},
+                                  categories=CATS, analyzer=StubAnalyzer())
+        assert [g["id"] for g in result["global_events"]] == ["frueh", "herbst"]
+        assert result["n_items"] == 1 and len(result["item_scores"]) == 1, "Ereignisse zählen nicht als Beleg"
+        assert all(e["source_type"] != "global" for e in result["explanations"])
+        assert all(not k.startswith("global:") for k in result["item_scores"]), "kein Rang für Ereignisse"
+        assert "Hypothese" in er.GLOBAL_EVENT_NOTE and "nicht in die Rangfolge" in er.GLOBAL_EVENT_NOTE
+        assert er.rank_evidence([], WINDOW, terms=[], topics=[], categories=CATS)["global_events"] == []

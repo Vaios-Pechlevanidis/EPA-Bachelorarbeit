@@ -707,19 +707,22 @@ def rank_evidence(
     ``analyzer``: ``SentimentAnalyzer`` oder None (dann keine Stimmung).
 
     Rückgabe ``{"state", "explanations", "n_items", "n_bundles", "n_groups", "n_by_stage",
-    "item_scores", "terms", "note", "rules"}``: höchstens ``max_explanations`` Einträge mit
+    "item_scores", "terms", "note", "rules", "global_events"}``: höchstens ``max_explanations`` Einträge mit
     Stufe mindestens niedrig, mit ``group_by_category`` (Standard) je Gruppe nach
     ``group_key`` der beste Eintrag mit den übrigen Bündeln der Gruppe unter ``group``;
     ``state`` ``offen`` ohne Bündel der Stufe niedrig. ``n_groups`` zählt die Gruppen mit
     Stufe mindestens niedrig. ``item_scores`` nennt je Beleg Stufe, Signale, Ereignisart und
     Rang (1 = oberster Beleg) für die Sortierung der Belegliste; die Gruppierung ändert
-    weder ``item_scores`` noch ``n_by_stage`` noch die Stufe des obersten Eintrags. Reine
-    Funktion bis auf den Analyzer.
+    weder ``item_scores`` noch ``n_by_stage`` noch die Stufe des obersten Eintrags.
+    ``global_events`` nennt die allgemeinen Ereignisse im Fenster (Nachtrag zu E29,
+    2026-10-17) zur Anzeige als Hypothese neben den Ansätzen; sie bleiben außerhalb von
+    Rangfolge, ``n_items`` und ``item_scores``. Reine Funktion bis auf den Analyzer.
     """
     cats = load_event_categories() if categories is None else categories
     kind = kind or window.get("kind") or KIND_CHANGE
     shifts = topic_shift_index(topics)
     scored = [score_item(i, window, terms, shifts, cats, exclude) for i in items if i.get("source_type") != TYPE_GLOBAL]
+    global_events = global_events_in_window([i for i in items if i.get("source_type") == TYPE_GLOBAL], window)
     bundles = sorted(bundle_items(scored, exclude), key=sort_key)
     n_by_stage = {s: 0 for s in STAGES}
     for b in bundles:
@@ -773,7 +776,54 @@ def rank_evidence(
         "note": EXPLANATION_NOTE,
         "open_note": OPEN_NOTE if state == STATE_OPEN else None,
         "rules": rules(),
+        "global_events": global_events,
     }
+
+
+# ── Allgemeine Ereignisse im Fenster (Nachtrag zu E29, 2026-10-17) ───────────
+
+GLOBAL_EVENT_NOTE = (
+    "Allgemeine Ereignisse sind Zeiträume, in denen sich die gesamtwirtschaftliche Lage in Deutschland "
+    "schnell verschlechtert hat (Eurostat: Wirtschaftsstimmung, Inflationsrate). Sie sind eine Hypothese: "
+    "Sie zählen nicht als Beleg und gehen nicht in die Rangfolge ein."
+)
+
+
+def global_events_in_window(items: List[Dict[str, Any]], window: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Allgemeine Ereignisse (Belege vom Typ ``global`` aus ``evidence_for_window``) als
+    kompakte Liste für die Anzeige neben den Erklärungsansätzen: Kennung, Titel, Zeitraum
+    (``from``/``to`` als JJJJ-MM, ``months``), Reichweite, Vermerk, Adresse, dazu
+    ``time_phrase`` wie bei den Belegen (Lage zum Fenster nach dem Beginn des Ereignisses).
+    Sortiert nach Beginn; reine Funktion."""
+    out = []
+    for item in items:
+        e = item.get("event") or {}
+        date_from = str(e.get("from") or (item.get("date") or "")[:7])
+        date_to = str(e.get("to") or date_from)
+        if not date_from:
+            continue
+        try:
+            months = _month_index(date_to) - _month_index(date_from) + 1
+        except ValueError:
+            months = None
+        out.append({
+            "id": str(e.get("id") or item.get("id")),
+            "item_id": item.get("id"),
+            "title": item.get("title"),
+            "from": date_from,
+            "to": date_to,
+            "months": months,
+            "scope": e.get("scope"),
+            "note": e.get("note"),
+            "url": item.get("url"),
+            "time_phrase": time_phrase(date_from, window, window.get("kind")),
+        })
+    return sorted(out, key=lambda g: (g["from"], g["to"], g["id"]))
+
+
+def _month_index(period: str) -> int:
+    year, month = str(period)[:7].split("-")
+    return int(year) * 12 + int(month) - 1
 
 
 # ── Themenverschiebung ohne Stimmung (für Auswertung und Tests) ──────────────
@@ -811,7 +861,7 @@ __all__ = [
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
     "TIME_MID", "TIME_MIN", "RULES_VERSION", "RULES_VERSION_DATE", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
-    "OPEN_NOTE", "SIGNAL_NAMES", "SIGNAL_NONE_LABEL", "signals_present", "signal_label", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
+    "OPEN_NOTE", "GLOBAL_EVENT_NOTE", "global_events_in_window", "SIGNAL_NAMES", "SIGNAL_NONE_LABEL", "signals_present", "signal_label", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
     "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "group_key", "group_bundles", "fmt_month", "time_phrase", "explanation_text",
     "title_sentiment", "rank_evidence", "topic_shift_table",
 ]

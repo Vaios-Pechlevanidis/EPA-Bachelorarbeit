@@ -157,6 +157,9 @@ backend/data/annotationsbogen*.html
 # Schlüssel zum blinden Annotationsbogen (E5, make_annotation_sheet.py --blind): Zuordnung Reihe/Monat ->
 # Unternehmen/Kalendermonat; nur beim Autor, nicht einchecken
 backend/data/annotationsbogen_blind_schluessel*.json
+# Bewertungsbogen der Erklärungsansätze (DZ2, scripts/rate_explanations.py bogen): enthält Titel und Links der
+# Meldungen aus dem Belegspeicher; Bogen, Schlüssel und Vorlage bleiben beim Autor, nicht einchecken
+backend/data/bewertungsbogen/
 
 # Belegspeicher der externen Belege (Inkrement 4, E18): nicht einchecken
 backend/data/context/

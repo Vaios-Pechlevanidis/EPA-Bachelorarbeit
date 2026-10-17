@@ -61,6 +61,16 @@ Bewertendengruppe (E13, Inkrement 2): Mit ``status`` laufen Reihe, Eignung,
 Strafterm und Erkennung nur auf den Bewertungen dieses Status; jede
 Kombination aus Quelle, Dimension und Status ist eine eigene Reihe. Die
 Antwort enthält dann zusätzlich ``status``; ohne ``status`` ist sie unverändert.
+
+Stabilität (Prüfung 2026-10-17, docs/feature-doku/16-report-qualitaet.md, B9):
+``company_anomalies`` ergänzt je Veränderung ``stability``: in wie vielen Varianten
+eines Parameterrasters (``STABILITY_GRID``: Strafterm-Faktor, Mindestlänge eines
+Abschnitts, Mindestzahl Bewertungen je Monat) eine Veränderung derselben Richtung
+innerhalb von ``STABILITY_TOLERANCE_MONTHS`` Kalendermonaten ebenfalls erkannt wird.
+Varianten, in denen die Reihe nicht geeignet ist (E4), zählen nicht. Die
+Standardparameter bleiben unverändert; die Stabilität beschreibt nur, wie stark eine
+Markierung an den Schwellen hängt. Die Antwort für ``dimension=all`` bleibt ohne
+Stabilität.
 """
 
 from __future__ import annotations
@@ -82,6 +92,7 @@ from services.rating_series_service import (
     MIN_EVALUATED_MONTHS,
     MIN_REVIEWS_PER_MONTH,
     OVERALL_DIMENSION,
+    build_monthly_series,
     evaluated_months,
     is_eligible,
     monthly_series,
@@ -225,6 +236,68 @@ def detect_anomalies(
 
 OUTLIER_NEIGHBOURS = 3      # E14: bewertete Monate je Seite für das Vergleichsniveau
 
+# Raster der Stabilitätsprüfung (Setzung 2026-10-17, vorläufig): die Standardwerte
+# (Faktor 2,0; min_size 3; 5 Bewertungen je Monat) liegen jeweils im Raster.
+STABILITY_GRID: Dict[str, tuple] = {
+    "penalty_factor": (1.0, 2.0, 3.0, 4.0),
+    "min_size": (2, 3, 4, 6),
+    "min_reviews_per_month": (3, 5, 8),
+}
+STABILITY_TOLERANCE_MONTHS = 3
+
+
+def _same_change(a: Dict[str, Any], b: Dict[str, Any], tolerance: int) -> bool:
+    return a["direction"] == b["direction"] and abs(_months_between(a["date"], b["date"])) <= tolerance
+
+
+def stability_of_anomalies(
+    anomalies: List[Dict[str, Any]],
+    rows: List[Dict[str, Any]],
+    column: str,
+    *,
+    company_id: int,
+    source: str,
+    dimension: str,
+    min_delta: float = DEFAULT_MIN_DELTA,
+    grid: Optional[Dict[str, tuple]] = None,
+    tolerance: int = STABILITY_TOLERANCE_MONTHS,
+) -> List[Dict[str, Any]]:
+    """Stabilität je Veränderung über das Raster; reine Funktion (Zeilen statt DB).
+
+    Rückgabe: Kopie der Anomalien mit ``stability`` = ``{"variants": geprüfte
+    Varianten (Reihe geeignet), "matches": Varianten mit derselben Veränderung,
+    "share": Anteil (2 Nachkommastellen) oder None, "tolerance_months", "grid"}``.
+    """
+    grid = grid or STABILITY_GRID
+    if not anomalies:
+        return []
+    series_by_min: Dict[int, List[Dict[str, Any]]] = {}
+    variants: List[List[Dict[str, Any]]] = []
+    for min_reviews in grid["min_reviews_per_month"]:
+        series = series_by_min.setdefault(min_reviews, build_monthly_series(rows, column, min_reviews))
+        if not is_eligible(series):
+            continue
+        for factor in grid["penalty_factor"]:
+            for min_size in grid["min_size"]:
+                variants.append(detect_anomalies(
+                    series, company_id=company_id, source=source, dimension=dimension,
+                    min_delta=min_delta, penalty_factor=factor, min_size=min_size,
+                ))
+    out: List[Dict[str, Any]] = []
+    for a in anomalies:
+        matches = sum(1 for found in variants if any(_same_change(a, b, tolerance) for b in found))
+        out.append({
+            **a,
+            "stability": {
+                "variants": len(variants),
+                "matches": matches,
+                "share": round(matches / len(variants), 2) if variants else None,
+                "tolerance_months": tolerance,
+                "grid": {k: list(v) for k, v in grid.items()},
+            },
+        })
+    return out
+
 
 def detect_outlier_months(
     series: List[Dict[str, Any]],
@@ -305,8 +378,13 @@ def company_anomalies(
     ``status`` wählt eine Bewertendengruppe (None = alle). ValueError bei
     ungültiger Quelle, Dimension oder ungültigem Status (aus ``monthly_series``).
     """
-    data = monthly_series(company_id, source, dimension, status=status)
-    series = data["series"]
+    from services.rating_series_service import _fetch_group_rows, validate_status, value_column  # lazy wie dort
+
+    column = value_column(source, dimension)
+    validate_status(source, status)
+    rows = _fetch_group_rows(source, company_id, column, status)
+    series = build_monthly_series(rows, column, MIN_REVIEWS_PER_MONTH)
+    data = {"min_reviews": MIN_REVIEWS_PER_MONTH}
     elig = eligibility(series)
     anomalies = (
         detect_anomalies(
@@ -315,6 +393,11 @@ def company_anomalies(
         )
         if elig["eligible"] else []
     )
+    # Stabilität über das Raster (2026-10-17); nur im skalierten Standardmodus sinnvoll
+    if anomalies and penalty is None:
+        anomalies = stability_of_anomalies(
+            anomalies, rows, column, company_id=company_id, source=source, dimension=dimension, min_delta=min_delta,
+        )
     outliers = (
         detect_outlier_months(series, company_id=company_id, source=source, dimension=dimension)
         if elig["eligible"] else []
@@ -414,6 +497,7 @@ def company_anomalies_all(
 
 __all__ = [
     "DEFAULT_MIN_DELTA", "SEVERITY_HIGH", "OUTLIER_SIGMA_FACTOR", "OUTLIER_MIN_DELTA", "OUTLIER_NEIGHBOURS", "detect_outlier_months",
+    "STABILITY_GRID", "STABILITY_TOLERANCE_MONTHS", "stability_of_anomalies",
     "eligibility", "detection_params", "sort_anomalies", "detect_anomalies", "company_anomalies",
     "company_anomalies_all",
 ]
