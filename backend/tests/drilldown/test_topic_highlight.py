@@ -111,4 +111,4 @@ class TestReviewsRoute:
 
     def test_without_dimension_unchanged(self, api):
         body = api.get(URL.format(3), params={**WINDOW, "format": "full", "limit": 2}).json()
-        assert "highlight" not in body and all(set(r) == {"id", "preview", "fullReview"} for r in body["reviews"])
+        assert "highlight" not in body and all(set(r) == {"id", "preview", "fullReview", "topics"} for r in body["reviews"])

@@ -264,15 +264,22 @@ def fetch_review_rows_in_range(
     return _fetch_all_rows(query.order("id"), page_size=PAGE_SIZE)  # id: stabile Reihenfolge für range()
 
 
-def sort_newest_first(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Nach ``datum`` absteigend, bei gleichem Datum nach ``id`` absteigend;
-    Zeilen ohne Datum zuletzt."""
+def sort_by_date(rows: List[Dict[str, Any]], newest_first: bool = True) -> List[Dict[str, Any]]:
+    """Nach ``datum`` (Tag, an dem die Bewertung geschrieben wurde), bei gleichem
+    Datum nach ``id``; absteigend (``newest_first``) oder aufsteigend. Zeilen ohne
+    Datum stehen in beiden Fällen zuletzt."""
     with_date = sorted(
         (r for r in rows if r.get("datum")),
         key=lambda r: (str(r["datum"]), r.get("id") or 0),
-        reverse=True,
+        reverse=newest_first,
     )
     return with_date + [r for r in rows if not r.get("datum")]
+
+
+def sort_newest_first(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Nach ``datum`` absteigend, bei gleichem Datum nach ``id`` absteigend;
+    Zeilen ohne Datum zuletzt."""
+    return sort_by_date(rows, newest_first=True)
 
 
 def full_review_item(row: Dict[str, Any], source: str) -> Dict[str, Any]:
@@ -284,5 +291,5 @@ __all__ = [
     "clean_html_text", "build_full_review", "CATEGORY_TEXT_FIELDS", "TEXT_FIELDS_BY_SOURCE", "has_text_content",
     "review_text", "review_preview",
     "UNKNOWN_STATUS", "STATUS_LABELS", "normalize_status", "validate_status", "filter_by_status",
-    "parse_day", "fetch_review_rows_in_range", "sort_newest_first", "full_review_item",
+    "parse_day", "fetch_review_rows_in_range", "sort_by_date", "sort_newest_first", "full_review_item",
 ]

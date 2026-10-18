@@ -29,7 +29,9 @@ nicht nur eine erkannte Veränderung:
 Darunter erscheinen **„Vergleich mit dem Zeitraum davor“** (gleiche Darstellung wie der
 Vorher-Nachher-Vergleich: Anzahl, Gesamtnote, Stimmung, Verschiebungen je Thema, kleine
 Basis) und **„Bewertungen der Auswahl“** mit Umschalter auf den Zeitraum davor, Detailfenster,
-Markierung des Themas der Dimension und Filter „nur Bewertungen, die … nennen“.
+Markierung des Themas der Dimension und Filter „nur Bewertungen, die … nennen“ (seit
+2026-10-18 Themen-Marken je Bewertung, Auswahlfeld „Alle Themen“ und Sortierung nach Datum,
+Doku 17).
 
 Die Auswahl steht in der Adresse (`?from=2020-02&to=2022-01`) und bleibt beim Wechsel von
 Quelle, Status oder Dimension stehen, so lässt sich derselbe Zeitraum für verschiedene

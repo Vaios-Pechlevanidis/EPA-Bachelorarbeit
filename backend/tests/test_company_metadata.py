@@ -47,6 +47,7 @@ EXPECTED_IDS = {3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
 REQUIRED_FIELDS = {
     "company_id", "name", "name_normalized", "ticker", "ticker_scope", "isin", "sector", "kununu_url",
     "peer_group", "news_term", "news_exclude", "news_term_confirmed", "eqs", "listed", "verification", "note",
+    "title_words",   # zusätzliche Kennungen des Unternehmens in Titeln (strenge Auswahl der Erklärungsansätze, E33)
     # Inkrement 6 (FA-37): Vergleich mit der Plattform, nur vom Autor gefüllt, sonst null
     "platform_review_count", "platform_count_date",
 }
@@ -99,6 +100,7 @@ def test_metadata_json_structure_and_types(entries):
         assert re.fullmatch(r"https://www\.kununu\.com/de/[a-z0-9-]+", e["kununu_url"])
         assert isinstance(e["listed"], bool)
         assert isinstance(e["note"], str)
+        assert isinstance(e["title_words"], list) and all(isinstance(w, str) and w.strip() for w in e["title_words"])
         for key in ("ticker", "isin"):
             assert e[key] is None or (isinstance(e[key], str) and e[key].strip())
         # ticker_scope (Inkrement 3, E15): einer der erlaubten Werte; None nur ohne Ticker

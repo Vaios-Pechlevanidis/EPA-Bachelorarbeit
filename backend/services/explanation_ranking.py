@@ -77,6 +77,22 @@ Stufe je Fenster (oberster Eintrag), ``n_by_stage``, ``n_bundles`` und
 ``item_scores`` ändern sich dadurch nicht (``group_by_category=False`` gibt
 die ungruppierte Liste, Test in ``tests/explanations``).
 
+**Strenge Auswahl** (E33, 2026-10-18, ``SELECTION_VERSION`` 1): Vor Bündelung und
+Rangfolge gelten vier Ausschlussregeln je Beleg, alle müssen erfüllt sein:
+(1) der Titel nennt das Unternehmen (ein Wort des Namens oder des Suchbegriffs,
+ohne allgemeine Wörter wie „Deutsche“ oder „Medical“; Genitiv erlaubt; EQS-
+Mitteilungen des Emittenten gelten als genannt), (2) Arbeitgeberbezug (die Gruppe
+ohne Arbeitgeberbezug ist ausgeschlossen statt zurückgestuft), (3) thematische
+Korrespondenz (``term_match ≥ TOPIC_WEAK`` oder ``category_match ≥ TOPIC_STRONG``;
+eine nur erkannte Ereignisart genügt nicht; ein Begriff trifft nur, wenn das Titelwort
+der Begriff ist oder mit ihm beginnt, nicht umgekehrt), (4) zeitliche Nähe mindestens
+``SELECTION_MIN_TIME`` (0,5). Ausgeschlossene Belege stehen in ``item_scores``
+mit ``excluded`` (nicht erfüllte Regel) hinter allen Bündeln; ``n_selected``, ``n_excluded`` und
+``n_excluded_by_reason`` zählen sie. Jeder ausgewählte Beleg erreicht nach den
+Stufenregeln mindestens ``mittel``. ``strict=False`` gibt die Rangfolge ohne
+Auswahl (Fassung bis 2026-10-17, Auswertung E23); die Stufenregeln und Schwellen
+ändern sich nicht.
+
 Alle Schwellen sind Setzungen, vom Autor am 2026-10-08 bestätigt (D2) und für
 die Auswertung festgeschrieben; die Stufenregeln in der zweiten Fassung
 (``tests/explanations/test_frozen_rules.py``). Alle Funktionen sind rein; nur
@@ -87,13 +103,13 @@ from __future__ import annotations
 
 import re
 from datetime import date as _date
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from services.event_categories import classify_title, load_event_categories
 from services.evidence_service import KIND_CHANGE, KIND_OUTLIER, KIND_SELECTION, month_index
 from services.evidence_sources import TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS
 from services.keyword_topic_service import EXPLANATION_TOPIC_TEXT_FIELDS, topic_definitions_for, topics_in_review
-from services.review_terms import COMPANY_PREFIX_MIN_LENGTH, match_terms, term_set
+from services.review_terms import MIN_TERM_LENGTH, STOPWORDS, match_terms, term_set
 
 _TITLE_WORD_RE = re.compile(r"[a-zäöüß0-9&]+")
 _INNER_DOT_RE = re.compile(r"(?<=[a-zäöüß0-9])\.(?=[a-zäöüß0-9])")
@@ -178,14 +194,69 @@ STATE_OPEN, STATE_FOUND = "offen", "ansaetze"
 
 EXPLANATION_NOTE = ("Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, "
                     "keine Ursachen.")
-OPEN_NOTE = ("Kein Beleg erreicht die Stufe niedrig: Keine Meldung im Ereignisfenster hat einen Wortbezug "
-             "zu den Bewertungen oder eine erkannte Ereignisart mit Arbeitgeberbezug. Interne Auslöser sind "
-             "von außen nicht sichtbar; die Veränderung bleibt offen.")
+OPEN_NOTE = ("Keine Meldung im Ereignisfenster erfüllt die strengen Auswahlregeln (Unternehmen im Titel genannt, "
+             "Arbeitgeberbezug, Wortbezug zu den Bewertungen oder Ereignisart mit Themenverschiebung, zeitliche Nähe "
+             "mindestens 0,5). Interne Auslöser sind von außen nicht sichtbar; die Veränderung bleibt offen.")
+# Wortlaut ohne strenge Auswahl (``strict=False``, Fassung bis 2026-10-17).
+OPEN_NOTE_LENIENT = ("Kein Beleg erreicht die Stufe niedrig: Keine Meldung im Ereignisfenster hat einen Wortbezug "
+                     "zu den Bewertungen oder eine erkannte Ereignisart mit Arbeitgeberbezug. Interne Auslöser sind "
+                     "von außen nicht sichtbar; die Veränderung bleibt offen.")
 
+# ── Strenge Auswahl (E33, 2026-10-18) ────────────────────────────────────────
+# Ausschlussregeln je Beleg vor Bündelung und Rangfolge. Ein Beleg wird nur dann zum
+# Erklärungsansatz, wenn alle vier Regeln gelten; die Stufenregeln (RULES_VERSION 2) und ihre
+# Schwellen bleiben unverändert. ``strict=False`` in ``rank_evidence`` gibt die Rangfolge
+# ohne Auswahl (Auswertung E23). Die vier Regeln hat der Autor am 2026-10-18 bestätigt (E33);
+# Änderungen nur mit dokumentiertem Grund in docs/entscheidungen.md
+# (tests/explanations/test_strict_selection.py).
+STRICT_SELECTION = True
+SELECTION_VERSION = 1
+SELECTION_DATE = "2026-10-18"
+SELECTION_MIN_TIME = TIME_MID        # zeitliche Nähe mindestens 0,5: der Rand des Fensters davor (0,33) zählt nicht
+COMPANY_TITLE_MAX_SUFFIX = 2         # Namenswort als Wortanfang nur mit höchstens so vielen Zeichen dahinter ("Telekoms")
+# Wörter eines Unternehmensnamens oder Suchbegriffs, die allein keinen Titel kennzeichnen
+# (allgemeine Beschreibungen); sie zählen nur, wenn kein anderes Namenswort bleibt.
+GENERIC_NAME_WORDS = frozenset({
+    "medical", "software", "semiconductor", "digital", "technology", "technologie", "technologies", "europe", "europa",
+    "data", "institut", "institute", "universität", "university", "uni", "technische", "group", "holding",
+    "international", "systems", "solutions", "services", "service", "partners", "consulting", "deutschland", "germany",
+    "network", "networks", "energy", "energie", "capital", "industries", "industrie",
+})
+EXCLUDED_COMPANY = "Unternehmen im Titel nicht genannt"
+EXCLUDED_NON_EMPLOYER = "ohne Arbeitgeberbezug"
+EXCLUDED_TOPIC = "kein Wortbezug und keine Themenverschiebung"
+EXCLUDED_TIME = "zeitliche Nähe unter 0,5"
+EXCLUSION_REASONS = (EXCLUDED_COMPANY, EXCLUDED_NON_EMPLOYER, EXCLUDED_TOPIC, EXCLUDED_TIME)
+SELECTION_RULES = (
+    "Der Titel nennt das Unternehmen: ein Wort des Namens oder des Suchbegriffs steht im Titel "
+    "(allgemeine Wörter wie „Deutsche“ zählen nicht); EQS-Mitteilungen des Emittenten gelten als genannt.",
+    "Die Meldung hat Arbeitgeberbezug: Börsenberichte, Kursziele, Sport- und Produktmeldungen sind ausgeschlossen, "
+    "nicht nur zurückgestuft.",
+    "Die Meldung hat thematische Korrespondenz: ein kennzeichnender Begriff der Bewertungen steht im Titel (Wortbezug: "
+    "der Begriff selbst oder ein Wort, das mit ihm beginnt) oder die erkannte Ereignisart hat ein zugeordnetes Thema, "
+    "das sich im Vergleich merklich verschiebt (Themenverschiebung); eine nur erkannte Ereignisart genügt nicht.",
+    "Die Meldung liegt nahe am Übergang: zeitliche Nähe mindestens 0,5, also nicht am Rand des Fensters davor.",
+)
+SELECTION_NOTE = ("Strenge Auswahl: Nur Meldungen, die alle vier Regeln erfüllen, werden zu Erklärungsansätzen; "
+                  "die übrigen stehen in der Belegliste mit der Regel, die sie nicht erfüllen.")
+
+
+
+def selection_rules() -> Dict[str, Any]:
+    """Die strengen Auswahlregeln (E33) mit Werten, Wortlaut und Gründen, für Antworten und Berichte."""
+    return {
+        "strict": STRICT_SELECTION, "version": SELECTION_VERSION, "date": SELECTION_DATE,
+        "require_company_in_title": True, "exclude_non_employer": True,
+        "min_topic": f"term_match >= {TOPIC_WEAK} oder category_match >= {TOPIC_STRONG}",
+        "term_match_compound_only": True,
+        "min_time": SELECTION_MIN_TIME, "min_stage": STAGE_MEDIUM,
+        "company_title_max_suffix": COMPANY_TITLE_MAX_SUFFIX,
+        "rules": list(SELECTION_RULES), "reasons": list(EXCLUSION_REASONS), "note": SELECTION_NOTE,
+    }
 
 
 def rules() -> Dict[str, Any]:
-    """Alle Schwellen und Stufenregeln, für Antworten und Berichte."""
+    """Alle Schwellen, Stufenregeln und die strenge Auswahl, für Antworten und Berichte."""
     return {
         "term_match_per_term": TERM_MATCH_PER_TERM, "term_match_strong": TERM_MATCH_STRONG,
         "term_strong_min_after": TERM_STRONG_MIN_AFTER, "term_strong_min_ratio": TERM_STRONG_MIN_RATIO,
@@ -199,6 +270,7 @@ def rules() -> Dict[str, Any]:
         "corrections": list(CORRECTIONS),
         "stage_labels": dict(STAGE_LABELS),
         "finding_note": STAGE_FINDING_NOTE,
+        "selection": selection_rules(),
         "stages": {
             STAGE_HIGH: f"term_match >= {TOPIC_WEAK} und Ereignisart erkannt (category_match >= {CATEGORY_MATCH_ONLY}) und time_match >= {TIME_NEAR}",
             STAGE_MEDIUM: f"term_match >= {TOPIC_WEAK} oder category_match >= {TOPIC_STRONG}, und time_match >= {TIME_MID}",
@@ -319,27 +391,52 @@ def stage_for(term: float, category: float, time: float, employer_related: Optio
     return stage
 
 
+def company_title_words(company_words: Iterable[str], extra: Iterable[str] = ()) -> Set[str]:
+    """Wörter, an denen ein Titel das Unternehmen nennt: die Wortteile des Namens und des
+    Suchbegriffs (``review_terms.company_terms``) ohne Stoppwörter und allgemeine
+    Bewertungswörter („Deutsche“); allgemeine Beschreibungen (``GENERIC_NAME_WORDS``, etwa
+    „Medical“) nur, wenn kein anderes Wort bleibt. ``extra`` sind zusätzliche Kennungen aus der
+    Metadatei (``title_words``, zum Beispiel eine Abkürzung wie „CGM“). Reine Funktion."""
+    words = {str(w).lower().strip() for w in (company_words or ()) if w}
+    words = {w for w in words if len(w) >= MIN_TERM_LENGTH and w not in STOPWORDS}
+    specific = {w for w in words if w not in GENERIC_NAME_WORDS}
+    out = specific or words
+    for e in extra or ():
+        lowered = str(e).lower()
+        tokens = _TITLE_WORD_RE.findall(lowered) + _TITLE_WORD_RE.findall(_INNER_DOT_RE.sub("", lowered))
+        out |= {t for t in tokens if len(t) >= MIN_TERM_LENGTH}
+    return out
+
+
 def company_in_title(title: Any, company_words: Iterable[str]) -> Optional[bool]:
-    """Nennt der Titel das Unternehmen? Ein Wort des Titels gleicht einem Wortteil des
-    Namens oder beginnt mit einem Wortteil ab ``COMPANY_PREFIX_MIN_LENGTH`` Zeichen. None
-    ohne Wortteile (dann nicht prüfbar). Nur Information, ohne Einfluss auf die Stufe."""
-    words = [w for w in (company_words or ()) if w]
+    """Nennt der Titel das Unternehmen? Ein Wort des Titels gleicht einem Wort aus
+    ``company_words`` (``company_title_words``) oder beginnt damit und ist höchstens
+    ``COMPANY_TITLE_MAX_SUFFIX`` Zeichen länger (Genitiv „Telekoms“, nicht
+    „Telekommunikation“). None ohne Wörter oder Titel (dann nicht prüfbar). Seit der strengen
+    Auswahl (E33, 2026-10-18) entscheidet das Ergebnis über den Ausschluss; bis dahin war es
+    ein Hinweis mit der Wortanfang-Regel ab fünf Zeichen (``review_terms.COMPANY_PREFIX_MIN_LENGTH``)."""
+    words = {str(w).lower() for w in (company_words or ()) if w}
     if not words or not title or not isinstance(title, str):
         return None
     lowered = title.lower()
     # Punkte innerhalb eines Worts entfallen zusätzlich ("E.ON" -> "eon"; Korrektur 2026-10-13).
-    tokens = _TITLE_WORD_RE.findall(lowered) + _TITLE_WORD_RE.findall(_INNER_DOT_RE.sub("", lowered))
-    prefixes = tuple(w for w in words if len(w) >= COMPANY_PREFIX_MIN_LENGTH)
-    exact = set(words)
-    return any(t in exact or (prefixes and t.startswith(prefixes)) for t in tokens)
+    tokens = set(_TITLE_WORD_RE.findall(lowered)) | set(_TITLE_WORD_RE.findall(_INNER_DOT_RE.sub("", lowered)))
+    for t in tokens:
+        if t in words:
+            return True
+        if any(t.startswith(w) and len(t) - len(w) <= COMPANY_TITLE_MAX_SUFFIX for w in words):
+            return True
+    return False
 
 
 def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[str, Any]],
                shifts: Dict[str, Dict[str, Any]], categories: Optional[List[Dict[str, Any]]] = None,
-               company_words: Iterable[str] = ()) -> Dict[str, Any]:
-    """Signale, Begriffe, Ereignisart und Stufe eines Belegs (reine Funktion)."""
+               company_words: Iterable[str] = (), strict_terms: bool = False) -> Dict[str, Any]:
+    """Signale, Begriffe, Ereignisart und Stufe eines Belegs (reine Funktion). ``strict_terms``
+    (strenge Auswahl, E33): ein Begriff trifft nur, wenn das Titelwort der Begriff ist oder mit
+    ihm beginnt (``review_terms.match_terms(compound_only=True)``)."""
     title = item.get("title") or ""
-    matched = match_terms(title, terms)
+    matched = match_terms(title, terms, compound_only=strict_terms)
     classification = classify_title(title, categories, eqs_category=item.get("category"))
     primary = classification["primary"]
     cat_match, shifted = category_match(primary, shifts)
@@ -367,6 +464,44 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
         "stage_label": STAGE_LABELS[stage],
         "signal_label": signal_label(t_match, cat_match, employer),
     }
+
+
+# ── Strenge Auswahl (E33) ────────────────────────────────────────────────────
+
+def exclusion_reason(scored: Dict[str, Any]) -> Optional[str]:
+    """Die erste nicht erfüllte der strengen Auswahlregeln eines bewerteten Belegs
+    (``score_item``), als Text für die Belegliste; None, wenn alle Regeln gelten. Reihenfolge der
+    Prüfung: Unternehmen im Titel (EQS-Mitteilungen des Emittenten ausgenommen; ohne
+    Namenswörter nicht prüfbar und daher nicht ausgeschlossen), Arbeitgeberbezug,
+    thematische Korrespondenz, zeitliche Nähe. Reine Funktion."""
+    if scored.get("source_type") != TYPE_ADHOC and scored.get("company_in_title") is False:
+        return EXCLUDED_COMPANY
+    if scored.get("employer_related") is False:
+        return EXCLUDED_NON_EMPLOYER
+    term, category = float(scored.get("term_match") or 0.0), float(scored.get("category_match") or 0.0)
+    if not (term >= TOPIC_WEAK or category >= TOPIC_STRONG):
+        return EXCLUDED_TOPIC
+    if float(scored.get("time_match") or 0.0) < SELECTION_MIN_TIME:
+        return EXCLUDED_TIME
+    return None
+
+
+def select_items(scored: List[Dict[str, Any]], strict: bool = STRICT_SELECTION) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """``(ausgewählt, ausgeschlossen)`` nach ``exclusion_reason``; je Beleg werden ``selected``
+    und ``excluded`` (nicht erfüllte Regel oder None) ergänzt. Ohne ``strict`` sind alle ausgewählt."""
+    kept: List[Dict[str, Any]] = []
+    dropped: List[Dict[str, Any]] = []
+    for item in scored:
+        reason = exclusion_reason(item) if strict else None
+        item["selected"], item["excluded"] = reason is None, reason
+        (kept if reason is None else dropped).append(item)
+    return kept, dropped
+
+
+def _excluded_sort_key(scored: Dict[str, Any]) -> Tuple:
+    """Ausgeschlossene Belege hinter allen Bündeln: Stufe, Quellenart, Signale, Datum."""
+    return (_STAGE_RANK[scored["stage"]], SOURCE_TYPE_ORDER.get(scored.get("source_type"), 9),
+            -scored["topic_match"], -scored["time_match"], str(scored.get("date") or "9999"), str(scored.get("id")))
 
 
 # ── Bündelung ────────────────────────────────────────────────────────────────
@@ -683,6 +818,27 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
     }
 
 
+def _item_score(i: Dict[str, Any], rank: int, bundle: Optional[Dict[str, Any]], b_index: Optional[int]) -> Dict[str, Any]:
+    """Eintrag in ``item_scores`` für einen Beleg eines Bündels (Stufe und Signale des Bündels)
+    oder einen ausgeschlossenen Beleg (``bundle`` None; eigene Stufe, ``excluded`` nennt die Regel)."""
+    return {
+        "rank": rank,
+        "stage": bundle["stage"] if bundle else i["stage"],
+        "stage_label": bundle["stage_label"] if bundle else i["stage_label"],
+        "signal_label": bundle["signal_label"] if bundle else i["signal_label"],
+        "item_signal_label": i["signal_label"], "bundle": b_index, "bundle_size": bundle["n_items"] if bundle else 1,
+        "time_match": i["time_match"], "term_match": i["term_match"], "category_match": i["category_match"],
+        "topic_match": i["topic_match"], "item_stage": i["stage"],
+        "category": i["category"]["id"] if i.get("category") else None,
+        "category_label": i["category"]["label"] if i.get("category") else None,
+        "employer_related": i.get("employer_related"),
+        "company_in_title": i.get("company_in_title"),
+        "terms": [t["term"] for t in i["terms"]],
+        "selected": bool(i.get("selected", True)),
+        "excluded": i.get("excluded"),
+    }
+
+
 def rank_evidence(
     items: List[Dict[str, Any]],
     window: Dict[str, Any],
@@ -696,6 +852,8 @@ def rank_evidence(
     kind: Optional[str] = None,
     max_explanations: int = MAX_EXPLANATIONS,
     group_by_category: bool = True,
+    strict: bool = STRICT_SELECTION,
+    title_words: Iterable[str] = (),
 ) -> Dict[str, Any]:
     """Rangfolge der Belege eines Fensters als Erklärungsansätze.
 
@@ -703,27 +861,39 @@ def rank_evidence(
     bleiben außen vor: Hypothesen nach E20). ``terms``: kennzeichnende Begriffe
     (``review_terms.distinctive_terms``). ``topics``: Themenliste des Vergleichs
     (``share_shift_pp``, ``low_basis``). ``direction``: ``fall`` oder ``rise`` für die
-    Stimmung. ``exclude``: Wortteile des Unternehmensnamens (Titelähnlichkeit).
-    ``analyzer``: ``SentimentAnalyzer`` oder None (dann keine Stimmung).
+    Stimmung. ``exclude``: Wortteile des Unternehmensnamens (Titelähnlichkeit und, mit
+    ``company_title_words``, die Nennung des Unternehmens im Titel). ``title_words``:
+    zusätzliche Kennungen des Unternehmens aus der Metadatei (etwa „CGM“).
+    ``analyzer``: ``SentimentAnalyzer`` oder None (dann keine Stimmung). ``strict``: die
+    strengen Auswahlregeln (E33, Standard); False gibt die Rangfolge ohne Auswahl
+    (Fassung bis 2026-10-17, Auswertung E23).
 
-    Rückgabe ``{"state", "explanations", "n_items", "n_bundles", "n_groups", "n_by_stage",
-    "item_scores", "terms", "note", "rules", "global_events"}``: höchstens ``max_explanations`` Einträge mit
-    Stufe mindestens niedrig, mit ``group_by_category`` (Standard) je Gruppe nach
-    ``group_key`` der beste Eintrag mit den übrigen Bündeln der Gruppe unter ``group``;
-    ``state`` ``offen`` ohne Bündel der Stufe niedrig. ``n_groups`` zählt die Gruppen mit
-    Stufe mindestens niedrig. ``item_scores`` nennt je Beleg Stufe, Signale, Ereignisart und
-    Rang (1 = oberster Beleg) für die Sortierung der Belegliste; die Gruppierung ändert
-    weder ``item_scores`` noch ``n_by_stage`` noch die Stufe des obersten Eintrags.
-    ``global_events`` nennt die allgemeinen Ereignisse im Fenster (Nachtrag zu E29,
-    2026-10-17) zur Anzeige als Hypothese neben den Ansätzen; sie bleiben außerhalb von
-    Rangfolge, ``n_items`` und ``item_scores``. Reine Funktion bis auf den Analyzer.
+    Rückgabe ``{"state", "explanations", "n_items", "n_selected", "n_excluded",
+    "n_excluded_by_reason", "n_bundles", "n_groups", "n_by_stage", "item_scores", "terms",
+    "note", "rules", "selection", "global_events"}``: höchstens ``max_explanations`` Einträge
+    mit Stufe mindestens niedrig (mit strenger Auswahl mindestens mittel), mit
+    ``group_by_category`` (Standard) je Gruppe nach ``group_key`` der beste Eintrag mit den
+    übrigen Bündeln der Gruppe unter ``group``; ``state`` ``offen`` ohne solches Bündel.
+    ``n_items`` zählt alle Belege außer den allgemeinen Ereignissen, ``n_selected`` die nach
+    der Auswahl verbliebenen, ``n_bundles`` und ``n_by_stage`` die Bündel der verbliebenen.
+    ``n_groups`` zählt die Gruppen mit Stufe mindestens niedrig. ``item_scores`` nennt je
+    Beleg Stufe, Signale, Ereignisart, ``selected``, ``excluded`` (nicht erfüllte Regel) und Rang (1 =
+    oberster Beleg; ausgeschlossene Belege hinter allen Bündeln) für die Sortierung der
+    Belegliste; die Gruppierung ändert weder ``item_scores`` noch ``n_by_stage`` noch die
+    Stufe des obersten Eintrags. ``global_events`` nennt die allgemeinen Ereignisse im
+    Fenster (Nachtrag zu E29, 2026-10-17) zur Anzeige als Hypothese neben den Ansätzen; sie
+    bleiben außerhalb von Rangfolge, ``n_items`` und ``item_scores``. Reine Funktion bis auf
+    den Analyzer.
     """
     cats = load_event_categories() if categories is None else categories
     kind = kind or window.get("kind") or KIND_CHANGE
     shifts = topic_shift_index(topics)
-    scored = [score_item(i, window, terms, shifts, cats, exclude) for i in items if i.get("source_type") != TYPE_GLOBAL]
+    name_words = company_title_words(exclude, title_words)
+    scored = [score_item(i, window, terms, shifts, cats, name_words, strict_terms=bool(strict))
+              for i in items if i.get("source_type") != TYPE_GLOBAL]
     global_events = global_events_in_window([i for i in items if i.get("source_type") == TYPE_GLOBAL], window)
-    bundles = sorted(bundle_items(scored, exclude), key=sort_key)
+    selected, excluded = select_items(scored, strict)
+    bundles = sorted(bundle_items(selected, exclude), key=sort_key)
     n_by_stage = {s: 0 for s in STAGES}
     for b in bundles:
         n_by_stage[b["stage"]] += 1
@@ -747,26 +917,26 @@ def rank_evidence(
     for b_index, b in enumerate(bundles):
         for i in b["items"]:
             rank += 1
-            item_scores[str(i.get("id"))] = {
-                "rank": rank, "stage": b["stage"], "stage_label": b["stage_label"], "signal_label": b["signal_label"],
-                "item_signal_label": i["signal_label"], "bundle": b_index, "bundle_size": b["n_items"],
-                "time_match": i["time_match"], "term_match": i["term_match"], "category_match": i["category_match"],
-                "topic_match": i["topic_match"], "item_stage": i["stage"],
-                "category": i["category"]["id"] if i.get("category") else None,
-                "category_label": i["category"]["label"] if i.get("category") else None,
-                "employer_related": i.get("employer_related"),
-                "company_in_title": i.get("company_in_title"),
-                "terms": [t["term"] for t in i["terms"]],
-            }
+            item_scores[str(i.get("id"))] = _item_score(i, rank, b, b_index)
+    # Ausgeschlossene Belege (strenge Auswahl) hinter allen Bündeln, geordnet wie die Bündel.
+    for i in sorted(excluded, key=_excluded_sort_key):
+        rank += 1
+        item_scores[str(i.get("id"))] = _item_score(i, rank, None, None)
     # Bündel mit Stufe mindestens niedrig je Bezeichnung nach Signalen (Kopfzeile, zusätzlich zu n_by_stage)
     n_by_signal_label: Dict[str, int] = {}
     for b in eligible:
         n_by_signal_label[b["signal_label"]] = n_by_signal_label.get(b["signal_label"], 0) + 1
+    n_excluded_by_reason = {reason: 0 for reason in EXCLUSION_REASONS}
+    for i in excluded:
+        n_excluded_by_reason[i["excluded"]] = n_excluded_by_reason.get(i["excluded"], 0) + 1
     state = STATE_FOUND if explanations else STATE_OPEN
     return {
         "state": state,
         "explanations": explanations,
         "n_items": len(scored),
+        "n_selected": len(selected),
+        "n_excluded": len(excluded),
+        "n_excluded_by_reason": n_excluded_by_reason,
         "n_bundles": len(bundles),
         "n_groups": len(groups),
         "n_by_stage": n_by_stage,
@@ -774,8 +944,9 @@ def rank_evidence(
         "item_scores": item_scores,
         "terms": terms,
         "note": EXPLANATION_NOTE,
-        "open_note": OPEN_NOTE if state == STATE_OPEN else None,
+        "open_note": (OPEN_NOTE if strict else OPEN_NOTE_LENIENT) if state == STATE_OPEN else None,
         "rules": rules(),
+        "selection": {**selection_rules(), "strict": bool(strict)},
         "global_events": global_events,
     }
 
@@ -859,7 +1030,11 @@ __all__ = [
     "TERM_MATCH_PER_TERM", "TERM_MATCH_STRONG", "TERM_STRONG_MIN_AFTER", "TERM_STRONG_MIN_RATIO", "TERM_STRONG_MIN_SHIFT",
     "TOPIC_SHIFT_MIN_PP",
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
-    "TIME_MID", "TIME_MIN", "RULES_VERSION", "RULES_VERSION_DATE", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
+    "TIME_MID", "TIME_MIN", "RULES_VERSION", "RULES_VERSION_DATE",
+    "STRICT_SELECTION", "SELECTION_VERSION", "SELECTION_DATE", "SELECTION_MIN_TIME", "COMPANY_TITLE_MAX_SUFFIX",
+    "GENERIC_NAME_WORDS", "EXCLUDED_COMPANY", "EXCLUDED_NON_EMPLOYER", "EXCLUDED_TOPIC", "EXCLUDED_TIME", "EXCLUSION_REASONS",
+    "SELECTION_RULES", "SELECTION_NOTE", "OPEN_NOTE_LENIENT", "selection_rules", "company_title_words", "exclusion_reason",
+    "select_items", "STAGE_HIGH", "STAGE_MEDIUM", "STAGE_LOW", "STAGE_NONE", "STAGES", "STAGE_LABELS", "STAGE_FINDING_NOTE", "BUNDLE_MAX_DAYS",
     "BUNDLE_TITLE_SIMILARITY", "MAX_EXPLANATIONS", "SOURCE_TYPE_ORDER", "STATE_OPEN", "STATE_FOUND", "EXPLANATION_NOTE",
     "OPEN_NOTE", "GLOBAL_EVENT_NOTE", "global_events_in_window", "SIGNAL_NAMES", "SIGNAL_NONE_LABEL", "signals_present", "signal_label", "rules", "time_match", "is_strong_term", "term_match", "topic_shift_index", "category_match", "stage_for",
     "company_in_title", "score_item", "title_similarity", "bundle_items", "sort_key", "group_key", "group_bundles", "fmt_month", "time_phrase", "explanation_text",

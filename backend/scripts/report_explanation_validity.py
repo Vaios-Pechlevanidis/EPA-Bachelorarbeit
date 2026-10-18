@@ -34,10 +34,16 @@ Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprü
 Solange die Annotationsdatei keine Einträge hat, meldet der Bericht „nicht
 verfügbar“; die Festlegung steht, der Lauf kommt nach der Annotation.
 
+**Strenge Auswahl (E33, 2026-10-18):** Seit diesem Datum gilt in der Rangfolge die
+strenge Auswahl der Belege (``rank_evidence(strict=True)``, Standard); ``--no-strict``
+rechnet die Fassung bis 2026-10-17 (Läufe E23). Die Ausgabe nennt ``strict`` und die
+Regeln unter ``rules.selection``; je Fenster zusätzlich ``n_selected`` und ``n_excluded``.
+
 Verwendung
 ----------
     cd backend
     uv run python scripts/report_explanation_validity.py                     # Tabellen (Markdown) auf der Konsole
+    uv run python scripts/report_explanation_validity.py --no-strict         # Rangfolge ohne strenge Auswahl (E23)
     uv run python scripts/report_explanation_validity.py --json data/calibration/explanation_validity.json
     uv run python scripts/report_explanation_validity.py --md ../docs/feature-doku/bilder/erklaerungsansaetze.md
     uv run python scripts/report_explanation_validity.py --annotations data/annotations.json
@@ -130,21 +136,23 @@ def review_windows(kind: str, anchor_from: str, anchor_to: str, anomaly: Optiona
 
 
 def _window_record(info: Dict[str, Any], window: Dict[str, Any], windows: Dict[str, Any], rows: List[Dict[str, Any]],
-                   categories: List[Dict[str, Any]], exclude: set) -> Dict[str, Any]:
-    """Rangfolge eines Fensters aus dem Speicher (kein Abruf, keine Stimmung): Zahlen je Stufe."""
+                   categories: List[Dict[str, Any]], exclude: set, strict: bool = True) -> Dict[str, Any]:
+    """Rangfolge eines Fensters aus dem Speicher (kein Abruf, keine Stimmung): Zahlen je Stufe;
+    ``strict`` wie in ``rank_evidence`` (strenge Auswahl, E33)."""
     by_window = es.split_rows_by_window(rows, windows)
     evidence = ev.evidence_for_window(info, window, live=False, events=[])
     terms = distinctive_terms(by_window["before"], by_window["after"], source=SOURCE, exclude=exclude)
     topics = topic_shift_table(by_window["before"], by_window["after"], SOURCE)
     ranked = rank_evidence(evidence["items"], window, terms=terms, topics=topics, exclude=exclude, categories=categories,
-                           analyzer=None, kind=window["kind"])
+                           analyzer=None, kind=window["kind"], strict=strict, title_words=info.get("title_words") or ())
     missing = {source: int(s["missing"]) for source, s in evidence["sources"].items()}
     top = ranked["explanations"][0]["confidence"] if ranked["explanations"] else None
     return {
         "window_from": window["from"], "window_to": window["to"], "months": int(window["months"]),
         "review_before": {"from": windows["before"]["from"], "to": windows["before"]["to"], "n": len(by_window["before"])},
         "review_after": {"from": windows["after"]["from"], "to": windows["after"]["to"], "n": len(by_window["after"])},
-        "n_items": ranked["n_items"], "n_bundles": ranked["n_bundles"], "n_by_stage": ranked["n_by_stage"],
+        "n_items": ranked["n_items"], "n_selected": ranked["n_selected"], "n_excluded": ranked["n_excluded"],
+        "n_bundles": ranked["n_bundles"], "n_by_stage": ranked["n_by_stage"],
         "state": ranked["state"], "top_stage": top, "n_terms": len(terms),
         "n_shifted_topics": sum(1 for t in topics if t["share_shift_pp"] is not None and not t["low_basis"]
                                 and abs(t["share_shift_pp"]) >= rules()["topic_shift_min_pp"]),
@@ -159,10 +167,11 @@ def _rows_for(company_id: int, windows: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def window_records(window_before: int = ev.DEFAULT_WINDOW_BEFORE, window_after: int = ev.DEFAULT_WINDOW_AFTER,
                    companies: Optional[List[Dict[str, Any]]] = None, verbose: bool = True,
-                   reference: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+                   reference: Optional[Dict[str, Any]] = None, strict: bool = True) -> List[Dict[str, Any]]:
     """Je Markierungsfenster und je Vergleichsfenster ein Datensatz mit den Zahlen der
     Rangfolge (nur lesend: Datenbank und Belegspeicher). ``reference`` (``load_reference``)
-    setzt je Markierung ``reference_hit`` (True/False; None ohne Referenz)."""
+    setzt je Markierung ``reference_hit`` (True/False; None ohne Referenz). ``strict``: strenge
+    Auswahl der Belege (E33, Standard); False für die Fassung bis 2026-10-17."""
     records: List[Dict[str, Any]] = []
     categories = load_event_categories()
     for company in companies if companies is not None else list_companies():
@@ -183,7 +192,7 @@ def window_records(window_before: int = ev.DEFAULT_WINDOW_BEFORE, window_after: 
                 "date": anchor["date"], "direction": anchor.get("direction"), "offset_months": 0,
                 "reference_hit": reference_hit(company["name"], anchor["date"], anchor.get("direction"),
                                                anchors.get("evaluated_months"), reference),
-                **_window_record(info, window, windows, _rows_for(company["id"], windows), categories, exclude),
+                **_window_record(info, window, windows, _rows_for(company["id"], windows), categories, exclude, strict),
             })
             for comp in ev.comparison_windows(window, marker_windows, anchors.get("series_from"), anchors.get("series_to")):
                 cw = review_windows(kind, comp["anchor_from"], comp["anchor_to"])
@@ -191,7 +200,7 @@ def window_records(window_before: int = ev.DEFAULT_WINDOW_BEFORE, window_after: 
                     "company_id": company["id"], "company": company["name"], "group": GROUP_COMPARISON, "kind": kind,
                     "date": anchor["date"], "direction": anchor.get("direction"), "offset_months": comp["offset_months"],
                     "reference_hit": None,
-                    **_window_record(info, comp, cw, _rows_for(company["id"], cw), categories, exclude),
+                    **_window_record(info, comp, cw, _rows_for(company["id"], cw), categories, exclude, strict),
                 })
         if verbose:
             mine = [r for r in records if r["company_id"] == company["id"]]
@@ -293,7 +302,7 @@ def aggregate(records: List[Dict[str, Any]], reference: Optional[Dict[str, Any]]
         "companies": per_company,
         "total": block(records),
         "windows": [{k: r.get(k) for k in ("company", "group", "kind", "date", "offset_months", "window_from", "window_to", "n_items",
-                                           "n_bundles", "n_by_stage", "state", "top_stage", "n_terms", "n_shifted_topics", "missing_months",
+                                           "n_selected", "n_excluded", "n_bundles", "n_by_stage", "state", "top_stage", "n_terms", "n_shifted_topics", "missing_months",
                                            "review_before", "review_after", "reference_hit")} for r in records],
         "note": ("Beschreibende Zahlen ohne Signifikanzaussage. Ein Erklärungsansatz ist ein möglicher Zusammenhang, keine "
                  "Ursache; die Einstufung beruht auf Titeln und Wortbezügen. Fenster mit fehlenden Monaten im Speicher "
@@ -404,14 +413,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--json", dest="json_out", help="Zusammenfassung als JSON-Datei")
     parser.add_argument("--annotations", default=DEFAULT_ANNOTATIONS,
                         help="Annotationsdatei für die Zusatzauswertung nach Referenzzeiträumen (Default: data/annotations.json)")
+    parser.add_argument("--no-strict", action="store_true",
+                        help="Rangfolge ohne die strenge Auswahl der Belege (Fassung bis 2026-10-17, Läufe E23)")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
+    strict = not args.no_strict
     reference = load_reference(args.annotations)
     if not reference["available"] and not args.quiet:
         print(f"Zusatzauswertung nach Referenzzeiträumen: {REFERENCE_NOT_AVAILABLE} ({reference['reason']}).")
-    records = window_records(args.window_before, args.window_after, verbose=not args.quiet, reference=reference)
+    records = window_records(args.window_before, args.window_after, verbose=not args.quiet, reference=reference, strict=strict)
     summary = aggregate(records, reference)
     summary["window_before"], summary["window_after"] = args.window_before, args.window_after
+    summary["strict"] = strict
+    summary["rules"]["selection"]["strict"] = strict
     text = markdown_tables(summary)
     print(text)
     t = summary["total"]

@@ -61,8 +61,9 @@ def ranking_numbers(er):
     out = {}
     for name, topics_ in (("mit_themen", topics), ("ohne_themen", [])):
         for grouped in (True, False):
+            # strict=False: Referenz vor der strengen Auswahl (E33, 2026-10-18); die Stufenregeln sind unverändert.
             r = er.rank_evidence(items, WINDOW, terms=terms, topics=topics_, exclude={"beispielwerk"}, categories=CATS,
-                                 analyzer=None, group_by_category=grouped)
+                                 analyzer=None, group_by_category=grouped, strict=False)
             out[f"{name}/{grouped}"] = {
                 "state": r["state"], "n_items": r["n_items"], "n_bundles": r["n_bundles"], "n_groups": r["n_groups"],
                 "n_by_stage": r["n_by_stage"],
@@ -421,10 +422,12 @@ def test_label_does_not_depend_on_time_and_stage_rules_unchanged():
 
 
 def test_fields_on_items_bundles_entries_and_item_scores():
-    result = er.rank_evidence(
-        [item(1, "Beispielwerk kündigt Stellenabbau an", "2023-02-10"),
-         item(2, "Beispielwerk gewinnt Pokalspiel", "2023-04-02")],
-        WINDOW, terms=[], topics=[], exclude={"beispielwerk"}, categories=CATS, analyzer=None)
+    items = [item(1, "Beispielwerk kündigt Stellenabbau an", "2023-02-10"),
+             item(2, "Beispielwerk gewinnt Pokalspiel", "2023-04-02")]
+    strict = er.rank_evidence(items, WINDOW, terms=[], topics=[], exclude={"beispielwerk"}, categories=CATS, analyzer=None)
+    assert strict["explanations"] == [] and all(s["signal_label"] and s["excluded"] for s in strict["item_scores"].values())
+    # ohne strenge Auswahl (Fassung bis 2026-10-17): nur Ereignisart ergibt Stufe niedrig
+    result = er.rank_evidence(items, WINDOW, terms=[], topics=[], exclude={"beispielwerk"}, categories=CATS, analyzer=None, strict=False)
     for e in result["explanations"]:
         assert e["signal_label"] and all(i["signal_label"] for i in e["items"])
         for o in (e.get("group") or {}).get("others", []):

@@ -107,6 +107,10 @@ class TestRecords:
         derby = next(r for r in comps if r["kind"] == "einzelmonat" and r["offset_months"] == -12)
         assert derby["n_items"] == 1 and derby["state"] == "offen", "Spielbericht: ohne Arbeitgeberbezug, keine Stufe"
         assert all(r["missing_months"] == 0 for r in records)
+        # Strenge Auswahl (E33, Standard): die Datensätze zählen Auswahl und Ausschluss; ohne sie dieselben Fenster.
+        assert change["n_selected"] == 2 and change["n_excluded"] == 0 and derby["n_selected"] == 0 and derby["n_excluded"] == 1
+        lenient = script.window_records(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False, strict=False)
+        assert len(lenient) == len(records) and all(r["n_excluded"] == 0 for r in lenient)
 
     def test_comparison_anchor_like_marked_month(self, env):
         records = script.window_records(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False)

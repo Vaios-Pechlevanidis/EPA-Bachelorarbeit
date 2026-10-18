@@ -426,7 +426,9 @@ class TestRankEvidence:
         stages = [e["confidence"] for e in result["explanations"]]
         assert stages == sorted(stages, key=lambda s: er.STAGES.index(s))
         assert all(e["confidence"] != "keine" for e in result["explanations"]) and len(result["explanations"]) <= 5
-        assert result["n_by_stage"]["keine"] >= 2, "Kursziel und Pokalspiel"
+        # Strenge Auswahl (E33): Kursziel und Pokalspiel sind ausgeschlossen statt zurückgestuft.
+        assert result["n_excluded_by_reason"][er.EXCLUDED_NON_EMPLOYER] == 2, "Kursziel und Pokalspiel"
+        assert result["n_selected"] + result["n_excluded"] == 7 and result["n_by_stage"]["keine"] == 0
         assert len(result["item_scores"]) == 7 and result["item_scores"][top["id"]]["rank"] == 1
         assert result["item_scores"][top["id"]]["category"] == "personalabbau"
         assert result["open_note"] is None
@@ -445,17 +447,20 @@ class TestRankEvidence:
         items = [item("Aktie erreicht Kursziel", "2023-02-10"), item("Pokalsieg im Elfmeterschießen", "2023-03-10"),
                  item("Heute scheint die Sonne", "2023-04-10")]
         result = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS)
-        assert result["state"] == "offen" and result["explanations"] == [] and result["n_bundles"] == 3
+        assert result["state"] == "offen" and result["explanations"] == [] and result["n_bundles"] == 0 and result["n_excluded"] == 3
+        lenient = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, strict=False)
+        assert lenient["state"] == "offen" and lenient["n_bundles"] == 3 and lenient["open_note"] == er.OPEN_NOTE_LENIENT
         assert result["open_note"] and "offen" in result["open_note"]
         assert all(s["stage"] == "keine" for s in result["item_scores"].values())
 
     def test_max_explanations(self):
         items = [item(f"Streik Nummer {i} legt Werk lahm", f"2023-01-{1 + 5 * i:02d}") for i in range(0, 6)]   # je 5 Tage Abstand: kein Bündel
-        result = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=5, group_by_category=False)
+        # Nur Ereignisart: ohne strenge Auswahl (strict=False) Stufe niedrig; die Obergrenze gilt unabhängig davon.
+        result = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=5, group_by_category=False, strict=False)
         assert len(result["explanations"]) == 5 and result["n_bundles"] == 6
-        assert er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=2, group_by_category=False)["n_bundles"] == 6
+        assert er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=2, group_by_category=False, strict=False)["n_bundles"] == 6
         # gruppiert: eine Ereignisart, also ein Eintrag mit fünf weiteren Bündeln darunter
-        grouped = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=5)
+        grouped = er.rank_evidence(items, WINDOW, terms=[], topics=[], categories=CATS, max_explanations=5, strict=False)
         assert len(grouped["explanations"]) == 1 and grouped["n_bundles"] == 6 and grouped["n_groups"] == 1
         assert grouped["explanations"][0]["group"]["n_bundles"] == 6 and len(grouped["explanations"][0]["group"]["others"]) == 5
 

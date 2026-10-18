@@ -142,6 +142,7 @@ eine Spalte.
 - Die Stimmungsbalken gelten für alle Bewertungen des Fensters, auch wenn im Dialog der
   Themenfilter aktiv ist; die Anzahl in der Kennzahl ist dann gefiltert, die Stimmung
   nicht (beschriftet als „nur Bewertungen, die … nennen“ bzw. „Stimmung der Freitexte“).
+  Seit 2026-10-18 ist der Themenfilter ein Auswahlfeld für jedes Thema (Doku 17).
 - Anzahl und mittlere Note in der Bewertungskarte stammen aus zwei Quellen
   (Bewertungsliste, Vergleich); sie passen, weil beide dasselbe Fenster und dieselbe
   Gruppe verwenden, sind aber keine gemeinsame Berechnung.

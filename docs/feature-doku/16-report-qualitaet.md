@@ -203,7 +203,12 @@ kleinerer Mindestdichte verschiebt sie sich. Das steht jetzt im Bericht neben de
    (im Backtest das genaueste Verfahren) findet nicht statt. Vorschlag für
    `docs/entscheidungen.md` (E33: Verfahren, Backtest-Ergebnis, Entscheidung), dort noch
    nicht eingetragen, weil die Datei parallel bearbeitet wurde.
-2. **Duplikate:** entfernen (Import oder Analyse) oder nur zählen wie jetzt.
+2. **Duplikate: entschieden (Autor, 2026-10-18): entfernt.** Das Skript
+   `backend/scripts/remove_duplicates.py` (gleicher Schlüssel wie die Zählung, plus
+   Unternehmen; je Gruppe bleibt die kleinste id) hat am 2026-10-18 in der gehosteten
+   Datenbank 26 Mitarbeiter-Zeilen und 2 Bewerber-Zeilen gelöscht (21.962 → 21.936 bzw.
+   4.676 → 4.674); ein Dry-Run danach findet 0 Duplikate. Alle Mittel und Läufe vor diesem
+   Datum enthalten die Duplikate noch. Tests: `backend/tests/test_remove_duplicates.py`.
 3. **Schwelle der Stabilität:** unter 0,5 gilt eine Veränderung im Bericht als „hängt
    deutlich von den Schwellen ab“ (Setzung); ob instabile Markierungen anders dargestellt
    werden sollen, ist offen.

@@ -6,7 +6,7 @@
 | Anforderungen | Erklärungsansätze neben dem Bewertungsverlauf laut Exposé (TF4); Abdeckungsquote nach NFA-05 (Anforderungstexte liegen nicht im Repository; Lesart in E23) |
 | Entscheidungen | E21 (Signale, Stufen, Bündelung, Schnittstelle; Iteration 2: zweite Fassung der Stufenregeln, Darstellung, Bündelung nach Ereignisart), E22 (Ereignisarten und Zuordnung), E23 (Auswertung, Nachtrag zur zweiten Fassung), E5 (Referenzzeiträume, zweite Person) in `docs/entscheidungen.md`; baut auf E7, E10–E12, E17–E20 |
 | Status | umgesetzt; Ereignisarten und Schwellen vom Autor am 2026-10-08 bestätigt (D1, D2); Stufenregeln seit Iteration 2 (2026-10-08) in der zweiten Fassung, festgeschrieben; Auswertung mit jeder Fassung genau einmal gelaufen; alle Werte bleiben Setzungen |
-| Stand | 2026-10-08 (Iteration 2) |
+| Stand | 2026-10-08 (Iteration 2); 2026-10-18 strenge Auswahl der Belege vorgeschaltet ([18](18-strenge-artikelauswahl.md), E33) |
 
 ## 1. Vorstellung
 
@@ -89,6 +89,15 @@ das Ereignis, [06](06-freier-drilldown.md)). Der Untertitel des Dialogs zählt d
 („· 1 allgemeines Ereignis (Hypothese)“). Die Ereignisse haben keine Stufe, zählen nicht als
 Beleg und gehen nicht in die Rangfolge ein; Ansätze, Zahlen und die Auswertung (E23) bleiben
 unverändert. Dieselben Flächen sind im Monatsverlauf anklickbar ([07](07-externe-belege.md)).
+
+**Nachtrag 2026-10-18 (strenge Auswahl):** Vor Bündelung und Rangfolge gelten vier
+Ausschlussregeln je Beleg: Unternehmen im Titel genannt, Arbeitgeberbezug, Wortbezug oder
+Themenverschiebung, zeitliche Nähe mindestens 0,5. Nur Meldungen, die alle vier erfüllen, werden
+Erklärungsansätze (damit mindestens Stufe mittel); die übrigen stehen in der Belegliste mit der
+nicht erfüllten Regel. Die Karte nennt die geeigneten Belege, der Dialog die Ausschlüsse je Regel,
+„Wie wird eingestuft?“ die Regeln. Stufenregeln und Schwellen unten bleiben unverändert;
+`rank_evidence(strict=False)` gibt die Fassung dieses Dokuments. Siehe
+[18](18-strenge-artikelauswahl.md) und E33.
 
 ## 2. Erklärung
 
@@ -395,8 +404,9 @@ Zeitraum; ein Klick auf einen Monat außerhalb der Flächen wählt wie bisher nu
 
 ## 6. Offene Punkte
 
-- Ob ein Hinweis „Unternehmen im Titel nicht genannt“ die Stufe deckeln soll, oder ob
-  Ausschlussbegriffe (`news_exclude`, zum Beispiel Rot-Weiss Essen bei RWE) besser sind (E18, D1).
+- ~~Ob ein Hinweis „Unternehmen im Titel nicht genannt“ die Stufe deckeln soll, oder ob
+  Ausschlussbegriffe (`news_exclude`, zum Beispiel Rot-Weiss Essen bei RWE) besser sind (E18, D1).~~
+  Seit 2026-10-18 schließt die strenge Auswahl solche Meldungen aus (E33, [18](18-strenge-artikelauswahl.md)).
 - Ob die Themenverschiebung von 5 Prozentpunkten in großen Fenstern zu leicht erreicht wird; ein
   neuer Wert bräuchte einen dokumentierten Grund und einen neuen Auswertungslauf (E23).
 - Eigene Wortangaben für Einzelmonate („im auffälligen Monat“) statt „Auswahl“ in der Antwort

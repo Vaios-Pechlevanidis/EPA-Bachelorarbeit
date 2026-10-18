@@ -702,6 +702,22 @@ def _compiled_topics(source: Optional[str]) -> List[tuple]:
     return _COMPILED[source]
 
 
+_COMBINED: Dict[Optional[str], List[tuple]] = {}
+
+
+def _combined_topics(source: Optional[str]) -> List[tuple]:
+    """(Thema, ein Muster aus allen Schlüsselwörtern als Alternative) je Quelle.
+    Findet genau dann etwas, wenn eines der Einzelmuster etwas findet, braucht
+    aber nur eine Suche je Thema und Text (2026-10-18: die Liste der Bewertungen
+    eines Zeitraums bestimmt die Themen aller Bewertungen bei jeder Seite)."""
+    if source not in _COMBINED:
+        _COMBINED[source] = [
+            (name, re.compile("|".join(f"(?:{p})" for p in config["keywords"]), re.IGNORECASE))
+            for name, config in topic_definitions_for(source).items()
+        ]
+    return _COMBINED[source]
+
+
 def topics_in_review(row: Dict[str, Any], source: Optional[str], fields: Optional[List[str]] = None) -> List[str]:
     """Namen der Themen, die eine Bewertung nennt, in der Reihenfolge der Definitionen.
 
@@ -718,8 +734,8 @@ def topics_in_review(row: Dict[str, Any], source: Optional[str], fields: Optiona
     if not texts:
         return []
     return [
-        name for name, patterns in _compiled_topics(source)
-        if any(p.search(text) for text in texts for p in patterns)
+        name for name, pattern in _combined_topics(source)
+        if any(pattern.search(text) for text in texts)
     ]
 
 

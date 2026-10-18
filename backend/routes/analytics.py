@@ -14,7 +14,7 @@ from services.review_service import (
     filter_by_status,
     full_review_item,
     parse_day,
-    sort_newest_first,
+    sort_by_date,
     validate_status,
 )
 from services.statistical_validator import StatisticalValidator
@@ -471,11 +471,16 @@ def _reviews_in_range(
     full: bool,
     dimension: Optional[str] = None,
     topic_only: bool = False,
+    topic_filter: Optional[str] = None,
+    order: str = "desc",
 ) -> Dict[str, Any]:
     """Bewertungen eines Zeitraums (Drill-down, Inkrement 2), vollständig
-    paginiert gelesen, nach Status gefiltert, nach Datum absteigend sortiert;
-    davon ``limit`` ab ``offset``. Mit ``dimension`` (braucht ``source``) werden
-    die Fundstellen des zugehörigen Schlüsselwort-Themas markiert.
+    paginiert gelesen, nach Status gefiltert, nach Datum sortiert (``order``:
+    ``desc`` neueste zuerst, ``asc`` älteste zuerst); davon ``limit`` ab
+    ``offset``. Mit ``dimension`` (braucht ``source``) werden die Fundstellen des
+    zugehörigen Schlüsselwort-Themas markiert. Jede Bewertung trägt ihre
+    Schlüsselwort-Themen (``topics``); ``topic_filter`` lässt nur Bewertungen mit
+    diesem Thema übrig und markiert dessen Fundstellen (Nachtrag 2026-10-18).
     ValueError bei ungültigen Parametern."""
     if source is not None and source not in ("employee", "candidates"):
         raise ValueError(f"source '{source}' ungültig; erlaubt: employee, candidates.")
@@ -488,30 +493,55 @@ def _reviews_in_range(
     if dimension is not None and source is None:
         raise ValueError("dimension braucht source (employee oder candidates).")
     topic = topic_for_dimension(source, dimension) if dimension is not None else None
+    if topic_only and dimension is None:
+        raise ValueError("topic_only braucht dimension.")
+    if topic_filter is not None:
+        if topic_only:
+            raise ValueError("topic und topic_only schließen sich aus.")
+        if topic_filter not in topic_definitions_for(source):
+            raise ValueError(f"Thema '{topic_filter}' gibt es für diese Quelle nicht.")
+    if order not in ("desc", "asc"):
+        raise ValueError(f"order '{order}' ungültig; erlaubt: desc, asc.")
 
     sources = [source] if source else ["candidates", "employee"]
     tagged = []
     for src in sources:
         rows = fetch_review_rows_in_range(src, company_id, start_day, end_day)
         tagged.extend({**row, "_source": src} for row in filter_by_status(rows, src, status))
-    ordered = sort_newest_first(tagged)
-    # Gleiche Felder wie der Vorher-Nachher-Vergleich (mit Kategorie-Kommentaren, Korrektur 2026-10-13).
-    mentioning = [r for r in ordered if topic in topics_in_review(r, r["_source"], EXPLANATION_TOPIC_TEXT_FIELDS)] if topic else []
+    ordered = sort_by_date(tagged, newest_first=order == "desc")
+    # Themen je Bewertung; gleiche Felder wie der Vorher-Nachher-Vergleich (mit
+    # Kategorie-Kommentaren, Korrektur 2026-10-13), einmal je Zeile berechnet.
+    for row in ordered:
+        row["_topics"] = topics_in_review(row, row["_source"], EXPLANATION_TOPIC_TEXT_FIELDS)
+    mentioning = [r for r in ordered if topic in r["_topics"]] if topic else []
+    # Zählung je Thema über alle Bewertungen des Zeitraums (vor dem Themenfilter),
+    # damit die Auswahl im Dashboard alle Themen mit ihrer Anzahl anbieten kann.
+    counts = Counter(t for r in ordered for t in r["_topics"])
+    topic_summary = {
+        "counts": [{"topic": name, "n": counts[name]} for name in topic_definitions_for(source) if counts[name]],
+        "without_topic": sum(1 for r in ordered if not r["_topics"]),
+        "filter": topic_filter if topic_filter is not None else topic if topic_only else None,
+    }
     if topic_only:
-        if dimension is None:
-            raise ValueError("topic_only braucht dimension.")
         ordered = mentioning
+    elif topic_filter is not None:
+        ordered = [r for r in ordered if topic_filter in r["_topics"]]
+    # Markiert wird das gefilterte Thema, sonst das Thema der Dimension.
+    marked = topic_summary["filter"] or topic
+    topic_summary["marked"] = marked
     page = ordered[offset: offset + max(limit, 0)]
 
     def item(row: Dict[str, Any]) -> Dict[str, Any]:
         src = row.pop("_source")
+        topics = row.pop("_topics")
         out = full_review_item(row, src) if full else _review_list_item(row, src)
+        out["topics"] = topics
         if topic is not None:
-            out["mentions_topic"] = topic in topics_in_review(row, src, EXPLANATION_TOPIC_TEXT_FIELDS)
-            if full:
-                texts = {"preview": out["preview"], **{k: out["fullReview"].get(k) for k in HIGHLIGHT_FIELDS}}
-                spans = {k: topic_spans(v, topic, src) for k, v in texts.items()}
-                out["highlights"] = {k: v for k, v in spans.items() if v}
+            out["mentions_topic"] = topic in topics
+        if marked is not None and full:
+            texts = {"preview": out["preview"], **{k: out["fullReview"].get(k) for k in HIGHLIGHT_FIELDS}}
+            spans = {k: topic_spans(v, marked, src) for k, v in texts.items()}
+            out["highlights"] = {k: v for k, v in spans.items() if v}
         return out
 
     result = {
@@ -519,6 +549,8 @@ def _reviews_in_range(
         "total": len(ordered),
         "offset": offset,
         "limit": limit,
+        "order": order,
+        "topic_summary": topic_summary,
     }
     if dimension is not None:
         result["highlight"] = {
@@ -549,6 +581,8 @@ def get_company_reviews(
     format_: Optional[Literal["full"]] = Query(default=None, alias="format", description="'full': je Bewertung id, preview, fullReview"),
     dimension: Optional[str] = Query(default=None, description="Dimension; markiert Fundstellen des zugehörigen Schlüsselwort-Themas, braucht source"),
     topic_only: bool = Query(default=False, description="Nur Bewertungen, die das Thema der Dimension nennen; braucht dimension"),
+    topic: Optional[str] = Query(default=None, description="Nur Bewertungen, die dieses Schlüsselwort-Thema nennen (Name wie in der Themenübersicht)"),
+    order: Optional[Literal["desc", "asc"]] = Query(default=None, description="Sortierung nach Datum: 'desc' neueste zuerst (Standard), 'asc' älteste zuerst"),
 ):
     """Get detailed reviews for a company.
 
@@ -570,12 +604,22 @@ def get_company_reviews(
     (Zeichenpositionen im gelieferten Text, Ende exklusiv). Für die
     Gesamtbewertung ist ``topic`` None. ``topic_only=true`` liefert nur die
     Bewertungen, die das Thema nennen; ``total`` zählt dann nur diese.
+
+    Themen je Bewertung (Nachtrag 2026-10-18): jede Bewertung hat ``topics``, die
+    Schlüsselwort-Themen, die sie nennt (gleiche Regel wie ``mentions_topic``;
+    leer, wenn sie keines nennt). ``topic_summary`` zählt die Themen über alle
+    Bewertungen des Zeitraums (``counts``, ``without_topic``; vor dem Themenfilter)
+    und nennt das gefilterte (``filter``) und das markierte Thema (``marked``).
+    ``topic=<Thema>`` lässt nur Bewertungen mit diesem Thema übrig und markiert
+    dessen Fundstellen (mit ``format=full``); unbekanntes Thema oder zusammen mit
+    ``topic_only``: 400. ``order=asc`` sortiert nach Datum aufsteigend (älteste
+    zuerst), ``desc`` (Standard) absteigend.
     """
-    if any(p is not None for p in (start, end, status, offset, format_, dimension)):
+    if any(p is not None for p in (start, end, status, offset, format_, dimension, topic, order)):
         try:
             return _reviews_in_range(
                 company_id, source, start, end, status, offset or 0, limit, full=format_ == "full",
-                dimension=dimension, topic_only=topic_only,
+                dimension=dimension, topic_only=topic_only, topic_filter=topic, order=order or "desc",
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))

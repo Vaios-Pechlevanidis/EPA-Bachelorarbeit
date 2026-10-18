@@ -314,7 +314,8 @@ def company_context_info(company_id: int, metadata: Optional[Dict[int, Dict[str,
     """Suchbegriff, Ausschlussbegriffe und Quellenangaben eines Unternehmens oder None,
     wenn es die ID nicht gibt. Name und Ticker kommen aus ``companies`` (nur lesend), der
     Rest aus ``company_metadata.json`` (``news_term``, ``news_exclude``,
-    ``news_term_confirmed``, ``eqs``), nur bei gleichem Namen."""
+    ``news_term_confirmed``, ``eqs``, ``title_words``: zusätzliche Kennungen des Unternehmens
+    in Titeln, etwa eine Abkürzung; strenge Auswahl E33), nur bei gleichem Namen."""
     from services.context_service import company_ticker_info, load_metadata  # lazy: Tests ohne DB
 
     info = company_ticker_info(company_id)
@@ -336,6 +337,7 @@ def company_context_info(company_id: int, metadata: Optional[Dict[int, Dict[str,
         "ticker_scope": info.get("ticker_scope"),
         "eqs_uuid": eqs.get("uuid") or None,
         "eqs_name": eqs.get("company_name") or None,
+        "title_words": [str(w).strip() for w in (meta.get("title_words") or []) if str(w).strip()],
     }
 
 

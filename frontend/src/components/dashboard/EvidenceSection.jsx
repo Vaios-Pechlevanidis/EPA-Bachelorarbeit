@@ -25,6 +25,9 @@ import { NO_CATEGORY } from "@/lib/evidenceText"
    je Quelle), ein Klick öffnet die volle Liste im Dialog (EvidenceContent)
    mit Sortierung und Filter (ListControls) im Dialogkopf. useEvidence wird
    von der Karte aufgerufen, useEvidenceList bündelt Sortierung und Filter.
+   Strenge Auswahl (E33, 2026-10-18): score.excluded nennt je Beleg die nicht
+   erfüllte Regel ("nicht in den Ansätzen: …"); solche
+   Belege stehen bei Sortierung nach Relevanz hinter allen Ansätzen.
    ============================================================================ */
 
 const SORTS = [
@@ -110,7 +113,7 @@ function EvidenceRow({ item, score = null, rules = null }) {
                         : `${item.publisher || (item.source === "eqs" ? "EQS News" : "Herausgeber unbekannt")}${item.issuer ? ` · Mitteilung von ${item.issuer}` : ""}${item.category ? ` · ${item.category}` : ""}`}
                     {score?.category_label ? ` · Ereignisart: ${score.category_label}` : ""}
                     {score?.terms?.length ? ` · Begriff: ${score.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
-                    {score?.company_in_title === false ? " · Unternehmen im Titel nicht genannt" : ""}
+                    {score?.excluded ? ` · nicht in den Ansätzen: ${score.excluded}` : score?.company_in_title === false ? " · Unternehmen im Titel nicht genannt" : ""}
                 </span>
             </span>
         </li>

@@ -1,0 +1,7099 @@
+{
+  "generated_at": "2026-10-18T10:07:52+00:00",
+  "git": {
+    "commit": "f8ecf6d3b48dc2880738017a0fc881187c7b8b0d",
+    "dirty": true,
+    "dirty_paths": [
+      "backend/data/company_metadata.json",
+      "backend/routes/analytics.py",
+      "backend/scripts/rate_explanations.py",
+      "backend/scripts/report_explanation_validity.py",
+      "backend/services/evidence_service.py",
+      "backend/services/explanation_ranking.py",
+      "backend/services/explanation_service.py",
+      "backend/services/keyword_topic_service.py",
+      "backend/services/review_service.py",
+      "backend/services/review_terms.py",
+      "backend/tests/drilldown/test_reviews_route.py",
+      "backend/tests/drilldown/test_topic_highlight.py",
+      "backend/tests/explanations/test_explanation_ranking.py",
+      "backend/tests/explanations/test_explanation_validity.py",
+      "backend/tests/explanations/test_explanations_in_responses.py",
+      "backend/tests/explanations/test_rate_explanations.py",
+      "backend/tests/explanations/test_signal_labels.py",
+      "backend/tests/test_company_metadata.py",
+      "backend/data/calibration/explanation_validity_strict_2026-10-18.json",
+      "backend/data/calibration/explanation_validity_strict_2026-10-18.md",
+      "backend/tests/drilldown/test_review_topics.py",
+      "backend/tests/explanations/test_strict_selection.py"
+    ]
+  },
+  "source": "employee",
+  "offsets": [
+    -12,
+    12,
+    -24,
+    24
+  ],
+  "max_per_marker": 3,
+  "rules": {
+    "term_match_per_term": 0.5,
+    "term_match_strong": 1.0,
+    "term_strong_min_after": 5,
+    "term_strong_min_ratio": 3.0,
+    "term_strong_min_shift": 0.05,
+    "topic_shift_min_pp": 5.0,
+    "category_match_with_shift": 1.0,
+    "category_match_only": 0.5,
+    "time_near": 1.0,
+    "time_after_factor": 0.5,
+    "topic_strong": 1.0,
+    "topic_weak": 0.5,
+    "time_mid": 0.5,
+    "time_min": 0.3,
+    "bundle_max_days": 3,
+    "bundle_title_similarity": 0.5,
+    "max_explanations": 5,
+    "version": 2,
+    "version_date": "2026-10-08",
+    "corrections": [
+      "2026-10-13: Schlüsselwort 'verdi' nur als ganzes Wort (trifft nicht mehr 'verdient', 'verdienen'; E22)",
+      "2026-10-13: Begriffe, Themen und Stimmung der Bewertungen mit den Kommentaren zu den Kategorien (E10, E11, E21)",
+      "2026-10-13: Vergleichsfenster begrenzt durch den ersten und letzten bewerteten statt datierten Monat (E18)",
+      "2026-10-13: 'Unternehmen im Titel genannt' erkennt Namen mit Punkt oder Ziffern (E.ON, 1&1; ohne Einfluss auf die Stufe)",
+      "2026-10-13: EQS-Mitteilungen heißen nur bei der EQS-Kategorie 'Ad-hoc' Ad-hoc-Mitteilung (E19; ohne Einfluss auf die Stufe)"
+    ],
+    "stage_labels": {
+      "hoch": "Wortbezug und Ereignisart",
+      "mittel": "Wortbezug oder Themenbezug",
+      "niedrig": "nur Ereignisart",
+      "keine": "kein Bezug"
+    },
+    "finding_note": "In der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung ähnlich häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung.",
+    "selection": {
+      "strict": true,
+      "version": 1,
+      "date": "2026-10-18",
+      "require_company_in_title": true,
+      "exclude_non_employer": true,
+      "min_topic": "term_match >= 0.5 oder category_match >= 1.0",
+      "term_match_compound_only": true,
+      "min_time": 0.5,
+      "min_stage": "mittel",
+      "company_title_max_suffix": 2,
+      "rules": [
+        "Der Titel nennt das Unternehmen: ein Wort des Namens oder des Suchbegriffs steht im Titel (allgemeine Wörter wie „Deutsche“ zählen nicht); EQS-Mitteilungen des Emittenten gelten als genannt.",
+        "Die Meldung hat Arbeitgeberbezug: Börsenberichte, Kursziele, Sport- und Produktmeldungen sind ausgeschlossen, nicht nur zurückgestuft.",
+        "Die Meldung hat thematische Korrespondenz: ein kennzeichnender Begriff der Bewertungen steht im Titel (Wortbezug: der Begriff selbst oder ein Wort, das mit ihm beginnt) oder die erkannte Ereignisart hat ein zugeordnetes Thema, das sich im Vergleich merklich verschiebt (Themenverschiebung); eine nur erkannte Ereignisart genügt nicht.",
+        "Die Meldung liegt nahe am Übergang: zeitliche Nähe mindestens 0,5, also nicht am Rand des Fensters davor."
+      ],
+      "reasons": [
+        "Unternehmen im Titel nicht genannt",
+        "ohne Arbeitgeberbezug",
+        "kein Wortbezug und keine Themenverschiebung",
+        "zeitliche Nähe unter 0,5"
+      ],
+      "note": "Strenge Auswahl: Nur Meldungen, die alle vier Regeln erfüllen, werden zu Erklärungsansätzen; die übrigen stehen in der Belegliste mit der Regel, die sie nicht erfüllen."
+    },
+    "stages": {
+      "hoch": "term_match >= 0.5 und Ereignisart erkannt (category_match >= 0.5) und time_match >= 1.0",
+      "mittel": "term_match >= 0.5 oder category_match >= 1.0, und time_match >= 0.5",
+      "niedrig": "Ereignisart erkannt (category_match >= 0.5) oder term_match >= 0.5, und time_match >= 0.3",
+      "keine": "sonst; Gruppe ohne Arbeitgeberbezug eine Stufe tiefer"
+    }
+  },
+  "reference": {
+    "available": true,
+    "reason": null,
+    "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+    "path": "data/annotations.json",
+    "version": 3,
+    "n_annotations": 20
+  },
+  "companies": [
+    {
+      "company_id": 7,
+      "company": "E.ON",
+      "n_markers": 1,
+      "n_comparison_windows": 3,
+      "markierung": {
+        "n": 1,
+        "complete": 1,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 1.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 1.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 0
+        },
+        "median_items": 373.0,
+        "median_bundles": 16.0,
+        "median_terms": 27.0,
+        "windows_with_terms": 1
+      },
+      "vergleich": {
+        "n": 3,
+        "complete": 3,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 3,
+        "share_any": 1.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 3,
+            "share": 1.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 3,
+          "niedrig": 0,
+          "offen": 0
+        },
+        "median_items": 335.0,
+        "median_bundles": 6.0,
+        "median_terms": 8.0,
+        "windows_with_terms": 3
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": null,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": null
+            },
+            "mittel": {
+              "windows": 0,
+              "share": null
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": null
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": null,
+          "median_bundles": null,
+          "median_terms": null,
+          "windows_with_terms": 0
+        },
+        "uebrige": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 1.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 1.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 1,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": 373.0,
+          "median_bundles": 16.0,
+          "median_terms": 27.0,
+          "windows_with_terms": 1
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 373.0,
+            "median_bundles": 16.0,
+            "median_terms": 27.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 3,
+            "complete": 3,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 3,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 3,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 3,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 335.0,
+            "median_bundles": 6.0,
+            "median_terms": 8.0,
+            "windows_with_terms": 3
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 1,
+        "n": 1,
+        "share": 1.0,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 1,
+            "n": 1,
+            "share": 1.0
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          }
+        }
+      }
+    },
+    {
+      "company_id": 8,
+      "company": "RWE",
+      "n_markers": 2,
+      "n_comparison_windows": 6,
+      "markierung": {
+        "n": 2,
+        "complete": 2,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 0.5,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 0.5
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 1
+        },
+        "median_items": 304.5,
+        "median_bundles": 4.5,
+        "median_terms": 3.5,
+        "windows_with_terms": 1
+      },
+      "vergleich": {
+        "n": 6,
+        "complete": 6,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 0.1667,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 0.1667
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 5
+        },
+        "median_items": 171.0,
+        "median_bundles": 0.0,
+        "median_terms": 0.0,
+        "windows_with_terms": 1
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": null,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": null
+            },
+            "mittel": {
+              "windows": 0,
+              "share": null
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": null
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": null,
+          "median_bundles": null,
+          "median_terms": null,
+          "windows_with_terms": 0
+        },
+        "uebrige": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 0.5,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 0.5
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 1,
+            "niedrig": 0,
+            "offen": 1
+          },
+          "median_items": 304.5,
+          "median_bundles": 4.5,
+          "median_terms": 3.5,
+          "windows_with_terms": 1
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 301.0,
+            "median_bundles": 9.0,
+            "median_terms": 7.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 3,
+            "complete": 3,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 0.3333,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 0.3333
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 2
+            },
+            "median_items": 188.0,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 1
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": 0.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 1
+            },
+            "median_items": 308.0,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 3,
+            "complete": 3,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": 0.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 3
+            },
+            "median_items": 154.0,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 0
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 1,
+        "n": 2,
+        "share": 0.5,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 1,
+            "n": 1,
+            "share": 1.0
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 1,
+            "share": 0.0
+          }
+        }
+      }
+    },
+    {
+      "company_id": 19,
+      "company": "SAP SE",
+      "n_markers": 2,
+      "n_comparison_windows": 3,
+      "markierung": {
+        "n": 2,
+        "complete": 2,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 2,
+        "share_any": 1.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 1,
+            "share": 0.5
+          },
+          "mittel": {
+            "windows": 2,
+            "share": 1.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 1,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 0
+        },
+        "median_items": 345.5,
+        "median_bundles": 43.0,
+        "median_terms": 50.0,
+        "windows_with_terms": 2
+      },
+      "vergleich": {
+        "n": 3,
+        "complete": 3,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 2,
+        "share_any": 0.6667,
+        "by_stage": {
+          "hoch": {
+            "windows": 1,
+            "share": 0.3333
+          },
+          "mittel": {
+            "windows": 2,
+            "share": 0.6667
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 1,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 1
+        },
+        "median_items": 460.0,
+        "median_bundles": 33.0,
+        "median_terms": 6.0,
+        "windows_with_terms": 2
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 1.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 1,
+              "share": 1.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 1.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 1,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": 362.0,
+          "median_bundles": 37.0,
+          "median_terms": 50.0,
+          "windows_with_terms": 1
+        },
+        "uebrige": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 1.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 1.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 1,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": 329.0,
+          "median_bundles": 49.0,
+          "median_terms": 50.0,
+          "windows_with_terms": 1
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 1,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 362.0,
+            "median_bundles": 37.0,
+            "median_terms": 50.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 1,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 460.0,
+            "median_bundles": 44.0,
+            "median_terms": 50.0,
+            "windows_with_terms": 1
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 329.0,
+            "median_bundles": 49.0,
+            "median_terms": 50.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 2,
+            "complete": 2,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 0.5,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 0.5
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 1
+            },
+            "median_items": 481.0,
+            "median_bundles": 16.5,
+            "median_terms": 3.0,
+            "windows_with_terms": 1
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 2,
+        "n": 2,
+        "share": 1.0,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 1,
+            "n": 1,
+            "share": 1.0
+          },
+          "einzelmonat": {
+            "covered": 1,
+            "n": 1,
+            "share": 1.0
+          }
+        }
+      }
+    },
+    {
+      "company_id": 20,
+      "company": "NTT DATA SE",
+      "n_markers": 4,
+      "n_comparison_windows": 9,
+      "markierung": {
+        "n": 4,
+        "complete": 4,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 0.25,
+        "by_stage": {
+          "hoch": {
+            "windows": 1,
+            "share": 0.25
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 0.25
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 1,
+          "mittel": 0,
+          "niedrig": 0,
+          "offen": 3
+        },
+        "median_items": 2.0,
+        "median_bundles": 0.0,
+        "median_terms": 36.0,
+        "windows_with_terms": 4
+      },
+      "vergleich": {
+        "n": 9,
+        "complete": 9,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 3,
+        "share_any": 0.3333,
+        "by_stage": {
+          "hoch": {
+            "windows": 1,
+            "share": 0.1111
+          },
+          "mittel": {
+            "windows": 2,
+            "share": 0.2222
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 1,
+          "mittel": 2,
+          "niedrig": 0,
+          "offen": 6
+        },
+        "median_items": 5.0,
+        "median_bundles": 0.0,
+        "median_terms": 19.0,
+        "windows_with_terms": 9
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": 0.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 1
+          },
+          "median_items": 2.0,
+          "median_bundles": 0.0,
+          "median_terms": 19.0,
+          "windows_with_terms": 1
+        },
+        "uebrige": {
+          "n": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 0.3333,
+          "by_stage": {
+            "hoch": {
+              "windows": 1,
+              "share": 0.3333
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 0.3333
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 1,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 2
+          },
+          "median_items": 2.0,
+          "median_bundles": 0.0,
+          "median_terms": 50.0,
+          "windows_with_terms": 3
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 4,
+            "complete": 4,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 0.25,
+            "by_stage": {
+              "hoch": {
+                "windows": 1,
+                "share": 0.25
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 0.25
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 1,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 3
+            },
+            "median_items": 2.0,
+            "median_bundles": 0.0,
+            "median_terms": 36.0,
+            "windows_with_terms": 4
+          },
+          "vergleich": {
+            "n": 9,
+            "complete": 9,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 3,
+            "share_any": 0.3333,
+            "by_stage": {
+              "hoch": {
+                "windows": 1,
+                "share": 0.1111
+              },
+              "mittel": {
+                "windows": 2,
+                "share": 0.2222
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 1,
+              "mittel": 2,
+              "niedrig": 0,
+              "offen": 6
+            },
+            "median_items": 5.0,
+            "median_bundles": 0.0,
+            "median_terms": 19.0,
+            "windows_with_terms": 9
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 1,
+        "n": 4,
+        "share": 0.25,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 1,
+            "n": 4,
+            "share": 0.25
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          }
+        }
+      }
+    },
+    {
+      "company_id": 21,
+      "company": "1&1 AG",
+      "n_markers": 1,
+      "n_comparison_windows": 3,
+      "markierung": {
+        "n": 1,
+        "complete": 1,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 1.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 1.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 0
+        },
+        "median_items": 25.0,
+        "median_bundles": 1.0,
+        "median_terms": 21.0,
+        "windows_with_terms": 1
+      },
+      "vergleich": {
+        "n": 3,
+        "complete": 3,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 2,
+        "share_any": 0.6667,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 2,
+            "share": 0.6667
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 2,
+          "niedrig": 0,
+          "offen": 1
+        },
+        "median_items": 30.0,
+        "median_bundles": 1.0,
+        "median_terms": 16.0,
+        "windows_with_terms": 3
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 1.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 1.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 1,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": 25.0,
+          "median_bundles": 1.0,
+          "median_terms": 21.0,
+          "windows_with_terms": 1
+        },
+        "uebrige": {
+          "n": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": null,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": null
+            },
+            "mittel": {
+              "windows": 0,
+              "share": null
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": null
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": null,
+          "median_bundles": null,
+          "median_terms": null,
+          "windows_with_terms": 0
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 25.0,
+            "median_bundles": 1.0,
+            "median_terms": 21.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 3,
+            "complete": 3,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 2,
+            "share_any": 0.6667,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 2,
+                "share": 0.6667
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 2,
+              "niedrig": 0,
+              "offen": 1
+            },
+            "median_items": 30.0,
+            "median_bundles": 1.0,
+            "median_terms": 16.0,
+            "windows_with_terms": 3
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 1,
+        "n": 1,
+        "share": 1.0,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 1,
+            "n": 1,
+            "share": 1.0
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          }
+        }
+      }
+    },
+    {
+      "company_id": 24,
+      "company": "Bechtle",
+      "n_markers": 1,
+      "n_comparison_windows": 3,
+      "markierung": {
+        "n": 1,
+        "complete": 1,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 1.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 1.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 0
+        },
+        "median_items": 6.0,
+        "median_bundles": 1.0,
+        "median_terms": 21.0,
+        "windows_with_terms": 1
+      },
+      "vergleich": {
+        "n": 3,
+        "complete": 3,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 0,
+        "share_any": 0.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 0,
+          "niedrig": 0,
+          "offen": 3
+        },
+        "median_items": 7.0,
+        "median_bundles": 0.0,
+        "median_terms": 29.0,
+        "windows_with_terms": 3
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": null,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": null
+            },
+            "mittel": {
+              "windows": 0,
+              "share": null
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": null
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": null,
+          "median_bundles": null,
+          "median_terms": null,
+          "windows_with_terms": 0
+        },
+        "uebrige": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 1.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 1.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 1,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": 6.0,
+          "median_bundles": 1.0,
+          "median_terms": 21.0,
+          "windows_with_terms": 1
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 6.0,
+            "median_bundles": 1.0,
+            "median_terms": 21.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 3,
+            "complete": 3,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": 0.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 3
+            },
+            "median_items": 7.0,
+            "median_bundles": 0.0,
+            "median_terms": 29.0,
+            "windows_with_terms": 3
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 1,
+        "n": 1,
+        "share": 1.0,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 1,
+            "n": 1,
+            "share": 1.0
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          }
+        }
+      }
+    },
+    {
+      "company_id": 25,
+      "company": "Cancom",
+      "n_markers": 2,
+      "n_comparison_windows": 6,
+      "markierung": {
+        "n": 2,
+        "complete": 2,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 0,
+        "share_any": 0.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 0,
+          "niedrig": 0,
+          "offen": 2
+        },
+        "median_items": 7.0,
+        "median_bundles": 0.0,
+        "median_terms": 0.0,
+        "windows_with_terms": 0
+      },
+      "vergleich": {
+        "n": 6,
+        "complete": 6,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 0,
+        "share_any": 0.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 0,
+          "niedrig": 0,
+          "offen": 6
+        },
+        "median_items": 4.0,
+        "median_bundles": 0.0,
+        "median_terms": 0.0,
+        "windows_with_terms": 2
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": null,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": null
+            },
+            "mittel": {
+              "windows": 0,
+              "share": null
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": null
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": null,
+          "median_bundles": null,
+          "median_terms": null,
+          "windows_with_terms": 0
+        },
+        "uebrige": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": 0.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 2
+          },
+          "median_items": 7.0,
+          "median_bundles": 0.0,
+          "median_terms": 0.0,
+          "windows_with_terms": 0
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 2,
+            "complete": 2,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": 0.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 2
+            },
+            "median_items": 7.0,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 6,
+            "complete": 6,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": 0.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 6
+            },
+            "median_items": 4.0,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 2
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 0,
+        "n": 2,
+        "share": 0.0,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 2,
+            "share": 0.0
+          }
+        }
+      }
+    },
+    {
+      "company_id": 26,
+      "company": "Carl Zeiss",
+      "n_markers": 2,
+      "n_comparison_windows": 5,
+      "markierung": {
+        "n": 2,
+        "complete": 2,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 0,
+        "share_any": 0.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 0,
+          "niedrig": 0,
+          "offen": 2
+        },
+        "median_items": 59.5,
+        "median_bundles": 0.0,
+        "median_terms": 0.0,
+        "windows_with_terms": 0
+      },
+      "vergleich": {
+        "n": 5,
+        "complete": 5,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 0,
+        "share_any": 0.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 0,
+          "niedrig": 0,
+          "offen": 5
+        },
+        "median_items": 34.0,
+        "median_bundles": 0.0,
+        "median_terms": 0.0,
+        "windows_with_terms": 1
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": null,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": null
+            },
+            "mittel": {
+              "windows": 0,
+              "share": null
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": null
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": null,
+          "median_bundles": null,
+          "median_terms": null,
+          "windows_with_terms": 0
+        },
+        "uebrige": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": 0.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 2
+          },
+          "median_items": 59.5,
+          "median_bundles": 0.0,
+          "median_terms": 0.0,
+          "windows_with_terms": 0
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 2,
+            "complete": 2,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": 0.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 2
+            },
+            "median_items": 59.5,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 5,
+            "complete": 5,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": 0.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 5
+            },
+            "median_items": 34.0,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 1
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 0,
+        "n": 2,
+        "share": 0.0,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 2,
+            "share": 0.0
+          }
+        }
+      }
+    },
+    {
+      "company_id": 27,
+      "company": "Compugroup Medical Deutschland",
+      "n_markers": 1,
+      "n_comparison_windows": 3,
+      "markierung": {
+        "n": 1,
+        "complete": 1,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 1.0,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 1.0
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 0
+        },
+        "median_items": 38.0,
+        "median_bundles": 2.0,
+        "median_terms": 50.0,
+        "windows_with_terms": 1
+      },
+      "vergleich": {
+        "n": 3,
+        "complete": 3,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 1,
+        "share_any": 0.3333,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 1,
+            "share": 0.3333
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 1,
+          "niedrig": 0,
+          "offen": 2
+        },
+        "median_items": 25.0,
+        "median_bundles": 0.0,
+        "median_terms": 33.0,
+        "windows_with_terms": 3
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 1.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 1.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 1,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": 38.0,
+          "median_bundles": 2.0,
+          "median_terms": 50.0,
+          "windows_with_terms": 1
+        },
+        "uebrige": {
+          "n": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": null,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": null
+            },
+            "mittel": {
+              "windows": 0,
+              "share": null
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": null
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": null,
+          "median_bundles": null,
+          "median_terms": null,
+          "windows_with_terms": 0
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 1,
+            "complete": 1,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 1.0,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 1.0
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": 38.0,
+            "median_bundles": 2.0,
+            "median_terms": 50.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 3,
+            "complete": 3,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 0.3333,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 0.3333
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 2
+            },
+            "median_items": 25.0,
+            "median_bundles": 0.0,
+            "median_terms": 33.0,
+            "windows_with_terms": 3
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 1,
+        "n": 1,
+        "share": 1.0,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 1,
+            "n": 1,
+            "share": 1.0
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          }
+        }
+      }
+    },
+    {
+      "company_id": 28,
+      "company": "Telekom",
+      "n_markers": 7,
+      "n_comparison_windows": 16,
+      "markierung": {
+        "n": 7,
+        "complete": 7,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 3,
+        "share_any": 0.4286,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 3,
+            "share": 0.4286
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 3,
+          "niedrig": 0,
+          "offen": 4
+        },
+        "median_items": 61.0,
+        "median_bundles": 0.0,
+        "median_terms": 2.0,
+        "windows_with_terms": 5
+      },
+      "vergleich": {
+        "n": 16,
+        "complete": 16,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 8,
+        "share_any": 0.5,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 8,
+            "share": 0.5
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 8,
+          "niedrig": 0,
+          "offen": 8
+        },
+        "median_items": 60.0,
+        "median_bundles": 0.5,
+        "median_terms": 6.0,
+        "windows_with_terms": 12
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 0,
+          "share_any": 0.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 0,
+            "niedrig": 0,
+            "offen": 2
+          },
+          "median_items": 70.0,
+          "median_bundles": 0.0,
+          "median_terms": 1.5,
+          "windows_with_terms": 2
+        },
+        "uebrige": {
+          "n": 5,
+          "complete": 5,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 3,
+          "share_any": 0.6,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 3,
+              "share": 0.6
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 3,
+            "niedrig": 0,
+            "offen": 2
+          },
+          "median_items": 61.0,
+          "median_bundles": 1.0,
+          "median_terms": 7.0,
+          "windows_with_terms": 3
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 4,
+            "complete": 4,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 2,
+            "share_any": 0.5,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 2,
+                "share": 0.5
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 2,
+              "niedrig": 0,
+              "offen": 2
+            },
+            "median_items": 56.0,
+            "median_bundles": 0.5,
+            "median_terms": 6.5,
+            "windows_with_terms": 4
+          },
+          "vergleich": {
+            "n": 8,
+            "complete": 8,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 0.125,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 0.125
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 7
+            },
+            "median_items": 55.5,
+            "median_bundles": 0.0,
+            "median_terms": 6.0,
+            "windows_with_terms": 7
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 3,
+            "complete": 3,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 1,
+            "share_any": 0.3333,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 1,
+                "share": 0.3333
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 1,
+              "niedrig": 0,
+              "offen": 2
+            },
+            "median_items": 67.0,
+            "median_bundles": 0.0,
+            "median_terms": 0.0,
+            "windows_with_terms": 1
+          },
+          "vergleich": {
+            "n": 8,
+            "complete": 8,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 7,
+            "share_any": 0.875,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 7,
+                "share": 0.875
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 7,
+              "niedrig": 0,
+              "offen": 1
+            },
+            "median_items": 62.0,
+            "median_bundles": 2.0,
+            "median_terms": 6.5,
+            "windows_with_terms": 5
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 3,
+        "n": 7,
+        "share": 0.4286,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 2,
+            "n": 4,
+            "share": 0.5
+          },
+          "einzelmonat": {
+            "covered": 1,
+            "n": 3,
+            "share": 0.3333
+          }
+        }
+      }
+    },
+    {
+      "company_id": 33,
+      "company": "Freenet",
+      "n_markers": 5,
+      "n_comparison_windows": 15,
+      "markierung": {
+        "n": 5,
+        "complete": 5,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 3,
+        "share_any": 0.6,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 3,
+            "share": 0.6
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 3,
+          "niedrig": 0,
+          "offen": 2
+        },
+        "median_items": 31.0,
+        "median_bundles": 1.0,
+        "median_terms": 12.0,
+        "windows_with_terms": 5
+      },
+      "vergleich": {
+        "n": 15,
+        "complete": 15,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 3,
+        "share_any": 0.2,
+        "by_stage": {
+          "hoch": {
+            "windows": 0,
+            "share": 0.0
+          },
+          "mittel": {
+            "windows": 3,
+            "share": 0.2
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 0,
+          "mittel": 3,
+          "niedrig": 0,
+          "offen": 12
+        },
+        "median_items": 41.0,
+        "median_bundles": 0.0,
+        "median_terms": 6.0,
+        "windows_with_terms": 15
+      },
+      "referenz": {
+        "available": true,
+        "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+        "treffer": {
+          "n": 2,
+          "complete": 2,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 2,
+          "share_any": 1.0,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 2,
+              "share": 1.0
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 2,
+            "niedrig": 0,
+            "offen": 0
+          },
+          "median_items": 39.0,
+          "median_bundles": 1.5,
+          "median_terms": 18.0,
+          "windows_with_terms": 2
+        },
+        "uebrige": {
+          "n": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 1,
+          "share_any": 0.3333,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 1,
+              "share": 0.3333
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 1,
+            "niedrig": 0,
+            "offen": 2
+          },
+          "median_items": 31.0,
+          "median_bundles": 0.0,
+          "median_terms": 12.0,
+          "windows_with_terms": 3
+        }
+      },
+      "kinds": {
+        "niveauwechsel": {
+          "markierung": {
+            "n": 5,
+            "complete": 5,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 3,
+            "share_any": 0.6,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 3,
+                "share": 0.6
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 3,
+              "niedrig": 0,
+              "offen": 2
+            },
+            "median_items": 31.0,
+            "median_bundles": 1.0,
+            "median_terms": 12.0,
+            "windows_with_terms": 5
+          },
+          "vergleich": {
+            "n": 15,
+            "complete": 15,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 3,
+            "share_any": 0.2,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": 0.0
+              },
+              "mittel": {
+                "windows": 3,
+                "share": 0.2
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": 0.0
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 3,
+              "niedrig": 0,
+              "offen": 12
+            },
+            "median_items": 41.0,
+            "median_bundles": 0.0,
+            "median_terms": 6.0,
+            "windows_with_terms": 15
+          }
+        },
+        "einzelmonat": {
+          "markierung": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          },
+          "vergleich": {
+            "n": 0,
+            "complete": 0,
+            "incomplete": 0,
+            "missing_months": 0,
+            "with_any": 0,
+            "share_any": null,
+            "by_stage": {
+              "hoch": {
+                "windows": 0,
+                "share": null
+              },
+              "mittel": {
+                "windows": 0,
+                "share": null
+              },
+              "niedrig": {
+                "windows": 0,
+                "share": null
+              }
+            },
+            "top_stage": {
+              "hoch": 0,
+              "mittel": 0,
+              "niedrig": 0,
+              "offen": 0
+            },
+            "median_items": null,
+            "median_bundles": null,
+            "median_terms": null,
+            "windows_with_terms": 0
+          }
+        }
+      },
+      "coverage_nfa05": {
+        "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+        "covered": 3,
+        "n": 5,
+        "share": 0.6,
+        "by_kind": {
+          "niveauwechsel": {
+            "covered": 3,
+            "n": 5,
+            "share": 0.6
+          },
+          "einzelmonat": {
+            "covered": 0,
+            "n": 0,
+            "share": null
+          }
+        }
+      }
+    }
+  ],
+  "total": {
+    "n_markers": 28,
+    "n_comparison_windows": 72,
+    "markierung": {
+      "n": 28,
+      "complete": 28,
+      "incomplete": 0,
+      "missing_months": 0,
+      "with_any": 14,
+      "share_any": 0.5,
+      "by_stage": {
+        "hoch": {
+          "windows": 2,
+          "share": 0.0714
+        },
+        "mittel": {
+          "windows": 14,
+          "share": 0.5
+        },
+        "niedrig": {
+          "windows": 0,
+          "share": 0.0
+        }
+      },
+      "top_stage": {
+        "hoch": 2,
+        "mittel": 12,
+        "niedrig": 0,
+        "offen": 14
+      },
+      "median_items": 45.0,
+      "median_bundles": 0.5,
+      "median_terms": 11.5,
+      "windows_with_terms": 21
+    },
+    "vergleich": {
+      "n": 72,
+      "complete": 72,
+      "incomplete": 0,
+      "missing_months": 0,
+      "with_any": 23,
+      "share_any": 0.3194,
+      "by_stage": {
+        "hoch": {
+          "windows": 2,
+          "share": 0.0278
+        },
+        "mittel": {
+          "windows": 22,
+          "share": 0.3056
+        },
+        "niedrig": {
+          "windows": 0,
+          "share": 0.0
+        }
+      },
+      "top_stage": {
+        "hoch": 2,
+        "mittel": 21,
+        "niedrig": 0,
+        "offen": 49
+      },
+      "median_items": 44.0,
+      "median_bundles": 0.0,
+      "median_terms": 6.0,
+      "windows_with_terms": 54
+    },
+    "referenz": {
+      "available": true,
+      "definition": "Markierung trifft einen Referenzzeitraum der Annotationsdatei (E5, Regel 6): Markierungsmonat im Fenster ±1 Monat um den Zeitraum, bei nicht bewertetem Nachbarmonat bis zu 3 Monate, gleiche Richtung; jede Markierung für sich geprüft, Vergleichsfenster außen vor.",
+      "treffer": {
+        "n": 8,
+        "complete": 8,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 5,
+        "share_any": 0.625,
+        "by_stage": {
+          "hoch": {
+            "windows": 1,
+            "share": 0.125
+          },
+          "mittel": {
+            "windows": 5,
+            "share": 0.625
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 1,
+          "mittel": 4,
+          "niedrig": 0,
+          "offen": 3
+        },
+        "median_items": 46.5,
+        "median_bundles": 1.0,
+        "median_terms": 20.0,
+        "windows_with_terms": 8
+      },
+      "uebrige": {
+        "n": 20,
+        "complete": 20,
+        "incomplete": 0,
+        "missing_months": 0,
+        "with_any": 9,
+        "share_any": 0.45,
+        "by_stage": {
+          "hoch": {
+            "windows": 1,
+            "share": 0.05
+          },
+          "mittel": {
+            "windows": 9,
+            "share": 0.45
+          },
+          "niedrig": {
+            "windows": 0,
+            "share": 0.0
+          }
+        },
+        "top_stage": {
+          "hoch": 1,
+          "mittel": 8,
+          "niedrig": 0,
+          "offen": 11
+        },
+        "median_items": 45.0,
+        "median_bundles": 0.0,
+        "median_terms": 9.5,
+        "windows_with_terms": 13
+      }
+    },
+    "kinds": {
+      "niveauwechsel": {
+        "markierung": {
+          "n": 19,
+          "complete": 19,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 12,
+          "share_any": 0.6316,
+          "by_stage": {
+            "hoch": {
+              "windows": 2,
+              "share": 0.1053
+            },
+            "mittel": {
+              "windows": 12,
+              "share": 0.6316
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 2,
+            "mittel": 10,
+            "niedrig": 0,
+            "offen": 7
+          },
+          "median_items": 38.0,
+          "median_bundles": 1.0,
+          "median_terms": 21.0,
+          "windows_with_terms": 19
+        },
+        "vergleich": {
+          "n": 48,
+          "complete": 48,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 15,
+          "share_any": 0.3125,
+          "by_stage": {
+            "hoch": {
+              "windows": 2,
+              "share": 0.0417
+            },
+            "mittel": {
+              "windows": 14,
+              "share": 0.2917
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 2,
+            "mittel": 13,
+            "niedrig": 0,
+            "offen": 33
+          },
+          "median_items": 35.5,
+          "median_bundles": 0.0,
+          "median_terms": 10.5,
+          "windows_with_terms": 45
+        }
+      },
+      "einzelmonat": {
+        "markierung": {
+          "n": 9,
+          "complete": 9,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 2,
+          "share_any": 0.2222,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 2,
+              "share": 0.2222
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 2,
+            "niedrig": 0,
+            "offen": 7
+          },
+          "median_items": 67.0,
+          "median_bundles": 0.0,
+          "median_terms": 0.0,
+          "windows_with_terms": 2
+        },
+        "vergleich": {
+          "n": 24,
+          "complete": 24,
+          "incomplete": 0,
+          "missing_months": 0,
+          "with_any": 8,
+          "share_any": 0.3333,
+          "by_stage": {
+            "hoch": {
+              "windows": 0,
+              "share": 0.0
+            },
+            "mittel": {
+              "windows": 8,
+              "share": 0.3333
+            },
+            "niedrig": {
+              "windows": 0,
+              "share": 0.0
+            }
+          },
+          "top_stage": {
+            "hoch": 0,
+            "mittel": 8,
+            "niedrig": 0,
+            "offen": 16
+          },
+          "median_items": 57.5,
+          "median_bundles": 0.0,
+          "median_terms": 0.0,
+          "windows_with_terms": 9
+        }
+      }
+    },
+    "coverage_nfa05": {
+      "definition": "Anteil der Markierungsfenster (vollständig im Speicher) mit mindestens einem Erklärungsansatz der Stufe mindestens niedrig",
+      "covered": 14,
+      "n": 28,
+      "share": 0.5,
+      "by_kind": {
+        "niveauwechsel": {
+          "covered": 12,
+          "n": 19,
+          "share": 0.6316
+        },
+        "einzelmonat": {
+          "covered": 2,
+          "n": 9,
+          "share": 0.2222
+        }
+      }
+    }
+  },
+  "windows": [
+    {
+      "company": "E.ON",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2023-11",
+      "offset_months": 0,
+      "window_from": "2023-02",
+      "window_to": "2023-12",
+      "n_items": 373,
+      "n_selected": 16,
+      "n_excluded": 357,
+      "n_bundles": 16,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 16,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 27,
+      "n_shifted_topics": 10,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-05",
+        "to": "2023-10",
+        "n": 10
+      },
+      "review_after": {
+        "from": "2023-11",
+        "to": "2024-04",
+        "n": 44
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "E.ON",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2023-11",
+      "offset_months": -12,
+      "window_from": "2022-02",
+      "window_to": "2022-12",
+      "n_items": 335,
+      "n_selected": 6,
+      "n_excluded": 329,
+      "n_bundles": 6,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 6,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 17,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-05",
+        "to": "2022-10",
+        "n": 26
+      },
+      "review_after": {
+        "from": "2022-11",
+        "to": "2023-04",
+        "n": 27
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "E.ON",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2023-11",
+      "offset_months": 12,
+      "window_from": "2024-02",
+      "window_to": "2024-12",
+      "n_items": 438,
+      "n_selected": 16,
+      "n_excluded": 422,
+      "n_bundles": 16,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 16,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 3,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2024-05",
+        "to": "2024-10",
+        "n": 61
+      },
+      "review_after": {
+        "from": "2024-11",
+        "to": "2025-04",
+        "n": 27
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "E.ON",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2023-11",
+      "offset_months": -24,
+      "window_from": "2021-02",
+      "window_to": "2021-12",
+      "n_items": 302,
+      "n_selected": 8,
+      "n_excluded": 294,
+      "n_bundles": 6,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 6,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 8,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-05",
+        "to": "2021-10",
+        "n": 30
+      },
+      "review_after": {
+        "from": "2021-11",
+        "to": "2022-04",
+        "n": 24
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "RWE",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2023-02",
+      "offset_months": 0,
+      "window_from": "2022-09",
+      "window_to": "2023-03",
+      "n_items": 301,
+      "n_selected": 9,
+      "n_excluded": 292,
+      "n_bundles": 9,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 9,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 7,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-08",
+        "to": "2023-01",
+        "n": 23
+      },
+      "review_after": {
+        "from": "2023-02",
+        "to": "2023-07",
+        "n": 23
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "RWE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2023-02",
+      "offset_months": -12,
+      "window_from": "2021-09",
+      "window_to": "2022-03",
+      "n_items": 188,
+      "n_selected": 0,
+      "n_excluded": 188,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-08",
+        "to": "2022-01",
+        "n": 16
+      },
+      "review_after": {
+        "from": "2022-02",
+        "to": "2022-07",
+        "n": 7
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "RWE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2023-02",
+      "offset_months": 12,
+      "window_from": "2023-09",
+      "window_to": "2024-03",
+      "n_items": 269,
+      "n_selected": 14,
+      "n_excluded": 255,
+      "n_bundles": 14,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 14,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 7,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-08",
+        "to": "2024-01",
+        "n": 20
+      },
+      "review_after": {
+        "from": "2024-02",
+        "to": "2024-07",
+        "n": 22
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "RWE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2023-02",
+      "offset_months": -24,
+      "window_from": "2020-09",
+      "window_to": "2021-03",
+      "n_items": 110,
+      "n_selected": 0,
+      "n_excluded": 110,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-08",
+        "to": "2021-01",
+        "n": 6
+      },
+      "review_after": {
+        "from": "2021-02",
+        "to": "2021-07",
+        "n": 13
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "RWE",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2024-07",
+      "offset_months": 0,
+      "window_from": "2024-04",
+      "window_to": "2024-08",
+      "n_items": 308,
+      "n_selected": 0,
+      "n_excluded": 308,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2024-01",
+        "to": "2024-06",
+        "n": 18
+      },
+      "review_after": {
+        "from": "2024-07",
+        "to": "2024-07",
+        "n": 5
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "RWE",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2024-07",
+      "offset_months": -12,
+      "window_from": "2023-04",
+      "window_to": "2023-08",
+      "n_items": 154,
+      "n_selected": 0,
+      "n_excluded": 154,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-01",
+        "to": "2023-06",
+        "n": 24
+      },
+      "review_after": {
+        "from": "2023-07",
+        "to": "2023-07",
+        "n": 1
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "RWE",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2024-07",
+      "offset_months": 12,
+      "window_from": "2025-04",
+      "window_to": "2025-08",
+      "n_items": 459,
+      "n_selected": 0,
+      "n_excluded": 459,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2025-01",
+        "to": "2025-06",
+        "n": 25
+      },
+      "review_after": {
+        "from": "2025-07",
+        "to": "2025-07",
+        "n": 6
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "RWE",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2024-07",
+      "offset_months": -24,
+      "window_from": "2022-04",
+      "window_to": "2022-08",
+      "n_items": 141,
+      "n_selected": 0,
+      "n_excluded": 141,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-01",
+        "to": "2022-06",
+        "n": 6
+      },
+      "review_after": {
+        "from": "2022-07",
+        "to": "2022-07",
+        "n": 2
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "SAP SE",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2024-07",
+      "offset_months": 0,
+      "window_from": "2024-04",
+      "window_to": "2024-08",
+      "n_items": 362,
+      "n_selected": 37,
+      "n_excluded": 325,
+      "n_bundles": 37,
+      "n_by_stage": {
+        "hoch": 3,
+        "mittel": 34,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "hoch",
+      "n_terms": 50,
+      "n_shifted_topics": 10,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2024-01",
+        "to": "2024-06",
+        "n": 246
+      },
+      "review_after": {
+        "from": "2024-07",
+        "to": "2024-12",
+        "n": 72
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "SAP SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2024-07",
+      "offset_months": 12,
+      "window_from": "2025-04",
+      "window_to": "2025-08",
+      "n_items": 460,
+      "n_selected": 45,
+      "n_excluded": 415,
+      "n_bundles": 44,
+      "n_by_stage": {
+        "hoch": 1,
+        "mittel": 43,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "hoch",
+      "n_terms": 50,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2025-01",
+        "to": "2025-06",
+        "n": 69
+      },
+      "review_after": {
+        "from": "2025-07",
+        "to": "2025-12",
+        "n": 68
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "SAP SE",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2024-03",
+      "offset_months": 0,
+      "window_from": "2023-12",
+      "window_to": "2024-04",
+      "n_items": 329,
+      "n_selected": 50,
+      "n_excluded": 279,
+      "n_bundles": 49,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 49,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 50,
+      "n_shifted_topics": 11,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-09",
+        "to": "2024-02",
+        "n": 33
+      },
+      "review_after": {
+        "from": "2024-03",
+        "to": "2024-03",
+        "n": 174
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "SAP SE",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2024-03",
+      "offset_months": 12,
+      "window_from": "2024-12",
+      "window_to": "2025-04",
+      "n_items": 452,
+      "n_selected": 36,
+      "n_excluded": 416,
+      "n_bundles": 33,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 33,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 6,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2024-09",
+        "to": "2025-02",
+        "n": 84
+      },
+      "review_after": {
+        "from": "2025-03",
+        "to": "2025-03",
+        "n": 15
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "SAP SE",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2024-03",
+      "offset_months": 24,
+      "window_from": "2025-12",
+      "window_to": "2026-04",
+      "n_items": 510,
+      "n_selected": 0,
+      "n_excluded": 510,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2025-09",
+        "to": "2026-02",
+        "n": 54
+      },
+      "review_after": {
+        "from": "2026-03",
+        "to": "2026-03",
+        "n": 6
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2019-07",
+      "offset_months": 0,
+      "window_from": "2019-03",
+      "window_to": "2019-08",
+      "n_items": 2,
+      "n_selected": 0,
+      "n_excluded": 2,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 50,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2019-01",
+        "to": "2019-06",
+        "n": 35
+      },
+      "review_after": {
+        "from": "2019-07",
+        "to": "2019-12",
+        "n": 34
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-07",
+      "offset_months": -12,
+      "window_from": "2018-03",
+      "window_to": "2018-08",
+      "n_items": 5,
+      "n_selected": 2,
+      "n_excluded": 3,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 23,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2018-01",
+        "to": "2018-06",
+        "n": 33
+      },
+      "review_after": {
+        "from": "2018-07",
+        "to": "2018-12",
+        "n": 19
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-07",
+      "offset_months": 24,
+      "window_from": "2021-03",
+      "window_to": "2021-08",
+      "n_items": 5,
+      "n_selected": 0,
+      "n_excluded": 5,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 50,
+      "n_shifted_topics": 10,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-01",
+        "to": "2021-06",
+        "n": 10
+      },
+      "review_after": {
+        "from": "2021-07",
+        "to": "2021-12",
+        "n": 28
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2017-11",
+      "offset_months": 0,
+      "window_from": "2017-08",
+      "window_to": "2017-12",
+      "n_items": 1,
+      "n_selected": 0,
+      "n_excluded": 1,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 50,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-05",
+        "to": "2017-10",
+        "n": 30
+      },
+      "review_after": {
+        "from": "2017-11",
+        "to": "2018-04",
+        "n": 29
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2017-11",
+      "offset_months": -12,
+      "window_from": "2016-08",
+      "window_to": "2016-12",
+      "n_items": 4,
+      "n_selected": 1,
+      "n_excluded": 3,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 3,
+      "n_shifted_topics": 2,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2016-05",
+        "to": "2016-10",
+        "n": 14
+      },
+      "review_after": {
+        "from": "2016-11",
+        "to": "2017-04",
+        "n": 15
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2017-11",
+      "offset_months": 12,
+      "window_from": "2018-08",
+      "window_to": "2018-12",
+      "n_items": 2,
+      "n_selected": 0,
+      "n_excluded": 2,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 19,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2018-05",
+        "to": "2018-10",
+        "n": 29
+      },
+      "review_after": {
+        "from": "2018-11",
+        "to": "2019-04",
+        "n": 24
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2024-03",
+      "offset_months": 0,
+      "window_from": "2023-09",
+      "window_to": "2024-04",
+      "n_items": 21,
+      "n_selected": 3,
+      "n_excluded": 18,
+      "n_bundles": 3,
+      "n_by_stage": {
+        "hoch": 1,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "hoch",
+      "n_terms": 22,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-09",
+        "to": "2024-02",
+        "n": 18
+      },
+      "review_after": {
+        "from": "2024-03",
+        "to": "2024-08",
+        "n": 22
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2024-03",
+      "offset_months": -12,
+      "window_from": "2022-09",
+      "window_to": "2023-04",
+      "n_items": 10,
+      "n_selected": 0,
+      "n_excluded": 10,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 6,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-09",
+        "to": "2023-02",
+        "n": 13
+      },
+      "review_after": {
+        "from": "2023-03",
+        "to": "2023-08",
+        "n": 21
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2024-03",
+      "offset_months": 12,
+      "window_from": "2024-09",
+      "window_to": "2025-04",
+      "n_items": 28,
+      "n_selected": 1,
+      "n_excluded": 27,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 1,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "hoch",
+      "n_terms": 35,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2024-09",
+        "to": "2025-02",
+        "n": 19
+      },
+      "review_after": {
+        "from": "2025-03",
+        "to": "2025-08",
+        "n": 21
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2024-03",
+      "offset_months": -24,
+      "window_from": "2021-09",
+      "window_to": "2022-04",
+      "n_items": 5,
+      "n_selected": 0,
+      "n_excluded": 5,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 4,
+      "n_shifted_topics": 11,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-09",
+        "to": "2022-02",
+        "n": 23
+      },
+      "review_after": {
+        "from": "2022-03",
+        "to": "2022-08",
+        "n": 11
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2020-06",
+      "offset_months": 0,
+      "window_from": "2019-12",
+      "window_to": "2020-07",
+      "n_items": 2,
+      "n_selected": 0,
+      "n_excluded": 2,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 19,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2019-12",
+        "to": "2020-05",
+        "n": 18
+      },
+      "review_after": {
+        "from": "2020-06",
+        "to": "2020-11",
+        "n": 17
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2020-06",
+      "offset_months": 12,
+      "window_from": "2020-12",
+      "window_to": "2021-07",
+      "n_items": 8,
+      "n_selected": 0,
+      "n_excluded": 8,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 50,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-12",
+        "to": "2021-05",
+        "n": 10
+      },
+      "review_after": {
+        "from": "2021-06",
+        "to": "2021-11",
+        "n": 19
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "NTT DATA SE",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2020-06",
+      "offset_months": 24,
+      "window_from": "2021-12",
+      "window_to": "2022-07",
+      "n_items": 5,
+      "n_selected": 0,
+      "n_excluded": 5,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 6,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-12",
+        "to": "2022-05",
+        "n": 29
+      },
+      "review_after": {
+        "from": "2022-06",
+        "to": "2022-11",
+        "n": 11
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "1&1 AG",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2016-10",
+      "offset_months": 0,
+      "window_from": "2016-07",
+      "window_to": "2016-11",
+      "n_items": 25,
+      "n_selected": 1,
+      "n_excluded": 24,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 21,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2016-04",
+        "to": "2016-09",
+        "n": 56
+      },
+      "review_after": {
+        "from": "2016-10",
+        "to": "2017-03",
+        "n": 31
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "1&1 AG",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-10",
+      "offset_months": -12,
+      "window_from": "2015-07",
+      "window_to": "2015-11",
+      "n_items": 30,
+      "n_selected": 0,
+      "n_excluded": 30,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 3,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-04",
+        "to": "2015-09",
+        "n": 35
+      },
+      "review_after": {
+        "from": "2015-10",
+        "to": "2016-03",
+        "n": 24
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "1&1 AG",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-10",
+      "offset_months": 12,
+      "window_from": "2017-07",
+      "window_to": "2017-11",
+      "n_items": 37,
+      "n_selected": 1,
+      "n_excluded": 36,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 16,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-04",
+        "to": "2017-09",
+        "n": 34
+      },
+      "review_after": {
+        "from": "2017-10",
+        "to": "2018-03",
+        "n": 31
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "1&1 AG",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-10",
+      "offset_months": -24,
+      "window_from": "2014-07",
+      "window_to": "2014-11",
+      "n_items": 27,
+      "n_selected": 1,
+      "n_excluded": 26,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 42,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2014-04",
+        "to": "2014-09",
+        "n": 28
+      },
+      "review_after": {
+        "from": "2014-10",
+        "to": "2015-03",
+        "n": 38
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Bechtle",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2016-02",
+      "offset_months": 0,
+      "window_from": "2015-11",
+      "window_to": "2016-03",
+      "n_items": 6,
+      "n_selected": 1,
+      "n_excluded": 5,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 21,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-08",
+        "to": "2016-01",
+        "n": 61
+      },
+      "review_after": {
+        "from": "2016-02",
+        "to": "2016-07",
+        "n": 55
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Bechtle",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-02",
+      "offset_months": -12,
+      "window_from": "2014-11",
+      "window_to": "2015-03",
+      "n_items": 7,
+      "n_selected": 0,
+      "n_excluded": 7,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 29,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2014-08",
+        "to": "2015-01",
+        "n": 44
+      },
+      "review_after": {
+        "from": "2015-02",
+        "to": "2015-07",
+        "n": 44
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Bechtle",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-02",
+      "offset_months": 12,
+      "window_from": "2016-11",
+      "window_to": "2017-03",
+      "n_items": 7,
+      "n_selected": 0,
+      "n_excluded": 7,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 41,
+      "n_shifted_topics": 4,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2016-08",
+        "to": "2017-01",
+        "n": 59
+      },
+      "review_after": {
+        "from": "2017-02",
+        "to": "2017-07",
+        "n": 75
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Bechtle",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-02",
+      "offset_months": -24,
+      "window_from": "2013-11",
+      "window_to": "2014-03",
+      "n_items": 4,
+      "n_selected": 0,
+      "n_excluded": 4,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 17,
+      "n_shifted_topics": 4,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2013-08",
+        "to": "2014-01",
+        "n": 41
+      },
+      "review_after": {
+        "from": "2014-02",
+        "to": "2014-07",
+        "n": 32
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Cancom",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2016-05",
+      "offset_months": 0,
+      "window_from": "2016-02",
+      "window_to": "2016-06",
+      "n_items": 9,
+      "n_selected": 0,
+      "n_excluded": 9,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-11",
+        "to": "2016-04",
+        "n": 32
+      },
+      "review_after": {
+        "from": "2016-05",
+        "to": "2016-05",
+        "n": 5
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Cancom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2016-05",
+      "offset_months": -12,
+      "window_from": "2015-02",
+      "window_to": "2015-06",
+      "n_items": 4,
+      "n_selected": 0,
+      "n_excluded": 4,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2014-11",
+        "to": "2015-04",
+        "n": 31
+      },
+      "review_after": {
+        "from": "2015-05",
+        "to": "2015-05",
+        "n": 4
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Cancom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2016-05",
+      "offset_months": -24,
+      "window_from": "2014-02",
+      "window_to": "2014-06",
+      "n_items": 5,
+      "n_selected": 0,
+      "n_excluded": 5,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2013-11",
+        "to": "2014-04",
+        "n": 33
+      },
+      "review_after": {
+        "from": "2014-05",
+        "to": "2014-05",
+        "n": 0
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Cancom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2016-05",
+      "offset_months": 24,
+      "window_from": "2018-02",
+      "window_to": "2018-06",
+      "n_items": 4,
+      "n_selected": 0,
+      "n_excluded": 4,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 2,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-11",
+        "to": "2018-04",
+        "n": 68
+      },
+      "review_after": {
+        "from": "2018-05",
+        "to": "2018-05",
+        "n": 13
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Cancom",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2017-08",
+      "offset_months": 0,
+      "window_from": "2017-05",
+      "window_to": "2017-09",
+      "n_items": 5,
+      "n_selected": 0,
+      "n_excluded": 5,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-02",
+        "to": "2017-07",
+        "n": 41
+      },
+      "review_after": {
+        "from": "2017-08",
+        "to": "2017-08",
+        "n": 5
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Cancom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2017-08",
+      "offset_months": 12,
+      "window_from": "2018-05",
+      "window_to": "2018-09",
+      "n_items": 4,
+      "n_selected": 0,
+      "n_excluded": 4,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 5,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2018-02",
+        "to": "2018-07",
+        "n": 70
+      },
+      "review_after": {
+        "from": "2018-08",
+        "to": "2018-08",
+        "n": 15
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Cancom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2017-08",
+      "offset_months": -24,
+      "window_from": "2015-05",
+      "window_to": "2015-09",
+      "n_items": 4,
+      "n_selected": 0,
+      "n_excluded": 4,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-02",
+        "to": "2015-07",
+        "n": 22
+      },
+      "review_after": {
+        "from": "2015-08",
+        "to": "2015-08",
+        "n": 3
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Cancom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2017-08",
+      "offset_months": 24,
+      "window_from": "2019-05",
+      "window_to": "2019-09",
+      "n_items": 2,
+      "n_selected": 0,
+      "n_excluded": 2,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2019-02",
+        "to": "2019-07",
+        "n": 100
+      },
+      "review_after": {
+        "from": "2019-08",
+        "to": "2019-08",
+        "n": 5
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Carl Zeiss",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2024-12",
+      "offset_months": 0,
+      "window_from": "2024-09",
+      "window_to": "2025-01",
+      "n_items": 89,
+      "n_selected": 0,
+      "n_excluded": 89,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2024-06",
+        "to": "2024-11",
+        "n": 123
+      },
+      "review_after": {
+        "from": "2024-12",
+        "to": "2024-12",
+        "n": 9
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Carl Zeiss",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2024-12",
+      "offset_months": -12,
+      "window_from": "2023-09",
+      "window_to": "2024-01",
+      "n_items": 69,
+      "n_selected": 0,
+      "n_excluded": 69,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 1,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-06",
+        "to": "2023-11",
+        "n": 104
+      },
+      "review_after": {
+        "from": "2023-12",
+        "to": "2023-12",
+        "n": 13
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Carl Zeiss",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2024-12",
+      "offset_months": -24,
+      "window_from": "2022-09",
+      "window_to": "2023-01",
+      "n_items": 61,
+      "n_selected": 0,
+      "n_excluded": 61,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-06",
+        "to": "2022-11",
+        "n": 81
+      },
+      "review_after": {
+        "from": "2022-12",
+        "to": "2022-12",
+        "n": 1
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Carl Zeiss",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2016-11",
+      "offset_months": 0,
+      "window_from": "2016-08",
+      "window_to": "2016-12",
+      "n_items": 30,
+      "n_selected": 0,
+      "n_excluded": 30,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2016-05",
+        "to": "2016-10",
+        "n": 21
+      },
+      "review_after": {
+        "from": "2016-11",
+        "to": "2016-11",
+        "n": 7
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Carl Zeiss",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2016-11",
+      "offset_months": -12,
+      "window_from": "2015-08",
+      "window_to": "2015-12",
+      "n_items": 21,
+      "n_selected": 0,
+      "n_excluded": 21,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-05",
+        "to": "2015-10",
+        "n": 26
+      },
+      "review_after": {
+        "from": "2015-11",
+        "to": "2015-11",
+        "n": 4
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Carl Zeiss",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2016-11",
+      "offset_months": 12,
+      "window_from": "2017-08",
+      "window_to": "2017-12",
+      "n_items": 34,
+      "n_selected": 0,
+      "n_excluded": 34,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-05",
+        "to": "2017-10",
+        "n": 49
+      },
+      "review_after": {
+        "from": "2017-11",
+        "to": "2017-11",
+        "n": 4
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Carl Zeiss",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2016-11",
+      "offset_months": -24,
+      "window_from": "2014-08",
+      "window_to": "2014-12",
+      "n_items": 16,
+      "n_selected": 0,
+      "n_excluded": 16,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2014-05",
+        "to": "2014-10",
+        "n": 16
+      },
+      "review_after": {
+        "from": "2014-11",
+        "to": "2014-11",
+        "n": 8
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Compugroup Medical Deutschland",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2022-08",
+      "offset_months": 0,
+      "window_from": "2022-05",
+      "window_to": "2022-09",
+      "n_items": 38,
+      "n_selected": 3,
+      "n_excluded": 35,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 50,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-02",
+        "to": "2022-07",
+        "n": 32
+      },
+      "review_after": {
+        "from": "2022-08",
+        "to": "2023-01",
+        "n": 57
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "Compugroup Medical Deutschland",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2022-08",
+      "offset_months": -12,
+      "window_from": "2021-05",
+      "window_to": "2021-09",
+      "n_items": 19,
+      "n_selected": 0,
+      "n_excluded": 19,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 33,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-02",
+        "to": "2021-07",
+        "n": 36
+      },
+      "review_after": {
+        "from": "2021-08",
+        "to": "2022-01",
+        "n": 45
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Compugroup Medical Deutschland",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2022-08",
+      "offset_months": 12,
+      "window_from": "2023-05",
+      "window_to": "2023-09",
+      "n_items": 32,
+      "n_selected": 0,
+      "n_excluded": 32,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 50,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-02",
+        "to": "2023-07",
+        "n": 75
+      },
+      "review_after": {
+        "from": "2023-08",
+        "to": "2024-01",
+        "n": 59
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Compugroup Medical Deutschland",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2022-08",
+      "offset_months": -24,
+      "window_from": "2020-05",
+      "window_to": "2020-09",
+      "n_items": 25,
+      "n_selected": 2,
+      "n_excluded": 23,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 31,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-02",
+        "to": "2020-07",
+        "n": 22
+      },
+      "review_after": {
+        "from": "2020-08",
+        "to": "2021-01",
+        "n": 29
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2010-07",
+      "offset_months": 0,
+      "window_from": "2010-02",
+      "window_to": "2010-08",
+      "n_items": 55,
+      "n_selected": 0,
+      "n_excluded": 55,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 2,
+      "n_shifted_topics": 1,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2010-01",
+        "to": "2010-06",
+        "n": 27
+      },
+      "review_after": {
+        "from": "2010-07",
+        "to": "2010-12",
+        "n": 54
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2010-07",
+      "offset_months": 12,
+      "window_from": "2011-02",
+      "window_to": "2011-08",
+      "n_items": 48,
+      "n_selected": 0,
+      "n_excluded": 48,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2011-01",
+        "to": "2011-06",
+        "n": 89
+      },
+      "review_after": {
+        "from": "2011-07",
+        "to": "2011-12",
+        "n": 9
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2010-07",
+      "offset_months": 24,
+      "window_from": "2012-02",
+      "window_to": "2012-08",
+      "n_items": 65,
+      "n_selected": 0,
+      "n_excluded": 65,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 6,
+      "n_shifted_topics": 2,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2012-01",
+        "to": "2012-06",
+        "n": 13
+      },
+      "review_after": {
+        "from": "2012-07",
+        "to": "2012-12",
+        "n": 15
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2018-11",
+      "offset_months": 0,
+      "window_from": "2018-08",
+      "window_to": "2018-12",
+      "n_items": 51,
+      "n_selected": 2,
+      "n_excluded": 49,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 24,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2018-05",
+        "to": "2018-10",
+        "n": 720
+      },
+      "review_after": {
+        "from": "2018-11",
+        "to": "2019-01",
+        "n": 39
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2018-11",
+      "offset_months": -12,
+      "window_from": "2017-08",
+      "window_to": "2017-12",
+      "n_items": 53,
+      "n_selected": 0,
+      "n_excluded": 53,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 22,
+      "n_shifted_topics": 1,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-05",
+        "to": "2017-10",
+        "n": 380
+      },
+      "review_after": {
+        "from": "2017-11",
+        "to": "2018-04",
+        "n": 226
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2018-11",
+      "offset_months": 12,
+      "window_from": "2019-08",
+      "window_to": "2019-12",
+      "n_items": 58,
+      "n_selected": 0,
+      "n_excluded": 58,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 6,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2019-05",
+        "to": "2019-10",
+        "n": 588
+      },
+      "review_after": {
+        "from": "2019-11",
+        "to": "2020-04",
+        "n": 343
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2018-11",
+      "offset_months": -24,
+      "window_from": "2016-08",
+      "window_to": "2016-12",
+      "n_items": 51,
+      "n_selected": 0,
+      "n_excluded": 51,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 31,
+      "n_shifted_topics": 2,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2016-05",
+        "to": "2016-10",
+        "n": 317
+      },
+      "review_after": {
+        "from": "2016-11",
+        "to": "2017-04",
+        "n": 106
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2019-02",
+      "offset_months": 0,
+      "window_from": "2018-11",
+      "window_to": "2019-03",
+      "n_items": 57,
+      "n_selected": 1,
+      "n_excluded": 56,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 11,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2018-11",
+        "to": "2019-01",
+        "n": 39
+      },
+      "review_after": {
+        "from": "2019-02",
+        "to": "2019-07",
+        "n": 511
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-02",
+      "offset_months": -12,
+      "window_from": "2017-11",
+      "window_to": "2018-03",
+      "n_items": 51,
+      "n_selected": 0,
+      "n_excluded": 51,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 4,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-08",
+        "to": "2018-01",
+        "n": 204
+      },
+      "review_after": {
+        "from": "2018-02",
+        "to": "2018-07",
+        "n": 598
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-02",
+      "offset_months": 12,
+      "window_from": "2019-11",
+      "window_to": "2020-03",
+      "n_items": 80,
+      "n_selected": 1,
+      "n_excluded": 79,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 8,
+      "n_shifted_topics": 1,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2019-08",
+        "to": "2020-01",
+        "n": 361
+      },
+      "review_after": {
+        "from": "2020-02",
+        "to": "2020-07",
+        "n": 397
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-02",
+      "offset_months": 24,
+      "window_from": "2020-11",
+      "window_to": "2021-03",
+      "n_items": 70,
+      "n_selected": 0,
+      "n_excluded": 70,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 2,
+      "n_shifted_topics": 2,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-08",
+        "to": "2021-01",
+        "n": 151
+      },
+      "review_after": {
+        "from": "2021-02",
+        "to": "2021-07",
+        "n": 278
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2009-12",
+      "offset_months": 0,
+      "window_from": "2008-08",
+      "window_to": "2010-01",
+      "n_items": 85,
+      "n_selected": 0,
+      "n_excluded": 85,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 1,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2009-06",
+        "to": "2009-11",
+        "n": 13
+      },
+      "review_after": {
+        "from": "2009-12",
+        "to": "2010-04",
+        "n": 46
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "Telekom",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2022-12",
+      "offset_months": 0,
+      "window_from": "2022-09",
+      "window_to": "2023-01",
+      "n_items": 129,
+      "n_selected": 1,
+      "n_excluded": 128,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 7,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-06",
+        "to": "2022-11",
+        "n": 223
+      },
+      "review_after": {
+        "from": "2022-12",
+        "to": "2022-12",
+        "n": 11
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2022-12",
+      "offset_months": -12,
+      "window_from": "2021-09",
+      "window_to": "2022-01",
+      "n_items": 98,
+      "n_selected": 3,
+      "n_excluded": 95,
+      "n_bundles": 3,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 3,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 1,
+      "n_shifted_topics": 3,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-06",
+        "to": "2021-11",
+        "n": 206
+      },
+      "review_after": {
+        "from": "2021-12",
+        "to": "2021-12",
+        "n": 28
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2022-12",
+      "offset_months": 12,
+      "window_from": "2023-09",
+      "window_to": "2024-01",
+      "n_items": 168,
+      "n_selected": 8,
+      "n_excluded": 160,
+      "n_bundles": 8,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 8,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 19,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-06",
+        "to": "2023-11",
+        "n": 227
+      },
+      "review_after": {
+        "from": "2023-12",
+        "to": "2023-12",
+        "n": 27
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2022-12",
+      "offset_months": -24,
+      "window_from": "2020-09",
+      "window_to": "2021-01",
+      "n_items": 65,
+      "n_selected": 3,
+      "n_excluded": 62,
+      "n_bundles": 3,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 3,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 17,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-06",
+        "to": "2020-11",
+        "n": 255
+      },
+      "review_after": {
+        "from": "2020-12",
+        "to": "2020-12",
+        "n": 28
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2015-05",
+      "offset_months": 0,
+      "window_from": "2015-02",
+      "window_to": "2015-06",
+      "n_items": 61,
+      "n_selected": 0,
+      "n_excluded": 61,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2014-11",
+        "to": "2015-04",
+        "n": 169
+      },
+      "review_after": {
+        "from": "2015-05",
+        "to": "2015-05",
+        "n": 5
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2015-05",
+      "offset_months": -12,
+      "window_from": "2014-02",
+      "window_to": "2014-06",
+      "n_items": 52,
+      "n_selected": 0,
+      "n_excluded": 52,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 2,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2013-11",
+        "to": "2014-04",
+        "n": 94
+      },
+      "review_after": {
+        "from": "2014-05",
+        "to": "2014-05",
+        "n": 11
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2015-05",
+      "offset_months": 12,
+      "window_from": "2016-02",
+      "window_to": "2016-06",
+      "n_items": 62,
+      "n_selected": 2,
+      "n_excluded": 60,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 0,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-11",
+        "to": "2016-04",
+        "n": 143
+      },
+      "review_after": {
+        "from": "2016-05",
+        "to": "2016-05",
+        "n": 10
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2015-05",
+      "offset_months": -24,
+      "window_from": "2013-02",
+      "window_to": "2013-06",
+      "n_items": 47,
+      "n_selected": 1,
+      "n_excluded": 46,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 12,
+      "n_shifted_topics": 4,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2012-11",
+        "to": "2013-04",
+        "n": 89
+      },
+      "review_after": {
+        "from": "2013-05",
+        "to": "2013-05",
+        "n": 78
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "markierung",
+      "kind": "einzelmonat",
+      "date": "2017-05",
+      "offset_months": 0,
+      "window_from": "2017-02",
+      "window_to": "2017-06",
+      "n_items": 67,
+      "n_selected": 0,
+      "n_excluded": 67,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 0,
+      "n_shifted_topics": 0,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2016-11",
+        "to": "2017-04",
+        "n": 106
+      },
+      "review_after": {
+        "from": "2017-05",
+        "to": "2017-05",
+        "n": 6
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2017-05",
+      "offset_months": -12,
+      "window_from": "2016-02",
+      "window_to": "2016-06",
+      "n_items": 62,
+      "n_selected": 2,
+      "n_excluded": 60,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 0,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-11",
+        "to": "2016-04",
+        "n": 143
+      },
+      "review_after": {
+        "from": "2016-05",
+        "to": "2016-05",
+        "n": 10
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Telekom",
+      "group": "vergleich",
+      "kind": "einzelmonat",
+      "date": "2017-05",
+      "offset_months": 12,
+      "window_from": "2018-02",
+      "window_to": "2018-06",
+      "n_items": 54,
+      "n_selected": 1,
+      "n_excluded": 53,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 21,
+      "n_shifted_topics": 3,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-11",
+        "to": "2018-04",
+        "n": 226
+      },
+      "review_after": {
+        "from": "2018-05",
+        "to": "2018-05",
+        "n": 113
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2021-09",
+      "offset_months": 0,
+      "window_from": "2021-05",
+      "window_to": "2021-10",
+      "n_items": 57,
+      "n_selected": 2,
+      "n_excluded": 55,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 26,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-03",
+        "to": "2021-08",
+        "n": 45
+      },
+      "review_after": {
+        "from": "2021-09",
+        "to": "2022-01",
+        "n": 45
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2021-09",
+      "offset_months": -12,
+      "window_from": "2020-05",
+      "window_to": "2020-10",
+      "n_items": 52,
+      "n_selected": 2,
+      "n_excluded": 50,
+      "n_bundles": 2,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 2,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 4,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-03",
+        "to": "2020-08",
+        "n": 55
+      },
+      "review_after": {
+        "from": "2020-09",
+        "to": "2021-02",
+        "n": 11
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2021-09",
+      "offset_months": 12,
+      "window_from": "2022-05",
+      "window_to": "2022-10",
+      "n_items": 71,
+      "n_selected": 0,
+      "n_excluded": 71,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 6,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-03",
+        "to": "2022-08",
+        "n": 29
+      },
+      "review_after": {
+        "from": "2022-09",
+        "to": "2023-02",
+        "n": 42
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2021-09",
+      "offset_months": 24,
+      "window_from": "2023-05",
+      "window_to": "2023-10",
+      "n_items": 98,
+      "n_selected": 0,
+      "n_excluded": 98,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 38,
+      "n_shifted_topics": 4,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-03",
+        "to": "2023-08",
+        "n": 42
+      },
+      "review_after": {
+        "from": "2023-09",
+        "to": "2024-02",
+        "n": 65
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2015-10",
+      "offset_months": 0,
+      "window_from": "2015-05",
+      "window_to": "2015-11",
+      "n_items": 18,
+      "n_selected": 0,
+      "n_excluded": 18,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 50,
+      "n_shifted_topics": 4,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-04",
+        "to": "2015-09",
+        "n": 20
+      },
+      "review_after": {
+        "from": "2015-10",
+        "to": "2016-03",
+        "n": 57
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2015-10",
+      "offset_months": -12,
+      "window_from": "2014-05",
+      "window_to": "2014-11",
+      "n_items": 7,
+      "n_selected": 0,
+      "n_excluded": 7,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 14,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2014-04",
+        "to": "2014-09",
+        "n": 13
+      },
+      "review_after": {
+        "from": "2014-10",
+        "to": "2015-03",
+        "n": 23
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2015-10",
+      "offset_months": -24,
+      "window_from": "2013-05",
+      "window_to": "2013-11",
+      "n_items": 11,
+      "n_selected": 0,
+      "n_excluded": 11,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 2,
+      "n_shifted_topics": 2,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2013-04",
+        "to": "2013-09",
+        "n": 22
+      },
+      "review_after": {
+        "from": "2013-10",
+        "to": "2014-03",
+        "n": 24
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2015-10",
+      "offset_months": 24,
+      "window_from": "2017-05",
+      "window_to": "2017-11",
+      "n_items": 52,
+      "n_selected": 0,
+      "n_excluded": 52,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 21,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-04",
+        "to": "2017-09",
+        "n": 39
+      },
+      "review_after": {
+        "from": "2017-10",
+        "to": "2018-03",
+        "n": 28
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2016-04",
+      "offset_months": 0,
+      "window_from": "2016-01",
+      "window_to": "2016-05",
+      "n_items": 21,
+      "n_selected": 1,
+      "n_excluded": 20,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 10,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2015-10",
+        "to": "2016-03",
+        "n": 57
+      },
+      "review_after": {
+        "from": "2016-04",
+        "to": "2016-09",
+        "n": 45
+      },
+      "reference_hit": true
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-04",
+      "offset_months": 12,
+      "window_from": "2017-01",
+      "window_to": "2017-05",
+      "n_items": 41,
+      "n_selected": 0,
+      "n_excluded": 41,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 6,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2016-10",
+        "to": "2017-03",
+        "n": 34
+      },
+      "review_after": {
+        "from": "2017-04",
+        "to": "2017-09",
+        "n": 39
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-04",
+      "offset_months": -24,
+      "window_from": "2014-01",
+      "window_to": "2014-05",
+      "n_items": 12,
+      "n_selected": 0,
+      "n_excluded": 12,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 3,
+      "n_shifted_topics": 1,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2013-10",
+        "to": "2014-03",
+        "n": 24
+      },
+      "review_after": {
+        "from": "2014-04",
+        "to": "2014-09",
+        "n": 13
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2016-04",
+      "offset_months": 24,
+      "window_from": "2018-01",
+      "window_to": "2018-05",
+      "n_items": 28,
+      "n_selected": 0,
+      "n_excluded": 28,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 13,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-10",
+        "to": "2018-03",
+        "n": 28
+      },
+      "review_after": {
+        "from": "2018-04",
+        "to": "2018-09",
+        "n": 47
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2022-02",
+      "offset_months": 0,
+      "window_from": "2021-11",
+      "window_to": "2022-03",
+      "n_items": 39,
+      "n_selected": 0,
+      "n_excluded": 39,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 8,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2021-09",
+        "to": "2022-01",
+        "n": 45
+      },
+      "review_after": {
+        "from": "2022-02",
+        "to": "2022-07",
+        "n": 22
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2022-02",
+      "offset_months": -12,
+      "window_from": "2020-11",
+      "window_to": "2021-03",
+      "n_items": 30,
+      "n_selected": 0,
+      "n_excluded": 30,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 42,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-08",
+        "to": "2021-01",
+        "n": 21
+      },
+      "review_after": {
+        "from": "2021-02",
+        "to": "2021-07",
+        "n": 45
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2022-02",
+      "offset_months": 12,
+      "window_from": "2022-11",
+      "window_to": "2023-03",
+      "n_items": 57,
+      "n_selected": 0,
+      "n_excluded": 57,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 4,
+      "n_shifted_topics": 7,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2022-08",
+        "to": "2023-01",
+        "n": 42
+      },
+      "review_after": {
+        "from": "2023-02",
+        "to": "2023-07",
+        "n": 37
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2022-02",
+      "offset_months": 24,
+      "window_from": "2023-11",
+      "window_to": "2024-03",
+      "n_items": 77,
+      "n_selected": 1,
+      "n_excluded": 76,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 6,
+      "n_shifted_topics": 4,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2023-08",
+        "to": "2024-01",
+        "n": 60
+      },
+      "review_after": {
+        "from": "2024-02",
+        "to": "2024-07",
+        "n": 59
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "markierung",
+      "kind": "niveauwechsel",
+      "date": "2019-10",
+      "offset_months": 0,
+      "window_from": "2019-07",
+      "window_to": "2019-11",
+      "n_items": 31,
+      "n_selected": 1,
+      "n_excluded": 30,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 12,
+      "n_shifted_topics": 9,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2019-04",
+        "to": "2019-09",
+        "n": 66
+      },
+      "review_after": {
+        "from": "2019-10",
+        "to": "2020-03",
+        "n": 27
+      },
+      "reference_hit": false
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-10",
+      "offset_months": -12,
+      "window_from": "2018-07",
+      "window_to": "2018-11",
+      "n_items": 29,
+      "n_selected": 0,
+      "n_excluded": 29,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 16,
+      "n_shifted_topics": 5,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2018-04",
+        "to": "2018-09",
+        "n": 47
+      },
+      "review_after": {
+        "from": "2018-10",
+        "to": "2019-03",
+        "n": 27
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-10",
+      "offset_months": 12,
+      "window_from": "2020-07",
+      "window_to": "2020-11",
+      "n_items": 41,
+      "n_selected": 1,
+      "n_excluded": 40,
+      "n_bundles": 1,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 1,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "ansaetze",
+      "top_stage": "mittel",
+      "n_terms": 5,
+      "n_shifted_topics": 6,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2020-04",
+        "to": "2020-09",
+        "n": 52
+      },
+      "review_after": {
+        "from": "2020-10",
+        "to": "2021-03",
+        "n": 13
+      },
+      "reference_hit": null
+    },
+    {
+      "company": "Freenet",
+      "group": "vergleich",
+      "kind": "niveauwechsel",
+      "date": "2019-10",
+      "offset_months": -24,
+      "window_from": "2017-07",
+      "window_to": "2017-11",
+      "n_items": 34,
+      "n_selected": 0,
+      "n_excluded": 34,
+      "n_bundles": 0,
+      "n_by_stage": {
+        "hoch": 0,
+        "mittel": 0,
+        "niedrig": 0,
+        "keine": 0
+      },
+      "state": "offen",
+      "top_stage": null,
+      "n_terms": 21,
+      "n_shifted_topics": 8,
+      "missing_months": 0,
+      "review_before": {
+        "from": "2017-04",
+        "to": "2017-09",
+        "n": 39
+      },
+      "review_after": {
+        "from": "2017-10",
+        "to": "2018-03",
+        "n": 28
+      },
+      "reference_hit": null
+    }
+  ],
+  "note": "Beschreibende Zahlen ohne Signifikanzaussage. Ein Erklärungsansatz ist ein möglicher Zusammenhang, keine Ursache; die Einstufung beruht auf Titeln und Wortbezügen. Fenster mit fehlenden Monaten im Speicher zählen nicht als 'ohne Ansatz'. Die Stimmung der Titel wurde nicht berechnet (ohne Einfluss auf die Stufe).",
+  "window_before": 3,
+  "window_after": 1,
+  "strict": true
+}

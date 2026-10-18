@@ -193,21 +193,29 @@ export default function AnomaliesPage() {
     const [periodSideState, setPeriodSideState] = useState({ key: null, side: "after" })
     const periodSide = periodSideState.key === selectionKey ? periodSideState.side : "after"
     const reviewSpan = selectedAnomaly ? sideWindow : selectionWindows?.[periodSide] ?? null
-    // Nur Bewertungen mit dem Thema der Dimension (?thema=nur); nur bei Einzeldimension.
-    const topicOnly = dimension !== OVERALL_DIMENSION.key && searchParams.get("thema") === "nur"
+    // Themenfilter der Bewertungsliste (?thema=<Thema>, Auswahl im Dialog der Karte,
+    // Nachtrag 2026-10-18). Das ältere ?thema=nur heißt weiter "nur das Thema der
+    // gewählten Dimension" (nur bei Einzeldimension).
+    const themaParam = searchParams.get("thema")
+    const topicOnly = dimension !== OVERALL_DIMENSION.key && themaParam === "nur"
+    const topicParam = themaParam && themaParam !== "nur" ? themaParam : null
+    // Sortierung nach dem Tag, an dem die Bewertung geschrieben wurde (?sortierung=aelteste).
+    const reviewOrder = searchParams.get("sortierung") === "aelteste" ? "asc" : "desc"
     const reviewPages = useReviewPages(companyId, {
         source, status, start: reviewSpan?.start, end: reviewSpan?.end,
         dimension: dimension === OVERALL_DIMENSION.key ? null : dimension,
-        topicOnly,
+        topicOnly, topic: topicParam, order: reviewOrder,
     })
-    // Themenfilter der Bewertungsliste (Schalter im Dialog der Karte).
-    const topicFilter = reviewPages.highlight?.topic
-        ? { topic: reviewPages.highlight.topic, checked: topicOnly, onChange: (on) => updateParams({ thema: on ? "nur" : null }) }
-        : null
-    // " · davon 12 nennen Image" für die Untertitel der Bewertungslisten.
-    const mentionText = reviewPages.highlight?.topic && reviewPages.highlight.mentions != null && !topicOnly
-        ? ` · davon ${reviewPages.highlight.mentions} ${reviewPages.highlight.mentions === 1 ? "nennt" : "nennen"} ${reviewPages.highlight.topic}`
-        : topicOnly && reviewPages.highlight?.topic ? `, die ${reviewPages.highlight.topic} nennen` : ""
+    const filterTopic = topicParam ?? (topicOnly ? reviewPages.highlight?.topic ?? null : null)
+    const topicFilter = { value: filterTopic, onChange: (name) => updateParams({ thema: name }) }
+    const setReviewOrder = (key) => updateParams({ sortierung: key === "asc" ? "aelteste" : null })
+    // " · davon 12 nennen Image" bzw. ", die Gehalt & Sozialleistungen nennen" für die Untertitel.
+    const mentionText = filterTopic
+        ? `, die ${filterTopic} nennen`
+        : reviewPages.highlight?.topic && reviewPages.highlight.mentions != null
+            ? ` · davon ${reviewPages.highlight.mentions} ${reviewPages.highlight.mentions === 1 ? "nennt" : "nennen"} ${reviewPages.highlight.topic}`
+            : ""
+    const topicEmptyText = filterTopic ? `Keine Bewertung dieses Zeitraums nennt das Thema ${filterTopic}.` : null
     const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
     const periodComparison = usePeriodComparison(companyId, selection, { source, dimension, status })
     // Untertitel der Bewertungskarte: kurz auf der Karte, mit Zeitraum und Anzahl im Dialog.
@@ -237,8 +245,8 @@ export default function AnomaliesPage() {
             side,
             onSide: (key) => setSideState({ id: selectedId, side: key }),
             window: sideWindow,
-            listKey: `${selectedId}:${side}:${topicOnly}`,
-            emptyText: topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : undefined,
+            listKey: `${selectedId}:${side}:${themaParam ?? ""}:${reviewOrder}`,
+            emptyText: topicEmptyText ?? undefined,
             footnote: `Vergleichsfenster: bis zu ${windows.windowMonths} Kalendermonate vor dem markierten Monat und ab ihm, begrenzt durch die benachbarten Veränderungen; alle Bewertungen dieser Monate.`,
             evidence: { anomalyId: selectedAnomaly.id, selection: null },
         }
@@ -266,8 +274,8 @@ export default function AnomaliesPage() {
                 side: periodSide,
                 onSide: (key) => setPeriodSideState({ key: selectionKey, side: key }),
                 window: reviewSpan,
-                listKey: `${selectionKey}:${periodSide}:${topicOnly}`,
-                emptyText: topicOnly ? "Keine Bewertung dieses Zeitraums nennt das Thema." : "Keine Bewertungen in diesem Zeitraum.",
+                listKey: `${selectionKey}:${periodSide}:${themaParam ?? ""}:${reviewOrder}`,
+                emptyText: topicEmptyText ?? "Keine Bewertungen in diesem Zeitraum.",
                 footnote: "Alle Bewertungen der gewählten Kalendermonate. Vergleichszeitraum: die gleich vielen Monate direkt davor, mindestens 6 (vorläufig).",
                 evidence: { anomalyId: selectedOutlier?.id ?? null, selection: selectedOutlier ? null : selection },
             }
@@ -375,7 +383,8 @@ export default function AnomaliesPage() {
                             source: key === DEFAULT_SOURCE ? null : key,
                             status: null,
                             dimension: isDimensionOf(key, dimension) && dimension !== OVERALL_DIMENSION.key ? dimension : null,
-                            anomaly: null, month: null,
+                            // Themen gehören zur Quelle (Bewerbende haben andere)
+                            anomaly: null, month: null, thema: null,
                         })}
                     />
                 )}
@@ -689,6 +698,8 @@ export default function AnomaliesPage() {
                                     window={detail.window}
                                     comparison={detail.comparison}
                                     topic={topicFilter}
+                                    order={reviewOrder}
+                                    onOrder={setReviewOrder}
                                     listKey={detail.listKey}
                                     emptyText={detail.emptyText}
                                     footnote={detail.footnote}

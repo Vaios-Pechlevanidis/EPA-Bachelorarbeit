@@ -156,6 +156,9 @@ gleichnamige Schlüsselwort-Thema (über die Sternespalte in `rating_fields`,
   Bewertungen · davon 7 nennen Image“).
 - Der Schalter **„nur Bewertungen, die Image nennen“** (`?thema=nur`) zeigt nur diese
   Bewertungen.
+  *Nachtrag 2026-10-18:* Kästchen und Kennzeichen „nennt Image“ sind durch das Auswahlfeld
+  „Alle Themen“ und die Themen-Marken je Bewertung ersetzt (Doku 17); `?thema=nur` funktioniert
+  weiter.
 - Im Detailfenster sind die Fundstellen in allen Textfeldern markiert („Image markiert“).
 - Im Vorher-Nachher-Vergleich ist die Zeile des Themas hervorgehoben („gewählte
   Dimension“) und immer sichtbar, auch wenn sie nicht unter den sechs größten

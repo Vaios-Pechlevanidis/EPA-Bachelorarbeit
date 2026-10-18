@@ -5,7 +5,7 @@ import { AnomalyComparison } from "./AnomalyComparison"
 import { ExplanationContent, ExplanationPreview } from "./ExplanationPanel"
 import { EvidenceContent, EvidencePreview, ListControls } from "./EvidenceSection"
 import { Headline, PreviewLabel, PreviewStatus, SentimentRows, ShiftBars, Warn } from "./CardPreview"
-import { PeriodReviewList, TopicOnlyToggle, WindowSideToggle } from "./PeriodReviews"
+import { PeriodReviewList, ReviewListControls, WindowSideToggle } from "./PeriodReviews"
 import { Delta } from "../ui/primitives"
 import { selectionLabel } from "@/lib/anomalySeries"
 import { useEvidence, useEvidenceList } from "@/hooks/useEvidence"
@@ -20,7 +20,7 @@ import { explanationSubtitle } from "@/lib/explanationText"
    Kennzahl und höchstens ein kleines Diagramm (CardPreview), damit man auf einen
    Blick sieht, wo die stärksten Unterschiede liegen; ein Klick öffnet die volle
    Ansicht im Dialog (ExpandableCard, 90 % der Breite, 85 % der Höhe). Schalter
-   (davor / danach, nur Thema, Sortierung, Ereignisart) stehen nur im Dialog.
+   (davor / danach, Thema, Sortierung, Ereignisart) stehen nur im Dialog.
    Inhalte und Wortwahl sind unverändert: keine Aussage über Ursachen.
    Die Karten gelten für eine ausgewählte Veränderung (Inkrement 2) ebenso wie
    für die freie Auswahl und den Einzelmonat (E14, E17); labels nennt die
@@ -120,16 +120,17 @@ export function ComparisonCard({ eyebrow, title, subtitle, comparison, labels, i
 
 /* Kennzahl: Anzahl der Bewertungen im gewählten Fenster mit mittlerer Note (aus
    dem Vergleich, nur ohne Themenfilter); darunter die Stimmung der Freitexte je
-   Fenster als gestapelter Balken, damit der Unterschied davor / danach sichtbar ist. */
-function ReviewsPreview({ pages, comparison, side, labels, span, topicOnly }) {
+   Fenster als gestapelter Balken, damit der Unterschied davor / danach sichtbar ist.
+   filterTopic: gefiltertes Thema oder null. */
+function ReviewsPreview({ pages, comparison, side, labels, span, filterTopic }) {
     if (pages.loading) return <PreviewStatus spinner>Lade Bewertungen…</PreviewStatus>
     if (pages.error && !pages.items.length) return <PreviewStatus>Bewertungen konnten nicht geladen werden: {pages.error}</PreviewStatus>
     const topic = pages.highlight?.topic ?? null
     const mentions = pages.highlight?.mentions
     const stats = comparison.data?.comparison ?? null
-    const meanRating = !topicOnly ? stats?.[side]?.mean_rating ?? null : null
+    const meanRating = !filterTopic ? stats?.[side]?.mean_rating ?? null : null
     const short = shortLabels(labels)
-    const sub = `${labels[side]} · ${span}${topicOnly && topic ? ` · nur Bewertungen, die ${topic} nennen` : topic && mentions != null ? ` · ${mentions} ${mentions === 1 ? "nennt" : "nennen"} ${topic}` : ""}`
+    const sub = `${labels[side]} · ${span}${filterTopic ? ` · nur Bewertungen, die ${filterTopic} nennen` : topic && mentions != null ? ` · ${mentions} ${mentions === 1 ? "nennt" : "nennen"} ${topic}` : ""}`
     return (
         <div>
             <Headline
@@ -152,9 +153,11 @@ function ReviewsPreview({ pages, comparison, side, labels, span, topicOnly }) {
 
 /* pages = useReviewPages des gewählten Fensters; comparison = Antwort des Vergleichs
    (Note und Stimmung je Fenster); side/onSide = "before" | "after"; window = {from, to}
-   des Fensters; topic = {topic, checked, onChange} für den Themenfilter. */
-export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic = null, listKey, emptyText, footnote }) {
+   des Fensters; topic = {value, onChange} für den Themenfilter (gefiltertes Thema
+   oder null); order/onOrder = "desc" | "asc" (Sortierung nach Datum). */
+export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic, order, onOrder, listKey, emptyText, footnote }) {
     const span = window ? selectionLabel(window) : ""
+    const withoutTopic = pages.topicCounts?.withoutTopic
     return (
         <ExpandableCard
             icon={<MessageSquareText />}
@@ -164,20 +167,25 @@ export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side,
             basis={["stars", "text"]}
             accent="bg-slate-500"
             hint={HINT}
-            actions={({ modal }) => (modal ? <WindowSideToggle value={side} onChange={onSide} labels={labels} /> : null)}
+            actions={({ modal }) => (modal ? (
+                <>
+                    <WindowSideToggle value={side} onChange={onSide} labels={labels} />
+                    <ReviewListControls order={order} onOrder={onOrder} topics={pages.topicCounts} value={topic.value} onTopic={topic.onChange} />
+                </>
+            ) : null)}
         >
             {({ modal }) => (modal ? (
                 <>
-                    {topic && (
-                        <div className="mb-2">
-                            <TopicOnlyToggle topic={topic.topic} checked={topic.checked} onChange={topic.onChange} />
-                        </div>
-                    )}
                     <PeriodReviewList key={listKey} pages={pages} emptyText={emptyText} />
                     <p className="m-0 mt-3 text-[11px] text-slate-400">{footnote}</p>
+                    <p className="m-0 mt-1 text-[11px] text-slate-400">
+                        Themen: die Schlüsselwort-Themen der Themenübersicht, erkannt an Schlüsselwörtern in Titel, Freitexten und
+                        Kategorie-Kommentaren; eine Bewertung kann mehrere oder keines nennen
+                        {withoutTopic != null ? ` (in diesem Zeitraum ${withoutTopic} ohne erkanntes Thema)` : ""}. Keine Textanalyse durch ein Modell.
+                    </p>
                 </>
             ) : (
-                <ReviewsPreview pages={pages} comparison={comparison} side={side} labels={labels} span={span} topicOnly={Boolean(topic?.checked)} />
+                <ReviewsPreview pages={pages} comparison={comparison} side={side} labels={labels} span={span} filterTopic={topic.value} />
             ))}
         </ExpandableCard>
     )

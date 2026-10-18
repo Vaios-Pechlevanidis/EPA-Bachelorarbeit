@@ -132,13 +132,14 @@ class TestStatusOffsetFormat:
         assert body["reviews"] == [] and body["total"] == len(store_rows("employee", DEMO_3))
 
     def test_format_full_items(self, api):
-        """Test: format=full liefert je Bewertung genau id, preview und fullReview."""
+        """Test: format=full liefert je Bewertung genau id, preview, fullReview und
+        (seit 2026-10-18) topics."""
         from services.review_service import build_full_review
 
         body = _get(api, source="employee", start="2023-01-01", end="2023-01-31", format="full", limit=5)
         by_id = {r["id"]: r for r in store_rows("employee", DEMO_3)}
         for item in body["reviews"]:
-            assert set(item) == {"id", "preview", "fullReview"}
+            assert set(item) == {"id", "preview", "fullReview", "topics"}
             assert item["fullReview"] == build_full_review(by_id[item["id"]])
             assert item["fullReview"]["sourceType"] == "Mitarbeiter"
             assert 0 < len(item["preview"]) <= 240

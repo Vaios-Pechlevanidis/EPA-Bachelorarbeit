@@ -40,7 +40,8 @@ ENTRY_FIELDS = {"id", "rank", "confidence", "stage_label", "event", "date", "sou
                 "time_phrase", "sentiment", "text", "items", "group"}
 SUMMARY_FIELDS = {"state", "kind", "window", "n_items", "n_bundles", "n_groups", "n_by_stage", "terms", "item_scores", "sources",
                   "coverage", "reason", "error", "note", "open_note", "rules",
-                  "global_events", "global_event_note"}   # allgemeine Ereignisse als Hypothese (Nachtrag zu E29, 2026-10-17)
+                  "global_events", "global_event_note",   # allgemeine Ereignisse als Hypothese (Nachtrag zu E29, 2026-10-17)
+                  "n_selected", "n_excluded", "n_excluded_by_reason", "selection"}   # strenge Auswahl (E33, 2026-10-18)
 
 
 @pytest.fixture(scope="module")
@@ -92,14 +93,17 @@ class TestAnomalyExplanations:
         window = ev.window_for_anomaly(anomaly)
         near = ev.shift_month(window["transition_from"], -1)   # Monat vor dem Übergang: time_match 1
         _fill(store, info, {
-            near: [("Konzern kündigt Stellenabbau in der Verwaltung an", f"{near}-10", "Blatt A"),
-                   ("Konzern kündigt Stellenabbau an", f"{near}-11", "Blatt B"),
+            near: [("Demo 3 kündigt Stellenabbau in der Verwaltung an", f"{near}-10", "Blatt A"),
+                   ("Demo 3 kündigt Stellenabbau an", f"{near}-11", "Blatt B"),
                    ("Aktie erreicht neues Kursziel", f"{near}-12", "Blatt C")],
             window["from"]: [("Neuer Chef für den Konzern", f"{window['from']}-05", "Blatt D")],
         })
         body = client.get(EXPLAIN.format(DEMO_3, FALL_ID)).json()
         s = body["explanation_summary"]
-        assert s["state"] == "ansaetze" and s["n_items"] == 4 and s["n_bundles"] == 3 and s["coverage"] is True
+        # Strenge Auswahl (E33): Kursziel (ohne Arbeitgeberbezug, Unternehmen nicht genannt) und "Neuer Chef für
+        # den Konzern" (Unternehmen nicht genannt, Rand des Fensters) bleiben außen vor.
+        assert s["state"] == "ansaetze" and s["n_items"] == 4 and s["n_selected"] == 2 and s["n_excluded"] == 2 and s["coverage"] is True
+        assert s["n_bundles"] == 1 and s["selection"]["strict"] is True and s["selection"]["version"] == 1
         assert s["sources"]["gnews"]["from_store"] >= 2
         entries = body["explanations"]
         assert entries and all(ENTRY_FIELDS <= set(e) for e in entries)
@@ -114,6 +118,8 @@ class TestAnomalyExplanations:
         assert len(scores) == 4 and scores[top["id"]]["rank"] == 1
         stock = next(v for v in scores.values() if v["category"] == "ohne_arbeitgeberbezug")
         assert stock["stage"] == "keine" and stock["employer_related"] is False
+        assert stock["selected"] is False and stock["excluded"] == "Unternehmen im Titel nicht genannt" and stock["rank"] > 2
+        assert scores[top["id"]]["selected"] is True and scores[top["id"]]["excluded"] is None
         assert body["comparison"]["topics"], "der Vergleich bleibt unverändert enthalten"
 
     def test_terms_from_reviews_reach_the_title(self, client, store):
@@ -125,7 +131,7 @@ class TestAnomalyExplanations:
         anomaly = _fall(client)
         info = ev.company_context_info(DEMO_3)
         near = ev.shift_month(ev.window_for_anomaly(anomaly)["transition_from"], -1)
-        _fill(store, info, {near: [(f"Meldung über {term['term']} im Werk", f"{near}-10", "Blatt")]})
+        _fill(store, info, {near: [(f"Demo 3: Meldung über {term['term']} im Werk", f"{near}-10", "Blatt")]})
         body = client.get(EXPLAIN.format(DEMO_3, FALL_ID)).json()
         entry = body["explanations"][0]
         assert entry["term_match"] >= 0.5 and entry["terms"][0]["term"] == term["term"]
@@ -149,14 +155,22 @@ class TestSelectionExplanations:
 
     def test_selection_and_single_month(self, client, store):
         info = ev.company_context_info(DEMO_3)
-        _fill(store, info, {"2024-02": [("Streik im Werk angekündigt", "2024-02-20", "Blatt")]})
+        terms = client.get(COMPARE.format(DEMO_3), params={"from": "2024-03", "to": "2024-04"}).json()["explanation_summary"]["terms"]
+        # Strenge Auswahl (E33): Unternehmen im Titel und Wortbezug (wenn Demo 3 hier einen Begriff hat) oder Themenverschiebung.
+        title = "Demo 3: Streik im Werk angekündigt" + (f", {terms[0]['term']}" if terms else "")
+        _fill(store, info, {"2024-02": [(title, "2024-02-20", "Blatt")]})
         body = client.get(COMPARE.format(DEMO_3), params={"from": "2024-03", "to": "2024-04"}).json()
         s = body["explanation_summary"]
         assert s["kind"] == "auswahl" and s["window"]["anchor_from"] == "2024-03" and s["window"]["to"] == "2024-05"
-        assert s["state"] == "ansaetze" and body["explanations"][0]["time_phrase"] == "im Monat vor der Auswahl"
-        assert body["explanations"][0]["category"]["id"] == "tarif_streik"
+        score = next(iter(s["item_scores"].values()))
+        assert score["category"] == "tarif_streik" and score["time_match"] == 1.0 and score["company_in_title"] is True
+        if score["excluded"]:
+            assert s["state"] == "offen" and score["excluded"] == "kein Wortbezug und keine Themenverschiebung" and not terms
+        else:
+            assert s["state"] == "ansaetze" and body["explanations"][0]["time_phrase"] == "im Monat vor der Auswahl"
+            assert body["explanations"][0]["category"]["id"] == "tarif_streik"
         single = client.get(COMPARE.format(DEMO_3), params={"from": "2024-03", "to": "2024-03"}).json()
-        assert single["explanation_summary"]["window"]["from"] == "2023-12" and single["explanation_summary"]["state"] == "ansaetze"
+        assert single["explanation_summary"]["window"]["from"] == "2023-12" and single["explanation_summary"]["kind"] == "auswahl"
 
     def test_direction_from_rating_shift(self, client, store):
         body = client.get(COMPARE.format(DEMO_3), params={"from": "2024-03", "to": "2024-04"}).json()

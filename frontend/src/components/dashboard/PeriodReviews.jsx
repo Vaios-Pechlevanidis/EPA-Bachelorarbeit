@@ -11,7 +11,11 @@ import { REVIEW_PAGE_SIZE } from "@/hooks/useReviewPages"
    auffälligen Veränderung; Daten aus useReviewPages (seitenweise geladen).
    Ein Klick öffnet die Bewertung im vorhandenen ReviewDetailModal. Ist eine
    Dimension gewählt, sind die Fundstellen ihres Schlüsselwort-Themas markiert
-   (Textauszug und Detailfenster) und Bewertungen, die es nennen, gekennzeichnet.
+   (Textauszug und Detailfenster).
+   Nachtrag 2026-10-18: Jede Zeile nennt die Schlüsselwort-Themen der Bewertung;
+   der Themenfilter lässt nur Bewertungen eines Themas übrig (dessen Fundstellen
+   sind dann markiert), die Sortierung ordnet nach dem Tag, an dem die Bewertung
+   geschrieben wurde (neueste oder älteste zuerst).
    ============================================================================ */
 
 const WINDOW_SIDES = [
@@ -46,10 +50,28 @@ const fmtDay = (value) => {
 
 const fmtStars = (v) => (v == null || !Number.isFinite(Number(v)) ? "–" : Number(v).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
 
+/* Themen der Bewertung als kleine Marken; das markierte Thema (Filter bzw.
+   Dimension) in Bernstein wie seine Fundstellen im Text. */
+function TopicTags({ topics, marked }) {
+    if (!topics) return null
+    if (!topics.length) return <span className="block mt-1 text-[10.5px] text-slate-400">kein Thema erkannt</span>
+    return (
+        <span className="flex flex-wrap gap-1 mt-1" aria-label="Themen der Bewertung">
+            {topics.map((t) => (
+                <span
+                    key={t}
+                    className={`inline-flex items-center px-1.5 py-px rounded-full text-[10.5px] ${t === marked ? "bg-amber-100 text-slate-800 font-medium" : "bg-slate-100 text-slate-600"}`}
+                >
+                    {t}
+                </span>
+            ))}
+        </span>
+    )
+}
+
 function ReviewRow({ item, onOpen, topic }) {
     const review = item.fullReview ?? {}
     const status = statusLabel(review.status)
-    const mentions = topic && item.mentions_topic
     return (
         <li className="border-t border-slate-100 first:border-t-0">
             <button
@@ -70,42 +92,67 @@ function ReviewRow({ item, onOpen, topic }) {
                                 {status}
                             </span>
                         )}
-                        {mentions && (
-                            <span className="flex-none inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-100 text-slate-700 text-[10px] font-medium">
-                                nennt {topic}
-                            </span>
-                        )}
                     </span>
                     <span className="block mt-0.5 text-[12px] text-slate-500 leading-snug line-clamp-2">
                         {item.preview
                             ? <HighlightedText text={item.preview} spans={item.highlights?.preview} title={topic ? `Thema ${topic}` : undefined} />
                             : "Kein Freitext."}
                     </span>
+                    <TopicTags topics={item.topics} marked={topic} />
                 </span>
             </button>
         </li>
     )
 }
 
-/* Schalter "nur Bewertungen, die <Thema> nennen" (bei gewählter Dimension). */
-export function TopicOnlyToggle({ topic, checked, onChange }) {
+const ORDERS = [
+    { key: "desc", label: "neueste zuerst" },
+    { key: "asc", label: "älteste zuerst" },
+]
+const selectClass =
+    "h-7 rounded-md border border-slate-300 bg-white px-2 text-[12px] text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:opacity-50 max-w-[260px]"
+
+/* Sortierung nach Datum und Themenfilter im Kopf des Dialogs. topics =
+   {counts: [{topic, n}], withoutTopic} des Zeitraums (null, solange er lädt);
+   value = gefiltertes Thema oder null. */
+export function ReviewListControls({ order, onOrder, topics, value, onTopic }) {
+    const counts = topics?.counts ?? []
+    // Gewähltes Thema ohne Treffer im Zeitraum (z. B. nach dem Wechsel davor / danach) bleibt wählbar.
+    const options = value && !counts.some((c) => c.topic === value) ? [...counts, { topic: value, n: 0 }] : counts
     return (
-        <label className="inline-flex items-center gap-1.5 text-[12px] text-slate-700 cursor-pointer select-none">
-            <input
-                type="checkbox"
-                className="accent-amber-500"
-                checked={checked}
-                onChange={(e) => onChange(e.target.checked)}
-            />
-            nur Bewertungen, die {topic} nennen
-        </label>
+        <>
+            <div className="ds-time-filter" role="group" aria-label="Sortierung nach Datum" title="Sortiert nach dem Tag, an dem die Bewertung geschrieben wurde">
+                {ORDERS.map((o) => (
+                    <button
+                        key={o.key}
+                        type="button"
+                        aria-pressed={order === o.key}
+                        className={`ds-time-btn${order === o.key ? " active" : ""}`}
+                        onClick={() => onOrder(o.key)}
+                    >
+                        {o.label}
+                    </button>
+                ))}
+            </div>
+            <select
+                className={selectClass}
+                value={value ?? ""}
+                onChange={(e) => onTopic(e.target.value || null)}
+                disabled={!topics && !value}
+                aria-label="Filter nach Thema"
+                title="Nur Bewertungen, die dieses Thema nennen (Schlüsselwort in Titel, Freitext oder Kategorie-Kommentar); Zahl = Bewertungen des Zeitraums mit dem Thema"
+            >
+                <option value="">Alle Themen</option>
+                {options.map((c) => <option key={c.topic} value={c.topic}>{c.topic} ({c.n})</option>)}
+            </select>
+        </>
     )
 }
 
 /* Liste mit Nachladen. pages: Rückgabe von useReviewPages. */
 export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in diesem Zeitraum." }) {
     const { items, total, loading, loadingMore, error, hasMore, loadMore } = pages
-    const topic = pages.highlight?.topic ?? null
+    const topic = pages.markedTopic ?? null
     const [openIndex, setOpenIndex] = useState(null)
 
     if (loading) {

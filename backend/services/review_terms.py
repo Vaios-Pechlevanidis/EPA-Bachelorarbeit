@@ -264,18 +264,24 @@ def distinctive_terms(
 
 # ── Treffer im Titel ─────────────────────────────────────────────────────────
 
-def _word_matches(word: str, term: str) -> bool:
+def _word_matches(word: str, term: str, compound_only: bool = False) -> bool:
     if word == term:
         return True
+    if compound_only:
+        # Strenge Auswahl (E33): nur der Begriff selbst oder ein Wort, das mit ihm beginnt
+        # ("stellenabbauprogramm" für "stellenabbau"); ein kürzeres Titelwort, mit dem der
+        # Begriff beginnt ("firmen" für "firmenwagen"), zählt nicht.
+        return len(term) >= TERM_PREFIX_MIN_LENGTH and word.startswith(term)
     shorter = min(len(word), len(term))
     return shorter >= TERM_PREFIX_MIN_LENGTH and (word.startswith(term) or term.startswith(word))
 
 
-def match_terms(title: Any, terms: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def match_terms(title: Any, terms: List[Dict[str, Any]], compound_only: bool = False) -> List[Dict[str, Any]]:
     """Die kennzeichnenden Begriffe (Einträge aus ``distinctive_terms``), die ein Titel
     nennt, in der Reihenfolge der Liste; je Treffer dazu ``word`` (das Wort des Titels).
     Gleiches Wort oder Wortanfang ab ``TERM_PREFIX_MIN_LENGTH`` Zeichen (Flexion,
-    Komposita)."""
+    Komposita). ``compound_only`` (strenge Auswahl, E33): der Wortanfang gilt nur in einer
+    Richtung, das Titelwort muss der Begriff sein oder mit ihm beginnen."""
     if not title or not isinstance(title, str) or not terms:
         return []
     words = [w for w in _TOKEN_RE.findall(title.lower()) if len(w) >= MIN_TERM_LENGTH]
@@ -284,7 +290,7 @@ def match_terms(title: Any, terms: List[Dict[str, Any]]) -> List[Dict[str, Any]]
     matched: List[Dict[str, Any]] = []
     for entry in terms:
         term = entry["term"]
-        word = next((w for w in words if _word_matches(w, term)), None)
+        word = next((w for w in words if _word_matches(w, term, compound_only)), None)
         if word is not None:
             matched.append({**entry, "word": word})
     return matched

@@ -303,7 +303,8 @@ def env(tmp_path, monkeypatch):
 class TestSheet:
 
     def test_collect_windows_visible_and_hidden(self, env):
-        pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False)
+        # strict=False: Fassung des Bogens vom 2026-10-17 (ohne strenge Auswahl, E33); Vergleichsfenster mit "nur Ereignisart".
+        pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False, strict=False)
         assert len(pairs) == 7
         groups = [h["group"] for _, h in pairs]
         assert groups.count("markierung") == 2 and groups.count("vergleich") == 5
@@ -331,7 +332,7 @@ class TestSheet:
     def test_comparison_window_uses_marker_kind_wording(self, env):
         """Der Text eines Vergleichsfensters eines Einzelmonats sagt 'auffälliger Monat', nicht 'Übergang':
         sonst verriete die Wortwahl die Gruppe."""
-        pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False)
+        pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False, strict=False)
         comp = next(v for v, h in pairs if h["group"] == "vergleich" and h["kind"] == "einzelmonat" and h["offset_months"] == 12)
         assert comp["state"] == "ansaetze" and len(comp["explanations"]) == 1
         e = comp["explanations"][0]
@@ -355,8 +356,20 @@ class TestSheet:
         assert rx.direction_from_rows([], [{"durchschnittsbewertung": 3}]) == ("unklar", None)
         assert rx.direction_from_rows([{"durchschnittsbewertung": "x"}], [{"durchschnittsbewertung": 3}]) == ("unklar", None)
 
-    def test_blind_sheet_and_key(self, env):
+    def test_strict_selection_is_default(self, env):
+        """Strenge Auswahl (E33, Standard seit 2026-10-18): die Markierung behält ihren Ansatz (Wortbezug und
+        Ereignisart), die Vergleichsfenster mit nur erkannter Ereignisart sind offen; der Bogen zählt die Auswahl."""
         pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False)
+        marker = next(v for v, h in pairs if h["group"] == "markierung" and h["kind"] == "niveauwechsel")
+        assert marker["state"] == "ansaetze" and len(marker["explanations"]) == 1 and marker["explanations"][0]["stage"] == "hoch"
+        assert marker["n_items"] == 2 and marker["n_selected"] == 2 and marker["n_excluded"] == 0
+        comp = next(v for v, h in pairs if h["group"] == "vergleich" and h["kind"] == "niveauwechsel" and h["offset_months"] == -12)
+        assert comp["state"] == "offen" and comp["explanations"] == [] and comp["n_items"] == 1 and comp["n_excluded"] == 1
+        sheet, _ = rx.blind_sheet(pairs, seed=5)
+        assert sheet["n_windows"] == 7 and sheet["n_explanations"] == 1
+
+    def test_blind_sheet_and_key(self, env):
+        pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False, strict=False)
         sheet, key = rx.blind_sheet(pairs, seed=5)
         sheet2, _ = rx.blind_sheet(pairs, seed=5)
         assert [w["id"] for w in sheet["windows"]] == [f"F-{i:03d}" for i in range(1, 8)]
@@ -373,7 +386,7 @@ class TestSheet:
         assert {k["group"] for k in key["windows"]} == {"markierung", "vergleich"}
 
     def test_sheet_markdown(self, env):
-        pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False)
+        pairs = rx.collect_windows(companies=[{"id": 5, "name": "Beispielwerk"}], verbose=False, strict=False)
         sheet, key = rx.blind_sheet(pairs, seed=5)
         text = rx.sheet_markdown(sheet)
         assert "# Bewertungsbogen Erklärungsansätze (blind) · 7 Fenster · 3 Ansätze" in text

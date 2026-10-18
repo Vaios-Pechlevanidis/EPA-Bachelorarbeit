@@ -45,7 +45,11 @@ sowie ``explanation_summary`` (Zustand ``ansaetze`` oder ``offen``, Fenster,
 Stand je Quelle, Begriffe, Signale je Beleg für die Belegliste, Regeln). Die
 Stimmungsanalyse der Bewertungen wird dafür nicht erneut berechnet; die
 Themenverschiebung kommt aus ``comparison``. Ein Fehler in diesem Teil ergibt
-den Zustand ``offen`` mit Fehlertext, nie einen Fehler der Route.
+den Zustand ``offen`` mit Fehlertext, nie einen Fehler der Route. Seit E33
+(2026-10-18) gilt die strenge Auswahl der Belege (``rank_evidence(strict=True)``):
+``explanation_summary`` nennt ``n_selected``, ``n_excluded``, ``n_excluded_by_reason``
+und ``selection`` (Regeln); die Kennungen aus ``info["title_words"]`` ergänzen die
+Prüfung „Unternehmen im Titel genannt“.
 """
 
 from __future__ import annotations
@@ -374,13 +378,14 @@ def explanations_for(
     ``summary["state"]`` ist ``ansaetze`` oder ``offen``. ``info`` und ``evidence``
     ersetzen Unternehmensdaten und Belege (Tests, Auswertung). Wirft nicht."""
     from services import evidence_service as ev
-    from services.explanation_ranking import GLOBAL_EVENT_NOTE, OPEN_NOTE, STATE_OPEN, rank_evidence, rules
+    from services.explanation_ranking import GLOBAL_EVENT_NOTE, OPEN_NOTE, STATE_OPEN, rank_evidence, rules, selection_rules
     from services.review_terms import company_terms, distinctive_terms
 
     base: Dict[str, Any] = {
         "state": STATE_OPEN, "kind": window.get("kind"), "window": {k: window.get(k) for k in (
             "kind", "from", "to", "months", "transition_from", "anchor_from", "anchor_to", "window_before", "window_after")},
-        "n_items": 0, "n_bundles": 0, "n_groups": 0, "n_by_stage": None, "n_by_signal_label": None, "terms": [], "item_scores": {}, "sources": {},
+        "n_items": 0, "n_selected": 0, "n_excluded": 0, "n_excluded_by_reason": None, "selection": selection_rules(),
+        "n_bundles": 0, "n_groups": 0, "n_by_stage": None, "n_by_signal_label": None, "terms": [], "item_scores": {}, "sources": {},
         "coverage": False, "reason": None, "error": None, "note": None, "open_note": OPEN_NOTE, "rules": rules(),
         "global_events": [], "global_event_note": GLOBAL_EVENT_NOTE,   # Hypothesen neben den Ansätzen (Nachtrag zu E29, 2026-10-17)
     }
@@ -393,7 +398,7 @@ def explanations_for(
         terms = distinctive_terms(before_rows, after_rows, source=source, exclude=exclude)
         ranked = rank_evidence(
             evidence["items"], window, terms=terms, topics=comparison.get("topics"), direction=direction,
-            exclude=exclude, analyzer=analyzer, kind=window.get("kind"),
+            exclude=exclude, analyzer=analyzer, kind=window.get("kind"), title_words=info.get("title_words") or (),
         )
     except Exception as exc:  # noqa: BLE001 – Belege oder Rangfolge: der Vergleich bleibt nutzbar
         logger.warning("Erklärungsansätze für Unternehmen %s nicht berechenbar: %s", company_id, exc)
@@ -401,6 +406,8 @@ def explanations_for(
     summary = {
         **base,
         "state": ranked["state"], "n_items": ranked["n_items"], "n_bundles": ranked["n_bundles"], "n_groups": ranked["n_groups"],
+        "n_selected": ranked["n_selected"], "n_excluded": ranked["n_excluded"], "n_excluded_by_reason": ranked["n_excluded_by_reason"],
+        "selection": ranked["selection"],
         "n_by_stage": ranked["n_by_stage"], "n_by_signal_label": ranked["n_by_signal_label"], "terms": ranked["terms"], "item_scores": ranked["item_scores"],
         "sources": evidence.get("sources", {}), "coverage": evidence.get("coverage", False), "reason": evidence.get("reason"),
         "note": ranked["note"], "open_note": ranked["open_note"], "search_term": info.get("search_term"),

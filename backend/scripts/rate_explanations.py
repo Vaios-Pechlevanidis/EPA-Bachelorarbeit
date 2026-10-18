@@ -486,7 +486,7 @@ def _sheet_explanation(entry: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _sheet_window(info: Dict[str, Any], window: Dict[str, Any], kind: str, windows: Dict[str, Any], rows: List[Dict[str, Any]],
-                  categories: List[Dict[str, Any]], exclude: set, top: int) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+                  categories: List[Dict[str, Any]], exclude: set, top: int, strict: bool = True) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Ein Fenster für den Bogen (sichtbar) und seine verdeckten Angaben (Schlüssel). Dieselbe
     Rangfolge wie die Oberfläche und der Bericht: Belege nur aus dem Speicher, ohne Stimmung;
     die Wortwahl der Zeitangaben folgt der Art der Markierung, nicht der des Fensters, damit
@@ -499,7 +499,8 @@ def _sheet_window(info: Dict[str, Any], window: Dict[str, Any], kind: str, windo
     terms = distinctive_terms(by_window["before"], by_window["after"], source=rev.SOURCE, exclude=exclude)
     topics = topic_shift_table(by_window["before"], by_window["after"], rev.SOURCE)
     ranked = rank_evidence(evidence["items"], window, terms=terms, topics=topics, exclude=exclude, categories=categories,
-                           analyzer=None, kind=kind, max_explanations=max(top, 1))
+                           analyzer=None, kind=kind, max_explanations=max(top, 1), strict=strict,
+                           title_words=info.get("title_words") or ())
     direction, shift = direction_from_rows(by_window["before"], by_window["after"])
     min_pp = rules()["topic_shift_min_pp"]
     shifted = [{"topic": t["topic"], "share_shift_pp": t["share_shift_pp"]} for t in topics
@@ -517,7 +518,8 @@ def _sheet_window(info: Dict[str, Any], window: Dict[str, Any], kind: str, windo
         "terms": [{"term": t["term"], "before": t["before"], "after": t["after"]} for t in terms[:MAX_TERMS_IN_SHEET]],
         "n_terms": len(terms),
         "shifted_topics": shifted[:MAX_TOPICS_IN_SHEET],
-        "n_items": ranked["n_items"], "n_bundles": ranked["n_bundles"], "n_groups": ranked["n_groups"],
+        "n_items": ranked["n_items"], "n_selected": ranked["n_selected"], "n_excluded": ranked["n_excluded"],
+        "n_bundles": ranked["n_bundles"], "n_groups": ranked["n_groups"],
         "n_by_stage": ranked["n_by_stage"], "state": ranked["state"], "missing_months": missing,
         "explanations": [_sheet_explanation(e) for e in ranked["explanations"][:top]],
     }
@@ -529,10 +531,12 @@ def _sheet_window(info: Dict[str, Any], window: Dict[str, Any], kind: str, windo
 
 def collect_windows(window_before: int = rev.ev.DEFAULT_WINDOW_BEFORE, window_after: int = rev.ev.DEFAULT_WINDOW_AFTER,
                     companies: Optional[List[Dict[str, Any]]] = None, top: int = DEFAULT_TOP, comparisons: str = "all",
-                    reference: Optional[Dict[str, Any]] = None, verbose: bool = True) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+                    reference: Optional[Dict[str, Any]] = None, verbose: bool = True,
+                    strict: bool = True) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
     """Alle Markierungs- und Vergleichsfenster der geeigneten Unternehmen als Paare
     (sichtbar, verdeckt), in der Reihenfolge der Datenbank (wird vor der Ausgabe gemischt).
-    Nur lesend: Datenbank und Belegspeicher, kein Abruf."""
+    Nur lesend: Datenbank und Belegspeicher, kein Abruf. ``strict``: strenge Auswahl der
+    Belege (E33, Standard seit 2026-10-18); False für die Fassung des Bogens vom 2026-10-17."""
     from services.event_categories import load_event_categories
     from services.review_terms import company_terms
 
@@ -554,7 +558,7 @@ def collect_windows(window_before: int = rev.ev.DEFAULT_WINDOW_BEFORE, window_af
         n_before = len(out)
         for kind, anchor, window in markers:
             windows = rev.review_windows(kind, window["anchor_from"], window["anchor_to"], anchor if kind == rev.ev.KIND_CHANGE else None)
-            visible, hidden = _sheet_window(info, window, kind, windows, rev._rows_for(company["id"], windows), categories, exclude, top)
+            visible, hidden = _sheet_window(info, window, kind, windows, rev._rows_for(company["id"], windows), categories, exclude, top, strict)
             out.append((visible, {
                 "company_id": company["id"], "company": company["name"], "kind": kind, "date": anchor["date"],
                 "direction_marker": anchor.get("direction"), "group": GROUP_MARKER, "offset_months": 0,
@@ -567,7 +571,7 @@ def collect_windows(window_before: int = rev.ev.DEFAULT_WINDOW_BEFORE, window_af
             comps = rev.ev.comparison_windows(window, marker_windows, anchors.get("series_from"), anchors.get("series_to"))
             for comp in comps[:1] if comparisons == "one" else comps:
                 cw = rev.review_windows(kind, comp["anchor_from"], comp["anchor_to"])
-                visible, hidden = _sheet_window(info, comp, kind, cw, rev._rows_for(company["id"], cw), categories, exclude, top)
+                visible, hidden = _sheet_window(info, comp, kind, cw, rev._rows_for(company["id"], cw), categories, exclude, top, strict)
                 out.append((visible, {
                     "company_id": company["id"], "company": company["name"], "kind": kind, "date": anchor["date"],
                     "direction_marker": anchor.get("direction"), "group": GROUP_COMPARISON, "offset_months": comp["offset_months"],
@@ -1136,7 +1140,7 @@ def cmd_bogen(args: argparse.Namespace) -> int:
         return 2
     reference = rev.load_reference(args.annotations)
     pairs = collect_windows(args.window_before, args.window_after, top=args.top, comparisons=args.comparisons,
-                            reference=reference, verbose=not args.quiet)
+                            reference=reference, verbose=not args.quiet, strict=not args.no_strict)
     sheet, key = blind_sheet(pairs, seed=args.seed, top=args.top, comparisons=args.comparisons)
     key["bogen_checksum"] = sheet_checksum(sheet)
     key["git"] = rev.git_state()
@@ -1224,6 +1228,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     b.add_argument("--window-before", type=int, default=rev.ev.DEFAULT_WINDOW_BEFORE)
     b.add_argument("--window-after", type=int, default=rev.ev.DEFAULT_WINDOW_AFTER)
     b.add_argument("--annotations", default=rev.DEFAULT_ANNOTATIONS, help="Annotationsdatei für den Referenztreffer im Schlüssel (E5)")
+    b.add_argument("--no-strict", action="store_true", help="Rangfolge ohne die strenge Auswahl der Belege (Fassung bis 2026-10-17)")
     b.add_argument("--force", action="store_true", help="vorhandenen Bogen im Zielordner überschreiben")
     b.add_argument("--quiet", action="store_true")
     b.set_defaults(func=cmd_bogen)

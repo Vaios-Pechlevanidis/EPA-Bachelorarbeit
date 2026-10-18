@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ChevronDown, ChevronRight, ExternalLink, MousePointerClick } from "lucide-react"
 import { Headline, PreviewStatus } from "./CardPreview"
-import { stageLabel } from "@/lib/explanationText"
+import { isStrict, selectionText, stageLabel } from "@/lib/explanationText"
 import { fmtPeriod } from "@/lib/anomalySeries"
 
 /* ============================================================================
@@ -38,6 +38,13 @@ import { fmtPeriod } from "@/lib/anomalySeries"
    Sie stehen als eigener Block "Hypothese" unter den Ansätzen, ohne Stufe und
    ohne Eingang in die Rangfolge; "Zeitraum wählen" setzt den Zeitraum des
    Ereignisses als Auswahl (onSelectPeriod), also den Drill-down in das Ereignis.
+   Strenge Auswahl (E33, 2026-10-18): Das Backend lässt nur Meldungen zu, die alle
+   vier Auswahlregeln erfüllen (Unternehmen im Titel, Arbeitgeberbezug, Wortbezug
+   oder Themenverschiebung, zeitliche Nähe mindestens 0,5); die Zusammenfassung
+   trägt n_selected, n_excluded, n_excluded_by_reason und selection (Regeln). Die
+   Karte nennt die Zahl der geeigneten Belege, der Dialog die Ausschlüsse je Grund
+   und unter "Wie wird eingestuft?" die Regeln; die Belegliste zeigt je Meldung die
+   nicht erfüllte Regel (EvidenceSection).
    ============================================================================ */
 
 export const EXPLANATION_NOTE = "Die Einstufung beruht auf Titeln und Wortbezügen. Sie zeigt mögliche Zusammenhänge, keine Ursachen."
@@ -346,10 +353,11 @@ export function ExplanationPreview({ data, loading, error, max = 2 }) {
     if (summary.error) return <PreviewStatus>Erklärungsansätze konnten nicht berechnet werden: {summary.error}</PreviewStatus>
     const belege = `${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"}`
     const globals = summary.global_events ?? []
+    const strict = isStrict(summary)
     if (summary.state === "offen") {
         return (
             <div>
-                <Headline value="Offen" sub={`${belege} im Ereignisfenster · keiner erreicht die Stufe niedrig`} />
+                <Headline value="Offen" sub={`${belege} im Ereignisfenster · ${strict ? "keiner erfüllt die strengen Auswahlregeln" : "keiner erreicht die Stufe niedrig"}`} />
                 <GlobalEventPreviewLine events={globals} />
             </div>
         )
@@ -358,7 +366,7 @@ export function ExplanationPreview({ data, loading, error, max = 2 }) {
     const rest = entries.length - shown.length
     return (
         <div>
-            <Headline value={entries.length} unit={entries.length === 1 ? "Ansatz" : "Ansätze"} sub={`aus ${belege} · ${summary.n_bundles} Bündel`} />
+            <Headline value={entries.length} unit={entries.length === 1 ? "Ansatz" : "Ansätze"} sub={`aus ${belege}${strict ? ` · ${summary.n_selected} geeignet` : ""} · ${summary.n_bundles} Bündel`} />
             <ul className="m-0 mt-2 p-0 list-none">
                 {shown.map((entry) => (
                     <li key={entry.id ?? entry.rank} className="border-t border-slate-100 py-1.5 min-w-0">
@@ -386,6 +394,9 @@ export function ExplanationContent({ data, loading, error, onSelectPeriod = null
     const entries = data?.explanations ?? []
     const rules = summary?.rules ?? null
     const open = summary?.state === "offen"
+    const selection = summary?.selection ?? rules?.selection ?? null
+    const strict = isStrict(summary)
+    const selectionNote = summary && !loading && !error && !summary.error ? selectionText(summary) : ""
     return (
         <div>
             {loading ? (
@@ -407,6 +418,9 @@ export function ExplanationContent({ data, loading, error, onSelectPeriod = null
                 <ul className="m-0 p-0 list-none">
                     {entries.map((entry) => <ExplanationEntry key={entry.id ?? entry.rank} entry={entry} rules={rules} />)}
                 </ul>
+            )}
+            {selectionNote && (
+                <p className="m-0 mt-2 text-[11px] text-slate-500" title={selection?.note ?? ""}>{selectionNote}</p>
             )}
             {summary && !loading && !error && !summary.error && (
                 <GlobalEventList events={summary.global_events} note={summary.global_event_note} onSelectPeriod={onSelectPeriod} />
@@ -438,11 +452,17 @@ export function ExplanationContent({ data, loading, error, onSelectPeriod = null
                                 Stufen nach festen Regeln{rules.version ? ` (Fassung ${rules.version}${rules.version_date ? `, ${rules.version_date}` : ""})` : ""}: <span className="font-medium">{stageLabel("hoch", rules)}</span> (Schlüssel hoch) = {rules.stages?.hoch};
                                 {" "}<span className="font-medium">{stageLabel("mittel", rules)}</span> (Schlüssel mittel) = {rules.stages?.mittel};
                                 {" "}<span className="font-medium">{stageLabel("niedrig", rules)}</span> (Schlüssel niedrig) = {rules.stages?.niedrig};
-                                sonst kein Bezug. Meldungen ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt) eine Stufe tiefer. Die Quellenart ordnet
+                                sonst kein Bezug. Meldungen ohne Arbeitgeberbezug (Börsenbericht, Kursziel, Sport, Produkt) {strict ? "sind ausgeschlossen" : "eine Stufe tiefer"}. Die Quellenart ordnet
                                 nur innerhalb einer Stufe. Meldungen zum selben Ereignis (gleiche Ereignisart, höchstens {rules.bundle_max_days} Tage Abstand,
                                 ähnlicher Titel) sind gebündelt. In der obersten Liste steht höchstens ein Eintrag je Ereignisart (ohne Ereignisart je Begriff),
                                 die übrigen Bündel der Gruppe sind darunter aufklappbar. Höchstens {rules.max_explanations} Einträge. Alle Schwellen sind vorläufige Setzungen.
                             </p>
+                            {strict && selection?.rules?.length > 0 && (
+                                <p className="m-0">
+                                    <span className="font-medium">Strenge Auswahl</span>{selection.date ? ` (seit ${selection.date})` : ""}: Vor Bündelung und Rangfolge muss jede Meldung vier Regeln erfüllen, sonst wird sie kein Erklärungsansatz.
+                                    {" "}{selection.rules.map((r, i) => `(${i + 1}) ${r}`).join(" ")} Ausgeschlossene Meldungen stehen in der Belegliste mit der nicht erfüllten Regel.
+                                </p>
+                            )}
                             <p className="m-0">
                                 {rules.finding_note ?? "In der Auswertung vom 08.10.2026 traten Einträge dieser Art in Zeiträumen ohne Markierung ähnlich häufig auf wie bei Markierungen. Sie sind Kandidaten für die eigene Einordnung."}
                             </p>

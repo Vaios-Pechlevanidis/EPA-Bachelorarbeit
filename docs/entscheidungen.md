@@ -2172,3 +2172,56 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   und Erklärungsansätzen); ein zeitliches Zusammentreffen mit einer Markierung ist keine Erklärung.
 - **Status:** umgesetzt am 2026-10-17, nicht committet; Migration 007 in der gehosteten
   Datenbank steht aus (Autor); Feldgrenzen vorläufig.
+
+## E33 – Strenge Auswahl der Belege für die Erklärungsansätze (2026-10-18)
+
+- **Kontext:** Die Auswertung E23 zeigte, dass die Rangfolge Markierungs- und Vergleichsfenster
+  nicht unterscheidet. In „Mögliche Zusammenhänge“ standen Meldungen, deren Titel das Unternehmen
+  nicht nennt (Compugroup: eine Telekom-Meldung auf Stufe hoch; RWE: Fußballmeldungen), Börsen- und
+  Spielberichte (nur eine Stufe tiefer) und Meldungen, die allein über eine erkannte Ereignisart
+  die Stufe niedrig erreichten. Der Autor will, dass dort nur passende Meldungen stehen, und
+  verlangt ein strenges Auswahlverfahren.
+- **Entscheidung (2026-10-18):** Vor Bündelung und Rangfolge gelten vier Ausschlussregeln je
+  Beleg (`backend/services/explanation_ranking.py`, `exclusion_reason`, `SELECTION_VERSION` 1),
+  alle müssen erfüllt sein: (1) **Unternehmen im Titel genannt** – ein Wort des Namens oder des
+  Suchbegriffs ohne Stoppwörter und allgemeine Beschreibungen (`GENERIC_NAME_WORDS`), gleich oder
+  höchstens zwei Zeichen länger (Genitiv); EQS-Mitteilungen des Emittenten gelten als genannt;
+  zusätzliche Kennungen je Unternehmen im Feld `title_words` von `company_metadata.json`
+  (Vorschlag „CGM“ für Compugroup Medical); (2) **Arbeitgeberbezug** – die Gruppe ohne
+  Arbeitgeberbezug (E22) ist ausgeschlossen statt eine Stufe tiefer; (3) **thematische
+  Korrespondenz** – `term_match ≥ 0,5` oder `category_match ≥ 1`, eine nur erkannte Ereignisart
+  genügt nicht, und der Wortbezug gilt nur in einer Richtung (Titelwort ist der Begriff oder
+  beginnt mit ihm; „Firmen“ trifft „firmenwagen“ nicht, `match_terms(compound_only=True)`); (4) **zeitliche Nähe** `time_match ≥ 0,5`. Die Stufenregeln (E21, Fassung 2) und
+  alle Schwellen bleiben unverändert; jeder ausgewählte Beleg erreicht mindestens mittel.
+  Ausgeschlossene Belege bleiben in der Belegliste mit der nicht erfüllten Regel
+  (`item_scores[…].excluded`, Rang hinter allen Bündeln); die Antwort nennt `n_selected`,
+  `n_excluded`, `n_excluded_by_reason` und `selection`. `rank_evidence(strict=False)` sowie
+  `--no-strict` in `report_explanation_validity.py` und `rate_explanations.py bogen` rechnen die
+  Fassung bis 2026-10-17 (Läufe E23, Bogen vom 2026-10-17). Oberfläche: Karte mit Zahl der
+  geeigneten Belege, Dialog mit Ausschlüssen je Regel, „Wie wird eingestuft?“ mit den vier
+  Regeln, Belegliste mit „nicht in den Ansätzen: …“; Zustand offen heißt „keiner erfüllt die
+  strengen Auswahlregeln“. Feature-Doku: `docs/feature-doku/18-strenge-artikelauswahl.md`.
+- **Begründung:** Eine Meldung ohne Nennung des Unternehmens im Titel lässt sich nicht als
+  Zusammenhang zu diesem Unternehmen lesen (offener Punkt aus E18/E21, jetzt entschieden);
+  Börsen-, Sport- und Produktmeldungen sagen nichts über den Arbeitgeber (E22) und standen
+  zurückgestuft trotzdem in der Liste; Einträge der Stufe niedrig waren in Vergleichsfenstern so
+  häufig wie bei Markierungen (E23, 75 % gegen 74 %), ein Schlüsselwort ohne Spur in den
+  Bewertungen ist kein Bezug zu den Bewertungen; der Rand des Fensters (0,33) ist zu weit vom
+  Übergang entfernt. Die Regeln gelten vor der Bündelung, damit eine genannte Meldung keine
+  ungenannte mitzieht. Die Stufenregeln bleiben, damit E23 reproduzierbar ist und ein neuer Lauf
+  die Fassungen gegenüberstellen kann. Nur die Stufe hoch zuzulassen wäre zu streng (2 von 28
+  Markierungsfenstern in E23).
+- **Grenzen:** nur Titel (Abkürzungen brauchen `title_words`); Genitiv-Regel deckt Komposita ohne
+  Bindestrich nicht; EQS-Mitteilungen einer Konzerngesellschaft gelten als genannt; die
+  Abdeckungsquote nach NFA-05 sinkt gegenüber E23 (Lauf in der Feature-Doku 18); bei kleiner Basis
+  bleibt nur die Themenverschiebung; englische Titel treffen deutsche Begriffe kaum; kein Beleg ist
+  eine Ursache.
+- **Status:** umgesetzt am 2026-10-18, nicht committet; die vier Regeln vom Autor am 2026-10-18
+  bestätigt (keine weitere Verschärfung, Wortbezug allein bleibt zugelassen); Werte (zwei
+  Zeichen, 0,5) und die Liste der allgemeinen Wörter bleiben Setzungen (vorläufig); `title_words`
+  „CGM“ vom Autor zu bestätigen. Auswertungslauf mit strenger Auswahl (2026-10-18, einmal,
+  `backend/data/calibration/explanation_validity_strict_2026-10-18.json`, Feature-Doku 18):
+  Markierungsfenster mit Ansatz 14/28 (50 %, vorher 23/28), Vergleichsfenster 23/72 (32 %, vorher
+  57/72), oberste Stufe nur noch hoch oder mittel; Abdeckungsquote NFA-05 50 % (Niveauwechsel 63 %,
+  Einzelmonate 22 %). Beschreibend, ohne Signifikanzaussage; ob die Quote als erfüllt gilt,
+  entscheidet der Autor.
