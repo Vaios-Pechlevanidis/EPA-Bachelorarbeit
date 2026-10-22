@@ -66,6 +66,10 @@ function ComparisonPreview({ comparison, intro = null }) {
         </Delta>
     )
     const top = topics.slice(0, TOP_SHIFTS)
+    // Bewertungen ohne Freitext je Fenster (MR2); nur wenn in einem Fenster Text fehlt.
+    const noText = (before.n_without_text ?? 0) > 0 || (after.n_without_text ?? 0) > 0
+        ? ` · ohne Freitext ${before.n_without_text ?? 0} → ${after.n_without_text ?? 0}`
+        : ""
     return (
         <div>
             {intro && <Warn className="mb-2">{intro}</Warn>}
@@ -74,7 +78,7 @@ function ComparisonPreview({ comparison, intro = null }) {
                 unit="Sterne"
                 tone={tone}
                 chip={chip}
-                sub={`Ø ${num(before.mean_rating)} → ${num(after.mean_rating)} · ${before.n_reviews} → ${after.n_reviews} Bewertungen${value_shift !== undefined ? ` · Dimension ${signed(value_shift)}` : ""}`}
+                sub={`Ø ${num(before.mean_rating)} → ${num(after.mean_rating)} · ${before.n_reviews} → ${after.n_reviews} Bewertungen${noText}${value_shift !== undefined ? ` · Dimension ${signed(value_shift)}` : ""}`}
             />
             {top.length > 0 && (
                 <>

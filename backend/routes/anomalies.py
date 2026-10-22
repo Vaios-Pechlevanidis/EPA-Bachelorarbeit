@@ -135,7 +135,7 @@ def get_anomaly_explanations(
           "windows": {"window_months": 6,
                       "before": {"from", "to", "start", "end", "months", "n_reviews"},
                       "after": {...}},
-          "comparison": {"before": {"n_reviews", "mean_rating", "n_rated", "sentiment"},
+          "comparison": {"before": {"n_reviews", "mean_rating", "n_rated", "n_with_text", "n_without_text", "sentiment"},
                          "after": {...}, "rating_shift", "polarity_shift",
                          "topics": [{"topic", "before": {"mentions", "share", "sentiment"},
                                      "after": {...}, "share_shift_pp", "polarity_shift",

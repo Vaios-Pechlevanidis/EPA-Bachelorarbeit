@@ -22,6 +22,8 @@ Je Fenster (``compare_windows``):
   Bewertungen, die es nennen
 - Stimmung (E11) gesamt und je Thema: Anteile positiv, neutral, negativ und
   mittlere Polarität (-1 bis 1)
+- Zahl der Bewertungen mit und ohne Freitext (``n_with_text``,
+  ``n_without_text``), damit erkennbar ist, wo Freitexte fehlen
 
 Daraus je Thema die Verschiebung des Anteils in Prozentpunkten und der
 mittleren Polarität; sortiert nach dem Betrag der Anteilsverschiebung, größte
@@ -232,6 +234,10 @@ def _window_stats(
         "n_reviews": n,
         "mean_rating": round(sum(ratings) / len(ratings), 3) if ratings else None,
         "n_rated": len(ratings),
+        # Bewertungen ohne Freitext (MR2): die Zahl allein sagt nichts über den Inhalt,
+        # deshalb steht je Fenster, wie viele Bewertungen nur Sterne tragen.
+        "n_with_text": len(with_text),
+        "n_without_text": n - len(with_text),
         "sentiment": _sentiment_summary(list(sentiment_of.values())),
         "sentiment_sample": {
             "with_text": len(with_text),
@@ -271,7 +277,7 @@ def compare_windows(
 
     Rückgabe::
 
-        {"before": {...}, "after": {...},      # n_reviews, mean_rating, sentiment, ...
+        {"before": {...}, "after": {...},      # n_reviews, mean_rating, n_with_text, n_without_text, sentiment, ...
          "rating_shift", "polarity_shift",
          "topics": [{"topic", "before": {"mentions", "share", "sentiment"},
                      "after": {...}, "share_shift_pp", "polarity_shift",

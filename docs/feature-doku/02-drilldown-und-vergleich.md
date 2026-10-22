@@ -113,6 +113,15 @@ Stimmung „je Thema“ ist die Stimmung der Bewertungen, die das Thema nennen. 
 werden die Anteile als dreifarbiger Balken (grün positiv, grau neutral, rot negativ) und die
 mittlere Polarität als Zahl.
 
+**Bewertungen ohne Freitext (Nachtrag 2026-10-22):** Je Fenster nennt die Antwort
+`n_with_text` und `n_without_text`; eine Bewertung zählt als „mit Freitext“, wenn
+`review_text` einen Text liefert (der Platzhalter „-“ zählt nicht). Die Fensterköpfe des
+Vergleichs zeigen darunter „3 ohne Freitext“ (bernstein), „alle mit Freitext“ oder „keine mit
+Freitext“; die Vorschau-Karte ergänzt „ohne Freitext 3 → 0“, sobald in einem Fenster Text
+fehlt. Grund: Die Interviews belegen, dass die Zahl ohne Text nicht deutbar ist; das System
+soll ausweisen, wo Freitexte fehlen, statt eine Erklärung nahezulegen (Meta-Requirement 2
+der Arbeit). Stimmung und Themen beruhen weiterhin nur auf den Bewertungen mit Freitext.
+
 ### 2.5 Kleine Basis
 
 `low_basis` kennzeichnet Werte, die auf wenigen Bewertungen beruhen: ein Fenster mit
@@ -243,7 +252,7 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
 |---|---|
 | Bewertungen eines Zeitraums | `backend/tests/drilldown/test_reviews_route.py`: Grenzen einschließlich, ein Tag, Sortierung, beide Quellen, `status`, `offset`, `format=full`, mehrere Seiten, 400/422; Antwort ohne neue Parameter gleicht Commit 4ad0a80 (Hash für Demo 1–3) |
 | Themen | `backend/tests/drilldown/test_keyword_topic_service.py`: `topic-overview` für Demo 1–3 identisch zu Commit 4ad0a80, `end_date`, `topics_in_review` = `frequency`, kein Dienst importiert eine Route |
-| Vergleich | `backend/tests/drilldown/test_explanation_service.py`: Fenster, Anteile, Verschiebung, Sortierung, `low_basis`, `sentiment_sample`, Zwischenspeicher, Modus (konstruierte Zeilen, Lexikon bzw. Stub) |
+| Vergleich | `backend/tests/drilldown/test_explanation_service.py`: Fenster, Anteile, Verschiebung, Sortierung, `low_basis`, `sentiment_sample`, `n_with_text`/`n_without_text`, Zwischenspeicher, Modus (konstruierte Zeilen, Lexikon bzw. Stub); `frontend/src/lib/__tests__/comparisonText.test.js`: Wortlaut „ohne Freitext“ |
 | Endpunkt | `backend/tests/drilldown/test_explanations_route.py`: Form, 404, 400, `window_months`, `status` |
 | Erkennung je Status | `backend/tests/anomaly/test_status_filter.py`: Zuordnung der Rohwerte, Reihen je Gruppe, Demo 3 je Status gültige Antwort |
 | Hervorhebung | `backend/tests/drilldown/test_topic_highlight.py`: Zuordnung Dimension → Thema (alle Dimensionen), Fundstellen nur als ganzes Wort, Fundstellen genau dann wenn `topics_in_review` das Thema nennt, `topic_only`, 400 bei ungültigen Angaben, Antwort ohne `dimension` unverändert. Browser: Telekom, Image, Abfall ab 2018-11 (7 von 720, Markierung in Liste und Detailfenster, Vergleichszeile hervorgehoben) |

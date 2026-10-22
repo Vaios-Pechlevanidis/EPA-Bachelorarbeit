@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { fmtPeriod } from "@/lib/anomalySeries"
+import { withoutTextText } from "@/lib/comparisonText"
 
 /* ============================================================================
    AnomalyComparison — Vorher-Nachher-Vergleich einer auffälligen Veränderung
@@ -60,6 +61,7 @@ function LowBasisBadge({ title }) {
 }
 
 function WindowHeader({ label, win, stats }) {
+    const noText = withoutTextText(stats)
     return (
         <div className="flex-1 min-w-[220px] rounded-md border border-slate-200 px-3 py-2.5">
             <p className="m-0 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500">{label}</p>
@@ -68,6 +70,14 @@ function WindowHeader({ label, win, stats }) {
                 {count(stats.n_reviews)} · Ø Gesamtnote {num(stats.mean_rating)}
                 {stats.mean_value !== undefined && ` · Ø Dimension ${num(stats.mean_value)}`}
             </p>
+            {noText && (
+                <p
+                    className={`m-0 mt-0.5 text-[11px] tnum ${stats.n_without_text > 0 ? "text-amber-700" : "text-slate-500"}`}
+                    title="Bewertungen, die nur Sterne tragen; Stimmung und Themen beruhen auf den Bewertungen mit Freitext"
+                >
+                    {noText}
+                </p>
+            )}
             <div className="mt-1.5 flex items-center gap-2 text-[11px] text-slate-500">
                 Stimmung <SentimentBar sentiment={stats.sentiment} />
             </div>

@@ -207,6 +207,16 @@ class TestSentiment:
         assert [t for t, _ in stub.calls] == ["neu", "mittel"]
         assert res["before"]["sentiment"]["n"] == 2
 
+    def test_counts_reviews_without_text_per_window(self):
+        """Test: Je Fenster n_with_text und n_without_text; ohne Freitext bleibt die Bewertung in n_reviews."""
+        before = [*_rows(3, start_id=1, text="Gehalt passt"), *_rows(2, start_id=10, text="")]
+        after = _rows(4, start_id=20, text="-")   # Platzhalter zählt nicht als Text (E11)
+        res = es.compare_windows(before, after, "employee", analyzer=StubAnalyzer())
+        assert res["before"]["n_reviews"] == 5
+        assert (res["before"]["n_with_text"], res["before"]["n_without_text"]) == (3, 2)
+        assert (res["after"]["n_with_text"], res["after"]["n_without_text"]) == (0, 4)
+        assert res["after"]["sentiment"]["n"] == 0
+
     def test_star_rating_is_passed_as_hint(self):
         stub = StubAnalyzer()
         es.compare_windows(_rows(1, start_id=1, rating=1.5), [], "employee", analyzer=stub)
