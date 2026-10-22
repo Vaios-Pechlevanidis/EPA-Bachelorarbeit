@@ -201,7 +201,9 @@ export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side,
    subtitle = Kurzform für die Karte (im Dialog steht die vollständige Zählung). */
 /* onSelectPeriod(from, to): "Zeitraum wählen" bei den allgemeinen Ereignissen im Dialog
    (Drill-down in das Ereignis, Nachtrag zu E29, 2026-10-17). */
-export function ExplanationCard({ eyebrow, subtitle, comparison, onSelectPeriod = null }) {
+/* userEvents: eigene Ereignisse des Unternehmens (nummeriert); die im Ereignisfenster
+   stehen als Gruppe "Eigenes Ereignis" (Nachtrag zu E32, 2026-10-22). */
+export function ExplanationCard({ eyebrow, subtitle, comparison, onSelectPeriod = null, userEvents = null }) {
     return (
         <ExpandableCard
             icon={<Lightbulb />}
@@ -213,8 +215,8 @@ export function ExplanationCard({ eyebrow, subtitle, comparison, onSelectPeriod 
             hint={HINT}
         >
             {({ modal }) => (modal
-                ? <ExplanationContent data={comparison.data} loading={comparison.loading} error={comparison.error} onSelectPeriod={onSelectPeriod} />
-                : <ExplanationPreview data={comparison.data} loading={comparison.loading} error={comparison.error} />)}
+                ? <ExplanationContent data={comparison.data} loading={comparison.loading} error={comparison.error} onSelectPeriod={onSelectPeriod} userEvents={userEvents} />
+                : <ExplanationPreview data={comparison.data} loading={comparison.loading} error={comparison.error} userEvents={userEvents} />)}
         </ExpandableCard>
     )
 }

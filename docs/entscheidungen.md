@@ -2178,6 +2178,25 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   Rangfolge der Erklärungsansätze (E21) und keine Zählung als Beleg, damit E23 unberührt bleibt
   und die Erkennung (E9) datengetrieben bleibt. Keine Dauergrenze wie in E20: Ein eigenes
   Ereignis trägt jemand bewusst ein und kennt seine Dauer.
+
+### E32 – Nachtrag 2026-10-22: Eigene Ereignisse als möglicher Zusammenhang
+
+- **Kontext:** Meta-Requirement 3 der Arbeit verlangt, dass das System „internes Ereigniswissen
+  der Nutzenden“ ebenso wie externe Meldungen als möglichen Zusammenhang anbietet. Bis dahin
+  lagen eigene Ereignisse nur als Marken im Verlauf und im Reiter, nicht bei den
+  Erklärungsansätzen.
+- **Entscheidung des Autors:** Die Karte „Mögliche Zusammenhänge“ zeigt eigene Ereignisse, deren
+  Zeitraum das Ereignisfenster (E18) berührt, als eigene Gruppe „Eigenes Ereignis im
+  Ereignisfenster · möglicher Zusammenhang“ unter den Belegen und vor den allgemeinen
+  Ereignissen; ebenso eine Zeile auf der Vorschau-Karte, je Wechsel ein Hinweis im PDF-Export
+  (Liste der Veränderungen, Kurzbericht) und eine Erklärung auf „Technische Hinweise“. Zuordnung
+  allein über die Überschneidung der Monate, im Frontend (`userEventsInWindow`); der PDF-Export
+  rechnet das Fenster eines Niveauwechsels nach der Regel von `window_for_change` nach.
+- **Unverändert:** keine Stufe, keine Quelle, kein Eingang in die Rangfolge (E21) oder in die
+  Zählung der Belege (E23), kein Eingang in die Erkennung (E9). Der Hinweistext lautet seitdem
+  „… gehen nicht in Erkennung, Rangfolge oder Belege ein; bei den Erklärungsansätzen stehen sie
+  nur nach zeitlicher Nähe als möglicher Zusammenhang.“
+- **Status:** umgesetzt (Feature-Doku 15, Nachtrag), nicht committet.
 - **Grenzen:** keine Anmeldung, keine Zuordnung zu Personen, keine Historie; nur auf der
   Detailseite (nicht in der Karte des Haupt-Dashboards, nicht im PDF-Export, nicht in Belegliste
   und Erklärungsansätzen); ein zeitliches Zusammentreffen mit einer Markierung ist keine Erklärung.

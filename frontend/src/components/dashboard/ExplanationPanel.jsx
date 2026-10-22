@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, ExternalLink, MousePointerClick } from "luci
 import { Headline, PreviewStatus } from "./CardPreview"
 import { isStrict, selectionText, stageLabel } from "@/lib/explanationText"
 import { fmtPeriod } from "@/lib/anomalySeries"
+import { USER_EVENT_EXPLANATION_NOTE, eventSpanLabel, userEventsInWindow } from "@/lib/userEvents"
 
 /* ============================================================================
    ExplanationPanel — "Mögliche Zusammenhänge" (Inkrement 5, Erklärungsansätze).
@@ -326,6 +327,69 @@ export function GlobalEventList({ events, note = null, onSelectPeriod = null }) 
     )
 }
 
+/* Kennzeichen der eigenen Ereignisse wie im Monatsverlauf: violette Marke. */
+function UserEventMark() {
+    return <span aria-hidden="true" className="inline-block w-3 h-2.5 rounded-[2px] border border-violet-600 bg-violet-100 flex-none" />
+}
+
+const userCountText = (n) => `${n} ${n === 1 ? "eigenes Ereignis" : "eigene Ereignisse"}`
+
+/* Eigene Ereignisse der Nutzenden, deren Zeitraum das Ereignisfenster berührt
+   (Nachtrag zu E32, 2026-10-22): eigene Gruppe neben den Belegen, ohne Quelle, ohne
+   Stufe und ohne Rangfolge; nur zeitliche Nähe. Titel, Zeitraum, Lage zum Fenster,
+   Vermerk; "Zeitraum wählen" wie bei den allgemeinen Ereignissen. */
+export function UserEventExplanationList({ events, onSelectPeriod = null }) {
+    if (!events?.length) return null
+    return (
+        <div className="mt-3 pt-3 border-t border-slate-100" aria-label="Eigene Ereignisse im Ereignisfenster">
+            <p className="m-0 text-[11px] font-medium text-slate-700 flex items-center gap-1.5">
+                <UserEventMark />
+                {events.length === 1 ? "Eigenes Ereignis im Ereignisfenster" : `${events.length} eigene Ereignisse im Ereignisfenster`} · möglicher Zusammenhang
+            </p>
+            <ul className="m-0 mt-1.5 p-0 list-none space-y-2">
+                {events.map((e) => (
+                    <li key={e.id} className="text-[11.5px] min-w-0">
+                        <p className="m-0 text-slate-800 break-words">
+                            {e.number != null && <span className="text-slate-500 tnum">{e.number} · </span>}
+                            <span className="font-medium">{e.title}</span>
+                            <span className="text-slate-500 tnum"> · {eventSpanLabel(e)} · {e.time_phrase}</span>
+                        </p>
+                        {e.note && <p className="m-0 mt-0.5 text-[11px] text-slate-500 break-words">{e.note}</p>}
+                        {onSelectPeriod && (
+                            <p className="m-0 mt-1 text-[11px]">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 text-slate-700 hover:text-slate-900 underline underline-offset-2"
+                                    onClick={() => onSelectPeriod(e.date_from, e.date_to)}
+                                    title="Zeitraum des Ereignisses als Auswahl setzen: Vergleich, Bewertungen, Erklärungsansätze und Berichte dieser Monate"
+                                >
+                                    <MousePointerClick className="w-3 h-3" aria-hidden="true" />
+                                    Zeitraum {eventSpanLabel(e)} wählen
+                                </button>
+                            </p>
+                        )}
+                    </li>
+                ))}
+            </ul>
+            <p className="m-0 mt-1.5 text-[11px] text-slate-400">{USER_EVENT_EXPLANATION_NOTE}</p>
+        </div>
+    )
+}
+
+/* Eine Zeile für die Vorschau-Karte: Zahl und erster Titel der eigenen Ereignisse. */
+function UserEventPreviewLine({ events }) {
+    if (!events?.length) return null
+    const first = events[0]
+    return (
+        <p className="m-0 mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-600 flex items-start gap-1.5 min-w-0" title={events.map((e) => `${e.title} (${eventSpanLabel(e)})`).join("; ")}>
+            <UserEventMark />
+            <span className="min-w-0 truncate">
+                {userCountText(events.length)}, möglicher Zusammenhang: {first.title} ({eventSpanLabel(first)}){events.length > 1 ? " …" : ""}
+            </span>
+        </p>
+    )
+}
+
 /* Eine Zeile für die Vorschau-Karte: Zahl und erster Titel. */
 function GlobalEventPreviewLine({ events }) {
     if (!events?.length) return null
@@ -343,7 +407,7 @@ function GlobalEventPreviewLine({ events }) {
 /* Vorschau für die Karte (2026-10-16): Kennzahl (Zahl der Ansätze oder "Offen")
    und die ersten Ansätze mit Ereignisart, Signalen und Datum, ohne Titel und
    Links; die volle Liste steht im Dialog (ExplanationContent). */
-export function ExplanationPreview({ data, loading, error, max = 2 }) {
+export function ExplanationPreview({ data, loading, error, max = 2, userEvents = null }) {
     const summary = data?.explanation_summary ?? null
     const entries = data?.explanations ?? []
     const rules = summary?.rules ?? null
@@ -353,11 +417,13 @@ export function ExplanationPreview({ data, loading, error, max = 2 }) {
     if (summary.error) return <PreviewStatus>Erklärungsansätze konnten nicht berechnet werden: {summary.error}</PreviewStatus>
     const belege = `${summary.n_items} ${summary.n_items === 1 ? "Beleg" : "Belege"}`
     const globals = summary.global_events ?? []
+    const own = userEventsInWindow(userEvents, summary.window)
     const strict = isStrict(summary)
     if (summary.state === "offen") {
         return (
             <div>
                 <Headline value="Offen" sub={`${belege} im Ereignisfenster · ${strict ? "keiner erfüllt die strengen Auswahlregeln" : "keiner erreicht die Stufe niedrig"}`} />
+                <UserEventPreviewLine events={own} />
                 <GlobalEventPreviewLine events={globals} />
             </div>
         )
@@ -381,16 +447,20 @@ export function ExplanationPreview({ data, loading, error, max = 2 }) {
                 ))}
             </ul>
             {rest > 0 && <p className="m-0 text-[11px] text-slate-500">+ {rest} {rest === 1 ? "weiterer" : "weitere"}</p>}
+            <UserEventPreviewLine events={own} />
             <GlobalEventPreviewLine events={globals} />
         </div>
     )
 }
 
-/* Volle Ansicht im Dialog: Liste der Ansätze, allgemeine Ereignisse als Hypothese
-   (onSelectPeriod: "Zeitraum wählen"), "Wie wird eingestuft?" und Hinweis. */
-export function ExplanationContent({ data, loading, error, onSelectPeriod = null }) {
+/* Volle Ansicht im Dialog: Liste der Ansätze, eigene Ereignisse im Fenster als
+   möglicher Zusammenhang, allgemeine Ereignisse als Hypothese (onSelectPeriod:
+   "Zeitraum wählen"), "Wie wird eingestuft?" und Hinweis. userEvents: alle eigenen
+   Ereignisse des Unternehmens; das Fenster kommt aus explanation_summary.window. */
+export function ExplanationContent({ data, loading, error, onSelectPeriod = null, userEvents = null }) {
     const [showRules, setShowRules] = useState(false)
     const summary = data?.explanation_summary ?? null
+    const own = userEventsInWindow(userEvents, summary?.window)
     const entries = data?.explanations ?? []
     const rules = summary?.rules ?? null
     const open = summary?.state === "offen"
@@ -423,7 +493,10 @@ export function ExplanationContent({ data, loading, error, onSelectPeriod = null
                 <p className="m-0 mt-2 text-[11px] text-slate-500" title={selection?.note ?? ""}>{selectionNote}</p>
             )}
             {summary && !loading && !error && !summary.error && (
-                <GlobalEventList events={summary.global_events} note={summary.global_event_note} onSelectPeriod={onSelectPeriod} />
+                <>
+                    <UserEventExplanationList events={own} onSelectPeriod={onSelectPeriod} />
+                    <GlobalEventList events={summary.global_events} note={summary.global_event_note} onSelectPeriod={onSelectPeriod} />
+                </>
             )}
             {rules && !loading && !error && (
                 <div className="mt-3">

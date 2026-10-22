@@ -709,6 +709,7 @@ export default function AnomaliesPage() {
                                     subtitle={group}
                                     comparison={detail.comparison}
                                     onSelectPeriod={selectPeriod}
+                                    userEvents={numberedUserEvents}
                                 />
                                 <EvidenceCard
                                     eyebrow={`EXTERNE BERICHTE · ${detail.tag}`}

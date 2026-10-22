@@ -37,6 +37,7 @@ import { BASIS, MIN_REVIEWS_PER_WINDOW } from '../lib/dataBasis';
 import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from '../lib/rollingAverage';
 import { evidenceText, fmtN, lastImportText, marketText, platformText, sourceLine, thresholdsNote, timestampCell } from '../lib/dataStatusText';
 import { fmtPeriod } from '../lib/anomalySeries';
+import { EVENT_WINDOW_AFTER, EVENT_WINDOW_BEFORE, USER_EVENT_EXPLANATION_NOTE, changeEventWindow, eventSpanLabel, userEventsInWindow } from '../lib/userEvents';
 import { OUTLIER_UNVALIDATED_NOTE, SHOW_FORECAST, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, isValidatedScope } from '../config';
 import { NEGATIVE_TOPIC_LABEL, TIMELINE_LABEL } from '../lib/labels';
 import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, UNCERTAINTY_NOTE, scoreCountText, scoreTrendWindowsText, scoreUncertaintyText } from '../lib/scoreText';
@@ -1701,6 +1702,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
         anomalyChartElement = null,
         anomalyData = null,            // Zustand der AnomalyCard (onDataChange)
         topicOverviewData = null,
+        userEvents = null,             // GET /companies/{id}/events (Nachtrag zu E32, 2026-10-22)
     } = kpiData;
 
     // Charts extrahieren (SVG → PNG, html2canvas als Rückfall)
@@ -1792,7 +1794,7 @@ export const exportKPIsAsPDF = async (kpiData) => {
     const minReviews = an?.minReviews ?? dataStatus?.thresholds?.min_reviews_per_month ?? 5;
     const unvalidatedScope = Boolean(an && !an.error && !(elig && !elig.eligible) && !isValidatedScope(an));
     const report = buildReportSummary({
-        avgScore, avgCount, scoreCi95, trend, rolling, mostCritical, negativeTopic, negativeTopicItem, topics, anomalyData,
+        avgScore, avgCount, scoreCi95, trend, rolling, mostCritical, negativeTopic, negativeTopicItem, topics, anomalyData, userEvents,
         dataStatus, timelineFilters, unvalidatedScope, now,
     });
     let y = startSection('Kurzbericht', 'Lage, jüngste Veränderungen, Stärken und Handlungsfelder');
@@ -2114,6 +2116,12 @@ export const exportKPIsAsPDF = async (kpiData) => {
                 if (a.month_near_previous_level) {
                     notes.push('Das Monatsmittel liegt noch nahe am alten Niveau; der sichtbare Übergang folgt später.');
                 }
+                // Eigene Ereignisse im Ereignisfenster (Nachtrag zu E32, 2026-10-22): möglicher Zusammenhang, keine Ursache
+                const own = userEventsInWindow(userEvents, changeEventWindow(a));
+                if (own.length) {
+                    const win = changeEventWindow(a);
+                    notes.push(`${own.length === 1 ? 'Eigenes Ereignis' : `${own.length} eigene Ereignisse`} im Ereignisfenster ${fmtSpan(win.from, win.to)}: ${own.map((e) => `${e.title} (${eventSpanLabel(e)}, ${e.time_phrase})`).join('; ')} – möglicher Zusammenhang, keine Ursache.`);
+                }
                 return {
                     cells: [
                         `ab ${fmtPeriod(a.date)}`,
@@ -2298,6 +2306,9 @@ export const exportKPIsAsPDF = async (kpiData) => {
         `Unsicherheit: ${scoreCi95 != null ? `Ø Score ${scoreUncertaintyText(scoreCi95)}` : 'Ø Score ohne Intervall'}${trend?.raw?.difference_ci95 != null ? `; Trend-Differenz ±${fmtNum(trend.raw.difference_ci95, 2)} (95 %, Welch)` : ''}. ${UNCERTAINTY_NOTE}`,
         `Zeitfilter „${range.value}“ gilt für Ø Score, Trend, ${CRITICAL_LABEL}, ${NEGATIVE_TOPIC_LABEL}, ${TIMELINE_LABEL}, Topics im Detail und Topic-Übersicht. Der 12- vs. 24-Monats-Schnitt und die Anomalien beziehen sich immer auf die ganze Reihe.`,
         `Warnung „kleine Basis“: unter ${MIN_REVIEWS_PER_WINDOW} Bewertungen in einem Fenster oder einer Kategorie.`,
+        userEvents?.length
+            ? `Eigene Ereignisse: ${userEvents.length} von Nutzerinnen und Nutzern eingetragene ${userEvents.length === 1 ? 'Zeitraum' : 'Zeiträume'}; genannt bei einer Veränderung, wenn der Zeitraum ihr Ereignisfenster (${EVENT_WINDOW_BEFORE} Monate vor dem Übergang bis ${EVENT_WINDOW_AFTER} Monat nach dem markierten Monat) berührt. ${USER_EVENT_EXPLANATION_NOTE}`
+            : null,
     ]);
 
     // Zeitverlauf und Prognose: Reihe, Verfahren, Backtest, Bandbreite (2026-10-17)

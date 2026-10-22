@@ -40,7 +40,8 @@ MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 USER_EVENT_NOTE = (
     "Eigene Ereignisse sind von Nutzerinnen und Nutzern eingetragene Zeiträume zur Einordnung. "
-    "Sie sind keine Aussage über Ursachen und gehen nicht in Erkennung, Erklärungsansätze oder Belege ein."
+    "Sie sind keine Aussage über Ursachen und gehen nicht in Erkennung, Rangfolge oder Belege ein; "
+    "bei den Erklärungsansätzen stehen sie nur nach zeitlicher Nähe als möglicher Zusammenhang."
 )
 
 FIELDS = ("id", "company_id", "date_from", "date_to", "title", "note", "created_at", "updated_at")

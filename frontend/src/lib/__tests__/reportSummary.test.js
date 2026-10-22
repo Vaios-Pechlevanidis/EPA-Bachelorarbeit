@@ -35,6 +35,20 @@ describe("summarizeChanges", () => {
     expect(ch.items[1].consequence).toContain("hängt deutlich von den Schwellen ab")
     expect(ch.net.text).toContain("netto -0,33 Sterne")
   })
+  it("nennt eigene Ereignisse im Ereignisfenster des Wechsels als möglichen Zusammenhang", () => {
+    // Wechsel ab 2016-10 ohne Lücke: Fenster 2016-07 bis 2016-11
+    const own = [
+      { id: 1, title: "Führungswechsel", date_from: "2016-08", date_to: "2016-08" },
+      { id: 2, title: "Weit weg", date_from: "2018-01", date_to: "2018-01" },
+    ]
+    const ch = summarizeChanges(anomalyData, undefined, own)
+    const older = ch.items.find((it) => it.date === "2016-10")
+    expect(older.ownEvents.map((e) => e.id)).toEqual([1])
+    expect(older.ownEventsText).toBe("Eigenes Ereignis im Ereignisfenster: Führungswechsel (Aug. 2016) – möglicher Zusammenhang, keine Ursache.")
+    expect(older.consequence).toContain("möglicher Zusammenhang, keine Ursache")
+    expect(ch.items.find((it) => it.date === "2017-09").ownEventsText).toBeNull()
+    expect(summarizeChanges(anomalyData).items[0].ownEvents).toEqual([])
+  })
   it("liefert Zustände für fehlende, ungeeignete und leere Reihen", () => {
     expect(summarizeChanges(null).state).toBe("missing")
     expect(summarizeChanges({ ...anomalyData, eligibility: { eligible: false, reason: "nur 4 Monate" } }).note).toBe("Keine automatische Erkennung: nur 4 Monate")

@@ -37,7 +37,25 @@ gerade ausgewählt, wird die Auswahl aufgehoben. Löschen steht zusätzlich im F
 Liste stehen ein zweiter Knopf „Ereignis eintragen“ und der feste Hinweis:
 
 > Eigene Ereignisse sind von Nutzerinnen und Nutzern eingetragene Zeiträume zur Einordnung. Sie
-> sind keine Aussage über Ursachen und gehen nicht in Erkennung, Erklärungsansätze oder Belege ein.
+> sind keine Aussage über Ursachen und gehen nicht in Erkennung, Rangfolge oder Belege ein; bei
+> den Erklärungsansätzen stehen sie nur nach zeitlicher Nähe als möglicher Zusammenhang.
+
+(Wortlaut seit 2026-10-22; bis dahin „… gehen nicht in Erkennung, Erklärungsansätze oder Belege
+ein“, siehe Nachtrag in Abschnitt 2.)
+
+**Nachtrag 2026-10-22 (Eigene Ereignisse bei den Erklärungsansätzen):** Die Karte „Mögliche
+Zusammenhänge“ zeigt eigene Ereignisse, deren Zeitraum das Ereignisfenster der Veränderung, des
+Einzelmonats oder der Auswahl berührt, als eigene Gruppe **„Eigenes Ereignis im Ereignisfenster
+· möglicher Zusammenhang“** mit violetter Marke, Nummer wie im Verlauf, Titel, Zeitraum, Lage zum
+Fenster („im Ereignisfenster“, „beginnt vor dem Ereignisfenster“, „reicht über das Ereignisfenster
+hinaus“, „umfasst das Ereignisfenster“), Vermerk und „Zeitraum wählen“. Auf der Vorschau-Karte
+steht eine Zeile „1 eigenes Ereignis, möglicher Zusammenhang: <Titel> (<Zeitraum>)“. Die Gruppe
+steht unter den Belegen und vor den allgemeinen Ereignissen; sie hat keine Quelle, keine Stufe und
+keinen Platz in der Rangfolge. Darunter der feste Hinweis: „Eigene Ereignisse haben keine Quelle
+und keine Stufe; sie stehen hier, weil ihr Zeitraum das Ereignisfenster berührt. Möglicher
+Zusammenhang, keine Ursache.“ Im PDF-Export nennt die Liste „Auffällige Veränderungen“ und der
+Kurzbericht („Jüngste auffällige Veränderungen und ihre Folge“) je Wechsel die eigenen Ereignisse
+im Ereignisfenster mit demselben Zusatz; die Seite „Technische Hinweise“ erklärt das Fenster.
 
 Die Ereignisse gelten je **Unternehmen** und sind für alle sichtbar, die das Dashboard
 benutzen; sie bleiben beim Neuladen, beim Wechsel der Dimension, Quelle oder Bewertendengruppe
@@ -100,6 +118,22 @@ Ereignisse im selben Bild – ohne dass das Dashboard daraus eine Ursache macht.
 
 Parameter (alle **vorläufig**, Setzungen): Titel höchstens 120 Zeichen, Vermerk höchstens 1000
 Zeichen, Tooltip zeigt höchstens 140 Zeichen des Vermerks, keine Obergrenze für die Dauer.
+
+**Nachtrag 2026-10-22 (Zuordnung zum Ereignisfenster):** Rein im Frontend, ohne Änderung am
+Backend der Erklärungsansätze. `userEventsInWindow(events, window)` in
+`frontend/src/lib/userEvents.js` liefert die Ereignisse, deren Monate sich mit `window.from` bis
+`window.to` überschneiden (einschließlich), sortiert wie die Liste, je Ereignis mit `time_phrase`
+(Lage zum Fenster). Auf der Detailseite ist `window` das Ereignisfenster aus der Antwort
+(`explanation_summary.window`, E18), also für alle drei Fälle (Veränderung, Einzelmonat, Auswahl)
+dasselbe Fenster wie bei den Belegen. Der PDF-Export ruft die Erklärungsansätze nicht ab und
+rechnet das Fenster eines Niveauwechsels mit `changeEventWindow(anomaly)` nach derselben Regel
+wie `evidence_service.window_for_change`: 3 Monate vor dem Beginn des Übergangs (Monat nach
+`previous_period`, ohne Lücke der markierte Monat) bis 1 Monat nach dem markierten Monat; die
+Werte stehen als `EVENT_WINDOW_BEFORE` und `EVENT_WINDOW_AFTER` im Frontend (vorläufig, E18) und
+müssen mit dem Backend übereinstimmen. Der Dashboard-Export lädt die Ereignisse mit
+`GET /companies/{id}/events`; ohne Tabelle (503) bleibt die Liste leer und der Export läuft.
+Der Hinweistext (Frontend und Backend, `USER_EVENT_NOTE`) nennt seitdem „Rangfolge“ statt
+„Erklärungsansätze“, weil die Ereignisse dort nun stehen, aber nicht bewertet werden.
 
 ## 3. Begründung
 
@@ -180,7 +214,12 @@ Zeichen, Tooltip zeigt höchstens 140 Zeichen des Vermerks, keine Obergrenze fü
 
 - Migration 007 in der gehosteten Datenbank ausführen (Autor); bis dahin zeigt der Reiter die
   503-Meldung.
-- Ob eigene Ereignisse als Belegtyp in der Belegliste und als Signal der Erklärungsansätze
-  erscheinen sollen (E32: vorerst nicht, damit E23 unberührt bleibt).
-- Ob der PDF-Export die Marken und die Liste übernehmen soll.
+- Als Signal der Rangfolge oder als Beleg erscheinen eigene Ereignisse weiterhin nicht (E32,
+  damit E23 unberührt bleibt); seit 2026-10-22 stehen sie bei den Erklärungsansätzen als eigene
+  Gruppe nach zeitlicher Nähe (Nachtrag oben, Meta-Requirement 3 der Arbeit).
+- Ob der PDF-Export zusätzlich die Marken im Diagramm und die vollständige Liste übernehmen soll;
+  seit 2026-10-22 nennt er die Ereignisse nur je Veränderung im Ereignisfenster.
+- `EVENT_WINDOW_BEFORE`/`EVENT_WINDOW_AFTER` im Frontend doppeln die Backend-Werte (3 / 1); bei
+  einer Änderung von E18 beide Stellen anpassen oder das Fenster je Veränderung vom Backend
+  liefern lassen.
 - Feldgrenzen (120 / 1000 Zeichen) und die 140 Zeichen im Tooltip sind Setzungen.

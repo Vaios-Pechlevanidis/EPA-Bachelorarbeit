@@ -15,6 +15,7 @@
  * Keine Pfeile und kein U+2212 in den Texten (Standardschriften des PDF). */
 
 import { fmtPeriod, periodIndex } from "./anomalySeries"
+import { changeEventWindow, eventSpanLabel, userEventsInWindow } from "./userEvents"
 import { MIN_REVIEWS_PER_WINDOW } from "./dataBasis"
 import { dataQualityNotes, fmtDay, fmtN } from "./dataStatusText"
 import { CRITICAL_LABEL, NEGATIVE_TOPIC_LABEL } from "./labels"
@@ -61,7 +62,7 @@ export function stabilityText(stability) {
  * Niveau und der Stabilität. Rückgabe: {state, items, shown, total, net, note}; state ist
  * "ok", "none" (keine Veränderung), "ineligible" (keine Erkennung), "error" oder
  * "missing" (Karte nicht geladen). */
-export function summarizeChanges(anomalyData, rules = REPORT_RULES) {
+export function summarizeChanges(anomalyData, rules = REPORT_RULES, userEvents = null) {
   const an = anomalyData
   if (!an) return { state: "missing", items: [], shown: 0, total: 0, net: null, note: "Die Anomalien-Karte war beim Export nicht geladen." }
   if (an.error) return { state: "error", items: [], shown: 0, total: 0, net: null, note: `Anomalien konnten nicht geladen werden: ${an.error}` }
@@ -102,6 +103,13 @@ export function summarizeChanges(anomalyData, rules = REPORT_RULES) {
       const low = a.stability.share != null && a.stability.share < rules.lowStability
       parts.push(`Stabilität: ${stab} erkannt${low ? "; die Markierung hängt deutlich von den Schwellen ab" : ""}.`)
     }
+    // Eigene Ereignisse im Ereignisfenster des Wechsels (Nachtrag zu E32, 2026-10-22):
+    // möglicher Zusammenhang nach zeitlicher Nähe, keine Ursache.
+    const own = userEventsInWindow(userEvents, changeEventWindow(a))
+    const ownText = own.length
+      ? `${own.length === 1 ? "Eigenes Ereignis" : `${own.length} eigene Ereignisse`} im Ereignisfenster: ${own.map((e) => `${e.title} (${eventSpanLabel(e)})`).join("; ")} – möglicher Zusammenhang, keine Ursache.`
+      : null
+    if (ownText) parts.push(ownText)
     return {
       date: a.date,
       direction: a.direction,
@@ -114,6 +122,8 @@ export function summarizeChanges(anomalyData, rules = REPORT_RULES) {
       stability: a.stability ?? null,
       stabilityText: a.stability?.variants != null ? `${a.stability.matches}/${a.stability.variants}` : "–",
       current: !next,
+      ownEvents: own,
+      ownEventsText: ownText,
       consequence: parts.join(" "),
     }
   })
@@ -424,7 +434,7 @@ export function rulesText(rules = REPORT_RULES) {
 
 /* Alles für die Seite „Kurzbericht“ des PDF-Exports. */
 export function buildReportSummary(input, rules = REPORT_RULES) {
-  const changes = summarizeChanges(input.anomalyData, rules)
+  const changes = summarizeChanges(input.anomalyData, rules, input.userEvents ?? null)
   const columns = summarizeColumns({ ...input, changes }, rules)
   return {
     cells: situationCells(input, rules),

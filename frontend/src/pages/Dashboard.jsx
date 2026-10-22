@@ -355,6 +355,12 @@ export default function Dashboard() {
       }
       // Datenstand (dieselbe Antwort wie die Leiste, aus dem Zwischenspeicher)
       const dataStatus = await loadDataStatus(effectiveCompanyId).catch(() => null)
+      // Eigene Ereignisse für die Hinweise zu den Veränderungen (Nachtrag zu E32, 2026-10-22);
+      // ohne Tabelle (503) oder Fehler bleibt die Liste leer, der Export läuft weiter.
+      const userEvents = await fetch(`${API_URL}/companies/${effectiveCompanyId}/events`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => json?.events ?? [])
+        .catch(() => [])
       const company = companies.find((c) => String(c.id) === String(effectiveCompanyId))
       await new Promise((r) => setTimeout(r, 1500))
       await exportKPIsAsPDF({
@@ -379,6 +385,7 @@ export default function Dashboard() {
         anomalyChartElement: anomalyEl,
         anomalyData: anomalyExportData,
         topicOverviewData,
+        userEvents,
       })
     } catch (err) {
       setError(`Export fehlgeschlagen: ${err.message}`)
