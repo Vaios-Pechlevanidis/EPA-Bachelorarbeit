@@ -418,6 +418,17 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Status:** Am 2026-10-12 vom Autor mit `backend/scripts/seed_company_metadata.py --apply`
   eingespielt: 21 Unternehmen aktualisiert, bei den übrigen 5 war der Wert bereits gleich.
 
+### E6 – Nachtrag 2026-10-22: Branche als Vorschlag im Firmenvergleich
+
+- **Entscheidung des Autors:** Der Satz „Erkennung, Erklärungsansätze und Dashboard werten
+  sie nicht aus“ gilt nur noch für Erkennung und Erklärungsansätze. Der Firmenvergleich zeigt
+  die Branche unter der gewählten Firma und schlägt Firmen derselben Branche zum Vergleich vor
+  (Feature-Doku 19). Grund: Meta-Requirement 4 der Arbeit (Vergleich mit strukturell
+  ähnlichen Organisationen, Interviewkategorie H4.8); die Branche ist das einzige gespeicherte
+  Merkmal, das diese Ähnlichkeit annähert.
+- **Grenze:** Vorschlag, kein Filter und keine Aussage über Vergleichbarkeit; das Dashboard
+  sagt das in einer Zeile dazu. Kein Branchenmittel, keine Gewichtung.
+
 ## E7 – Nachrichtenquelle für historische Meldungen
 
 - **Kontext:** `yfinance.Ticker.get_news` hat keinen Datumsparameter und liefert nur die

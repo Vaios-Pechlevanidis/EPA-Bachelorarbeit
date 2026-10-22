@@ -21,6 +21,7 @@ import { Building2, Plus, X, ArrowLeft, Loader2, TrendingUp, TrendingDown, Minus
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
+import { loadCompanies, sameSectorCompanies, sectorOf } from "@/lib/companies"
 import { exportCompareAsPDF } from "@/utils/pdfExport"
 import { Compare as CompareIcon, Star as StarIcon, Tag, TrendUp as TrendUpIcon } from "../icons"
 import { API_URL } from "../config"
@@ -268,6 +269,16 @@ const ComparePage = () => {
     const [companyData, setCompanyData] = useState({})
     const [loadingIds, setLoadingIds] = useState(new Set())
 
+    // Firmenliste mit Branche (sector, E6) für die Zeile unter dem Namen und den
+    // Vorschlag "gleiche Branche" (2026-10-22); dieselbe Liste wie das Suchfeld.
+    const [companyList, setCompanyList] = useState([])
+    useEffect(() => {
+        let active = true
+        loadCompanies().then((list) => { if (active) setCompanyList(list) }).catch(() => {})
+        return () => { active = false }
+    }, [])
+    const companyById = useMemo(() => Object.fromEntries(companyList.map((c) => [String(c.id), c])), [companyList])
+
     // ---------- Slot management ----------
     const updateSlotQuery = (index, value) => {
         setSlots((prev) => {
@@ -319,6 +330,20 @@ const ComparePage = () => {
             const available = DEFAULT_COLOR_INDICES.find(ci => !usedColors.includes(ci)) 
                 ?? COLOR_PALETTE.findIndex((_, i) => !usedColors.includes(i))
             return [...prev, { id: null, name: "", query: "", colorIndex: available >= 0 ? available : prev.length }]
+        })
+    }
+
+    // Vorschlag "gleiche Branche": Firma in den ersten freien Platz, sonst neuer Platz.
+    const addSuggestedCompany = (company) => {
+        if (slots.some((s) => s.id === String(company.id))) return
+        const free = slots.findIndex((s) => !s.id)
+        if (free >= 0) { selectCompanyForSlot(free, company); return }
+        if (slots.length >= MAX_COMPANIES) return
+        setSlots((prev) => {
+            const usedColors = prev.map((s) => s.colorIndex)
+            const available = DEFAULT_COLOR_INDICES.find((ci) => !usedColors.includes(ci))
+                ?? COLOR_PALETTE.findIndex((_, i) => !usedColors.includes(i))
+            return [...prev, { id: String(company.id), name: company.name, query: company.name, colorIndex: available >= 0 ? available : prev.length }]
         })
     }
 
@@ -535,6 +560,16 @@ const ComparePage = () => {
 
     // ---------- Derived data ----------
     const activeSlots = slots.filter((s) => s.id && companyData[s.id])
+
+    // Vorschlag "gleiche Branche" (2026-10-22): Bezug ist die erste gewählte Firma;
+    // vorgeschlagen werden Firmen derselben Kununu-Branche, die noch nicht gewählt sind.
+    const referenceCompany = companyById[slots.find((s) => s.id)?.id] ?? null
+    const selectedKey = slots.filter((s) => s.id).map((s) => s.id).join(",")
+    const sectorSuggestions = useMemo(
+        () => (referenceCompany ? sameSectorCompanies(companyList, referenceCompany, selectedKey.split(",").filter(Boolean)) : []),
+        [companyList, referenceCompany, selectedKey]
+    )
+    const canAddSuggestion = slots.some((s) => !s.id) || slots.length < MAX_COMPANIES
 
     // Build radar chart data
     const radarData = Object.entries(CATEGORY_LABELS).map(([key, label]) => {
@@ -814,13 +849,21 @@ const ComparePage = () => {
                                     </div>
 
                                     {slot.id ? (
-                                        <div className="flex items-center gap-2 min-h-[28px]">
-                                            <Building2 className="h-4 w-4 text-slate-400 flex-none" />
-                                            <span className="text-[13px] font-semibold text-slate-900 truncate">
-                                                {slot.name}
-                                            </span>
-                                            {loadingIds.has(slot.id) && (
-                                                <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400 flex-none" />
+                                        <div className="min-h-[28px]">
+                                            <div className="flex items-center gap-2">
+                                                <Building2 className="h-4 w-4 text-slate-400 flex-none" />
+                                                <span className="text-[13px] font-semibold text-slate-900 truncate">
+                                                    {slot.name}
+                                                </span>
+                                                {loadingIds.has(slot.id) && (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400 flex-none" />
+                                                )}
+                                            </div>
+                                            {/* Branche laut Kununu-Profil (E6) und Vergleichsgruppe */}
+                                            {(sectorOf(companyById[slot.id]) || companyById[slot.id]?.peer_group) && (
+                                                <p className="m-0 mt-1 pl-6 text-[11px] text-slate-500 truncate" title="Branche laut Kununu-Profil · Vergleichsgruppe">
+                                                    {[sectorOf(companyById[slot.id]), companyById[slot.id]?.peer_group].filter(Boolean).join(" · ")}
+                                                </p>
                                             )}
                                         </div>
                                     ) : (
@@ -850,6 +893,45 @@ const ComparePage = () => {
                                 </button>
                             )}
                         </div>
+
+                    {/* Vorschlag "gleiche Branche" (2026-10-22): nur ein Vorschlag, keine
+                        Aussage darüber, ob die Firmen vergleichbar sind */}
+                    {referenceCompany && (
+                        <div className="mt-4 pt-3 border-t border-slate-100" aria-label="Vorschlag gleiche Branche">
+                            {sectorOf(referenceCompany) ? (
+                                <>
+                                    <p className="m-0 text-[12px] text-slate-600">
+                                        <span className="font-medium text-slate-800">Gleiche Branche wie {referenceCompany.name}</span>
+                                        {" "}({sectorOf(referenceCompany)}, laut Kununu-Profil)
+                                        {sectorSuggestions.length === 0 && ": keine weitere Firma dieser Branche im Datensatz."}
+                                    </p>
+                                    {sectorSuggestions.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            {sectorSuggestions.map((c) => (
+                                                <button
+                                                    key={c.id}
+                                                    type="button"
+                                                    onClick={() => addSuggestedCompany(c)}
+                                                    disabled={!canAddSuggestion}
+                                                    title={canAddSuggestion ? `${c.name} in den Vergleich aufnehmen` : `Höchstens ${MAX_COMPANIES} Firmen; erst eine Firma entfernen`}
+                                                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[12px] text-slate-700 hover:bg-slate-50 hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    <Plus className="h-3 w-3" />
+                                                    {c.name}
+                                                    {c.review_count != null && <span className="text-[11px] text-slate-500">{c.review_count} Bew.</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p className="m-0 mt-1.5 text-[11px] text-slate-500">
+                                        Vorschlag nach Branche; ob die Firmen vergleichbar sind, zeigt die Branche nicht.
+                                    </p>
+                                </>
+                            ) : (
+                                <p className="m-0 text-[12px] text-slate-500">Für {referenceCompany.name} ist keine Branche hinterlegt; kein Vorschlag.</p>
+                            )}
+                        </div>
+                    )}
                 </DSSection>
 
                 {/* Show content only when at least 2 companies selected */}

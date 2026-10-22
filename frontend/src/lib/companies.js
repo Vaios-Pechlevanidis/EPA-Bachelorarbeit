@@ -53,3 +53,23 @@ export async function loadCompanyName(companyId) {
   const company = await loadCompany(companyId)
   return company?.name?.trim() ?? ""
 }
+
+/* Branche einer Firma (sector, laut Kununu-Profil, E6) als Anzeigetext oder null. */
+export function sectorOf(company) {
+  const s = company?.sector
+  return typeof s === "string" && s.trim() ? s.trim() : null
+}
+
+/* Firmen derselben Branche wie reference (ohne sie selbst und ohne excludeIds),
+ * nach Zahl der Bewertungen absteigend, dann nach Name. Ohne Branche: leer.
+ * Vorschlag für den Firmenvergleich (2026-10-22): "strukturell ähnlich" heißt
+ * hier nur gleiche Kununu-Branche; ob der Vergleich passt, entscheiden die
+ * Nutzenden. */
+export function sameSectorCompanies(list, reference, excludeIds = []) {
+  const sector = sectorOf(reference)
+  if (!sector || !Array.isArray(list)) return []
+  const excluded = new Set([String(reference.id), ...excludeIds.map(String)])
+  return list
+    .filter((c) => !excluded.has(String(c.id)) && sectorOf(c) === sector)
+    .sort((a, b) => (b.review_count ?? 0) - (a.review_count ?? 0) || a.name.localeCompare(b.name, "de"))
+}

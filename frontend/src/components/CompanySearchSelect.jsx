@@ -15,7 +15,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { cachedCompanies, loadCompanies } from "@/lib/companies"
+import { cachedCompanies, loadCompanies, sectorOf } from "@/lib/companies"
 
 export function CompanySearchSelect({
     value,
@@ -71,9 +71,10 @@ export function CompanySearchSelect({
         onCompanySelect(null)
     }
 
-    // Filter companies based on input
+    // Filter companies based on input: Name oder Branche (E6; "Energie" listet alle Energie-Firmen)
+    const needle = inputValue.toLowerCase()
     const filteredCompanies = companies.filter((company) =>
-        company.name.toLowerCase().includes(inputValue.toLowerCase())
+        company.name.toLowerCase().includes(needle) || (sectorOf(company)?.toLowerCase().includes(needle) ?? false)
     )
 
     return (
@@ -197,6 +198,22 @@ export function CompanySearchSelect({
                                             isDark ? "text-slate-500" : "text-slate-400"
                                         )} />
                                         <span style={{ flex: 1 }}>{company.name}</span>
+                                        {sectorOf(company) && (
+                                            <span
+                                                title="Branche laut Kununu-Profil"
+                                                style={{
+                                                    marginLeft: 8,
+                                                    fontSize: 10,
+                                                    padding: "1px 6px",
+                                                    borderRadius: 999,
+                                                    border: `1px solid ${isDark ? "var(--slate-600)" : "var(--slate-200)"}`,
+                                                    color: isDark ? "var(--slate-300)" : "var(--slate-600)",
+                                                    whiteSpace: "nowrap",
+                                                }}
+                                            >
+                                                {sectorOf(company)}
+                                            </span>
+                                        )}
                                         {company.review_count != null && (
                                             <span style={{
                                                 marginLeft: 8,
