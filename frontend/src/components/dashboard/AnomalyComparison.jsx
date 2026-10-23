@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { fmtPeriod } from "@/lib/anomalySeries"
 import { withoutTextText } from "@/lib/comparisonText"
+import { HintIcon } from "./HintIcon"
 
 /* ============================================================================
    AnomalyComparison — Vorher-Nachher-Vergleich einer auffälligen Veränderung
@@ -8,13 +9,18 @@ import { withoutTextText } from "@/lib/comparisonText"
    Zeigt, was sich in den Bewertungen zwischen den Fenstern verändert hat:
    Anzahl, Gesamtnote, Stimmung und je Schlüsselwort-Thema Anteil und Stimmung.
    Wortwahl: "Verschiebung", keine Aussage über Ursachen.
-   Drill-down aus der Tabelle (2026-10-23): Mit onDrill(thema, seite) ist jede
-   Themenzeile anklickbar und öffnet die Bewertungen, die das Thema nennen, im
-   Fenster ab dem markierten Monat (bzw. der Auswahl); der Anteil davor führt in
-   das Fenster davor. Die Seite schließt dafür diesen Dialog und öffnet die Liste.
+   Drill-down aus der Tabelle (2026-10-23): Mit onDrill(thema, seite, dimension)
+   ist jede Themenzeile anklickbar. Die Seite wechselt zur Dimension des Themas
+   (t.dimension aus der Antwort) und behält den Zeitraum des Fensters ab dem
+   markierten Monat (bzw. der Auswahl) als Auswahl; der Anteil davor nimmt das
+   Fenster davor. Themen ohne Dimension öffnen die Bewertungen, die das Thema
+   nennen. Die Seite schließt dafür diesen Dialog und öffnet die Bewertungsliste.
    ============================================================================ */
 
 const TOP_TOPICS = 6
+
+/* Erklärung der Anteile beim Darüberfahren über das Fragezeichen neben der Tabelle (2026-10-23). */
+const SHARE_HINT = "Anteil = Bewertungen des Fensters, die das Thema nennen. Eine Bewertung kann mehrere Themen nennen oder keines; deshalb ergeben die Anteile zusammen nicht 100 %."
 
 const SENTIMENT_MODE_LABEL = {
     transformer: "Transformer-Modell (German Sentiment BERT) mit der Sternebewertung als Hinweis",
@@ -91,7 +97,7 @@ function WindowHeader({ label, win, stats }) {
 
 /* labels: Bezeichnungen der beiden Fenster, Standard für eine auffällige
    Veränderung; bei freier Auswahl (E17) "Zeitraum davor" und "Auswahl".
-   onDrill(thema, "before" | "after"): Klick auf eine Themenzeile (2026-10-23). */
+   onDrill(thema, "before" | "after", dimension | null): Klick auf eine Themenzeile (2026-10-23). */
 export function AnomalyComparison({ data, loading, error, labels = { before: "davor", after: "ab dem markierten Monat" }, onDrill = null }) {
     // Kurzformen für die Tabellenköpfe ("Anteil davor" / "Anteil Auswahl").
     const short = { before: "davor", after: labels.after === "ab dem markierten Monat" ? "danach" : labels.after }
@@ -152,7 +158,10 @@ export function AnomalyComparison({ data, loading, error, labels = { before: "da
             )}
 
             <div>
-                <p className="m-0 mb-1.5 text-[12px] font-medium text-slate-800">Größte Verschiebungen je Thema</p>
+                <p className="m-0 mb-1.5 text-[12px] font-medium text-slate-800 inline-flex items-center gap-1.5">
+                    Größte Verschiebungen je Thema
+                    <HintIcon text={SHARE_HINT} label="Wie werden die Anteile gerechnet?" />
+                </p>
                 <div className="overflow-x-auto">
                     <table className="w-full text-[12px] border-collapse">
                         <thead>
@@ -172,9 +181,9 @@ export function AnomalyComparison({ data, loading, error, labels = { before: "da
                                     className={`border-t border-slate-100 ${t.low_basis ? "text-slate-500" : "text-slate-800"} ${t.topic === dimensionTopic ? "bg-amber-100" : ""}${onDrill ? " cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400" : ""}`}
                                     role={onDrill ? "button" : undefined}
                                     tabIndex={onDrill ? 0 : undefined}
-                                    title={onDrill ? `Bewertungen lesen, die ${t.topic} nennen (${labels.after})` : undefined}
-                                    onClick={onDrill ? () => onDrill(t.topic, "after") : undefined}
-                                    onKeyDown={onDrill ? (e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onDrill(t.topic, "after") } } : undefined}
+                                    title={onDrill ? (t.dimension ? `Zur Dimension ${t.topic} wechseln und die Bewertungen ${labels.after} lesen` : `Bewertungen lesen, die ${t.topic} nennen (${labels.after})`) : undefined}
+                                    onClick={onDrill ? () => onDrill(t.topic, "after", t.dimension ?? null) : undefined}
+                                    onKeyDown={onDrill ? (e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onDrill(t.topic, "after", t.dimension ?? null) } } : undefined}
                                 >
                                     <td className="py-1.5 pr-3">
                                         <span className="inline-flex items-center gap-2">
@@ -194,8 +203,8 @@ export function AnomalyComparison({ data, loading, error, labels = { before: "da
                                             <button
                                                 type="button"
                                                 className="tnum underline decoration-dotted underline-offset-2 decoration-slate-400 hover:text-slate-900 hover:decoration-solid"
-                                                title={`${t.before.mentions} Nennungen · Bewertungen lesen, die ${t.topic} nennen (${labels.before})`}
-                                                onClick={(e) => { e.stopPropagation(); onDrill(t.topic, "before") }}
+                                                title={`${t.before.mentions} Nennungen · ${t.dimension ? `zur Dimension ${t.topic} wechseln und die Bewertungen ${labels.before} lesen` : `Bewertungen lesen, die ${t.topic} nennen (${labels.before})`}`}
+                                                onClick={(e) => { e.stopPropagation(); onDrill(t.topic, "before", t.dimension ?? null) }}
                                             >
                                                 {pct(t.before.share)}
                                             </button>
@@ -223,8 +232,8 @@ export function AnomalyComparison({ data, loading, error, labels = { before: "da
 
             {onDrill && (
                 <p className="m-0 text-[11px] text-slate-500 leading-4">
-                    Drill-down: Eine Themenzeile anklicken öffnet die Bewertungen, die das Thema nennen, im Fenster „{labels.after}“;
-                    der Anteil {short.before} führt in das Fenster „{labels.before}“.
+                    Drill-down: Eine Themenzeile anklicken wechselt die Seite zur Dimension dieses Themas und öffnet ihre Bewertungen
+                    im Fenster „{labels.after}“ (der Zeitraum bleibt als Auswahl); der Anteil {short.before} nimmt das Fenster „{labels.before}“.
                 </p>
             )}
             <p className="m-0 text-[11px] text-slate-500 leading-4">

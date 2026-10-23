@@ -92,9 +92,11 @@ import { USER_EVENT_NOTE } from "@/lib/userEvents"
    Zurück zum Dashboard nimmt Quelle, Dimension und Status mit (AnomalyCard).
    Drill-down aus dem Vergleich (2026-10-23): Im Dialog des Vorher-Nachher-
    Vergleichs ist jede Themenzeile anklickbar; der Klick schließt den Dialog,
-   setzt ?thema=<Thema> und das Fenster (ab dem markierten Monat, über den
-   Anteil davor das Fenster davor) und öffnet die Bewertungsliste (openCard,
-   ExpandableCard mit open/onOpenChange).
+   wechselt die Seite zur Dimension des Themas (global, siehe oben) und behält
+   den Zeitraum des Fensters (ab dem markierten Monat, über den Anteil davor das
+   Fenster davor) als freie Auswahl ?from=&to=; dann öffnet sich die
+   Bewertungsliste (openCard, ExpandableCard mit open/onOpenChange). Themen ohne
+   Dimension setzen stattdessen den Themenfilter ?thema=<Thema>.
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -308,22 +310,53 @@ export default function AnomaliesPage() {
     // auf eine Themenzeile im Vergleich schließt dessen Dialog und öffnet die Bewertungen,
     // die das Thema nennen, im gewählten Fenster.
     const [openCard, setOpenCard] = useState(null) // "comparison" | "reviews" | null
-    const drillToTopic = (topicName, sideKey) => {
+    const drillToTopic = (topicName, sideKey, dimensionKey = null) => {
+        const spans = selectedAnomaly ? windows : selectionWindows
+        const win = spans?.[sideKey] ?? null
+        // Thema mit eigener Dimension (jede Kununu-Kategorie): Die Seite wechselt zu dieser
+        // Dimension, der Zeitraum des angeklickten Fensters bleibt als Auswahl; Bewertungen und
+        // Belege gelten dann für die Dimension (Doku 20), ein Themenfilter ist nicht mehr nötig.
+        if (dimensionKey && isDimensionOf(source, dimensionKey) && win) {
+            if (dimensionKey !== dimension) {
+                updateParams({ dimension: dimensionKey, anomaly: null, month: null, from: win.from, to: win.to, thema: null })
+                setPeriodSideState({ key: `${win.from}_${win.to}`, side: "after" })
+            } else {
+                detail?.onSide(sideKey)
+                updateParams({ thema: null })
+            }
+            setOpenCard("reviews")
+            return
+        }
         detail?.onSide(sideKey)
         updateParams({ thema: topicName })
         setOpenCard("reviews")
+    }
+    // Filtermarke im Dialogkopf: Dimension abwählen (Gesamtbewertung); eine markierte
+    // Veränderung gehört zur Reihe der Dimension, ihr aktuelles Fenster bleibt als Auswahl.
+    const clearDimension = () => {
+        const win = selectedAnomaly ? windows?.[side] ?? null : null
+        if (win) {
+            updateParams({ dimension: null, anomaly: null, month: null, from: win.from, to: win.to, thema: null })
+            setPeriodSideState({ key: `${win.from}_${win.to}`, side: "after" })
+        } else {
+            updateParams({ dimension: null, anomaly: null, thema: null })
+        }
     }
     // Karte "Markierungen": Veränderungen, Einzelmonate (?liste=einzelmonate, nur mit
     // SHOW_OUTLIER_MONTHS) oder eigene Ereignisse (?liste=ereignisse, E32).
     const listParam = searchParams.get("liste")
     const markerTab = listParam === "ereignisse" ? "events" : SHOW_OUTLIER_MONTHS && listParam === "einzelmonate" ? "outliers" : "changes"
     const setMarkerTab = (key) => updateParams({ liste: key === "outliers" ? "einzelmonate" : key === "events" ? "ereignisse" : null })
-    const selectAnomaly = (id) => updateParams({ anomaly: id, month: null, from: null, to: null })
-    const selectPeriod = (from, to) => updateParams({ from, to, month: null, anomaly: null })
+    // Der Themenfilter der Bewertungsliste (?thema=) gehört zur aktuellen Auswahl: Er wird
+    // zurückgesetzt, sobald Auswahl, Dimension, Status oder Firma wechseln (2026-10-23, Rückmeldung
+    // des Autors: alter Filter blieb nach dem Wechsel der Dimension stehen). Beim Wechsel
+    // davor / danach und der Sortierung bleibt er.
+    const selectAnomaly = (id) => updateParams({ anomaly: id, month: null, from: null, to: null, thema: null })
+    const selectPeriod = (from, to) => updateParams({ from, to, month: null, anomaly: null, thema: null })
     const selectOutlier = (period) => selectPeriod(period, period)
-    const clearSelection = () => updateParams({ anomaly: null, month: null, from: null, to: null })
+    const clearSelection = () => updateParams({ anomaly: null, month: null, from: null, to: null, thema: null })
     // Eigenes Ereignis (E32): Zeitraum als freie Auswahl, Liste "Eigene Ereignisse" aufklappen.
-    const selectUserEvent = (e) => updateParams({ from: e.date_from, to: e.date_to, month: null, anomaly: null, liste: "ereignisse" })
+    const selectUserEvent = (e) => updateParams({ from: e.date_from, to: e.date_to, month: null, anomaly: null, liste: "ereignisse", thema: null })
     // Formular öffnen: neu mit der aktuellen Auswahl bzw. dem Monat der Veränderung als Vorbelegung.
     const openNewUserEvent = () => setEventDialog({
         event: null,
@@ -382,7 +415,7 @@ export default function AnomaliesPage() {
         const id = String(company.id)
         setNames((n) => ({ ...n, [id]: company.name }))
         setQuery(company.name)
-        updateParams({ company: id, anomaly: null, month: null, from: null, to: null })
+        updateParams({ company: id, anomaly: null, month: null, from: null, to: null, thema: null })
     }
 
     return (
@@ -426,7 +459,7 @@ export default function AnomaliesPage() {
                     <StatusPicker
                         source={source}
                         value={status}
-                        onChange={(key) => updateParams({ status: key, anomaly: null })}
+                        onChange={(key) => updateParams({ status: key, anomaly: null, thema: null })}
                         counts={sourceStatus?.status_counts ?? null}
                         hint={statusHint}
                     />
@@ -435,7 +468,7 @@ export default function AnomaliesPage() {
                     <DimensionPicker
                         source={source}
                         value={dimension}
-                        onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key, anomaly: null })}
+                        onChange={(key) => updateParams({ dimension: key === OVERALL_DIMENSION.key ? null : key, anomaly: null, thema: null })}
                     />
                 )}
                 <div className="w-[260px] max-w-full flex-none">
@@ -739,6 +772,7 @@ export default function AnomaliesPage() {
                                     comparison={detail.comparison}
                                     topic={topicFilter}
                                     dimension={singleDimension ? dimension : null}
+                                    onClearDimension={singleDimension ? clearDimension : null}
                                     order={reviewOrder}
                                     onOrder={setReviewOrder}
                                     listKey={detail.listKey}
@@ -762,6 +796,7 @@ export default function AnomaliesPage() {
                                     selection={detail.evidence.selection}
                                     group={{ source, dimension, status }}
                                     dimensionOnly={singleDimension}
+                                    onClearDimension={clearDimension}
                                     scores={detail.comparison.data?.explanation_summary?.item_scores ?? null}
                                     rules={detail.comparison.data?.explanation_summary?.rules ?? null}
                                 />

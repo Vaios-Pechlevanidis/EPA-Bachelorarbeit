@@ -169,8 +169,11 @@ gleichnamige Schlüsselwort-Thema (über die Sternespalte in `rating_fields`,
   „Alle Themen“ und die Themen-Marken je Bewertung ersetzt (Doku 17); `?thema=nur` funktioniert
   weiter. *Nachtrag 2026-10-23:* Bei einer Einzeldimension enthält die Liste nur noch
   Bewertungen, die zur Dimension gehören (Kommentar zur Kategorie oder Thema; Doku 20, E34).
-  Seit demselben Tag ist jede Themenzeile des Vergleichs anklickbar und öffnet die Bewertungen,
-  die das Thema nennen (Doku 21).
+  Seit demselben Tag ist jede Themenzeile des Vergleichs anklickbar und wechselt die Seite zur
+  Dimension dieser Kategorie für den Zeitraum des Fensters (Doku 21). Ein Fragezeichen neben „Größte Verschiebungen je Thema“ erklärt seit dem
+  2026-10-23 beim Darüberfahren, dass sich die Anteile je Thema nicht zu 100 % ergänzen
+  (Mehrfachnennungen zählen in jeder Zeile, Bewertungen ohne Schlüsselwort oder Freitext in
+  keiner; Nachfrage des Autors, `HintIcon.jsx`).
 - Im Detailfenster sind die Fundstellen in allen Textfeldern markiert („Image markiert“).
 - Im Vorher-Nachher-Vergleich ist die Zeile des Themas hervorgehoben („gewählte
   Dimension“) und immer sichtbar, auch wenn sie nicht unter den sechs größten

@@ -4,6 +4,7 @@ import { FigureRow, Headline, PreviewLabel, PreviewStatus } from "./CardPreview"
 import { fmtPeriod } from "@/lib/anomalySeries"
 import { NO_CATEGORY } from "@/lib/evidenceText"
 import { evidenceMatchText, evidenceScopeEmptyText, evidenceScopeText } from "@/lib/dimensionScope"
+import { dimensionLabel } from "@/lib/ratingCategories"
 
 /* ============================================================================
    EvidenceSection — "Externe Berichte im Ereignisfenster" (Inkrement 4, E18;
@@ -126,9 +127,16 @@ function EvidenceRow({ item, score = null, rules = null }) {
     )
 }
 
-/* Umschaltung der Sortierung und Filter nach Ereignisart (Kopf des Dialogs). */
-export function ListControls({ sort, onSort, category, onCategory, categories, enabled }) {
+/* Umschaltung der Sortierung und Filter nach Ereignisart (Kopf des Dialogs).
+   dimension (2026-10-23): gilt die Dimension als Filter, heißt die Grundauswahl des
+   Feldes nicht "Alle Ereignisarten", sondern wie die Dimension ("Arbeitsatmosphäre"):
+   alle Belege zur Dimension; eine Ereignisart darunter schränkt weiter ein. */
+export function ListControls({ sort, onSort, category, onCategory, categories, enabled, dimension = null }) {
     const hint = enabled ? "" : "Relevanz und Ereignisart folgen aus den Erklärungsansätzen oben; sie werden geladen…"
+    const allLabel = dimension ? dimensionLabel(dimension) : "Alle Ereignisarten"
+    const selectTitle = dimension
+        ? `Belege zur Dimension ${dimensionLabel(dimension)}; eine Ereignisart darunter zeigt nur diese (aus Schlüsselwörtern im Titel)`
+        : "Nur Belege dieser Ereignisart (aus Schlüsselwörtern im Titel)"
     return (
         <>
             <div className="ds-time-filter" role="group" aria-label="Sortierung der Belege" title={hint || "Sortierung: Datum (neueste zuerst) oder Relevanz (Rang der Erklärungsansätze)"}>
@@ -151,9 +159,9 @@ export function ListControls({ sort, onSort, category, onCategory, categories, e
                 onChange={(e) => onCategory(e.target.value)}
                 disabled={!enabled}
                 aria-label="Filter nach Ereignisart"
-                title={hint || "Nur Belege dieser Ereignisart (aus Schlüsselwörtern im Titel)"}
+                title={hint || selectTitle}
             >
-                <option value="">Alle Ereignisarten</option>
+                <option value="">{allLabel}</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                 <option value={NO_CATEGORY}>ohne Ereignisart</option>
             </select>

@@ -754,6 +754,19 @@ def topic_for_dimension(source: str, dimension: str) -> Optional[str]:
     )
 
 
+def dimension_for_topic(source: str, topic: str) -> Optional[str]:
+    """Dimension der Erkennung zu einem Schlüsselwort-Thema (Umkehrung von
+    ``topic_for_dimension``, über ``rating_fields``), z. B. ``"Image"`` → ``image``;
+    None ohne passende Sternespalte. Für den Drill-down aus dem Vergleich (2026-10-23)."""
+    from services.rating_series_service import DIMENSIONS_BY_SOURCE, OVERALL_DIMENSION, value_column  # vermeidet Importzyklus
+
+    fields = (topic_definitions_for(source).get(topic) or {}).get("rating_fields") or []
+    for dimension in DIMENSIONS_BY_SOURCE.get(source, []):
+        if dimension != OVERALL_DIMENSION and value_column(source, dimension) in fields:
+            return dimension
+    return None
+
+
 def topic_spans(text: Any, topic: str, source: Optional[str]) -> List[List[int]]:
     """Fundstellen der Schlüsselwörter eines Themas in ``text`` als
     ``[[start, ende], ...]`` (Zeichenpositionen, Ende exklusiv), sortiert und
@@ -772,7 +785,7 @@ def topic_spans(text: Any, topic: str, source: Optional[str]) -> List[List[int]]
 
 
 __all__ = [
-    "topic_for_dimension", "topic_spans",
+    "topic_for_dimension", "dimension_for_topic", "topic_spans",
     "TOPIC_TEXT_FIELDS", "EXPLANATION_TOPIC_TEXT_FIELDS", "EMPLOYEE_TOPIC_DEFINITIONS", "CANDIDATE_TOPIC_DEFINITIONS",
     "QUOTE_EXCLUDED_FIELDS", "TOPIC_DEFINITIONS_BY_SOURCE", "topic_definitions_for", "topics_in_review", "analyze_topic",
     "NEUTRAL_FROM", "POSITIVE_FROM", "CLASSIFICATION_BASIS", "rating_class",

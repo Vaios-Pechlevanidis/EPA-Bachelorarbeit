@@ -40,6 +40,18 @@ class TestTopicForDimension:
         with pytest.raises(ValueError):
             topic_for_dimension("employee", "schnelle_antwort")
 
+    def test_dimension_for_topic_is_the_inverse(self):
+        """Test: Drill-down aus dem Vergleich (2026-10-23): jedes Thema führt zurück zu seiner Dimension."""
+        from services.keyword_topic_service import dimension_for_topic
+        from services.rating_series_service import DIMENSIONS_BY_SOURCE, OVERALL_DIMENSION
+
+        for source, dims in DIMENSIONS_BY_SOURCE.items():
+            for dim in dims:
+                if dim != OVERALL_DIMENSION:
+                    assert dimension_for_topic(source, topic_for_dimension(source, dim)) == dim, (source, dim)
+        assert dimension_for_topic("employee", "Image") == "image"
+        assert dimension_for_topic("employee", "Schnelle Antwort") is None and dimension_for_topic("employee", "gibtsnicht") is None
+
 
 class TestTopicSpans:
 

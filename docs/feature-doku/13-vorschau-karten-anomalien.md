@@ -173,3 +173,12 @@ eine Spalte.
 - Sollen die Themenbalken absolut skaliert werden (z. B. 50 Pp. = volle Breite), damit
   Auswahlen untereinander vergleichbar sind?
 - Rückmeldung der Interviewpartner (DZ3) zur Lesbarkeit der Kennzahlen und Balken.
+
+## Nachtrag 2026-10-23: Kopf der Dialoge
+
+Im Dialog einer Karte (`ExpandableCard`) nehmen Titel und Untertitel die Restbreite und brechen
+um; die Schalter rechts bleiben in einer Reihe und rücken nur bei schmalem Fenster als Ganzes
+unter den Titel. Vorher brachen die Schalter einzeln um, sobald der Untertitel länger wurde (etwa
+beim Wechsel davor / ab dem markierten Monat in „Bewertungen des Zeitraums“), und der Kopf sprang
+(Rückmeldung des Autors). Geprüft bei 1800 px (eine Reihe in beiden Fenstern, Kopf 91 px hoch) und
+bei 577 px (Schalter unter dem Titel, kein Überlauf).

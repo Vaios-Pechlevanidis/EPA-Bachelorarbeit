@@ -60,7 +60,7 @@ import calendar
 import threading
 from typing import Any, Dict, Iterable, List, Optional
 
-from services.keyword_topic_service import EXPLANATION_TOPIC_TEXT_FIELDS, topic_definitions_for, topic_for_dimension, topics_in_review
+from services.keyword_topic_service import EXPLANATION_TOPIC_TEXT_FIELDS, dimension_for_topic, topic_definitions_for, topic_for_dimension, topics_in_review
 from services.rating_series_service import month_key
 from services.review_service import review_text, sort_newest_first
 
@@ -279,7 +279,8 @@ def compare_windows(
 
         {"before": {...}, "after": {...},      # n_reviews, mean_rating, n_with_text, n_without_text, sentiment, ...
          "rating_shift", "polarity_shift",
-         "topics": [{"topic", "before": {"mentions", "share", "sentiment"},
+         "topics": [{"topic", "dimension",   # Dimension der Erkennung zum Thema (Drill-down, 2026-10-23)
+                     "before": {"mentions", "share", "sentiment"},
                      "after": {...}, "share_shift_pp", "polarity_shift",
                      "low_basis"}, ...],      # nach |share_shift_pp| absteigend
          "low_basis", "low_basis_rule", "sentiment_mode", "sentiment_sample"}
@@ -295,7 +296,7 @@ def compare_windows(
 
     topic_rows: List[Dict[str, Any]] = []
     for topic in topics:
-        entry: Dict[str, Any] = {"topic": topic}
+        entry: Dict[str, Any] = {"topic": topic, "dimension": dimension_for_topic(source, topic)}
         for side, w in windows.items():
             mentions = w["_mentions"][topic]
             entry[side] = {

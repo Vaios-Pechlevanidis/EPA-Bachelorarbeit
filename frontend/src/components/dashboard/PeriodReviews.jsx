@@ -148,9 +148,15 @@ const selectClass =
 
 /* Sortierung nach Datum und Themenfilter im Kopf des Dialogs. topics =
    {counts: [{topic, n}], withoutTopic} des Zeitraums (null, solange er lädt);
-   value = gefiltertes Thema oder null. */
-export function ReviewListControls({ order, onOrder, topics, value, onTopic }) {
+   value = gefiltertes Thema oder null. dimension (2026-10-23): gilt die Dimension
+   als Filter, heißt die Grundauswahl des Feldes wie die Dimension statt "Alle Themen"
+   (alle Bewertungen zur Dimension; ein Thema darunter schränkt weiter ein). */
+export function ReviewListControls({ order, onOrder, topics, value, onTopic, dimension = null }) {
     const counts = topics?.counts ?? []
+    const allLabel = dimension ? dimensionLabel(dimension) : "Alle Themen"
+    const selectTitle = dimension
+        ? `Bewertungen zur Dimension ${dimensionLabel(dimension)}; ein Thema darunter zeigt nur die, die es nennen (Zahl = Bewertungen des Zeitraums mit dem Thema)`
+        : "Nur Bewertungen, die dieses Thema nennen (Schlüsselwort in Titel, Freitext oder Kategorie-Kommentar); Zahl = Bewertungen des Zeitraums mit dem Thema"
     // Gewähltes Thema ohne Treffer im Zeitraum (z. B. nach dem Wechsel davor / danach) bleibt wählbar.
     const options = value && !counts.some((c) => c.topic === value) ? [...counts, { topic: value, n: 0 }] : counts
     return (
@@ -174,9 +180,9 @@ export function ReviewListControls({ order, onOrder, topics, value, onTopic }) {
                 onChange={(e) => onTopic(e.target.value || null)}
                 disabled={!topics && !value}
                 aria-label="Filter nach Thema"
-                title="Nur Bewertungen, die dieses Thema nennen (Schlüsselwort in Titel, Freitext oder Kategorie-Kommentar); Zahl = Bewertungen des Zeitraums mit dem Thema"
+                title={selectTitle}
             >
-                <option value="">Alle Themen</option>
+                <option value="">{allLabel}</option>
                 {options.map((c) => <option key={c.topic} value={c.topic}>{c.topic} ({c.n})</option>)}
             </select>
         </>

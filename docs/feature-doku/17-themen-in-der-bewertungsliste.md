@@ -31,7 +31,10 @@ Einzelbewertungen im Dialog. Dort gilt jetzt:
 Filter und Sortierung stehen in der Adresse (`?thema=Kommunikation`, `?sortierung=aelteste`),
 bleiben beim Wechsel zwischen „davor“ und „ab dem markierten Monat“ erhalten und lassen sich
 teilen. Beim Wechsel zwischen Mitarbeitenden und Bewerbenden wird der Themenfilter
-zurückgesetzt, weil beide Quellen verschiedene Themen haben. Unter der Liste erklärt ein
+zurückgesetzt, weil beide Quellen verschiedene Themen haben. *Nachtrag 2026-10-23:* Er wird auch
+zurückgesetzt, wenn Dimension, Status, Firma oder die Auswahl (Veränderung, Einzelmonat,
+Zeitraum, eigenes Ereignis) wechseln; der Filter gehört zur aktuellen Auswahl (Rückmeldung des
+Autors: ein alter Filter blieb nach dem Wechsel der Dimension stehen). Unter der Liste erklärt ein
 Hinweis, woher die Themen kommen, und nennt, wie viele Bewertungen des Zeitraums kein Thema
 haben.
 

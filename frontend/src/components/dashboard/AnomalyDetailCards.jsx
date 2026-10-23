@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowDownRight, ArrowUpRight, GitCompareArrows, Lightbulb, MessageSquareText, Newspaper } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight, GitCompareArrows, Layers, Lightbulb, MessageSquareText, Newspaper, X } from "lucide-react"
 import { ExpandableCard } from "./ExpandableCard"
 import { AnomalyComparison } from "./AnomalyComparison"
 import { ExplanationContent, ExplanationPreview } from "./ExplanationPanel"
@@ -35,6 +35,35 @@ import { dimensionLabel } from "@/lib/ratingCategories"
 
 const HINT = "Karte anklicken öffnet Detailansicht"
 const TOP_SHIFTS = 3
+
+/* Filtermarke im Kopf der Dialoge (2026-10-23, Rückmeldung des Autors: die Liste war auf die
+   Dimension eingeschränkt, die Schalterleiste zeigte es nicht): "Dimension: Arbeitsatmosphäre"
+   in Bernstein wie die Fundstellen; das Kreuz hebt den Filter auf (Gesamtbewertung, der
+   Zeitraum bleibt). dimension = Schlüssel, onClear = Rücksetzen oder null. */
+export function DimensionFilterChip({ dimension, onClear = null }) {
+    if (!dimension) return null
+    const label = dimensionLabel(dimension)
+    return (
+        <span
+            className="inline-flex items-center gap-1.5 h-7 pl-2 pr-1 rounded-md border border-amber-300 bg-amber-50 text-[12px] text-slate-800"
+            title={`Nur zur Dimension ${label}: Bewertungen mit Kommentar zur Kategorie oder Schlüsselwort ihres Themas, Meldungen mit Schlüsselwort im Titel oder zugeordneter Ereignisart`}
+        >
+            <Layers className="w-3.5 h-3.5 text-amber-700" aria-hidden="true" />
+            <span>Dimension: <span className="font-medium">{label}</span></span>
+            {onClear ? (
+                <button
+                    type="button"
+                    onClick={onClear}
+                    aria-label={`Filter aufheben: Dimension ${label} abwählen`}
+                    title="Filter aufheben: zur Gesamtbewertung wechseln, der Zeitraum bleibt"
+                    className="inline-flex items-center justify-center w-5 h-5 rounded text-slate-500 hover:bg-amber-100 hover:text-slate-900"
+                >
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+            ) : null}
+        </span>
+    )
+}
 
 const num = (v, digits = 2) =>
     v == null ? "–" : Number(v).toLocaleString("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits })
@@ -175,8 +204,9 @@ function ReviewsPreview({ pages, comparison, side, labels, span, filterTopic, di
    des Fensters; topic = {value, onChange} für den Themenfilter (gefiltertes Thema
    oder null); order/onOrder = "desc" | "asc" (Sortierung nach Datum); dimension =
    Schlüssel der Einzeldimension, wenn sie als Filter gilt (2026-10-23), sonst null;
-   open / onOpenChange steuern den Dialog von der Seite aus (Drill-down aus dem Vergleich). */
-export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic, order, onOrder, listKey, emptyText, footnote, dimension = null, open = undefined, onOpenChange = null }) {
+   onClearDimension hebt den Filter auf (Marke im Dialogkopf); open / onOpenChange
+   steuern den Dialog von der Seite aus (Drill-down aus dem Vergleich). */
+export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic, order, onOrder, listKey, emptyText, footnote, dimension = null, onClearDimension = null, open = undefined, onOpenChange = null }) {
     const span = window ? selectionLabel(window) : ""
     const withoutTopic = pages.topicCounts?.withoutTopic
     return (
@@ -192,8 +222,9 @@ export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side,
             onOpenChange={onOpenChange}
             actions={({ modal }) => (modal ? (
                 <>
+                    <DimensionFilterChip dimension={dimension} onClear={onClearDimension} />
                     <WindowSideToggle value={side} onChange={onSide} labels={labels} />
-                    <ReviewListControls order={order} onOrder={onOrder} topics={pages.topicCounts} value={topic.value} onTopic={topic.onChange} />
+                    <ReviewListControls order={order} onOrder={onOrder} topics={pages.topicCounts} value={topic.value} onTopic={topic.onChange} dimension={dimension} />
                 </>
             ) : null)}
         >
@@ -251,8 +282,9 @@ export function ExplanationCard({ eyebrow, subtitle, comparison, onSelectPeriod 
    group = {source, dimension, status} wie die Erkennung; scores und rules aus
    explanation_summary des Vergleichs (null, solange er lädt). Sortierung und
    Filter bleiben beim Wechsel der Auswahl erhalten (wie bisher). dimensionOnly:
-   nur Belege zur Einzeldimension der Gruppe (2026-10-23). */
-export function EvidenceCard({ eyebrow, subtitle, companyId, anomalyId = null, selection = null, group = {}, scores = null, rules = null, dimensionOnly = false }) {
+   nur Belege zur Einzeldimension der Gruppe (2026-10-23); onClearDimension hebt den
+   Filter auf (Marke im Dialogkopf). */
+export function EvidenceCard({ eyebrow, subtitle, companyId, anomalyId = null, selection = null, group = {}, scores = null, rules = null, dimensionOnly = false, onClearDimension = null }) {
     const evidence = useEvidence(companyId, { anomalyId, selection, ...group, dimensionOnly })
     const [sort, setSort] = useState("date")
     const [category, setCategory] = useState("")
@@ -267,8 +299,13 @@ export function EvidenceCard({ eyebrow, subtitle, companyId, anomalyId = null, s
             basis="external"
             accent="bg-slate-500"
             hint={HINT}
-            actions={({ modal }) => (modal && showControls ? (
-                <ListControls sort={sort} onSort={setSort} category={category} onCategory={setCategory} categories={list.categories} enabled={Boolean(scores)} />
+            actions={({ modal }) => (modal ? (
+                <>
+                    {dimensionOnly && <DimensionFilterChip dimension={group.dimension} onClear={onClearDimension} />}
+                    {showControls && (
+                        <ListControls sort={sort} onSort={setSort} category={category} onCategory={setCategory} categories={list.categories} enabled={Boolean(scores)} dimension={dimensionOnly ? group.dimension ?? null : null} />
+                    )}
+                </>
             ) : null)}
         >
             {({ modal }) => (modal

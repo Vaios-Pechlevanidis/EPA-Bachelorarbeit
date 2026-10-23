@@ -137,8 +137,12 @@ export function ExpandableCard({
                     aria-describedby={undefined}
                 >
                     <span aria-hidden="true" className={`block h-[3px] w-full ${accent}`} />
-                    <div className="px-5 py-4 pr-14 border-b border-slate-200 flex items-start justify-between gap-3 flex-shrink-0">
-                        <div className="flex items-start gap-2.5 min-w-0">
+                    {/* Kopf des Dialogs (Korrektur 2026-10-23): Titel und Untertitel nehmen die Restbreite
+                        und brechen um; die Schalter bleiben in einer Reihe und rücken nur bei schmalem
+                        Fenster als Ganzes unter den Titel. Vorher brachen die Schalter einzeln um, sobald
+                        der Untertitel länger wurde (z. B. beim Wechsel davor / danach), und der Kopf sprang. */}
+                    <div className="px-5 py-4 pr-14 border-b border-slate-200 flex flex-wrap items-start justify-between gap-x-3 gap-y-2 flex-shrink-0">
+                        <div className="flex items-start gap-2.5 min-w-[260px] flex-1">
                             <span className="w-9 h-9 rounded-md grid place-items-center bg-slate-100 text-slate-600 flex-none [&_svg]:w-[18px] [&_svg]:h-[18px]">
                                 {icon}
                             </span>
@@ -152,7 +156,7 @@ export function ExpandableCard({
                             </div>
                         </div>
                         {actions && (
-                            <div className="flex items-center gap-2 flex-wrap justify-end">{render(actions, { modal: true })}</div>
+                            <div className="flex items-center gap-2 flex-wrap justify-end flex-none max-w-full ml-auto">{render(actions, { modal: true })}</div>
                         )}
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
