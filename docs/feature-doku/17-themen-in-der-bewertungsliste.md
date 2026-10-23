@@ -6,7 +6,7 @@
 | Anforderungen | keine eigene Anforderung aus der Prüfliste; Wunsch des Autors (2026-10-18): bei den Bewertungen des Zeitraums das jeweilige Thema zeigen, nach Thema filtern und auf- oder absteigend nach dem Datum sortieren, an dem die Bewertung geschrieben wurde |
 | Entscheidungen | keine neue; Themenregel aus E10 (Schlüsselwort-Themen) mit den Feldern der Korrektur E23 (Kategorie-Kommentare) |
 | Status | umgesetzt (2026-10-18), nicht committet; keine neuen Parameter |
-| Stand | 2026-10-18 |
+| Stand | 2026-10-18; Nachtrag 2026-10-23: bei einer Einzeldimension gilt der Themenfilter innerhalb der Bewertungen, die zur Dimension gehören, und das Auswahlfeld zählt nur diese (Doku 20, E34) |
 
 ## 1. Vorstellung
 

@@ -4,6 +4,7 @@ import ReviewDetailModal from "./modals/ReviewDetailModal"
 import { statusLabel } from "@/lib/reviewerStatus"
 import { HighlightedText } from "./HighlightedText"
 import { REVIEW_PAGE_SIZE } from "@/hooks/useReviewPages"
+import { dimensionLabel } from "@/lib/ratingCategories"
 
 /* ============================================================================
    PeriodReviews — Bewertungen eines Vergleichsfensters (Inkrement 2).
@@ -16,6 +17,11 @@ import { REVIEW_PAGE_SIZE } from "@/hooks/useReviewPages"
    der Themenfilter lässt nur Bewertungen eines Themas übrig (dessen Fundstellen
    sind dann markiert), die Sortierung ordnet nach dem Tag, an dem die Bewertung
    geschrieben wurde (neueste oder älteste zuerst).
+   Dimension als globaler Filter (2026-10-23): Mit einer Einzeldimension (dimension)
+   enthält die Liste nur Bewertungen, die zur Dimension gehören; die Sternespalte
+   zeigt dann die Sterne der Dimension (die Gesamtnote klein darunter) und der
+   Textauszug, wenn vorhanden, den Kommentar zur Kategorie statt des allgemeinen
+   Textauszugs (Fundstellen markiert).
    ============================================================================ */
 
 const WINDOW_SIDES = [
@@ -69,9 +75,12 @@ function TopicTags({ topics, marked }) {
     )
 }
 
-function ReviewRow({ item, onOpen, topic }) {
+function ReviewRow({ item, onOpen, topic, dimension = null }) {
     const review = item.fullReview ?? {}
     const status = statusLabel(review.status)
+    // Bezug zur gewählten Dimension (Sterne, Kommentar zur Kategorie), nur mit Filter.
+    const dim = dimension ? item.dimension ?? null : null
+    const dimLabel = dimension ? dimensionLabel(dimension) : ""
     return (
         <li className="border-t border-slate-100 first:border-t-0">
             <button
@@ -80,10 +89,30 @@ function ReviewRow({ item, onOpen, topic }) {
                 className="w-full text-left flex items-start gap-3 py-2.5 px-2 -mx-2 rounded-md hover:bg-slate-50 transition-colors"
             >
                 <span className="w-[76px] flex-none text-[11px] text-slate-500 tnum pt-0.5">{fmtDay(review.datum)}</span>
-                <span className="w-[46px] flex-none inline-flex items-center gap-1 text-[12px] font-semibold text-slate-800 tnum pt-px">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" strokeWidth={1.5} aria-hidden="true" />
-                    {fmtStars(review.durchschnittsbewertung)}
-                </span>
+                {/* Sternespalte: mit gewählter Dimension deren Sterne, die Gesamtnote klein darunter;
+                    sonst die Gesamtnote wie bisher. */}
+                {dim && dim.rating != null ? (
+                    <span className="w-[64px] flex-none flex flex-col pt-px">
+                        <span
+                            className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-800 tnum"
+                            title={`Sterne der Dimension ${dimLabel} in dieser Bewertung`}
+                        >
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" strokeWidth={1.5} aria-hidden="true" />
+                            {fmtStars(dim.rating)}
+                        </span>
+                        <span className="text-[10.5px] text-slate-500 tnum leading-tight" title="Gesamtbewertung dieser Bewertung">
+                            Gesamt {fmtStars(review.durchschnittsbewertung)}
+                        </span>
+                    </span>
+                ) : (
+                    <span
+                        className={`${dim ? "w-[64px]" : "w-[46px]"} flex-none inline-flex items-center gap-1 text-[12px] font-semibold text-slate-800 tnum pt-px`}
+                        title={dim ? `Gesamtbewertung; keine Sterne für ${dimLabel} in dieser Bewertung` : undefined}
+                    >
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" strokeWidth={1.5} aria-hidden="true" />
+                        {fmtStars(review.durchschnittsbewertung)}
+                    </span>
+                )}
                 <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 min-w-0">
                         <span className="text-[12.5px] font-medium text-slate-900 truncate">{review.titel || "Ohne Titel"}</span>
@@ -94,7 +123,12 @@ function ReviewRow({ item, onOpen, topic }) {
                         )}
                     </span>
                     <span className="block mt-0.5 text-[12px] text-slate-500 leading-snug line-clamp-2">
-                        {item.preview
+                        {dim?.comment ? (
+                            <>
+                                <span className="text-slate-400">Kommentar zu {dimLabel} · </span>
+                                <HighlightedText text={dim.comment} spans={item.highlights?.comment} title={topic ? `Thema ${topic}` : undefined} />
+                            </>
+                        ) : item.preview
                             ? <HighlightedText text={item.preview} spans={item.highlights?.preview} title={topic ? `Thema ${topic}` : undefined} />
                             : "Kein Freitext."}
                     </span>
@@ -149,8 +183,9 @@ export function ReviewListControls({ order, onOrder, topics, value, onTopic }) {
     )
 }
 
-/* Liste mit Nachladen. pages: Rückgabe von useReviewPages. */
-export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in diesem Zeitraum." }) {
+/* Liste mit Nachladen. pages: Rückgabe von useReviewPages; dimension: Schlüssel der
+   Einzeldimension, wenn sie als Filter gilt (2026-10-23), sonst null. */
+export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in diesem Zeitraum.", dimension = null }) {
     const { items, total, loading, loadingMore, error, hasMore, loadMore } = pages
     const topic = pages.markedTopic ?? null
     const [openIndex, setOpenIndex] = useState(null)
@@ -177,7 +212,7 @@ export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in dies
         <>
             <ul className="m-0 p-0 list-none">
                 {items.map((item, i) => (
-                    <ReviewRow key={`${item.id}-${i}`} item={item} onOpen={() => setOpenIndex(i)} topic={topic} />
+                    <ReviewRow key={`${item.id}-${i}`} item={item} onOpen={() => setOpenIndex(i)} topic={topic} dimension={dimension} />
                 ))}
             </ul>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
@@ -202,6 +237,7 @@ export function PeriodReviewList({ pages, emptyText = "Keine Bewertungen in dies
                 currentIndex={openIndex ?? 0}
                 onNavigate={navigate}
                 highlightTopic={topic}
+                dimension={dimension}
             />
         </>
     )

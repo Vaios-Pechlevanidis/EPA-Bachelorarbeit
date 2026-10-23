@@ -1,5 +1,5 @@
 import * as React from "react"
-import { RATING_CATEGORIES as ratingCategories } from "@/lib/ratingCategories"
+import { RATING_CATEGORIES as ratingCategories, dimensionLabel } from "@/lib/ratingCategories"
 import { statusLabel } from "@/lib/reviewerStatus"
 import { HighlightedText } from "../HighlightedText"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
@@ -119,15 +119,24 @@ function Section({ icon, title, eyebrow, tone = "neutral", action, children }) {
 export default function ReviewDetailModal({
   open, onOpenChange, reviewDetail, allReviewDetails = [], currentIndex = 0, onNavigate,
   highlightTopic = null,  // Name des Schlüsselwort-Themas, dessen Fundstellen markiert sind (reviewDetail.highlights)
+  dimension = null,       // Schlüssel der Einzeldimension als Filter (2026-10-23): Kopfblock mit den Sternen der Dimension, Abschnitt mit dem Kommentar zur Kategorie (reviewDetail.dimension)
 }) {
   if (!reviewDetail || !reviewDetail.fullReview) return null
 
   const { fullReview } = reviewDetail
+  const dim = dimension ? reviewDetail.dimension ?? null : null
+  const dimRating = dim?.rating != null ? Number(dim.rating) : null
   const hasMultiple = allReviewDetails.length > 1
   const canPrev = currentIndex > 0
   const canNext = currentIndex < allReviewDetails.length - 1
   const overall = Number(fullReview.durchschnittsbewertung)
   const overallTone = ratingTone(overall)
+  // Kopfblock (2026-10-23): mit gewählter Dimension deren Sterne groß und in ihrer Farbe,
+  // die Gesamtbewertung als kleinere Zeile darunter; sonst die Gesamtbewertung wie bisher.
+  const dimLabel = dimension ? dimensionLabel(dimension) : ""
+  const headIsDimension = dimRating != null && Number.isFinite(dimRating)
+  const headRating = headIsDimension ? dimRating : overall
+  const headTone = ratingTone(headRating)
 
   const goPrev = () => canPrev && onNavigate?.(currentIndex - 1)
   const goNext = () => canNext && onNavigate?.(currentIndex + 1)
@@ -156,13 +165,13 @@ export default function ReviewDetailModal({
         style={{ width: "82vw", maxWidth: "82vw", height: "88vh", maxHeight: "88vh" }}
       >
         {/* Tonaler Akzentbalken oben (basierend auf Gesamtbewertung) */}
-        <span aria-hidden="true" className={`block h-[3px] w-full ${overallTone.bar}`} />
+        <span aria-hidden="true" className={`block h-[3px] w-full ${headTone.bar}`} />
 
         {/* ── Header ── */}
         <DialogTitle className="sr-only">{fullReview.titel || "Review Details"}</DialogTitle>
         <div className="px-5 py-3 pr-14 border-b border-slate-200 flex items-center justify-between gap-3 flex-shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className={`w-7 h-7 rounded-md grid place-items-center flex-none ${overallTone.bg} ${overallTone.text} [&_svg]:w-[14px] [&_svg]:h-[14px]`}>
+            <span className={`w-7 h-7 rounded-md grid place-items-center flex-none ${headTone.bg} ${headTone.text} [&_svg]:w-[14px] [&_svg]:h-[14px]`}>
               <MessageSquare />
             </span>
             <div className="flex items-center gap-x-3 gap-y-1 flex-wrap min-w-0">
@@ -224,33 +233,63 @@ export default function ReviewDetailModal({
         <div className="flex-1 overflow-y-auto bg-slate-50">
           <div className="p-5 space-y-4">
 
-            {/* Gesamtbewertung — prominent */}
-            {Number.isFinite(overall) && (
-              <div className={`bg-white border ${overallTone.border} rounded-lg overflow-hidden shadow-xs`}>
+            {/* Kopfblock — prominent: gewählte Dimension (2026-10-23) oder Gesamtbewertung */}
+            {Number.isFinite(headRating) && (
+              <div className={`bg-white border ${headTone.border} rounded-lg overflow-hidden shadow-xs`}>
                 <div className="px-5 py-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className={`w-10 h-10 rounded-md grid place-items-center flex-none ${overallTone.bg} ${overallTone.text} [&_svg]:w-5 [&_svg]:h-5`}>
+                    <span className={`w-10 h-10 rounded-md grid place-items-center flex-none ${headTone.bg} ${headTone.text} [&_svg]:w-5 [&_svg]:h-5`}>
                       <Star className="fill-current" />
                     </span>
                     <div>
                       <p className="m-0 mb-0.5 font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">
-                        GESAMTBEWERTUNG
+                        {headIsDimension ? `${dimLabel} · GEWÄHLTE DIMENSION` : "GESAMTBEWERTUNG"}
                       </p>
-                      <StarRating rating={overall} size="lg" />
+                      <StarRating rating={headRating} size="lg" />
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`m-0 text-[36px] font-semibold tnum tracking-tight leading-none ${overallTone.text}`}>
-                      {fmt(overall, 1)}
+                    <p className={`m-0 text-[36px] font-semibold tnum tracking-tight leading-none ${headTone.text}`} title={headIsDimension ? `Sterne der Dimension ${dimLabel} in dieser Bewertung` : undefined}>
+                      {fmt(headRating, 1)}
                     </p>
                     <p className="m-0 mt-1 text-[11px] text-slate-500 tnum">von 5,0</p>
                   </div>
                 </div>
+                {/* Mit gewählter Dimension: Gesamtbewertung als kleinere Zeile */}
+                {headIsDimension && Number.isFinite(overall) && (
+                  <div className="px-5 py-2 border-t border-slate-100 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="font-mono text-[10px] tracking-[0.06em] uppercase text-slate-500 leading-none">Gesamtbewertung</span>
+                      <StarRating rating={overall} size="sm" />
+                    </div>
+                    <span className={`font-semibold tnum text-[14px] ${overallTone.text}`}>{fmt(overall, 1)}</span>
+                  </div>
+                )}
                 {/* Tonaler Fortschrittsbalken am unteren Rand */}
                 <div className="h-1 bg-slate-100">
-                  <div className={`h-full ${overallTone.bar}`} style={{ width: `${(overall / 5) * 100}%` }} />
+                  <div className={`h-full ${headTone.bar}`} style={{ width: `${(headRating / 5) * 100}%` }} />
                 </div>
               </div>
+            )}
+
+            {/* Gewählte Dimension (2026-10-23): Kommentar zur Kategorie; die Sterne stehen im Kopfblock */}
+            {dim && (
+              <Section
+                icon={<Star />}
+                eyebrow={`KOMMENTAR ZUR KATEGORIE${headIsDimension ? "" : " · GEWÄHLTE DIMENSION"}`}
+                title={dimLabel}
+                tone="info"
+              >
+                {dim.comment ? (
+                  <p className="m-0 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
+                    <HighlightedText text={dim.comment} spans={reviewDetail.highlights?.comment} title={highlightTopic ? `Thema ${highlightTopic}` : undefined} />
+                  </p>
+                ) : (
+                  <p className="m-0 text-[13px] text-slate-400 italic">
+                    Kein Kommentar zu dieser Kategorie{dim.mentions_topic ? "; das Thema wird im Text genannt (markiert)" : ""}.
+                  </p>
+                )}
+              </Section>
             )}
 
             {/* Review-Texte: alle Textfelder im gemeinsamen Raster */}
@@ -336,6 +375,9 @@ export default function ReviewDetailModal({
                           {label}
                         </span>
                         <div className="flex items-center gap-2 flex-none">
+                          {key === dimension && (
+                            <span className="text-[10px] uppercase tracking-wider text-amber-700" title="Steht auch im Kopfblock oben">gewählte Dimension</span>
+                          )}
                           <StarRating rating={rating} size="sm" />
                           <span className={`font-semibold tnum text-[14px] min-w-[32px] text-right ${t.text}`}>
                             {fmt(rating, 1)}

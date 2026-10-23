@@ -11,6 +11,7 @@ import { selectionLabel } from "@/lib/anomalySeries"
 import { useEvidence, useEvidenceList } from "@/hooks/useEvidence"
 import { evidenceSubtitle } from "@/lib/evidenceText"
 import { explanationSubtitle } from "@/lib/explanationText"
+import { dimensionLabel } from "@/lib/ratingCategories"
 
 /* ============================================================================
    AnomalyDetailCards — die vier Karten unter der Drill-down-Leiste der Seite
@@ -22,6 +23,10 @@ import { explanationSubtitle } from "@/lib/explanationText"
    Ansicht im Dialog (ExpandableCard, 90 % der Breite, 85 % der Höhe). Schalter
    (davor / danach, Thema, Sortierung, Ereignisart) stehen nur im Dialog.
    Inhalte und Wortwahl sind unverändert: keine Aussage über Ursachen.
+   Dimension als globaler Filter (2026-10-23): Mit einer Einzeldimension zeigen
+   Bewertungskarte und Belegkarte nur, was zur Dimension gehört (dimension in
+   ReviewsCard, dimensionOnly in EvidenceCard); die Vorschau nennt die Zählung
+   vor und nach dem Filter und das Mittel der Sterne der Dimension.
    Die Karten gelten für eine ausgewählte Veränderung (Inkrement 2) ebenso wie
    für die freie Auswahl und den Einzelmonat (E14, E17); labels nennt die
    beiden Fenster ("davor" / "ab dem markierten Monat" bzw. "Zeitraum davor" /
@@ -125,22 +130,28 @@ export function ComparisonCard({ eyebrow, title, subtitle, comparison, labels, i
 /* Kennzahl: Anzahl der Bewertungen im gewählten Fenster mit mittlerer Note (aus
    dem Vergleich, nur ohne Themenfilter); darunter die Stimmung der Freitexte je
    Fenster als gestapelter Balken, damit der Unterschied davor / danach sichtbar ist.
-   filterTopic: gefiltertes Thema oder null. */
-function ReviewsPreview({ pages, comparison, side, labels, span, filterTopic }) {
+   filterTopic: gefiltertes Thema oder null. dimension: Einzeldimension als Filter
+   (2026-10-23): Zählung nur zur Dimension, Ø der Sterne der Dimension statt der Gesamtnote. */
+function ReviewsPreview({ pages, comparison, side, labels, span, filterTopic, dimension = null }) {
     if (pages.loading) return <PreviewStatus spinner>Lade Bewertungen…</PreviewStatus>
     if (pages.error && !pages.items.length) return <PreviewStatus>Bewertungen konnten nicht geladen werden: {pages.error}</PreviewStatus>
     const topic = pages.highlight?.topic ?? null
     const mentions = pages.highlight?.mentions
+    const scope = dimension && pages.highlight?.dimension_only ? pages.highlight : null
     const stats = comparison.data?.comparison ?? null
-    const meanRating = !filterTopic ? stats?.[side]?.mean_rating ?? null : null
+    const meanRating = filterTopic ? null : scope ? scope.dimension_mean ?? null : stats?.[side]?.mean_rating ?? null
     const short = shortLabels(labels)
-    const sub = `${labels[side]} · ${span}${filterTopic ? ` · nur Bewertungen, die ${filterTopic} nennen` : topic && mentions != null ? ` · ${mentions} ${mentions === 1 ? "nennt" : "nennen"} ${topic}` : ""}`
+    const sub = `${labels[side]} · ${span}${filterTopic
+        ? ` · nur Bewertungen, die ${filterTopic} nennen`
+        : scope
+            ? ` · zur Dimension ${dimensionLabel(dimension)}, von ${scope.n_all} insgesamt`
+            : topic && mentions != null ? ` · ${mentions} ${mentions === 1 ? "nennt" : "nennen"} ${topic}` : ""}`
     return (
         <div>
             <Headline
                 value={pages.total}
                 unit={pages.total === 1 ? "Bewertung" : "Bewertungen"}
-                chip={meanRating != null ? <Delta tone={ratingTone(meanRating)}>Ø {num(meanRating)}</Delta> : null}
+                chip={meanRating != null ? <Delta tone={ratingTone(meanRating)}>{scope ? "Ø Dimension" : "Ø"} {num(meanRating)}</Delta> : null}
                 sub={sub}
             />
             <PreviewLabel>Stimmung der Freitexte</PreviewLabel>
@@ -158,8 +169,9 @@ function ReviewsPreview({ pages, comparison, side, labels, span, filterTopic }) 
 /* pages = useReviewPages des gewählten Fensters; comparison = Antwort des Vergleichs
    (Note und Stimmung je Fenster); side/onSide = "before" | "after"; window = {from, to}
    des Fensters; topic = {value, onChange} für den Themenfilter (gefiltertes Thema
-   oder null); order/onOrder = "desc" | "asc" (Sortierung nach Datum). */
-export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic, order, onOrder, listKey, emptyText, footnote }) {
+   oder null); order/onOrder = "desc" | "asc" (Sortierung nach Datum); dimension =
+   Schlüssel der Einzeldimension, wenn sie als Filter gilt (2026-10-23), sonst null. */
+export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic, order, onOrder, listKey, emptyText, footnote, dimension = null }) {
     const span = window ? selectionLabel(window) : ""
     const withoutTopic = pages.topicCounts?.withoutTopic
     return (
@@ -180,8 +192,13 @@ export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side,
         >
             {({ modal }) => (modal ? (
                 <>
-                    <PeriodReviewList key={listKey} pages={pages} emptyText={emptyText} />
+                    <PeriodReviewList key={listKey} pages={pages} emptyText={emptyText} dimension={dimension} />
                     <p className="m-0 mt-3 text-[11px] text-slate-400">{footnote}</p>
+                    {dimension && pages.highlight?.note && (
+                        <p className="m-0 mt-1 text-[11px] text-slate-400">
+                            Dimension {dimensionLabel(dimension)} als Filter: {pages.highlight.note} Je Zeile stehen die Sterne der Dimension und, wenn vorhanden, der Kommentar zur Kategorie.
+                        </p>
+                    )}
                     <p className="m-0 mt-1 text-[11px] text-slate-400">
                         Themen: die Schlüsselwort-Themen der Themenübersicht, erkannt an Schlüsselwörtern in Titel, Freitexten und
                         Kategorie-Kommentaren; eine Bewertung kann mehrere oder keines nennen
@@ -189,7 +206,7 @@ export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side,
                     </p>
                 </>
             ) : (
-                <ReviewsPreview pages={pages} comparison={comparison} side={side} labels={labels} span={span} filterTopic={topic.value} />
+                <ReviewsPreview pages={pages} comparison={comparison} side={side} labels={labels} span={span} filterTopic={topic.value} dimension={dimension} />
             ))}
         </ExpandableCard>
     )
@@ -226,9 +243,10 @@ export function ExplanationCard({ eyebrow, subtitle, comparison, onSelectPeriod 
 /* anomalyId für Veränderung oder Einzelmonat, sonst selection {from, to};
    group = {source, dimension, status} wie die Erkennung; scores und rules aus
    explanation_summary des Vergleichs (null, solange er lädt). Sortierung und
-   Filter bleiben beim Wechsel der Auswahl erhalten (wie bisher). */
-export function EvidenceCard({ eyebrow, subtitle, companyId, anomalyId = null, selection = null, group = {}, scores = null, rules = null }) {
-    const evidence = useEvidence(companyId, { anomalyId, selection, ...group })
+   Filter bleiben beim Wechsel der Auswahl erhalten (wie bisher). dimensionOnly:
+   nur Belege zur Einzeldimension der Gruppe (2026-10-23). */
+export function EvidenceCard({ eyebrow, subtitle, companyId, anomalyId = null, selection = null, group = {}, scores = null, rules = null, dimensionOnly = false }) {
+    const evidence = useEvidence(companyId, { anomalyId, selection, ...group, dimensionOnly })
     const [sort, setSort] = useState("date")
     const [category, setCategory] = useState("")
     const list = useEvidenceList(evidence, scores, { sort, category })

@@ -78,7 +78,8 @@ class TestReviewsRoute:
         assert h["mentions"] == sum(r["mentions_topic"] for r in body["reviews"]) > 0
         for r in body["reviews"]:
             for field, spans in r.get("highlights", {}).items():
-                text = r["preview"] if field == "preview" else r["fullReview"][field]
+                # "comment": Kommentar zur Kategorie der Dimension (2026-10-23), sonst ein Feld von fullReview
+                text = r["preview"] if field == "preview" else r["dimension"]["comment"] if field == "comment" else r["fullReview"][field]
                 assert all(0 <= s < e <= len(text) for s, e in spans)
             if not r["mentions_topic"]:
                 assert "highlights" in r and r["highlights"] == {}

@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-17 (E32 neu und E29 um einen Nachtrag ergänzt am 2026-10-17 mit den eigenen Ereignissen und den anklickbaren allgemeinen Ereignissen; E23 Korrektur vorab festgelegt und E10, E11, E18, E19, E22 ergänzt am 2026-10-13; E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-23 (E34 neu am 2026-10-23 mit der Dimension als globalem Filter der Detailseite; E33 neu am 2026-10-18; E32 neu und E29 um einen Nachtrag ergänzt am 2026-10-17 mit den eigenen Ereignissen und den anklickbaren allgemeinen Ereignissen; E23 Korrektur vorab festgelegt und E10, E11, E18, E19, E22 ergänzt am 2026-10-13; E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -2255,3 +2255,56 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   57/72), oberste Stufe nur noch hoch oder mittel; Abdeckungsquote NFA-05 50 % (Niveauwechsel 63 %,
   Einzelmonate 22 %). Beschreibend, ohne Signifikanzaussage; ob die Quote als erfüllt gilt,
   entscheidet der Autor.
+
+
+## E34 – Dimension als globaler Filter der Detailseite (2026-10-23)
+
+- **Kontext:** Auf der Detailseite „Anomalien im Verlauf“ wählte das Auswahlfeld „Dimension“
+  nur die Reihe von Monatsverlauf, Erkennung und Vergleich. Die Liste „Bewertungen des
+  Zeitraums“ zeigte alle Bewertungen des Fensters (nur das Thema der Dimension markiert, E10,
+  Doku 02 § 2.8), die Karte „Externe Berichte“ alle Meldungen des Ereignisfensters. Der Autor
+  will (2026-10-23), dass eine gewählte Kategorie im ganzen Dashboard gilt und nur Bewertungen
+  und Kommentare sowie Nachrichten und Quellen zu dieser Dimension angezeigt werden. Offen war
+  seit Doku 02, ob je Dimension nur das zugehörige Thema gezeigt werden soll.
+- **Entscheidung (2026-10-23):** Die Dimension in der Adresse (`?dimension=`) ist der eine
+  Zustand der Seite und gilt für alle Karten (`backend/services/dimension_scope.py`, Doku 20).
+  (1) Eine **Bewertung gehört zur Dimension**, wenn sie einen Kommentar zur Kategorie der
+  Dimension hat (Spalte mit dem Namen der Dimension, nur Mitarbeitende; Platzhalter „-“ zählt
+  nicht) oder das Schlüsselwort-Thema der Dimension nennt (Titel, Freitexte, Kategorie-
+  Kommentare; Regel von E10/E23 wie Themen-Marken und Themenfilter). Die Sterne der Dimension
+  allein genügen nicht. (2) Eine **Meldung gehört zur Dimension**, wenn ihr Titel ein
+  Schlüsselwort des Themas nennt – als ganzes Wort (`topic_spans`) oder als Wortanfang ab sechs
+  Zeichen nach der Regel von E33 („Gehaltserhöhung“ zu „gehalt“) – oder wenn ihre Ereignisart
+  (E22, nur mit Arbeitgeberbezug) dem Thema zugeordnet ist (`event_categories.json`,
+  `topics`). Allgemeine Ereignisse (E29) entfallen mit dem Filter. (3) Die Routen bekommen
+  `dimension_only=true` (`/reviews`; `/context` der Veränderung und der Auswahl, letztere mit
+  `source` und `dimension`); je Bewertung `dimension` (Sterne, Kommentar, Bezug) mit
+  `highlights.comment`, je Beleg `dimension_match`; `highlight` bzw. `scope` nennen die
+  Zählung vor und nach dem Filter, `highlight.dimension_mean` das Mittel der Sterne der
+  Dimension über die gezeigten Bewertungen. Mit der Gesamtbewertung: 400, nichts gefiltert.
+  (4) Oberfläche: Hinweis unter dem Verlauf, Zählung „3 von 54 Bewertungen zur Dimension …“ und
+  „nur zur Dimension …: 1 von 55 Belegen“, je Zeile Sterne der Dimension und Kommentar zur
+  Kategorie (statt des allgemeinen Auszugs), im Detailfenster der Kopfblock mit den Sternen der
+  Dimension (Gesamtbewertung kleiner darunter) und der Abschnitt „Kommentar zur Kategorie“,
+  Bezug je Beleg; „Gesamtbewertung“ hebt den Filter auf. Zurück zum Dashboard nimmt Quelle,
+  Dimension und Status in die Karte „Anomalien im Verlauf“ mit. Vorher-Nachher-Vergleich und
+  Erklärungsansätze bleiben unverändert (E12, E21–E23, E33).
+- **Begründung:** Ein Zustand statt kartenlokaler Auswahlen, damit Verlauf, Liste und Belege
+  nie zu verschiedenen Dimensionen stehen. Nur lesende Prüfung am 2026-10-23: Fast jede
+  Bewertung vergibt Sterne in jeder Kategorie (Thyssenkrupp 445 von 446 für Arbeitsatmosphäre,
+  219 mit Kommentar, 70 mit Thema; E.ON 484/486, 233, 73; Aixtron 109/109, 31, 14), die Sterne
+  unterscheiden also nichts; Kommentar und Thema sagen, dass sich eine Bewertung zur Kategorie
+  äußert. Für Meldungen sind Wortbezug und Ereignisart die Signale der thematischen
+  Korrespondenz aus Inkrement 5; die Wortanfang-Regel ist aus E33 übernommen, weil Titel
+  Komposita verwenden. Vergleich und Erklärungsansätze bleiben, damit die Auswertungen (E23,
+  E33) reproduzierbar sind. Die Zählung vor und nach dem Filter steht überall, damit eine
+  kleine Liste nicht als ganze Datenlage gelesen wird (FA-25, FA-26).
+- **Grenzen:** Kategorie-Kommentare fehlen bei älteren Bewertungen und Zyklus-1-Unternehmen oft
+  (dann nur das Thema, deutsch, mehrdeutig, E10); bei vollständigen Exporten (Telekom ab 2013)
+  hat jede Bewertung alle Kommentare, dort filtert die Dimension nicht; Bewerbende ohne
+  Kommentare; Meldungen nur über den Titel, deutsche Schlüsselwörter; ein Treffer ist kein
+  Zusammenhang; „Ø Dimension“ über wenige Bewertungen nicht belastbar; Detailseite ohne
+  PDF-Export.
+- **Status:** umgesetzt am 2026-10-23 (Feature-Doku 20), nicht committet; Regeln Setzungen
+  (vorläufig): ob der Kommentar allein die bessere Regel ist und ob englische Schlüsselwörter je
+  Thema folgen sollen, entscheidet der Autor.

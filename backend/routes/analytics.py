@@ -8,6 +8,8 @@ from typing import Optional, List, Dict, Any, Literal
 from services.topic_average_rating_service import _fetch_all_rows, fetch_all_rows_parallel, get_topic_rating_timeseries
 import services.review_service as review_service
 from services.keyword_topic_service import EXPLANATION_TOPIC_TEXT_FIELDS, analyze_topic, topic_definitions_for, topic_for_dimension, topic_spans, topics_in_review
+from services.dimension_scope import REVIEW_SCOPE_NOTE, mean_rating, review_dimension_info, single_dimension_topic
+from services.rating_series_service import OVERALL_DIMENSION
 from services.review_service import (
     clean_html_text,
     fetch_review_rows_in_range,
@@ -473,6 +475,7 @@ def _reviews_in_range(
     topic_only: bool = False,
     topic_filter: Optional[str] = None,
     order: str = "desc",
+    dimension_only: bool = False,
 ) -> Dict[str, Any]:
     """Bewertungen eines Zeitraums (Drill-down, Inkrement 2), vollständig
     paginiert gelesen, nach Status gefiltert, nach Datum sortiert (``order``:
@@ -481,6 +484,11 @@ def _reviews_in_range(
     zugehörigen Schlüsselwort-Themas markiert. Jede Bewertung trägt ihre
     Schlüsselwort-Themen (``topics``); ``topic_filter`` lässt nur Bewertungen mit
     diesem Thema übrig und markiert dessen Fundstellen (Nachtrag 2026-10-18).
+    ``dimension_only`` (2026-10-23, Dimension als globaler Filter): nur Bewertungen,
+    die zur Einzeldimension gehören (Kommentar zur Kategorie oder Schlüsselwort des
+    Themas, ``services/dimension_scope.py``); jede Bewertung einer Einzeldimension
+    trägt ``dimension`` (Sterne, Kommentar, Bezug), ``highlight`` die Zählung vor und
+    nach dem Filter und das Mittel der Sterne der Dimension.
     ValueError bei ungültigen Parametern."""
     if source is not None and source not in ("employee", "candidates"):
         raise ValueError(f"source '{source}' ungültig; erlaubt: employee, candidates.")
@@ -495,6 +503,9 @@ def _reviews_in_range(
     topic = topic_for_dimension(source, dimension) if dimension is not None else None
     if topic_only and dimension is None:
         raise ValueError("topic_only braucht dimension.")
+    if dimension_only:
+        single_dimension_topic(source, dimension)  # ValueError ohne Einzeldimension
+    single = dimension is not None and dimension != OVERALL_DIMENSION
     if topic_filter is not None:
         if topic_only:
             raise ValueError("topic und topic_only schließen sich aus.")
@@ -513,6 +524,14 @@ def _reviews_in_range(
     # Kategorie-Kommentaren, Korrektur 2026-10-13), einmal je Zeile berechnet.
     for row in ordered:
         row["_topics"] = topics_in_review(row, row["_source"], EXPLANATION_TOPIC_TEXT_FIELDS)
+        if single:
+            row["_dim"] = review_dimension_info(row, row["_source"], dimension, topic, row["_topics"])
+    # Dimension als globaler Filter (2026-10-23): nur Bewertungen mit Kommentar zur
+    # Kategorie oder Schlüsselwort des Themas; Themenzählung und Mittel danach.
+    n_all = len(ordered)
+    if dimension_only:
+        ordered = [r for r in ordered if r["_dim"]["in_dimension"]]
+    scoped = ordered
     mentioning = [r for r in ordered if topic in r["_topics"]] if topic else []
     # Zählung je Thema über alle Bewertungen des Zeitraums (vor dem Themenfilter),
     # damit die Auswahl im Dashboard alle Themen mit ihrer Anzahl anbieten kann.
@@ -534,12 +553,17 @@ def _reviews_in_range(
     def item(row: Dict[str, Any]) -> Dict[str, Any]:
         src = row.pop("_source")
         topics = row.pop("_topics")
+        dim = row.pop("_dim", None)
         out = full_review_item(row, src) if full else _review_list_item(row, src)
         out["topics"] = topics
         if topic is not None:
             out["mentions_topic"] = topic in topics
+        if dim is not None:
+            out["dimension"] = {k: dim[k] for k in ("key", "rating", "comment", "mentions_topic", "in_dimension")}
         if marked is not None and full:
             texts = {"preview": out["preview"], **{k: out["fullReview"].get(k) for k in HIGHLIGHT_FIELDS}}
+            if dim is not None and dim["comment"]:
+                texts["comment"] = dim["comment"]
             spans = {k: topic_spans(v, marked, src) for k, v in texts.items()}
             out["highlights"] = {k: v for k, v in spans.items() if v}
         return out
@@ -559,6 +583,14 @@ def _reviews_in_range(
             "mentions": len(mentioning) if topic else None,
             "topic_only": topic_only,
         }
+        if dimension_only:
+            result["highlight"].update({
+                "dimension_only": True,
+                "n_all": n_all,
+                "n_dimension": len(scoped),
+                "dimension_mean": mean_rating([r["_dim"] for r in scoped]),
+                "note": REVIEW_SCOPE_NOTE,
+            })
     return result
 
 
@@ -583,6 +615,7 @@ def get_company_reviews(
     topic_only: bool = Query(default=False, description="Nur Bewertungen, die das Thema der Dimension nennen; braucht dimension"),
     topic: Optional[str] = Query(default=None, description="Nur Bewertungen, die dieses Schlüsselwort-Thema nennen (Name wie in der Themenübersicht)"),
     order: Optional[Literal["desc", "asc"]] = Query(default=None, description="Sortierung nach Datum: 'desc' neueste zuerst (Standard), 'asc' älteste zuerst"),
+    dimension_only: bool = Query(default=False, description="Nur Bewertungen zur Dimension (Kommentar zur Kategorie oder Schlüsselwort des Themas); braucht eine Einzeldimension"),
 ):
     """Get detailed reviews for a company.
 
@@ -614,12 +647,23 @@ def get_company_reviews(
     dessen Fundstellen (mit ``format=full``); unbekanntes Thema oder zusammen mit
     ``topic_only``: 400. ``order=asc`` sortiert nach Datum aufsteigend (älteste
     zuerst), ``desc`` (Standard) absteigend.
+
+    Dimension als globaler Filter (2026-10-23): Mit einer Einzeldimension trägt jede
+    Bewertung ``dimension`` (``key``, ``rating`` = Sterne der Dimension, ``comment`` =
+    Kommentar zur Kategorie oder None, ``mentions_topic``, ``in_dimension``) und mit
+    ``format=full`` bei Kommentar auch ``highlights.comment``. ``dimension_only=true``
+    lässt nur Bewertungen übrig, die zur Dimension gehören (Kommentar oder Thema);
+    ``highlight`` nennt dann ``n_all`` (vor dem Filter), ``n_dimension``,
+    ``dimension_mean`` (Mittel der Sterne der Dimension über diese Bewertungen) und
+    ``note``; ``topic_summary`` zählt innerhalb der Dimension. Mit der Gesamtbewertung
+    oder ohne ``dimension``: 400.
     """
     if any(p is not None for p in (start, end, status, offset, format_, dimension, topic, order)):
         try:
             return _reviews_in_range(
                 company_id, source, start, end, status, offset or 0, limit, full=format_ == "full",
                 dimension=dimension, topic_only=topic_only, topic_filter=topic, order=order or "desc",
+                dimension_only=dimension_only,
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))

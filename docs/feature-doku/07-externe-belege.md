@@ -1,5 +1,9 @@
 # 07 – Externe Berichte im Ereignisfenster
 
+*Nachtrag 2026-10-23:* Ist auf der Detailseite eine Einzeldimension gewählt, zeigt die
+Belegliste nur Meldungen, die zur Dimension gehören (Schlüsselwort des Themas im Titel oder
+zugeordnete Ereignisart); Zählung vor und nach dem Filter in Karte und Dialog (Doku 20, E34).
+
 | | |
 |---|---|
 | Inkrement | 4 (Zyklus 2) |

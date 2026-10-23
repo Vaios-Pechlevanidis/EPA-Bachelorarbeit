@@ -40,6 +40,7 @@ def get_anomaly_context(
     source: Optional[str] = Query(None, description="Quelle; Standard aus anomaly_id"),
     dimension: Optional[str] = Query(None, description="Dimension; Standard aus anomaly_id"),
     status: Optional[str] = Query(None, description="Statusschlüssel der Bewertendengruppe (E13); ohne = alle"),
+    dimension_only: bool = Query(False, description="Nur Belege zur Dimension (Schlüsselwort des Themas im Titel oder zugeordnete Ereignisart, 2026-10-23); braucht eine Einzeldimension"),
     window_before: int = Query(DEFAULT_WINDOW_BEFORE, ge=0, le=MAX_WINDOW_MONTHS, description="Monate vor dem Beginn des Übergangs (Standard 3)"),
     window_after: int = Query(DEFAULT_WINDOW_AFTER, ge=0, le=MAX_WINDOW_MONTHS, description="Monate nach dem markierten Monat (Standard 1)"),
     limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT, description="Belege je Seite"),
@@ -71,11 +72,17 @@ def get_anomaly_context(
     ``window_after`` Monate nach dem markierten Monat (E18). Unbekannte Kennung:
     404; keine Daten: leere Liste mit ``reason``, kein 500. Ungültige Quelle,
     Dimension, Status oder Monate: 400, jeweils ``{"detail": ...}``.
+
+    Dimension als globaler Filter (2026-10-23): ``dimension_only=true`` lässt nur Belege
+    übrig, die zur Einzeldimension der Veränderung gehören (``services/dimension_scope.py``);
+    jeder Beleg trägt dann ``dimension_match`` (``terms``, ``category``), die Antwort
+    ``scope`` (``dimension``, ``topic``, ``n_all``, ``n_dimension``, ``note``); ``total``,
+    ``counts`` und ``coverage`` zählen nur diese Belege. Mit der Gesamtbewertung: 400.
     """
     try:
         result = context_for_anchor(
             company_id, anomaly_id, source=source, dimension=dimension, status=status,
-            **_window_params(window_before, window_after),
+            dimension_only=dimension_only, **_window_params(window_before, window_after),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -93,6 +100,9 @@ def get_selection_context(
     company_id: int,
     from_: str = Query(..., alias="from", description="Erster Monat der Auswahl (YYYY-MM)"),
     to: str = Query(..., description="Letzter Monat der Auswahl (YYYY-MM, einschließlich)"),
+    source: Optional[str] = Query(None, description="Quelle der Dimension (Standard employee); nur mit dimension"),
+    dimension: Optional[str] = Query(None, description="Einzeldimension für dimension_only (2026-10-23)"),
+    dimension_only: bool = Query(False, description="Nur Belege zur Dimension (Schlüsselwort des Themas im Titel oder zugeordnete Ereignisart); braucht dimension"),
     window_before: int = Query(DEFAULT_WINDOW_BEFORE, ge=0, le=MAX_WINDOW_MONTHS, description="Monate vor der Auswahl (Standard 3)"),
     window_after: int = Query(DEFAULT_WINDOW_AFTER, ge=0, le=MAX_WINDOW_MONTHS, description="Monate nach der Auswahl (Standard 1)"),
     limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT, description="Belege je Seite"),
@@ -103,9 +113,14 @@ def get_selection_context(
     Antwort wie bei einer Veränderung, ``anchor`` ist ``{"kind": "auswahl", "from", "to"}``
     und das Fenster reicht von ``window_before`` Monaten vor ``from`` bis ``window_after``
     Monate nach ``to``. Unbekanntes Unternehmen: 404; ungültige Monate: 400.
+    ``source``, ``dimension`` und ``dimension_only`` wie bei der Veränderung (2026-10-23):
+    nur Belege zur Dimension, mit ``dimension_match`` je Beleg und ``scope``.
     """
     try:
-        result = context_for_selection(company_id, from_, to, **_window_params(window_before, window_after))
+        result = context_for_selection(
+            company_id, from_, to, source=source, dimension=dimension, dimension_only=dimension_only,
+            **_window_params(window_before, window_after),
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:  # noqa: BLE001

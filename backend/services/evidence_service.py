@@ -256,6 +256,7 @@ from pathlib import Path  # noqa: E402
 from typing import Callable  # noqa: E402
 
 from services import news_service  # noqa: E402
+from services.dimension_scope import scope_evidence, single_dimension_topic  # noqa: E402
 from services.evidence_sources import (  # noqa: E402
     SOURCE_EQS, SOURCE_GDELT, SOURCE_GLOBAL, SOURCE_GNEWS, SOURCE_LABELS, TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS,
     dedupe, fetch_gnews_month, gnews_month_query, guess_language, make_item, throttle, utc_now,
@@ -766,13 +767,16 @@ def context_for_anchor(
     source: Optional[str] = None,
     dimension: Optional[str] = None,
     status: Optional[str] = None,
+    dimension_only: bool = False,
     window_before: int = DEFAULT_WINDOW_BEFORE,
     window_after: int = DEFAULT_WINDOW_AFTER,
     **evidence_kwargs: Any,
 ) -> Optional[Dict[str, Any]]:
     """Belege zu einer Veränderung oder einem Einzelmonat. Rückgabe None, wenn es das
     Unternehmen nicht gibt; ``{"anchor": None}``, wenn die Kennung unbekannt ist;
-    ValueError bei ungültigen Angaben. ``evidence_kwargs`` gehen an ``evidence_for_window``."""
+    ValueError bei ungültigen Angaben. ``evidence_kwargs`` gehen an ``evidence_for_window``.
+    ``dimension_only`` (2026-10-23): nur Belege zur Einzeldimension der Kennung
+    (``scope_evidence``); ValueError für die Gesamtbewertung."""
     info = company_context_info(company_id)
     if info is None:
         return None
@@ -783,7 +787,11 @@ def context_for_anchor(
         window = window_for_change(anchor["date"], anchor["previous_period"], anchor["gap_months"], window_before, window_after)
     else:
         window = window_for_outlier(anchor["date"], window_before, window_after)
+    if dimension_only:
+        single_dimension_topic(anchor["source"], anchor["dimension"])  # ValueError vor dem Abruf
     evidence = evidence_for_window(info, window, **evidence_kwargs)
+    if dimension_only:
+        evidence = scope_evidence(evidence, anchor["source"], anchor["dimension"])
     return _context_response(info, anchor, window, evidence)
 
 
@@ -792,18 +800,32 @@ def context_for_selection(
     from_month: str,
     to_month: str,
     *,
+    source: Optional[str] = None,
+    dimension: Optional[str] = None,
+    dimension_only: bool = False,
     window_before: int = DEFAULT_WINDOW_BEFORE,
     window_after: int = DEFAULT_WINDOW_AFTER,
     **evidence_kwargs: Any,
 ) -> Optional[Dict[str, Any]]:
     """Belege zu einer frei gewählten Auswahl (E17). None bei unbekanntem Unternehmen;
-    ValueError bei ungültigen Monaten oder Fenstergrößen."""
+    ValueError bei ungültigen Monaten oder Fenstergrößen. ``dimension_only`` (2026-10-23)
+    mit ``source`` (Standard employee) und ``dimension``: nur Belege zur Einzeldimension
+    (``scope_evidence``); ValueError ohne Dimension oder für die Gesamtbewertung."""
+    from services.rating_series_service import value_column
+
+    source = source or "employee"
+    if dimension is not None:
+        value_column(source, dimension)  # ValueError bei ungültiger Quelle oder Dimension
+    if dimension_only:
+        single_dimension_topic(source, dimension)
     info = company_context_info(company_id)
     if info is None:
         return None
     window = window_for_selection(from_month, to_month, window_before, window_after)
     anchor = {"kind": KIND_SELECTION, "id": None, "from": from_month, "to": to_month}
     evidence = evidence_for_window(info, window, **evidence_kwargs)
+    if dimension_only:
+        evidence = scope_evidence(evidence, source, dimension)
     return _context_response(info, anchor, window, evidence)
 
 

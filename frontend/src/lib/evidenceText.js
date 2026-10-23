@@ -1,4 +1,5 @@
 import { fmtPeriod } from "./anomalySeries"
+import { evidenceScopeText } from "./dimensionScope"
 
 /* Texte der Karte "Externe Berichte im Ereignisfenster" (EvidenceSection,
  * AnomalyDetailCards): Zählung, Fenster und Untertitel. Hier statt in der
@@ -33,5 +34,7 @@ export function evidenceSubtitle(evidence, listNote = "", { short = false } = {}
     if (evidence.error) return "Belege konnten nicht geladen werden"
     if (!data) return ""
     if (short) return countsText(data.total, data.counts)
-    return `Ereignisfenster ${windowText(data.window)} · ${countsText(data.total, data.counts)}${listNote ? ` · ${listNote}` : ""}`
+    // Mit der Dimension als Filter (2026-10-23): "… · nur zur Dimension Image: 3 von 12 Belegen"
+    const scope = evidenceScopeText(data.scope)
+    return `Ereignisfenster ${windowText(data.window)} · ${countsText(data.total, data.counts)}${scope ? ` · ${scope}` : ""}${listNote ? ` · ${listNote}` : ""}`
 }

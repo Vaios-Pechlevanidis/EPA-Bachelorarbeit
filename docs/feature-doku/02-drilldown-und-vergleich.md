@@ -167,7 +167,8 @@ gleichnamige Schlüsselwort-Thema (über die Sternespalte in `rating_fields`,
   Bewertungen.
   *Nachtrag 2026-10-18:* Kästchen und Kennzeichen „nennt Image“ sind durch das Auswahlfeld
   „Alle Themen“ und die Themen-Marken je Bewertung ersetzt (Doku 17); `?thema=nur` funktioniert
-  weiter.
+  weiter. *Nachtrag 2026-10-23:* Bei einer Einzeldimension enthält die Liste nur noch
+  Bewertungen, die zur Dimension gehören (Kommentar zur Kategorie oder Thema; Doku 20, E34).
 - Im Detailfenster sind die Fundstellen in allen Textfeldern markiert („Image markiert“).
 - Im Vorher-Nachher-Vergleich ist die Zeile des Themas hervorgehoben („gewählte
   Dimension“) und immer sichtbar, auch wenn sie nicht unter den sechs größten
@@ -279,7 +280,9 @@ beruhen auf 3 bis 8 Nennungen je Fenster; die Stimmung je Thema auf noch weniger
   „Zurückgestellt oder Absage“ und Einschränkungen in E13 und
   `docs/offene-punkte-vor-inkrement-4.md`, Abschnitt D1.
 - Der Vergleich für Einzeldimensionen nutzt dieselben Themen wie die Gesamtbewertung; ob
-  je Dimension nur das zugehörige Thema gezeigt werden soll, ist offen.
+  je Dimension nur das zugehörige Thema gezeigt werden soll, war offen. *Entschieden
+  2026-10-23 (E34, Doku 20):* Der Vergleich bleibt unverändert; die Bewertungsliste und die
+  Belegliste zeigen bei einer Einzeldimension nur, was zur Dimension gehört.
 - Gemeinsamer Supabase-Client (behoben 2026-10-04): Der Fix aus
   `fix/supabase-client-thread-safety` (ein Client je Thread) ist in diesen Branch
   übernommen und auf `TopicModelDatabase` und `ExcelProcessor` erweitert. Vorher

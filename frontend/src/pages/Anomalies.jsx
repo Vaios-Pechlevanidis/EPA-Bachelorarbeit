@@ -13,6 +13,7 @@ import { AddUserEventButton, UserEventDialog, UserEventList } from "@/components
 import { PageSection } from "@/components/dashboard/PageSection"
 import { DEFAULT_TIME_RANGE, comparisonWindows, fmtPeriod, inWindow, isPeriod, isTimeRangeKey, outlierCountText, periodIndex, periodWindows, selectionLabel, timeWindow, trimToEvaluated } from "@/lib/anomalySeries"
 import { DEFAULT_SOURCE, OVERALL_DIMENSION, dimensionLabel, isDimensionOf, isSource } from "@/lib/ratingCategories"
+import { dimensionScopeNote, isSingleDimension, reviewScopeEmptyText, reviewScopeText } from "@/lib/dimensionScope"
 import { PRICE_ON, PRICE_PARAM, noPriceText } from "@/lib/market"
 import { groupLabel, statusDistinctionHint, validStatus } from "@/lib/reviewerStatus"
 import { useAnomalies } from "@/hooks/useAnomalies"
@@ -80,6 +81,15 @@ import { USER_EVENT_NOTE } from "@/lib/userEvents"
    (?liste=ereignisse). Klick auf Marke oder Zeile wählt den Zeitraum als
    freie Auswahl (?from=&to=); der Stift in der Zeile ändert oder löscht.
    Keine Aussage über Ursachen, kein Eingang in Erkennung oder Erklärungen.
+   Dimension als globaler Filter (2026-10-23): Die im Kopf gewählte Dimension
+   (?dimension=) gilt für alle Karten der Seite. Bei einer Einzeldimension zeigt
+   "Bewertungen des Zeitraums" nur Bewertungen, die zur Dimension gehören
+   (Kommentar zur Kategorie oder Schlüsselwort ihres Themas; je Zeile die Sterne
+   der Dimension und der Kommentar), und "Externe Berichte" nur Meldungen mit
+   Schlüsselwort im Titel oder zugeordneter Ereignisart (dimension_only in
+   useReviewPages und useEvidence, Regeln in backend/services/dimension_scope.py).
+   Ein Hinweis unter dem Verlauf nennt das; "Gesamtbewertung" zeigt wieder alles.
+   Zurück zum Dashboard nimmt Quelle, Dimension und Status mit (AnomalyCard).
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -100,6 +110,8 @@ export default function AnomaliesPage() {
     const group = groupLabel(source, status)
     const dimensionParam = searchParams.get("dimension")
     const dimension = isDimensionOf(source, dimensionParam) ? dimensionParam : OVERALL_DIMENSION.key
+    // Einzeldimension: Bewertungsliste und Belegliste nur zur Dimension (2026-10-23).
+    const singleDimension = isSingleDimension(dimension)
     const rangeParam = searchParams.get("range")
     const rangeKey = isTimeRangeKey(rangeParam) ? rangeParam : DEFAULT_TIME_RANGE
 
@@ -204,7 +216,7 @@ export default function AnomaliesPage() {
     const reviewPages = useReviewPages(companyId, {
         source, status, start: reviewSpan?.start, end: reviewSpan?.end,
         dimension: dimension === OVERALL_DIMENSION.key ? null : dimension,
-        topicOnly, topic: topicParam, order: reviewOrder,
+        dimensionOnly: singleDimension, topicOnly, topic: topicParam, order: reviewOrder,
     })
     const filterTopic = topicParam ?? (topicOnly ? reviewPages.highlight?.topic ?? null : null)
     const topicFilter = { value: filterTopic, onChange: (name) => updateParams({ thema: name }) }
@@ -215,13 +227,20 @@ export default function AnomaliesPage() {
         : reviewPages.highlight?.topic && reviewPages.highlight.mentions != null
             ? ` · davon ${reviewPages.highlight.mentions} ${reviewPages.highlight.mentions === 1 ? "nennt" : "nennen"} ${reviewPages.highlight.topic}`
             : ""
-    const topicEmptyText = filterTopic ? `Keine Bewertung dieses Zeitraums nennt das Thema ${filterTopic}.` : null
+    const topicEmptyText = filterTopic
+        ? `Keine Bewertung dieses Zeitraums nennt das Thema ${filterTopic}.`
+        : singleDimension ? reviewScopeEmptyText(dimension) : null
+    // Zählung mit Dimension als Filter: "12 von 40 Bewertungen zur Dimension Image" statt "12 Bewertungen".
+    const scopeText = reviewScopeText(reviewPages.highlight, dimension)
+    const reviewCountText = scopeText && !filterTopic
+        ? scopeText
+        : `${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`
     const comparison = useAnomalyComparison(companyId, selectedAnomaly?.id, { source, dimension, status })
     const periodComparison = usePeriodComparison(companyId, selection, { source, dimension, status })
     // Untertitel der Bewertungskarte: kurz auf der Karte, mit Zeitraum und Anzahl im Dialog.
     const reviewsSubtitle = (sideLabel, span) => ({
         short: `${group} · ${sideLabel}`,
-        full: `${group} · ${sideLabel} · ${span}${reviewPages.loading || reviewPages.error ? "" : ` · ${reviewPages.total} ${reviewPages.total === 1 ? "Bewertung" : "Bewertungen"}${mentionText}`}`,
+        full: `${group} · ${sideLabel} · ${span}${reviewPages.loading || reviewPages.error ? "" : ` · ${reviewCountText}`}`,
     })
     // Die vier Karten zur Auswahl (2026-10-16): dieselben Bausteine für eine
     // ausgewählte Veränderung und für die freie Auswahl bzw. den Einzelmonat.
@@ -339,9 +358,10 @@ export default function AnomaliesPage() {
                 : "keine auffälligen Veränderungen"}${outlierCountText(visibleOutliers.length)}`
             : `${group} · ${countText}${outlierCountText(outliers.length)}`
 
-    // Zurück mit der gewählten Firma, damit das Dashboard sie wieder anzeigt.
+    // Zurück mit der gewählten Firma, damit das Dashboard sie wieder anzeigt; Quelle,
+    // Dimension und Status gehen mit, damit die Anomalien-Karte dort dieselbe Reihe zeigt.
     const backToDashboard = () =>
-        navigate("/dashboard", companyId ? { state: { companyId, companyName } } : undefined)
+        navigate("/dashboard", companyId ? { state: { companyId, companyName, anomalySelection: { source, dimension, status } } } : undefined)
 
     const selectCompany = (company) => {
         if (!company) return
@@ -483,6 +503,9 @@ export default function AnomaliesPage() {
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
                                     <StatusHint hint={statusHint} />
                                     <ScopeHint source={source} dimension={dimension} status={status} eligibility={eligibility} error={error} />
+                                    {singleDimension && (
+                                        <p className="m-0 text-[11px] text-slate-500">{dimensionScopeNote(dimension)}</p>
+                                    )}
                                     {showEvents && !globalEvents.loading && !globalEvents.error && globalEvents.events.length === 0 && (
                                         <p className="m-0 text-[11px] text-slate-500">
                                             Keine allgemeinen Ereignisse: Die Wirtschaftsdaten (Eurostat) liegen nicht vor oder zeigen keinen Konjunktureinbruch und keinen Inflationsschub.
@@ -698,6 +721,7 @@ export default function AnomaliesPage() {
                                     window={detail.window}
                                     comparison={detail.comparison}
                                     topic={topicFilter}
+                                    dimension={singleDimension ? dimension : null}
                                     order={reviewOrder}
                                     onOrder={setReviewOrder}
                                     listKey={detail.listKey}
@@ -718,6 +742,7 @@ export default function AnomaliesPage() {
                                     anomalyId={detail.evidence.anomalyId}
                                     selection={detail.evidence.selection}
                                     group={{ source, dimension, status }}
+                                    dimensionOnly={singleDimension}
                                     scores={detail.comparison.data?.explanation_summary?.item_scores ?? null}
                                     rules={detail.comparison.data?.explanation_summary?.rules ?? null}
                                 />

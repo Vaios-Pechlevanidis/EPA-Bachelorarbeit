@@ -3,6 +3,7 @@ import { StageBadge } from "./ExplanationPanel"
 import { FigureRow, Headline, PreviewLabel, PreviewStatus } from "./CardPreview"
 import { fmtPeriod } from "@/lib/anomalySeries"
 import { NO_CATEGORY } from "@/lib/evidenceText"
+import { evidenceMatchText, evidenceScopeEmptyText, evidenceScopeText } from "@/lib/dimensionScope"
 
 /* ============================================================================
    EvidenceSection — "Externe Berichte im Ereignisfenster" (Inkrement 4, E18;
@@ -28,6 +29,10 @@ import { NO_CATEGORY } from "@/lib/evidenceText"
    Strenge Auswahl (E33, 2026-10-18): score.excluded nennt je Beleg die nicht
    erfüllte Regel ("nicht in den Ansätzen: …"); solche
    Belege stehen bei Sortierung nach Relevanz hinter allen Ansätzen.
+   Dimension als globaler Filter (2026-10-23): Mit einer Einzeldimension liefert
+   das Backend nur Belege zur Dimension (data.scope, je Beleg dimension_match);
+   Vorschau, Untertitel und leere Liste nennen die Zählung vor und nach dem
+   Filter, jede Zeile ihren Bezug (Schlüsselwort im Titel, Ereignisart).
    ============================================================================ */
 
 const SORTS = [
@@ -114,6 +119,7 @@ function EvidenceRow({ item, score = null, rules = null }) {
                     {score?.category_label ? ` · Ereignisart: ${score.category_label}` : ""}
                     {score?.terms?.length ? ` · Begriff: ${score.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
                     {score?.excluded ? ` · nicht in den Ansätzen: ${score.excluded}` : score?.company_in_title === false ? " · Unternehmen im Titel nicht genannt" : ""}
+                    {item.dimension_match ? ` · ${evidenceMatchText(item.dimension_match)}` : ""}
                 </span>
             </span>
         </li>
@@ -186,12 +192,15 @@ export function EvidencePreview({ evidence }) {
     if (!data) return null
     const w = data.window
     const span = w ? (w.from === w.to ? fmtPeriod(w.from) : `${fmtPeriod(w.from)} – ${fmtPeriod(w.to)}`) : ""
-    const sub = w ? `${span} · ${w.months} ${w.months === 1 ? "Monat" : "Monate"}` : ""
+    const scopeText = evidenceScopeText(data.scope)
+    const sub = `${w ? `${span} · ${w.months} ${w.months === 1 ? "Monat" : "Monate"}` : ""}${scopeText ? ` · ${scopeText}` : ""}`
     if (!data.total) {
         return (
             <div>
                 <Headline value="0" unit="Belege" sub={sub} />
-                <p className="m-0 mt-2 text-[11.5px] leading-4 text-slate-500">Ein fehlender Beleg heißt nicht, dass nichts geschehen ist.</p>
+                <p className="m-0 mt-2 text-[11.5px] leading-4 text-slate-500">
+                    {data.scope ? evidenceScopeEmptyText(data.scope) : "Ein fehlender Beleg heißt nicht, dass nichts geschehen ist."}
+                </p>
             </div>
         )
     }
@@ -233,15 +242,21 @@ export function EvidenceContent({ evidence, items, needAll, sort, category, scor
                 <p className="m-0 text-[12px] text-slate-500">Belege konnten nicht geladen werden: {evidence.error}</p>
             ) : evidence.items.length === 0 ? (
                 <div className="space-y-1">
-                    <p className="m-0 text-[12.5px] font-medium text-slate-700">Kein Beleg im Fenster gefunden.</p>
-                    {data?.reason && data.reason !== "Kein Beleg im Fenster gefunden." && (
+                    {data?.scope ? (
+                        <p className="m-0 text-[12.5px] font-medium text-slate-700">{evidenceScopeEmptyText(data.scope)}</p>
+                    ) : (
+                        <p className="m-0 text-[12.5px] font-medium text-slate-700">Kein Beleg im Fenster gefunden.</p>
+                    )}
+                    {data?.reason && data.reason !== "Kein Beleg im Fenster gefunden." && !data?.scope?.n_all && (
                         <p className="m-0 text-[12px] text-slate-500">{data.reason}</p>
                     )}
-                    <p className="m-0 text-[12px] text-slate-500">
-                        Bekannte Grenzen: Für ältere Zeiträume liefern die Quellen deutlich weniger Meldungen, für kleine
-                        Unternehmen oft keine; mehrdeutige Namen bringen fremde Treffer. Ein fehlender Beleg heißt nicht,
-                        dass nichts geschehen ist.
-                    </p>
+                    {!data?.scope?.n_all && (
+                        <p className="m-0 text-[12px] text-slate-500">
+                            Bekannte Grenzen: Für ältere Zeiträume liefern die Quellen deutlich weniger Meldungen, für kleine
+                            Unternehmen oft keine; mehrdeutige Namen bringen fremde Treffer. Ein fehlender Beleg heißt nicht,
+                            dass nichts geschehen ist.
+                        </p>
+                    )}
                 </div>
             ) : (
                 <>
@@ -271,6 +286,9 @@ export function EvidenceContent({ evidence, items, needAll, sort, category, scor
                 </>
             )}
             {!evidence.loading && !evidence.error && <SourcesLine sources={data?.sources} />}
+            {data?.scope?.note && (
+                <p className="m-0 mt-2 text-[11px] text-slate-400">Dimension als Filter: {data.scope.note}</p>
+            )}
             <p className="m-0 mt-3 text-[11px] text-slate-400">
                 {data?.note ?? "Belege sind zeitlich nahe Meldungen aus externen Quellen. Sie sind keine Aussage über Ursachen; interne Auslöser sind von außen nicht sichtbar."}
             </p>

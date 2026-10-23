@@ -16,8 +16,8 @@ import { ArrowDownRight, ArrowUpRight, Layers, Maximize2, Users } from "lucide-r
 import { Anomaly as AnomalyIcon } from "../../icons"
 import { useAnomalies } from "@/hooks/useAnomalies"
 import { ChartCardHeader, DropdownPicker, SourceToggle } from "./ChartHeader"
-import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf } from "@/lib/ratingCategories"
-import { groupLabel, statusDistinctionHint, statusOptions } from "@/lib/reviewerStatus"
+import { DEFAULT_SOURCE, OVERALL_DIMENSION, SOURCES, dimensionLabel, dimensionsFor, isDimensionOf, isSource } from "@/lib/ratingCategories"
+import { groupLabel, statusDistinctionHint, statusOptions, validStatus } from "@/lib/reviewerStatus"
 import { useDataStatus } from "@/hooks/useDataStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, periodWindows, trimToEvaluated } from "@/lib/anomalySeries"
 import { PARENT_SCOPE, GROUP_COMPANY_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
@@ -1064,11 +1064,23 @@ export function ScopeHint({ source, dimension, status, eligibility = null, error
     return <p className={`m-0 text-[11px] text-slate-500 ${className}`}>{UNVALIDATED_SCOPE_NOTE}.</p>
 }
 
+/* Startauswahl der Karte: Quelle, Dimension und Status, die die Anomalien-Seite beim
+   Zurück mitgibt (2026-10-23), geprüft; sonst Mitarbeitende, Gesamtbewertung, alle. */
+function initialSelectionState(initial) {
+    const source = isSource(initial?.source) ? initial.source : DEFAULT_SOURCE
+    return {
+        source,
+        dimension: isDimensionOf(source, initial?.dimension) ? initial.dimension : OVERALL_DIMENSION.key,
+        status: validStatus(source, initial?.status ?? null),
+    }
+}
+
 /* onDataChange / onLoadingChange: Zustand der Karte für den PDF-Export (wie
    TopicOverviewCard): Auswahl, Zähler, Eignung, Reihe; das Diagramm selbst wird
-   über die ID "anomaly-chart-export" aus dem DOM übernommen. */
-export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen, onDataChange = null, onLoadingChange = null }) {
-    const [selection, setSelection] = useState({ source: DEFAULT_SOURCE, dimension: OVERALL_DIMENSION.key, status: null })
+   über die ID "anomaly-chart-export" aus dem DOM übernommen.
+   initialSelection: {source, dimension, status} beim Zurück von der Detailseite. */
+export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen, onDataChange = null, onLoadingChange = null, initialSelection = null }) {
+    const [selection, setSelection] = useState(() => initialSelectionState(initialSelection))
     const { source, dimension, status } = selection
     const { data, anomalies, loading, error } = useAnomalies(companyId, { source, dimension, status })
     // Datenstand für n je Statusgruppe und den Hinweis ohne Unterscheidung (Inkrement 6, A4)

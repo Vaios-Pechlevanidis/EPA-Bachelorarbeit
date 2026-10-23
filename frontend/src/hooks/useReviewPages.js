@@ -10,12 +10,16 @@ export const REVIEW_PAGE_SIZE = 25
  * loadMore; so wird nie die ganze Liste auf einmal geladen und gerendert.
  * topic filtert auf ein Schlüsselwort-Thema, order sortiert nach Datum ("desc"
  * neueste zuerst, "asc" älteste zuerst; Nachtrag 2026-10-18).
+ * dimensionOnly (2026-10-23, Dimension als globaler Filter): nur Bewertungen, die zur
+ * Einzeldimension gehören (dimension_only=true); jede Bewertung trägt dann
+ * `dimension` (Sterne, Kommentar zur Kategorie, Bezug), highlight die Zählung.
  * Ergebnis je Anfrage-Schlüssel, wie in useAnomalies. */
-export function useReviewPages(companyId, { source = "employee", status = null, start, end, dimension = null, topicOnly = false, topic = null, order = "desc" } = {}) {
-  const requestKey = companyId && start && end ? `${companyId}:${source}:${status ?? ""}:${start}:${end}:${dimension ?? ""}:${topicOnly}:${topic ?? ""}:${order}` : null
-  // Die Zählung je Thema hängt nur vom Zeitraum und der Gruppe ab; sie bleibt beim
-  // Wechsel von Themenfilter oder Sortierung stehen, damit die Auswahl nicht flackert.
-  const countsKey = companyId && start && end ? `${companyId}:${source}:${status ?? ""}:${start}:${end}` : null
+export function useReviewPages(companyId, { source = "employee", status = null, start, end, dimension = null, dimensionOnly = false, topicOnly = false, topic = null, order = "desc" } = {}) {
+  const scoped = Boolean(dimension) && dimensionOnly
+  const requestKey = companyId && start && end ? `${companyId}:${source}:${status ?? ""}:${start}:${end}:${dimension ?? ""}:${scoped}:${topicOnly}:${topic ?? ""}:${order}` : null
+  // Die Zählung je Thema hängt nur vom Zeitraum, der Gruppe und der Dimension ab; sie bleibt
+  // beim Wechsel von Themenfilter oder Sortierung stehen, damit die Auswahl nicht flackert.
+  const countsKey = companyId && start && end ? `${companyId}:${source}:${status ?? ""}:${start}:${end}:${scoped ? dimension : ""}` : null
   const [result, setResult] = useState({ key: null, items: [], total: 0, highlight: null, markedTopic: null, error: "", loadingMore: false })
   const [topicCounts, setTopicCounts] = useState({ key: null, counts: [], withoutTopic: 0 })
   const controllerRef = useRef(null)
@@ -25,6 +29,7 @@ export function useReviewPages(companyId, { source = "employee", status = null, 
       const params = new URLSearchParams({ source, start, end, offset: String(offset), limit: String(REVIEW_PAGE_SIZE), format: "full", order })
       if (status) params.set("status", status)
       if (dimension) params.set("dimension", dimension)
+      if (scoped) params.set("dimension_only", "true")
       if (dimension && topicOnly) params.set("topic_only", "true")
       else if (topic) params.set("topic", topic)
       return fetch(`${API_URL}/analytics/company/${companyId}/reviews?${params}`, { signal }).then(async (res) => {
@@ -33,7 +38,7 @@ export function useReviewPages(companyId, { source = "employee", status = null, 
         return json
       })
     },
-    [companyId, source, status, start, end, dimension, topicOnly, topic, order],
+    [companyId, source, status, start, end, dimension, scoped, topicOnly, topic, order],
   )
 
   useEffect(() => {

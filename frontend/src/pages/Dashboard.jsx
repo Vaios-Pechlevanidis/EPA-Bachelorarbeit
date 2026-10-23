@@ -36,6 +36,8 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const companyFromWelcome    = location.state?.companyId
   const companyNameFromWelcome = location.state?.companyName
+  // Zurück von der Anomalien-Seite: Quelle, Dimension und Status der dort gewählten Reihe (2026-10-23)
+  const anomalySelectionFromDetail = location.state?.anomalySelection ?? null
 
   /* ---- Modal state ---- */
   const [open, setOpen]               = useState(false)
@@ -696,6 +698,7 @@ export default function Dashboard() {
             <div style={{ marginBottom: 16 }}>
               <AnomalyCard
                 companyId={selectedCompany || selectedCompanyId}
+                initialSelection={anomalySelectionFromDetail}
                 onOpen={openAnomalies}
                 onDataChange={handleAnomalyDataChange}
                 onLoadingChange={handleAnomalyLoadingChange}

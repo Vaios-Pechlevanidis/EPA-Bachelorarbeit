@@ -17,10 +17,15 @@ export const FIRST_FETCH_HINT_MS = 2000
  * freie Auswahl. Die erste Seite kommt beim Wechsel der Auswahl, weitere mit
  * loadMore; loadAll holt alle restlichen Seiten (für Sortierung und Filter der
  * Belegliste, Inkrement 5). Ergebnis je Anfrage-Schlüssel, wie in useReviewPages.
- * `slow` ist wahr, solange die erste Seite länger als FIRST_FETCH_HINT_MS braucht. */
-export function useEvidence(companyId, { anomalyId = null, selection = null, source = "employee", dimension = null, status = null } = {}) {
+ * `slow` ist wahr, solange die erste Seite länger als FIRST_FETCH_HINT_MS braucht.
+ * dimensionOnly (2026-10-23, Dimension als globaler Filter): mit einer Einzeldimension
+ * nur Belege, die zur Dimension gehören (dimension_only=true, auch für die freie
+ * Auswahl mit source und dimension); jeder Beleg trägt dann `dimension_match`, die
+ * Antwort `scope`. */
+export function useEvidence(companyId, { anomalyId = null, selection = null, source = "employee", dimension = null, status = null, dimensionOnly = false } = {}) {
   const anchorKey = anomalyId ? `a:${anomalyId}` : selection?.from && selection?.to ? `s:${selection.from}:${selection.to}` : null
-  const requestKey = companyId && anchorKey ? `${companyId}:${anchorKey}:${source}:${dimension ?? ""}:${status ?? ""}` : null
+  const scoped = Boolean(dimension) && dimensionOnly
+  const requestKey = companyId && anchorKey ? `${companyId}:${anchorKey}:${source}:${dimension ?? ""}:${status ?? ""}:${scoped}` : null
   const [result, setResult] = useState({ key: null, data: null, items: [], total: 0, error: "", loadingMore: false, loadingAll: false })
   const [slowKey, setSlowKey] = useState(null)
   const controllerRef = useRef(null)
@@ -33,10 +38,16 @@ export function useEvidence(companyId, { anomalyId = null, selection = null, sou
         params.set("source", source)
         if (dimension) params.set("dimension", dimension)
         if (status) params.set("status", status)
+        if (scoped) params.set("dimension_only", "true")
         url = `${API_URL}/analytics/company/${companyId}/anomalies/${encodeURIComponent(anomalyId)}/context?${params}`
       } else {
         params.set("from", selection.from)
         params.set("to", selection.to)
+        if (scoped) {
+          params.set("source", source)
+          params.set("dimension", dimension)
+          params.set("dimension_only", "true")
+        }
         url = `${API_URL}/analytics/company/${companyId}/context?${params}`
       }
       return fetch(url, { signal }).then(async (res) => {
@@ -45,7 +56,7 @@ export function useEvidence(companyId, { anomalyId = null, selection = null, sou
         return json
       })
     },
-    [companyId, anomalyId, selection, source, dimension, status],
+    [companyId, anomalyId, selection, source, dimension, status, scoped],
   )
 
   useEffect(() => {
