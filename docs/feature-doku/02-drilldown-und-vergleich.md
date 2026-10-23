@@ -169,6 +169,8 @@ gleichnamige Schlüsselwort-Thema (über die Sternespalte in `rating_fields`,
   „Alle Themen“ und die Themen-Marken je Bewertung ersetzt (Doku 17); `?thema=nur` funktioniert
   weiter. *Nachtrag 2026-10-23:* Bei einer Einzeldimension enthält die Liste nur noch
   Bewertungen, die zur Dimension gehören (Kommentar zur Kategorie oder Thema; Doku 20, E34).
+  Seit demselben Tag ist jede Themenzeile des Vergleichs anklickbar und öffnet die Bewertungen,
+  die das Thema nennen (Doku 21).
 - Im Detailfenster sind die Fundstellen in allen Textfeldern markiert („Image markiert“).
 - Im Vorher-Nachher-Vergleich ist die Zeile des Themas hervorgehoben („gewählte
   Dimension“) und immer sichtbar, auch wenn sie nicht unter den sechs größten

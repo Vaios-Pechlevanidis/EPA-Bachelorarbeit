@@ -19,6 +19,9 @@ import { DataBasisTags } from "./DataBasis"
    - sonst cardHeight,
    - im Dialog die verfügbare Höhe unter dem Kopf.
    hint: Fußzeile der Karte (Standard "Karte anklicken zum Vergrößern").
+   open / onOpenChange (2026-10-23): Dialog von außen steuern, z. B. damit ein
+   Klick im Vergleich die Bewertungsliste öffnet; ohne open bleibt der Zustand
+   in der Karte.
    ============================================================================ */
 
 const MODAL_RESERVE = 120 // Kopf und Innenabstand des Dialogs in Pixeln
@@ -64,8 +67,16 @@ export function ExpandableCard({
     cardHeight = 220, fill = false, accent = "bg-violet-500", className = "",
     basis = null,   // Datenbasis (DataBasis-Schlüssel oder Liste), Inkrement 6, FA-25
     hint = "Karte anklicken zum Vergrößern",
+    open: openProp = undefined,   // gesteuert: true/false; undefined = Zustand in der Karte
+    onOpenChange = null,
 }) {
-    const [open, setOpen] = useState(false)
+    const [openState, setOpenState] = useState(false)
+    const controlled = openProp !== undefined
+    const open = controlled ? Boolean(openProp) : openState
+    const setOpen = useCallback((next) => {
+        if (!controlled) setOpenState(next)
+        onOpenChange?.(next)
+    }, [controlled, onOpenChange])
     const modalHeight = useModalHeight(open)
     const render = (fn, ctx) => (typeof fn === "function" ? fn(ctx) : fn)
     const cardSubtitle = render(subtitle, { modal: false })

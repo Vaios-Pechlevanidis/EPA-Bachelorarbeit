@@ -90,6 +90,11 @@ import { USER_EVENT_NOTE } from "@/lib/userEvents"
    useReviewPages und useEvidence, Regeln in backend/services/dimension_scope.py).
    Ein Hinweis unter dem Verlauf nennt das; "Gesamtbewertung" zeigt wieder alles.
    Zurück zum Dashboard nimmt Quelle, Dimension und Status mit (AnomalyCard).
+   Drill-down aus dem Vergleich (2026-10-23): Im Dialog des Vorher-Nachher-
+   Vergleichs ist jede Themenzeile anklickbar; der Klick schließt den Dialog,
+   setzt ?thema=<Thema> und das Fenster (ab dem markierten Monat, über den
+   Anteil davor das Fenster davor) und öffnet die Bewertungsliste (openCard,
+   ExpandableCard mit open/onOpenChange).
    ============================================================================ */
 
 export default function AnomaliesPage() {
@@ -299,6 +304,15 @@ export default function AnomaliesPage() {
                 evidence: { anomalyId: selectedOutlier?.id ?? null, selection: selectedOutlier ? null : selection },
             }
             : null
+    // Dialoge der Karten Vergleich und Bewertungen von der Seite aus (2026-10-23): Ein Klick
+    // auf eine Themenzeile im Vergleich schließt dessen Dialog und öffnet die Bewertungen,
+    // die das Thema nennen, im gewählten Fenster.
+    const [openCard, setOpenCard] = useState(null) // "comparison" | "reviews" | null
+    const drillToTopic = (topicName, sideKey) => {
+        detail?.onSide(sideKey)
+        updateParams({ thema: topicName })
+        setOpenCard("reviews")
+    }
     // Karte "Markierungen": Veränderungen, Einzelmonate (?liste=einzelmonate, nur mit
     // SHOW_OUTLIER_MONTHS) oder eigene Ereignisse (?liste=ereignisse, E32).
     const listParam = searchParams.get("liste")
@@ -709,6 +723,9 @@ export default function AnomaliesPage() {
                                     labels={detail.labels}
                                     intro={detail.intro}
                                     introText={detail.introText}
+                                    onDrill={drillToTopic}
+                                    open={openCard === "comparison"}
+                                    onOpenChange={(o) => setOpenCard(o ? "comparison" : null)}
                                 />
                                 <ReviewsCard
                                     eyebrow={`${detail.reviewsEyebrow} · ${detail.tag}`}
@@ -727,6 +744,8 @@ export default function AnomaliesPage() {
                                     listKey={detail.listKey}
                                     emptyText={detail.emptyText}
                                     footnote={detail.footnote}
+                                    open={openCard === "reviews"}
+                                    onOpenChange={(o) => setOpenCard(o ? "reviews" : null)}
                                 />
                                 <ExplanationCard
                                     eyebrow={`ERKLÄRUNGSANSÄTZE · ${detail.tag}`}

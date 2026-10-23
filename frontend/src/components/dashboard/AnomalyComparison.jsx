@@ -8,6 +8,10 @@ import { withoutTextText } from "@/lib/comparisonText"
    Zeigt, was sich in den Bewertungen zwischen den Fenstern verändert hat:
    Anzahl, Gesamtnote, Stimmung und je Schlüsselwort-Thema Anteil und Stimmung.
    Wortwahl: "Verschiebung", keine Aussage über Ursachen.
+   Drill-down aus der Tabelle (2026-10-23): Mit onDrill(thema, seite) ist jede
+   Themenzeile anklickbar und öffnet die Bewertungen, die das Thema nennen, im
+   Fenster ab dem markierten Monat (bzw. der Auswahl); der Anteil davor führt in
+   das Fenster davor. Die Seite schließt dafür diesen Dialog und öffnet die Liste.
    ============================================================================ */
 
 const TOP_TOPICS = 6
@@ -86,8 +90,9 @@ function WindowHeader({ label, win, stats }) {
 }
 
 /* labels: Bezeichnungen der beiden Fenster, Standard für eine auffällige
-   Veränderung; bei freier Auswahl (E17) "Zeitraum davor" und "Auswahl". */
-export function AnomalyComparison({ data, loading, error, labels = { before: "davor", after: "ab dem markierten Monat" } }) {
+   Veränderung; bei freier Auswahl (E17) "Zeitraum davor" und "Auswahl".
+   onDrill(thema, "before" | "after"): Klick auf eine Themenzeile (2026-10-23). */
+export function AnomalyComparison({ data, loading, error, labels = { before: "davor", after: "ab dem markierten Monat" }, onDrill = null }) {
     // Kurzformen für die Tabellenköpfe ("Anteil davor" / "Anteil Auswahl").
     const short = { before: "davor", after: labels.after === "ab dem markierten Monat" ? "danach" : labels.after }
     const [showAll, setShowAll] = useState(false)
@@ -164,11 +169,16 @@ export function AnomalyComparison({ data, loading, error, labels = { before: "da
                             {shown.map((t) => (
                                 <tr
                                     key={t.topic}
-                                    className={`border-t border-slate-100 ${t.low_basis ? "text-slate-500" : "text-slate-800"} ${t.topic === dimensionTopic ? "bg-amber-100" : ""}`}
+                                    className={`border-t border-slate-100 ${t.low_basis ? "text-slate-500" : "text-slate-800"} ${t.topic === dimensionTopic ? "bg-amber-100" : ""}${onDrill ? " cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400" : ""}`}
+                                    role={onDrill ? "button" : undefined}
+                                    tabIndex={onDrill ? 0 : undefined}
+                                    title={onDrill ? `Bewertungen lesen, die ${t.topic} nennen (${labels.after})` : undefined}
+                                    onClick={onDrill ? () => onDrill(t.topic, "after") : undefined}
+                                    onKeyDown={onDrill ? (e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onDrill(t.topic, "after") } } : undefined}
                                 >
                                     <td className="py-1.5 pr-3">
                                         <span className="inline-flex items-center gap-2">
-                                            <span className={t.topic === dimensionTopic ? "font-semibold" : undefined}>{t.topic}</span>
+                                            <span className={`${t.topic === dimensionTopic ? "font-semibold" : ""}${onDrill ? " underline decoration-dotted underline-offset-2 decoration-slate-400" : ""}`}>{t.topic}</span>
                                             {t.topic === dimensionTopic && (
                                                 <span className="text-[10px] uppercase tracking-wider text-slate-600">gewählte Dimension</span>
                                             )}
@@ -179,7 +189,18 @@ export function AnomalyComparison({ data, loading, error, labels = { before: "da
                                             )}
                                         </span>
                                     </td>
-                                    <td className="py-1.5 pr-3 text-right tnum" title={`${t.before.mentions} Nennungen`}>{pct(t.before.share)}</td>
+                                    <td className="py-1.5 pr-3 text-right tnum" title={`${t.before.mentions} Nennungen`}>
+                                        {onDrill ? (
+                                            <button
+                                                type="button"
+                                                className="tnum underline decoration-dotted underline-offset-2 decoration-slate-400 hover:text-slate-900 hover:decoration-solid"
+                                                title={`${t.before.mentions} Nennungen · Bewertungen lesen, die ${t.topic} nennen (${labels.before})`}
+                                                onClick={(e) => { e.stopPropagation(); onDrill(t.topic, "before") }}
+                                            >
+                                                {pct(t.before.share)}
+                                            </button>
+                                        ) : pct(t.before.share)}
+                                    </td>
                                     <td className="py-1.5 pr-3 text-right tnum" title={`${t.after.mentions} Nennungen`}>{pct(t.after.share)}</td>
                                     <td className="py-1.5 pr-3 text-right tnum font-semibold">{signed(t.share_shift_pp, 1)} Pp.</td>
                                     <td className="py-1.5 pr-3"><SentimentBar sentiment={t.before.sentiment} emptyText={t.before.mentions ? "keine Texte" : "keine Nennung"} /></td>
@@ -200,6 +221,12 @@ export function AnomalyComparison({ data, loading, error, labels = { before: "da
                 )}
             </div>
 
+            {onDrill && (
+                <p className="m-0 text-[11px] text-slate-500 leading-4">
+                    Drill-down: Eine Themenzeile anklicken öffnet die Bewertungen, die das Thema nennen, im Fenster „{labels.after}“;
+                    der Anteil {short.before} führt in das Fenster „{labels.before}“.
+                </p>
+            )}
             <p className="m-0 text-[11px] text-slate-500 leading-4">
                 Der Vergleich zeigt, was sich in den Bewertungen verändert hat; er ist keine Aussage über Ursachen.
                 Anteil = Bewertungen, die das Thema nennen (deutsche Schlüsselwörter), an allen Bewertungen des Fensters;

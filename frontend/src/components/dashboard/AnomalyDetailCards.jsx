@@ -101,8 +101,10 @@ function ComparisonPreview({ comparison, intro = null }) {
 }
 
 /* comparison = useAnomalyComparison / usePeriodComparison; subtitle = {short, full};
-   intro: Hinweis zum Einzelmonat (Warnzeile auf der Karte, Absatz im Dialog). */
-export function ComparisonCard({ eyebrow, title, subtitle, comparison, labels, intro = null, introText = null }) {
+   intro: Hinweis zum Einzelmonat (Warnzeile auf der Karte, Absatz im Dialog).
+   onDrill(thema, seite): Klick auf eine Themenzeile im Dialog (2026-10-23); open /
+   onOpenChange steuern den Dialog von der Seite aus. */
+export function ComparisonCard({ eyebrow, title, subtitle, comparison, labels, intro = null, introText = null, onDrill = null, open = undefined, onOpenChange = null }) {
     return (
         <ExpandableCard
             icon={<GitCompareArrows />}
@@ -112,11 +114,13 @@ export function ComparisonCard({ eyebrow, title, subtitle, comparison, labels, i
             basis={["stars", "text"]}
             accent="bg-slate-500"
             hint={HINT}
+            open={open}
+            onOpenChange={onOpenChange}
         >
             {({ modal }) => (modal ? (
                 <>
                     {introText && <p className="m-0 mb-3 text-[12px] text-slate-600">{introText}</p>}
-                    <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} labels={labels} />
+                    <AnomalyComparison data={comparison.data} loading={comparison.loading} error={comparison.error} labels={labels} onDrill={onDrill} />
                 </>
             ) : (
                 <ComparisonPreview comparison={comparison} intro={intro} />
@@ -170,8 +174,9 @@ function ReviewsPreview({ pages, comparison, side, labels, span, filterTopic, di
    (Note und Stimmung je Fenster); side/onSide = "before" | "after"; window = {from, to}
    des Fensters; topic = {value, onChange} für den Themenfilter (gefiltertes Thema
    oder null); order/onOrder = "desc" | "asc" (Sortierung nach Datum); dimension =
-   Schlüssel der Einzeldimension, wenn sie als Filter gilt (2026-10-23), sonst null. */
-export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic, order, onOrder, listKey, emptyText, footnote, dimension = null }) {
+   Schlüssel der Einzeldimension, wenn sie als Filter gilt (2026-10-23), sonst null;
+   open / onOpenChange steuern den Dialog von der Seite aus (Drill-down aus dem Vergleich). */
+export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side, onSide, labels, window, topic, order, onOrder, listKey, emptyText, footnote, dimension = null, open = undefined, onOpenChange = null }) {
     const span = window ? selectionLabel(window) : ""
     const withoutTopic = pages.topicCounts?.withoutTopic
     return (
@@ -183,6 +188,8 @@ export function ReviewsCard({ eyebrow, title, subtitle, pages, comparison, side,
             basis={["stars", "text"]}
             accent="bg-slate-500"
             hint={HINT}
+            open={open}
+            onOpenChange={onOpenChange}
             actions={({ modal }) => (modal ? (
                 <>
                     <WindowSideToggle value={side} onChange={onSide} labels={labels} />
