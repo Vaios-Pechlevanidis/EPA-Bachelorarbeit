@@ -386,6 +386,7 @@ def explanations_for(
     ersetzen Unternehmensdaten und Belege (Tests, Auswertung). Wirft nicht."""
     from services import evidence_service as ev
     from services.explanation_ranking import GLOBAL_EVENT_NOTE, OPEN_NOTE, STATE_OPEN, rank_evidence, rules, selection_rules
+    from services.evidence_text import attach_texts
     from services.review_terms import company_terms, distinctive_terms
 
     base: Dict[str, Any] = {
@@ -395,6 +396,7 @@ def explanations_for(
         "n_bundles": 0, "n_groups": 0, "n_by_stage": None, "n_by_signal_label": None, "terms": [], "item_scores": {}, "sources": {},
         "coverage": False, "reason": None, "error": None, "note": None, "open_note": OPEN_NOTE, "rules": rules(),
         "global_events": [], "global_event_note": GLOBAL_EVENT_NOTE,   # Hypothesen neben den Ansätzen (Nachtrag zu E29, 2026-10-17)
+        "texts": None,   # Belege mit gespeichertem Text (E35, 2026-10-23)
     }
     try:
         info = info if info is not None else ev.company_context_info(company_id)
@@ -403,8 +405,10 @@ def explanations_for(
         evidence = evidence if evidence is not None else ev.evidence_for_window(info, window)
         exclude = company_terms(info.get("name"), info.get("search_term"))
         terms = distinctive_terms(before_rows, after_rows, source=source, exclude=exclude)
+        # Texte aus dem Textspeicher nur für die Rangfolge (E35); die Belegliste der Antwort bleibt ohne Text.
+        items_with_text, text_counts = attach_texts(company_id, evidence["items"])
         ranked = rank_evidence(
-            evidence["items"], window, terms=terms, topics=comparison.get("topics"), direction=direction,
+            items_with_text, window, terms=terms, topics=comparison.get("topics"), direction=direction,
             exclude=exclude, analyzer=analyzer, kind=window.get("kind"), title_words=info.get("title_words") or (),
         )
     except Exception as exc:  # noqa: BLE001 – Belege oder Rangfolge: der Vergleich bleibt nutzbar
@@ -420,6 +424,7 @@ def explanations_for(
         "note": ranked["note"], "open_note": ranked["open_note"], "search_term": info.get("search_term"),
         "direction": direction,
         "global_events": ranked.get("global_events", []),
+        "texts": {**text_counts, **ranked.get("texts", {})},   # Belege mit Text, Texte, im Text nicht zählende Begriffe (E35)
     }
     return {"explanations": ranked["explanations"], "summary": summary}
 

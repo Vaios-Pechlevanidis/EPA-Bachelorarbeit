@@ -1,5 +1,8 @@
 # 20 – Dimension als globaler Filter der Detailseite
 
+*Nachtrag 2026-10-23:* Bei Meldungen mit gespeichertem Text werden die Schlüsselwörter des
+Themas auch im Text gesucht und als „Schlüsselwort im Text“ ausgewiesen (Doku 22, E35).
+
 | | |
 |---|---|
 | Inkrement | Ergänzung der Detailseite „Anomalien im Verlauf“ (2026-10-23) |

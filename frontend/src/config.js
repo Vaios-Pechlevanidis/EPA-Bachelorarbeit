@@ -33,21 +33,12 @@ export const SHOW_OUTLIER_MONTHS = !["false", "0"].includes(
 
 /* Prüfumfang der Erkennung (DZ1, E30): Geprüft sind nur die Niveauwechsel der
    Gesamtbewertung der Mitarbeitenden ohne Statusfilter (DZ1: 8 annotierte der
-   15 geeigneten Reihen; E30: alle 15 Reihen).
-   Für Einzeldimensionen, die Bewerberquelle und Statusgruppen läuft dieselbe
-   Erkennung ungeprüft. Die beiden Hinweise stehen hier, damit Dashboard-Karte,
-   Detailseite und PDF-Export denselben Wortlaut zeigen; sie gelten unabhängig
-   von den Schaltern. */
-export const VALIDATED_SCOPE = { source: "employee", dimension: "durchschnittsbewertung", status: null };
-
-/* true, wenn Quelle, Dimension und Status dem geprüften Umfang entsprechen. */
-export function isValidatedScope({ source, dimension, status } = {}) {
-  return source === VALIDATED_SCOPE.source && dimension === VALIDATED_SCOPE.dimension && !status;
-}
-
-/* Hinweis bei Reihen außerhalb des geprüften Umfangs (Kopf bzw. unter dem Diagramm). */
-export const UNVALIDATED_SCOPE_NOTE =
-  "Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die Gesamtbewertung der Mitarbeitenden ohne Statusfilter";
+   15 geeigneten Reihen; E30: alle 15 Reihen); für Einzeldimensionen, die
+   Bewerberquelle und Statusgruppen läuft dieselbe Erkennung ungeprüft. Der
+   Hinweis „Erkennung für diese Auswahl nicht geprüft“ unter dem Diagramm wurde
+   am 2026-10-24 auf Entscheidung des Autors entfernt (E25, Nachtrag); der
+   Prüfumfang steht in der Arbeit, nicht mehr im Dashboard. Der Zusatz zu den
+   Einzelmonaten bleibt. */
 
 /* Zusatz, wo auffällige Einzelmonate erklärt werden (Legende, Tooltip, Liste, PDF):
    ohne Veränderung entstehen in der Simulation 8,9 bzw. 5,4 Einzelmonate je 15

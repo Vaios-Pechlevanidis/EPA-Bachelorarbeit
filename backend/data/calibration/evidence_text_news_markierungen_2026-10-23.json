@@ -1,0 +1,487 @@
+{
+  "generated_at": "2026-10-23T22:45:47+00:00",
+  "ways": [
+    "news"
+  ],
+  "comparison": false,
+  "window_before": 3,
+  "window_after": 1,
+  "live": true,
+  "dry_run": false,
+  "retry_failed": true,
+  "companies": [
+    {
+      "company_id": 3,
+      "name": "Thyssenkrupp",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 0
+    },
+    {
+      "company_id": 4,
+      "name": "Open Grid Europe",
+      "ways": {},
+      "error": "ReadError: [Errno 54] Connection reset by peer"
+    },
+    {
+      "company_id": 5,
+      "name": "PLEdoc GmbH",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 6,
+      "name": "E.ON Digital Technology",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 7,
+      "name": "E.ON",
+      "ways": {
+        "news": {
+          "candidates": 105,
+          "stored": 38,
+          "fetched_now": 3,
+          "ok": 35,
+          "kurz": 3,
+          "fehlgeschlagen": 3,
+          "skipped": 64,
+          "errors": 3
+        }
+      },
+      "eligible": true,
+      "n_windows": 1
+    },
+    {
+      "company_id": 8,
+      "name": "RWE",
+      "ways": {
+        "news": {
+          "candidates": 316,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 316,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 2
+    },
+    {
+      "company_id": 9,
+      "name": "Thyssengas GmbH",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 13,
+      "name": "Universität Duisburg-Essen",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 14,
+      "name": "Karlsruher Institut für Technologie",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 0
+    },
+    {
+      "company_id": 15,
+      "name": "Technische Universität München",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 0
+    },
+    {
+      "company_id": 16,
+      "name": "Universität zu Köln",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 19,
+      "name": "SAP SE",
+      "ways": {
+        "news": {
+          "candidates": 408,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 408,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 2
+    },
+    {
+      "company_id": 20,
+      "name": "NTT DATA SE",
+      "ways": {},
+      "error": "ReadError: [Errno 54] Connection reset by peer"
+    },
+    {
+      "company_id": 21,
+      "name": "1&1 AG",
+      "ways": {
+        "news": {
+          "candidates": 4,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 4,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 1
+    },
+    {
+      "company_id": 22,
+      "name": "Aixtron",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 23,
+      "name": "Atoss",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 24,
+      "name": "Bechtle",
+      "ways": {
+        "news": {
+          "candidates": 2,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 2,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 1
+    },
+    {
+      "company_id": 25,
+      "name": "Cancom",
+      "ways": {
+        "news": {
+          "candidates": 2,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 2,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 2
+    },
+    {
+      "company_id": 26,
+      "name": "Carl Zeiss",
+      "ways": {
+        "news": {
+          "candidates": 63,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 63,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 2
+    },
+    {
+      "company_id": 27,
+      "name": "Compugroup Medical Deutschland",
+      "ways": {
+        "news": {
+          "candidates": 5,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 5,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 1
+    },
+    {
+      "company_id": 28,
+      "name": "Telekom",
+      "ways": {
+        "news": {
+          "candidates": 187,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 187,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 7
+    },
+    {
+      "company_id": 29,
+      "name": "Eckert Ziegler",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 30,
+      "name": "Elmos Semiconductor",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 31,
+      "name": "Evotec",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 32,
+      "name": "Formycon",
+      "ways": {
+        "news": {
+          "candidates": 0,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 0,
+          "errors": 0
+        }
+      },
+      "eligible": false
+    },
+    {
+      "company_id": 33,
+      "name": "Freenet",
+      "ways": {
+        "news": {
+          "candidates": 30,
+          "stored": 0,
+          "fetched_now": 0,
+          "ok": 0,
+          "kurz": 0,
+          "fehlgeschlagen": 0,
+          "skipped": 30,
+          "errors": 0
+        }
+      },
+      "eligible": true,
+      "n_windows": 5
+    }
+  ],
+  "fetches": 3,
+  "fetch_limit_reached": false,
+  "min_text_chars": 300,
+  "max_text_chars": 40000,
+  "ways_summary": {
+    "news": {
+      "label": "Meldungen (Google News, Verlagsseiten)",
+      "candidates": 1122,
+      "stored": 38,
+      "fetched_now": 3,
+      "ok": 35,
+      "kurz": 3,
+      "fehlgeschlagen": 3,
+      "skipped": 1081,
+      "errors": [
+        {
+          "company_id": 7,
+          "id": "b5670abb8b7074fb",
+          "error": "HTTPError: HTTP Error 403: Forbidden"
+        },
+        {
+          "company_id": 7,
+          "id": "2e4cec4f20c370db",
+          "error": "TimeoutError: [Errno 60] Operation timed out"
+        },
+        {
+          "company_id": 7,
+          "id": "233013e682aa2244",
+          "error": "HTTPError: HTTP Error 403: Forbidden"
+        }
+      ],
+      "aborted": {
+        "company_id": 7,
+        "company": "E.ON",
+        "after_errors": 3,
+        "last_error": "HTTPError: HTTP Error 403: Forbidden"
+      }
+    }
+  },
+  "duration_s": 30.1
+}

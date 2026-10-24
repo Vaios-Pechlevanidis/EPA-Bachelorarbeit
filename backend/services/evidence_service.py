@@ -791,7 +791,7 @@ def context_for_anchor(
         single_dimension_topic(anchor["source"], anchor["dimension"])  # ValueError vor dem Abruf
     evidence = evidence_for_window(info, window, **evidence_kwargs)
     if dimension_only:
-        evidence = scope_evidence(evidence, anchor["source"], anchor["dimension"])
+        evidence = scope_evidence(evidence, anchor["source"], anchor["dimension"], company_id=info.get("company_id"))
     return _context_response(info, anchor, window, evidence)
 
 
@@ -825,7 +825,7 @@ def context_for_selection(
     anchor = {"kind": KIND_SELECTION, "id": None, "from": from_month, "to": to_month}
     evidence = evidence_for_window(info, window, **evidence_kwargs)
     if dimension_only:
-        evidence = scope_evidence(evidence, source, dimension)
+        evidence = scope_evidence(evidence, source, dimension, company_id=info.get("company_id"))
     return _context_response(info, anchor, window, evidence)
 
 

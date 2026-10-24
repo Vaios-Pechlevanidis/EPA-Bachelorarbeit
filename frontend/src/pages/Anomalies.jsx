@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Building2, Diamond, Flag, ListOrdered, MousePointerClick } from "lucide-react"
 import { Anomaly as AnomalyIcon } from "../icons"
 import { CompanySearchSelect } from "@/components/CompanySearchSelect"
-import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, ScopeHint, StatusHint, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
+import { AnomalyChart, AnomalyList, AnomalySourceToggle, DimensionPicker, OutlierList, StatusHint, StatusPicker, TimeRangeFilter } from "@/components/dashboard/AnomalyCard"
 import { ComparisonCard, EvidenceCard, ExplanationCard, ReviewsCard } from "@/components/dashboard/AnomalyDetailCards"
 import { DataStatusBar } from "@/components/dashboard/DataStatusBar"
 import { DrilldownPicker } from "@/components/dashboard/DrilldownPicker"
@@ -62,10 +62,8 @@ import { USER_EVENT_NOTE } from "@/lib/userEvents"
    der Antwort des Vergleichs (explanations, explanation_summary); die
    Belegliste erhält daraus Stufe und Ereignisart je Beleg, eine Umschaltung
    der Sortierung (Datum, Relevanz) und einen Filter nach Ereignisart.
-   Kennzeichnung (2026-10-13, E30): Unter dem Verlauf steht ScopeHint, wenn die
-   Reihe außerhalb des geprüften Umfangs liegt (geprüft: Mitarbeitende,
-   Gesamtbewertung, ohne Statusfilter); Einzelmonate tragen den Zusatz
-   "ungeprüft". Mit VITE_SHOW_OUTLIER_MONTHS=false (config.js) gibt es keine
+   Kennzeichnung (2026-10-13, E30): Einzelmonate tragen den Zusatz "ungeprüft";
+   der Hinweis zum Prüfumfang unter dem Verlauf wurde am 2026-10-24 entfernt (E25). Mit VITE_SHOW_OUTLIER_MONTHS=false (config.js) gibt es keine
    Einzelmonate: keine Liste, kein Umschalter, ?liste=einzelmonate zeigt die
    Veränderungen, ein Monat aus ?from=&to= ist eine freie Auswahl.
    Vorschau-Karten (2026-10-16): Vergleich, Bewertungen, Erklärungsansätze und
@@ -549,7 +547,6 @@ export default function AnomaliesPage() {
                                 />
                                 <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
                                     <StatusHint hint={statusHint} />
-                                    <ScopeHint source={source} dimension={dimension} status={status} eligibility={eligibility} error={error} />
                                     {singleDimension && (
                                         <p className="m-0 text-[11px] text-slate-500">{dimensionScopeNote(dimension)}</p>
                                     )}

@@ -87,7 +87,7 @@ class TestEvidenceDimensionMatch:
 
     def test_category_without_keyword(self):
         match = evidence_dimension_match({"title": "Warnstreik bei Demo 3", "source_type": "news"}, GEHALT, "employee")
-        assert match == {"terms": [], "category": "Tarifverhandlung und Streik"}
+        assert match == {"terms": [], "terms_in_text": [], "category": "Tarifverhandlung und Streik", "has_text": False}
 
     def test_no_relation(self):
         assert evidence_dimension_match({"title": "Demo 3 gewinnt das Spiel", "source_type": "news"}, GEHALT, "employee") is None

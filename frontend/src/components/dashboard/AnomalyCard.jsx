@@ -21,7 +21,7 @@ import { groupLabel, statusDistinctionHint, statusOptions, validStatus } from "@
 import { useDataStatus } from "@/hooks/useDataStatus"
 import { INTERP_KEYS, TIME_RANGES, comparisonWindows, fmtPeriod, inWindow, interpolateGaps, levelsFromAnomalies, outlierCountText, periodIndex, periodWindows, trimToEvaluated } from "@/lib/anomalySeries"
 import { PARENT_SCOPE, GROUP_COMPANY_SCOPE, fmtPrice, fmtPriceTick } from "@/lib/market"
-import { OUTLIER_UNVALIDATED_NOTE, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, isValidatedScope } from "@/config"
+import { OUTLIER_UNVALIDATED_NOTE, SHOW_OUTLIER_MONTHS } from "@/config"
 import { eventCoversPeriod, eventSpanLabel } from "@/lib/userEvents"
 import { UserEventGlyph } from "./UserEvents"
 
@@ -37,8 +37,8 @@ import { UserEventGlyph } from "./UserEvents"
    zweiten Y-Achse mit (prop "market"); die Dashboard-Karte übergibt keinen Kurs.
    Kennzeichnung (2026-10-13, E30): Auffällige Einzelmonate tragen in Legende und
    Tooltip den Zusatz "ungeprüft"; mit VITE_SHOW_OUTLIER_MONTHS=false entfallen
-   sie ganz (config.js). Außerhalb des geprüften Umfangs (Mitarbeitende,
-   Gesamtbewertung, ohne Statusfilter) steht unter dem Diagramm ScopeHint.
+   sie ganz (config.js). Der Hinweis „Erkennung für diese Auswahl nicht
+   geprüft“ außerhalb des geprüften Umfangs wurde am 2026-10-24 entfernt (E25).
    Eigene Ereignisse (2026-10-17, E32): Die Detailseite übergibt die vom
    Nutzer eingetragenen Zeiträume (prop "userEvents"); sie erscheinen als
    nummerierte Marke am oberen Rand mit senkrechter Linie am Startmonat, bei
@@ -1056,14 +1056,6 @@ export function StatusHint({ hint, className = "" }) {
     return <p className={`m-0 text-[11px] text-slate-500 ${className}`}>Hinweis zum Status: {hint}</p>
 }
 
-/* Vermerk unter dem Verlauf, wenn die Reihe außerhalb des geprüften Umfangs liegt
-   (DZ1, E30: nur Mitarbeitende, Gesamtbewertung, ohne Statusfilter). Ohne
-   automatische Erkennung (E4) oder im Fehlerfall kein Vermerk. */
-export function ScopeHint({ source, dimension, status, eligibility = null, error = null, className = "" }) {
-    if (error || (eligibility && !eligibility.eligible) || isValidatedScope({ source, dimension, status })) return null
-    return <p className={`m-0 text-[11px] text-slate-500 ${className}`}>{UNVALIDATED_SCOPE_NOTE}.</p>
-}
-
 /* Startauswahl der Karte: Quelle, Dimension und Status, die die Anomalien-Seite beim
    Zurück mitgibt (2026-10-23), geprüft; sonst Mitarbeitende, Gesamtbewertung, alle. */
 function initialSelectionState(initial) {
@@ -1159,7 +1151,6 @@ export const AnomalyCard = memo(function AnomalyCard({ companyId, onOpen, onData
                     <AnomalyChart data={data} anomalies={anomalies} loading={loading} error={error} height={220} compact />
                 </div>
                 {status && <StatusHint hint={statusHint} className="mt-2" />}
-                <ScopeHint source={source} dimension={dimension} status={status} eligibility={data?.eligibility} error={error} className="mt-2" />
 
                 {/* Die Liste der Veränderungen steht nur auf der Detailseite; die Karte
                     zeigt Verlauf und Zähler und erklärt nur, wenn nichts erkannt werden kann. */}

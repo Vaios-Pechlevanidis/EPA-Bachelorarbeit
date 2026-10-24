@@ -224,7 +224,7 @@ export function datenstandLines({ dataStatus, timelineFilters = null, now = new 
 }
 
 /* Warnungen zur Datenqualität und Aussagekraft, als Liste (leer, wenn nichts auffällt). */
-export function warningLines({ dataStatus, topics = [], timelineFilters = null, anomalyData = null, trend = null, unvalidatedScope = false }, rules = REPORT_RULES) {
+export function warningLines({ dataStatus, topics = [], timelineFilters = null, anomalyData = null, trend = null }, rules = REPORT_RULES) {
   const out = [...dataQualityNotes(dataStatus)]
   const limited = (topics ?? []).filter(isLimited).length
   if (limited) out.push(`${limited} von ${topics.length} Topics haben eine begrenzte Datenbasis (unter 30 Bewertungen); ihre Mittel und Einstufungen sind unsicher.`)
@@ -246,7 +246,6 @@ export function warningLines({ dataStatus, topics = [], timelineFilters = null, 
   if (unstable.length) {
     out.push(`${unstable.length} von ${anomalyData.anomalies.length} auffälligen Veränderungen ${unstable.length === 1 ? "bleibt" : "bleiben"} in weniger als der Hälfte der Parametervarianten bestehen (${unstable.map((a) => `${fmtPeriod(a.date)}: ${stabilityText(a.stability)}`).join("; ")}).`)
   }
-  if (unvalidatedScope) out.push("Die Erkennung ist für diese Auswahl (Quelle, Dimension oder Status) nicht gegen Referenzzeiträume geprüft.")
   return out
 }
 

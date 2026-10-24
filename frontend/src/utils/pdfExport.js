@@ -14,7 +14,7 @@
  *   06 Topic-Übersicht             — Stats-Strip, Sentiment-Tabs, Tabelle aller Topics (mehrseitig)
  *   07 Technische Hinweise         — letzte Seite (Nachtrag 2026-10-17): Datenstand-Karte (FA-37),
  *                                    Berechnung und Zeitfenster der Kacheln (FA-38), Schwellen der
- *                                    Erkennung, Hinweise „ungeprüft“ und Prüfumfang (config.js, E30),
+ *                                    Erkennung, Hinweis „ungeprüft“ bei Einzelmonaten (config.js, E30),
  *                                    Hinweise zur Topic-Übersicht, Regeln des Kurzberichts,
  *                                    Datenbasis-Kennzeichen. Die Inhaltsseiten zeigen nur die
  *                                    Kernelemente und verweisen hierher.
@@ -38,7 +38,7 @@ import { fmtRollingMonth, rollingPhrase, rollingReady, rollingWarnings } from '.
 import { evidenceText, fmtN, lastImportText, marketText, platformText, sourceLine, thresholdsNote, timestampCell } from '../lib/dataStatusText';
 import { fmtPeriod } from '../lib/anomalySeries';
 import { EVENT_WINDOW_AFTER, EVENT_WINDOW_BEFORE, USER_EVENT_EXPLANATION_NOTE, changeEventWindow, eventSpanLabel, userEventsInWindow } from '../lib/userEvents';
-import { OUTLIER_UNVALIDATED_NOTE, SHOW_FORECAST, SHOW_OUTLIER_MONTHS, UNVALIDATED_SCOPE_NOTE, isValidatedScope } from '../config';
+import { OUTLIER_UNVALIDATED_NOTE, SHOW_FORECAST, SHOW_OUTLIER_MONTHS } from '../config';
 import { NEGATIVE_TOPIC_LABEL, TIMELINE_LABEL } from '../lib/labels';
 import { CATEGORY_MEAN_NOTE, CATEGORY_MEAN_TITLE, CRITICAL_LABEL, CRITICAL_NOTE, SCORE_HINT, UNCERTAINTY_NOTE, scoreCountText, scoreTrendWindowsText, scoreUncertaintyText } from '../lib/scoreText';
 import { buildReportSummary } from '../lib/reportSummary';
@@ -1792,10 +1792,9 @@ export const exportKPIsAsPDF = async (kpiData) => {
     const outliers = SHOW_OUTLIER_MONTHS ? (an?.outliers || []) : [];
     const elig = an?.eligibility || null;
     const minReviews = an?.minReviews ?? dataStatus?.thresholds?.min_reviews_per_month ?? 5;
-    const unvalidatedScope = Boolean(an && !an.error && !(elig && !elig.eligible) && !isValidatedScope(an));
     const report = buildReportSummary({
         avgScore, avgCount, scoreCi95, trend, rolling, mostCritical, negativeTopic, negativeTopicItem, topics, anomalyData, userEvents,
-        dataStatus, timelineFilters, unvalidatedScope, now,
+        dataStatus, timelineFilters, now,
     });
     let y = startSection('Kurzbericht', 'Lage, jüngste Veränderungen, Stärken und Handlungsfelder');
     y = drawSectionTitle(doc, y, 1, 'Kurzbericht', 'Zusammenfassung · nach festen Regeln');
@@ -2082,16 +2081,6 @@ export const exportKPIsAsPDF = async (kpiData) => {
         doc.setTextColor(...C.s600);
         y = drawWrapped(doc, elig.reason || '', PAGE.mx + lw, y + 2, PAGE.cw - lw, { lineH: 3.4 }) + 1;
     }
-    // Reihe außerhalb des geprüften Umfangs (DZ1, E30): kurzer Vermerk wie im Dashboard,
-    // der volle Hinweis und der Status-Hinweis stehen auf der letzten Seite
-    if (unvalidatedScope) {
-        y = ensureSpace(y, 12);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor(...C.s500);
-        y = drawWrapped(doc, `Erkennung für diese Auswahl nicht geprüft (${TECH_PAGE_REF}).`, PAGE.mx, y + 2, PAGE.cw, { lineH: 3.2 }) + 1;
-    }
-
     // Markierungen als Liste: im Dashboard als Tooltip, im PDF ausgeschrieben
     if (anomalies.length) {
         y = ensureSpace(y + 4, 24);
@@ -2338,7 +2327,6 @@ export const exportKPIsAsPDF = async (kpiData) => {
             : an?.error ? `Anomalien konnten nicht geladen werden: ${an.error}` : 'Die Anomalien-Karte war beim Export nicht geladen.',
         elig && !elig.eligible ? `Keine automatische Erkennung: ${elig.reason || ''}` : null,
         an?.statusHint ? `Hinweis zum Status: ${an.statusHint}` : null,
-        unvalidatedScope ? `${UNVALIDATED_SCOPE_NOTE}.` : null,
         outliers.length ? `Auffällige Einzelmonate: Abweichung vom Niveau der Nachbarmonate ohne neues Niveau. ${OUTLIER_UNVALIDATED_NOTE}.` : null,
         stabGrid
             ? `Stabilität je Veränderung: Anteil der Parametervarianten (Strafterm-Faktor ${stabGrid.grid.penalty_factor.join(' / ')}, Mindestlänge ${stabGrid.grid.min_size.join(' / ')} Monate, Mindestdichte ${stabGrid.grid.min_reviews_per_month.join(' / ')} Bewertungen je Monat; ${stabGrid.variants} Varianten), in denen eine Veränderung derselben Richtung innerhalb von ${stabGrid.tolerance_months} Monaten ebenfalls erkannt wird. Die Standardparameter bleiben unverändert; ein niedriger Anteil heißt, dass die Markierung von den Schwellen abhängt.`

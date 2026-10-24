@@ -67,6 +67,7 @@ import validate_annotations as va  # noqa: E402
 from evaluate_detection import match_window  # noqa: E402
 from fetch_context import company_anchors, list_companies  # noqa: E402
 from services import evidence_service as ev  # noqa: E402
+from services import evidence_text as et  # noqa: E402
 from services import explanation_service as es  # noqa: E402
 from services.event_categories import load_event_categories  # noqa: E402
 from services.explanation_ranking import STAGE_NONE, STAGES, rank_evidence, rules, topic_shift_table  # noqa: E402
@@ -143,7 +144,8 @@ def _window_record(info: Dict[str, Any], window: Dict[str, Any], windows: Dict[s
     evidence = ev.evidence_for_window(info, window, live=False, events=[])
     terms = distinctive_terms(by_window["before"], by_window["after"], source=SOURCE, exclude=exclude)
     topics = topic_shift_table(by_window["before"], by_window["after"], SOURCE)
-    ranked = rank_evidence(evidence["items"], window, terms=terms, topics=topics, exclude=exclude, categories=categories,
+    items, text_counts = et.attach_texts(info["company_id"], evidence["items"])   # Texte aus dem Textspeicher (E35)
+    ranked = rank_evidence(items, window, terms=terms, topics=topics, exclude=exclude, categories=categories,
                            analyzer=None, kind=window["kind"], strict=strict, title_words=info.get("title_words") or ())
     missing = {source: int(s["missing"]) for source, s in evidence["sources"].items()}
     top = ranked["explanations"][0]["confidence"] if ranked["explanations"] else None
@@ -152,6 +154,11 @@ def _window_record(info: Dict[str, Any], window: Dict[str, Any], windows: Dict[s
         "review_before": {"from": windows["before"]["from"], "to": windows["before"]["to"], "n": len(by_window["before"])},
         "review_after": {"from": windows["after"]["from"], "to": windows["after"]["to"], "n": len(by_window["after"])},
         "n_items": ranked["n_items"], "n_selected": ranked["n_selected"], "n_excluded": ranked["n_excluded"],
+        "n_with_text": text_counts["with_text"],
+        "n_text_terms_excluded": len(ranked.get("texts", {}).get("excluded_terms", [])),
+        "n_selected_by_text": sum(1 for sc in ranked["item_scores"].values() if sc.get("selected") and sc.get("terms_in_text")
+                                  and not (set(sc.get("terms") or []) - set(sc.get("terms_in_text") or []))
+                                  and float(sc.get("category_match") or 0.0) < rules()["topic_strong"]),
         "n_bundles": ranked["n_bundles"], "n_by_stage": ranked["n_by_stage"],
         "state": ranked["state"], "top_stage": top, "n_terms": len(terms),
         "n_shifted_topics": sum(1 for t in topics if t["share_shift_pp"] is not None and not t["low_basis"]

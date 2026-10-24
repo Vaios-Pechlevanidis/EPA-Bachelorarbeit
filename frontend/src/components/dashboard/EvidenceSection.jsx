@@ -118,7 +118,8 @@ function EvidenceRow({ item, score = null, rules = null }) {
                         ? `${fmtPeriod(item.event.from)} – ${fmtPeriod(item.event.to)}${item.event.scope ? ` · ${item.event.scope}` : ""}${item.event.note ? ` · ${item.event.note}` : ""}`
                         : `${item.publisher || (item.source === "eqs" ? "EQS News" : "Herausgeber unbekannt")}${item.issuer ? ` · Mitteilung von ${item.issuer}` : ""}${item.category ? ` · ${item.category}` : ""}`}
                     {score?.category_label ? ` · Ereignisart: ${score.category_label}` : ""}
-                    {score?.terms?.length ? ` · Begriff: ${score.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
+                    {score?.terms?.length ? ` · Begriff: ${score.terms.map((t) => `‚${t}‘${score.terms_in_text?.includes(t) ? " (im Text)" : ""}`).join(", ")}` : ""}
+                    {score?.has_text ? " · Text geprüft" : ""}
                     {score?.excluded ? ` · nicht in den Ansätzen: ${score.excluded}` : score?.company_in_title === false ? " · Unternehmen im Titel nicht genannt" : ""}
                     {item.dimension_match ? ` · ${evidenceMatchText(item.dimension_match)}` : ""}
                 </span>

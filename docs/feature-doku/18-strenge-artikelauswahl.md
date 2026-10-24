@@ -1,5 +1,9 @@
 # 18 – Strenge Auswahl der Berichte für die Erklärungsansätze
 
+*Nachtrag 2026-10-23:* Regel 3 gilt für den Titel oder, wenn er vorliegt, den Text der
+Meldung; Regeln 1, 2 und 4 bleiben beim Titel. Texte gibt es nur für Kandidaten, die Regel 1 und 4
+erfüllen (Doku 22, E35).
+
 | | |
 |---|---|
 | Inkrement | Korrektur der Erklärungsansätze (2026-10-18) |

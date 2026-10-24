@@ -43,6 +43,7 @@ from typing import Any, Dict, List, Optional
 
 from services.event_categories import classify_title
 from services.evidence_sources import TYPE_ADHOC, TYPE_GLOBAL, TYPE_NEWS
+from services.evidence_text import attach_texts
 from services.keyword_topic_service import (
     EXPLANATION_TOPIC_TEXT_FIELDS,
     topic_definitions_for,
@@ -153,32 +154,43 @@ def evidence_dimension_match(
     title = item.get("title")
     if not topic or not title or not isinstance(title, str) or item.get("source_type") == TYPE_GLOBAL:
         return None
-    words: List[str] = []
-    for start, end in topic_spans(title, topic, source):
-        word = title[start:end].lower()
-        if word not in words:
-            words.append(word)
     terms = [{"term": t} for t in topic_title_terms(topic, source)]
-    for hit in match_terms(title, terms, compound_only=True):
-        if hit["word"] not in words:
-            words.append(hit["word"])
+
+    def hits(text: str) -> List[str]:
+        found: List[str] = []
+        for start, end in topic_spans(text, topic, source):
+            word = text[start:end].lower()
+            if word not in found:
+                found.append(word)
+        for hit in match_terms(text, terms, compound_only=True):
+            if hit["word"] not in found:
+                found.append(hit["word"])
+        return found
+
+    words = hits(title)
+    # Gespeicherter Text (E35): Schlüsselwörter des Themas auch im Text, getrennt ausgewiesen.
+    text = item.get("text") if isinstance(item.get("text"), str) else ""
+    words_in_text = [w for w in hits(text) if w not in words] if text else []
     primary = classify_title(title, categories, eqs_category=item.get("category"))["primary"]
     category = primary["label"] if primary and primary["employer_related"] and topic in primary["topics"] else None
-    if not words and category is None:
+    if not words and not words_in_text and category is None:
         return None
-    return {"terms": words, "category": category}
+    return {"terms": words, "terms_in_text": words_in_text, "category": category, "has_text": bool(text)}
 
 
-def scope_evidence(evidence: Dict[str, Any], source: str, dimension: Optional[str]) -> Dict[str, Any]:
+def scope_evidence(evidence: Dict[str, Any], source: str, dimension: Optional[str],
+                   company_id: Optional[int] = None) -> Dict[str, Any]:
     """Belegliste auf die Dimension eingeschränkt: ``items`` nur mit Bezug (je Beleg
     ``dimension_match``), ``total``, ``counts``, ``coverage`` und ``reason`` neu gerechnet,
     dazu ``scope`` mit Dimension, Thema und Zählung vor und nach dem Filter.
     ValueError wie ``single_dimension_topic``."""
     topic = single_dimension_topic(source, dimension)
     items = evidence.get("items") or []
+    # Mit company_id werden gespeicherte Texte für die Prüfung angehängt (E35); die Antwort trägt keine Texte.
+    with_text = attach_texts(company_id, items)[0] if company_id is not None else items
     kept: List[Dict[str, Any]] = []
-    for item in items:
-        match = evidence_dimension_match(item, topic, source)
+    for item, probe in zip(items, with_text):
+        match = evidence_dimension_match(probe, topic, source)
         if match is not None:
             kept.append({**item, "dimension_match": match})
     counts = {TYPE_NEWS: 0, TYPE_ADHOC: 0, TYPE_GLOBAL: 0}

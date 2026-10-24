@@ -90,7 +90,17 @@ will wir wird wirst wo wollen wollte wollten wurde wurden würde würden zu zum 
 gern gerne gibt gab geben gegeben hatte halt kaum leider meist meistens nie oft schon sehr sowie teils teilweise trotz
 trotzdem überhaupt vielleicht wenig weniger wenigstens wirklich ziemlich zumindest zusammen bereits beide beiden bzw
 etc usw sowohl obwohl falls somit dennoch deswegen natürlich eigentlich allerdings zudem außerdem ebenfalls daneben
+""".split()) | frozenset("""
+andere anderen anderem anderer anderes anders bisher bislang deutlich aktuell aktuelle aktuellen aktueller eigene
+eigenen eigener eigenes gerade statt wohl innerhalb außerhalb direkt sogar genau wäre wären hätte hätten konnte
+konnten müsste müssten musste mussten darf darfst dürfen weder laut lieber paar weit völlig eben seit siehe pro per
+uhr gegenüber möchte möchten vermutlich überwiegend darüber einzelne einzelnen gleich gleiche gleichen meisten stets
+aufgrund hängt gilt fast irgendwie irgendwann jeweils jemand niemand ggf evtl ca sofern insofern hierbei hiermit
+daraufhin seitdem seither inzwischen mittlerweile zunächst schließlich letztlich letztendlich beispielsweise
 """.split())
+# Ergänzung 2026-10-23 (E35): Funktionswörter, Adverbien und Modalverben, die als kennzeichnende Begriffe
+# durchgingen, weil sie in Titeln nie stehen, in Texten aber in bis zu einem Drittel der Meldungen
+# („andere“ in 36 von 107 Texten bei E.ON 2023-11); Zählung in docs/feature-doku/22-text-der-berichte.md.
 
 STOPWORDS_EN = frozenset("""
 a about above after again against all also am an and any are as at be because been before being below between both
@@ -98,7 +108,13 @@ but by can could did do does doing down during each few for from further had has
 his how i if in into is it its itself just me more most my no nor not now of off on once only or other our ours out
 over own same she should so some such than that the their theirs them then there these they this those through to too
 under until up very was we were what when where which while who whom why will with would you your yours
+""".split()) | frozenset("""
+don doesn didn isn aren wasn weren won wouldn couldn shouldn far every everything everyone anything nothing something
+somebody anybody nobody especially different think thought really quite rather pretty much many lot lots still already
+yet even almost sometimes often always never usually mostly however although though despite within without around
+across towards upon whether either neither per via etc
 """.split())
+# Ergänzung 2026-10-23 (E35), englische Entsprechungen (Begriffe aus englischen Bewertungen, SAP 2024-03).
 
 # Allgemeine Bewertungswörter: in fast jeder Bewertung, ohne thematische Aussage;
 # dazu häufige Adjektive, Adverbien und Verben sowie englische Entsprechungen.

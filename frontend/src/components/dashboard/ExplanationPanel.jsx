@@ -109,11 +109,16 @@ function SignalChips({ entry }) {
                 <Chip
                     key={t.term}
                     strong={t.strong}
-                    title={`Kennzeichnender Begriff der Bewertungen im Titel („${t.word}“): ${t.after} von ${t.n_after} Bewertungen danach gegenüber ${t.before} von ${t.n_before} davor${t.strong ? "; starker Begriff" : ""}`}
+                    title={`Kennzeichnender Begriff der Bewertungen ${t.in === "text" ? "im Text der Meldung" : "im Titel"} („${t.word}“): ${t.after} von ${t.n_after} Bewertungen danach gegenüber ${t.before} von ${t.n_before} davor${t.strong ? "; starker Begriff" : ""}`}
                 >
-                    Begriff ‚{t.term}‘ {t.after} ggü. {t.before}
+                    Begriff ‚{t.term}‘ {t.after} ggü. {t.before}{t.in === "text" ? " · im Text" : ""}
                 </Chip>
             ))}
+            {entry.has_text && (
+                <Chip title="Zu dieser Meldung liegt der Text vor; der Wortbezug wurde im Titel und im Text gesucht. Ereignisart, Arbeitgeberbezug und die Nennung des Unternehmens kommen aus dem Titel">
+                    Text geprüft
+                </Chip>
+            )}
             {cat && cat.employer_related && (
                 <Chip
                     strong={shifted.length > 0}
@@ -166,6 +171,8 @@ function BundledItems({ items, rules }) {
                         <span className="block text-[10.5px] text-slate-500 break-words">
                             {item.publisher || "Herausgeber unbekannt"} · {typeLabel(item.source_type, item.eqs_category)}
                             {item.issuer ? ` · Mitteilung von ${item.issuer}` : ""} · Zeit {num(item.time_match, 2)}, Thema {num(item.topic_match, 2)}
+                            {item.terms?.some((t) => t.in === "text") ? ` · Begriff im Text: ${item.terms.filter((t) => t.in === "text").map((t) => `‚${t.term}‘`).join(", ")}` : ""}
+                            {item.has_text ? " · Text geprüft" : ""}
                         </span>
                     </span>
                     <span className="flex-none self-start"><StageBadge stage={item.stage} signalLabel={item.signal_label} rules={rules} small /></span>
@@ -193,6 +200,7 @@ function GroupMembers({ others, rules }) {
                             {o.n_items > 1 ? ` · ${o.n_items} Meldungen (${(o.publishers ?? []).join(", ")})` : ""}
                             {" "}· {o.time_phrase} · Zeit {num(o.time_match, 2)}, Thema {num(o.topic_match, 2)}
                             {o.terms?.length ? ` · Begriff: ${o.terms.map((t) => `‚${t}‘`).join(", ")}` : ""}
+                            {o.has_text ? " · Text geprüft" : ""}
                         </span>
                     </span>
                     <span className="flex-none self-start"><StageBadge stage={o.confidence} signalLabel={o.signal_label} rules={rules} small /></span>
@@ -512,8 +520,8 @@ export function ExplanationContent({ data, loading, error, onSelectPeriod = null
                     {showRules && (
                         <div className="mt-1.5 text-[11px] text-slate-600 leading-4 space-y-1">
                             <p className="m-0">
-                                Drei Signale je Beleg, alle aus dem Titel und den Bewertungen: <span className="font-medium">Begriff</span> (kennzeichnende
-                                Begriffe, die in den Bewertungen danach deutlich häufiger vorkommen als davor und im Titel stehen; je Begriff
+                                Drei Signale je Beleg, aus dem Titel{rules.text ? ", bei vorliegendem Text auch aus dem Text der Meldung," : ""} und den Bewertungen: <span className="font-medium">Begriff</span> (kennzeichnende
+                                Begriffe, die in den Bewertungen danach deutlich häufiger vorkommen als davor und im Titel{rules.text ? " oder im Text" : ""} stehen; je Begriff
                                 {" "}{num(rules.term_match_per_term, 1)}, ein starker Begriff {num(rules.term_match_strong, 1)}),
                                 {" "}<span className="font-medium">Ereignisart</span> (aus Schlüsselwörtern im Titel; {num(rules.category_match_with_shift, 1)}, wenn sich ein
                                 zugeordnetes Thema im Vergleich um mindestens {num(rules.topic_shift_min_pp, 0)} Prozentpunkte verschoben hat, sonst
@@ -530,6 +538,17 @@ export function ExplanationContent({ data, loading, error, onSelectPeriod = null
                                 ähnlicher Titel) sind gebündelt. In der obersten Liste steht höchstens ein Eintrag je Ereignisart (ohne Ereignisart je Begriff),
                                 die übrigen Bündel der Gruppe sind darunter aufklappbar. Höchstens {rules.max_explanations} Einträge. Alle Schwellen sind vorläufige Setzungen.
                             </p>
+                            {rules.text?.note && (
+                                <p className="m-0">
+                                    <span className="font-medium">Text der Meldung</span>{rules.text.version_date ? ` (seit ${rules.text.version_date})` : ""}: {rules.text.note}
+                                    {summary?.texts?.n_texts > 0
+                                        ? ` In diesem Fenster liegt zu ${summary.texts.n_texts} von ${summary.n_items} Belegen der Text vor.`
+                                        : " In diesem Fenster liegt zu keinem Beleg ein Text vor."}
+                                    {summary?.texts?.excluded_terms?.length
+                                        ? ` Im Text nicht gezählt, weil zu häufig: ${summary.texts.excluded_terms.map((e) => `‚${e.term}‘ (${Math.round(e.share * 100)} %)`).join(", ")}.`
+                                        : ""}
+                                </p>
+                            )}
                             {strict && selection?.rules?.length > 0 && (
                                 <p className="m-0">
                                     <span className="font-medium">Strenge Auswahl</span>{selection.date ? ` (seit ${selection.date})` : ""}: Vor Bündelung und Rangfolge muss jede Meldung vier Regeln erfüllen, sonst wird sie kein Erklärungsansatz.

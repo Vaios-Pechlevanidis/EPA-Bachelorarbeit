@@ -102,14 +102,14 @@ describe("Datenstand, Warnungen, nächste Schritte", () => {
   })
   it("sammelt Warnungen zu Duplikaten, kleiner Basis, Prognose, Trend und Stabilität", () => {
     const timelineFilters = { hasForecast: true, forecastInfo: { n_months: 106, months_below_min_reviews: 33, min_reviews_per_month: 5, last_month: "2025-07", backtest: { best_method: "ma6", methods: { holt: { mae: 0.64 }, ma6: { mae: 0.48, label: "Mittel der letzten 6 Monate" } } } } }
-    const w = warningLines({ dataStatus, topics, timelineFilters, anomalyData, trend, unvalidatedScope: true })
+    const w = warningLines({ dataStatus, topics, timelineFilters, anomalyData, trend })
     expect(w.some((t) => t.includes("3 exakte Duplikate"))).toBe(true)
     expect(w.some((t) => t.includes("1 von 4 Topics"))).toBe(true)
     expect(w.some((t) => t.includes("33 von 106 Monaten"))).toBe(true)
     expect(w.some((t) => t.includes("ungenauer als die einfache Fortschreibung"))).toBe(true)
     expect(w.some((t) => t.includes("statistisch nicht von 0 unterscheidbar"))).toBe(true)
     expect(w.some((t) => t.includes("Okt. 2016: in 20 von 48 Parametervarianten"))).toBe(true)
-    expect(w.some((t) => t.includes("nicht gegen Referenzzeiträume geprüft"))).toBe(true)
+    expect(w.some((t) => t.includes("nicht gegen Referenzzeiträume geprüft"))).toBe(false)   // Hinweis am 2026-10-24 entfernt (E25)
   })
   it("leitet höchstens drei Untersuchungsfragen aus den Handlungsfeldern ab", () => {
     const steps = nextSteps([{ kind: "change", ref: { date: "2016-10" } }, { kind: "trend" }, { kind: "topic", ref: { topic: "Gehalt" } }, { kind: "topic", ref: { topic: "X" } }])

@@ -6,12 +6,24 @@ auffälligen Veränderung und einem extern belegten Ereignis, begründet durch
 zeitliche und thematische Korrespondenz. Er ist nie eine Ursache; jede Stufe
 nennt, worauf sie beruht. Befund aus Inkrement 4 (E18): fast jedes Fenster hat
 Belege, die zeitliche Nähe allein unterscheidet nicht. Die Aussagekraft muss
-aus der thematischen Korrespondenz kommen; es liegen nur Titel vor.
+aus der thematischen Korrespondenz kommen; bis zum 2026-10-23 lagen nur Titel vor.
+
+**Text neben dem Titel** (E35, 2026-10-23, ``TEXT_VERSION`` 1): Trägt ein Beleg
+einen gespeicherten Mitteilungs- oder Artikeltext (``item["text"]`` aus
+``services/evidence_text.py``, nur über ``scripts/fetch_evidence_text.py`` gefüllt),
+sucht der Wortbezug die kennzeichnenden Begriffe auch im Text; je Begriff steht
+``in`` (``title`` oder ``text``), Titeltreffer zuerst. Die Ereignisart, der
+Arbeitgeberbezug und die Nennung des Unternehmens kommen weiter allein aus dem
+Titel: Die Schlüsselwörter der Ereignisarten (Verlust, Klage, Übernahme, …) stehen in
+langen Texten beiläufig, die Begriffe der Bewertungen dagegen sind je Fenster
+gewonnen und selten. Belege ohne Text werden wie bisher bewertet; ``has_text``
+sagt je Beleg, Bündel und Eintrag, ob ein Text vorlag. Schwellen und Stufenregeln
+ändern sich nicht.
 
 Signale je Beleg (0 bis 1, aus Titel und Bewertungen):
 
 - ``term_match``: kennzeichnende Begriffe der Bewertungen (``review_terms``,
-  A1), die im Titel stehen. Jeder Begriff zählt ``TERM_MATCH_PER_TERM``, ein
+  A1), die im Titel oder (seit E35) im gespeicherten Text stehen. Jeder Begriff zählt ``TERM_MATCH_PER_TERM``, ein
   starker Begriff (mindestens ``TERM_STRONG_MIN_AFTER`` Bewertungen danach,
   Anteil mindestens ``TERM_STRONG_MIN_RATIO``-fach und mindestens
   ``TERM_STRONG_MIN_SHIFT`` über dem Anteil davor) ``TERM_MATCH_STRONG``;
@@ -84,8 +96,8 @@ ohne allgemeine Wörter wie „Deutsche“ oder „Medical“; Genitiv erlaubt; 
 Mitteilungen des Emittenten gelten als genannt), (2) Arbeitgeberbezug (die Gruppe
 ohne Arbeitgeberbezug ist ausgeschlossen statt zurückgestuft), (3) thematische
 Korrespondenz (``term_match ≥ TOPIC_WEAK`` oder ``category_match ≥ TOPIC_STRONG``;
-eine nur erkannte Ereignisart genügt nicht; ein Begriff trifft nur, wenn das Titelwort
-der Begriff ist oder mit ihm beginnt, nicht umgekehrt), (4) zeitliche Nähe mindestens
+eine nur erkannte Ereignisart genügt nicht; ein Begriff trifft nur, wenn das Wort des
+Titels oder des Textes der Begriff ist oder mit ihm beginnt, nicht umgekehrt), (4) zeitliche Nähe mindestens
 ``SELECTION_MIN_TIME`` (0,5). Ausgeschlossene Belege stehen in ``item_scores``
 mit ``excluded`` (nicht erfüllte Regel) hinter allen Bündeln; ``n_selected``, ``n_excluded`` und
 ``n_excluded_by_reason`` zählen sie. Jeder ausgewählte Beleg erreicht nach den
@@ -142,6 +154,23 @@ TIME_MIN = 0.3                   # zeitliche Nähe mindestens (Rand eines Fenste
 # 2 = vom Autor am 2026-10-08 festgelegt: hoch nur mit Wortbezug und Ereignisart.
 RULES_VERSION = 2
 RULES_VERSION_DATE = "2026-10-08"
+# Text neben dem Titel (E35): der Wortbezug sucht die Begriffe auch im gespeicherten Text eines Belegs.
+TEXT_VERSION = 1
+TEXT_VERSION_DATE = "2026-10-23"
+TERM_IN_TITLE = "title"
+TERM_IN_TEXT = "text"
+# Ein Begriff, der in vielen Texten des Fensters steht, kennzeichnet dort nichts (Zählung 2026-10-23: „andere“
+# in 36 von 107 Texten, „deutlich“ in 20, „bisher“ in 14 bei E.ON 2023-11): Er zählt im Text nicht, wenn er in
+# mindestens TEXT_TERM_MIN_HITS Texten und in mehr als TEXT_TERM_MAX_SHARE der Texte des Fensters steht
+# (Titeltreffer bleiben). Setzung, vorläufig (E35).
+TEXT_TERM_MAX_SHARE = 0.2
+TEXT_TERM_MIN_HITS = 3
+TEXT_NOTE = ("Liegt zu einer Meldung der Text vor (EQS-Mitteilungen vollständig, Presseartikel für die Kandidaten der "
+             "Markierungs- und Vergleichsfenster), sucht der Wortbezug die Begriffe der Bewertungen auch im Text; "
+             "je Begriff steht, ob er im Titel oder im Text steht. Ein Begriff, der in mehr als 20 % der Texte des "
+             "Fensters steht (mindestens 3 Texte), zählt im Text nicht, weil er dort nichts kennzeichnet. Ereignisart, "
+             "Arbeitgeberbezug und die Nennung des Unternehmens kommen weiter aus dem Titel. Meldungen ohne gespeicherten "
+             "Text werden nur über den Titel bewertet.")
 # Korrekturen ohne Änderung der Schwellen und Stufenregeln (E23, Nachtrag 2026-10-13); jeder
 # Bericht nennt sie unter rules()["corrections"].
 CORRECTIONS = (
@@ -150,6 +179,7 @@ CORRECTIONS = (
     "2026-10-13: Vergleichsfenster begrenzt durch den ersten und letzten bewerteten statt datierten Monat (E18)",
     "2026-10-13: 'Unternehmen im Titel genannt' erkennt Namen mit Punkt oder Ziffern (E.ON, 1&1; ohne Einfluss auf die Stufe)",
     "2026-10-13: EQS-Mitteilungen heißen nur bei der EQS-Kategorie 'Ad-hoc' Ad-hoc-Mitteilung (E19; ohne Einfluss auf die Stufe)",
+    "2026-10-23: Stoppwörter um Funktionswörter, Adverbien und Modalverben ergänzt ('andere', 'bisher', 'deutlich', …; E35)",
 )
 
 STAGE_HIGH, STAGE_MEDIUM, STAGE_LOW, STAGE_NONE = "hoch", "mittel", "niedrig", "keine"
@@ -232,8 +262,9 @@ SELECTION_RULES = (
     "(allgemeine Wörter wie „Deutsche“ zählen nicht); EQS-Mitteilungen des Emittenten gelten als genannt.",
     "Die Meldung hat Arbeitgeberbezug: Börsenberichte, Kursziele, Sport- und Produktmeldungen sind ausgeschlossen, "
     "nicht nur zurückgestuft.",
-    "Die Meldung hat thematische Korrespondenz: ein kennzeichnender Begriff der Bewertungen steht im Titel (Wortbezug: "
-    "der Begriff selbst oder ein Wort, das mit ihm beginnt) oder die erkannte Ereignisart hat ein zugeordnetes Thema, "
+    "Die Meldung hat thematische Korrespondenz: ein kennzeichnender Begriff der Bewertungen steht im Titel oder, wenn "
+    "er vorliegt, im Text der Meldung (Wortbezug: der Begriff selbst oder ein Wort, das mit ihm beginnt) oder die "
+    "erkannte Ereignisart hat ein zugeordnetes Thema, "
     "das sich im Vergleich merklich verschiebt (Themenverschiebung); eine nur erkannte Ereignisart genügt nicht.",
     "Die Meldung liegt nahe am Übergang: zeitliche Nähe mindestens 0,5, also nicht am Rand des Fensters davor.",
 )
@@ -268,6 +299,9 @@ def rules() -> Dict[str, Any]:
         "max_explanations": MAX_EXPLANATIONS,
         "version": RULES_VERSION, "version_date": RULES_VERSION_DATE,
         "corrections": list(CORRECTIONS),
+        "text": {"version": TEXT_VERSION, "version_date": TEXT_VERSION_DATE, "used_for": "term_match",
+                 "title_only": ["category_match", "employer_related", "company_in_title"],
+                 "term_max_share": TEXT_TERM_MAX_SHARE, "term_min_hits": TEXT_TERM_MIN_HITS, "note": TEXT_NOTE},
         "stage_labels": dict(STAGE_LABELS),
         "finding_note": STAGE_FINDING_NOTE,
         "selection": selection_rules(),
@@ -429,14 +463,36 @@ def company_in_title(title: Any, company_words: Iterable[str]) -> Optional[bool]
     return False
 
 
+def frequent_text_terms(items: Iterable[Dict[str, Any]], terms: List[Dict[str, Any]], strict_terms: bool = False,
+                        max_share: float = TEXT_TERM_MAX_SHARE, min_hits: int = TEXT_TERM_MIN_HITS) -> Dict[str, Any]:
+    """Begriffe, die in zu vielen Texten des Fensters stehen (E35): ``{"n_texts", "excluded": [{"term",
+    "n_texts_with_term", "share"}]}``. Ein Begriff ist ausgeschlossen, wenn er in mindestens ``min_hits``
+    Texten und in mehr als ``max_share`` der Texte steht; ohne Texte leer. Reine Funktion."""
+    texts = [i["text"] for i in items if isinstance(i.get("text"), str) and i.get("text")]
+    counts: Dict[str, int] = {}
+    for text in texts:
+        for hit in match_terms(text, terms, compound_only=strict_terms):
+            counts[hit["term"]] = counts.get(hit["term"], 0) + 1
+    excluded = [{"term": term, "n_texts_with_term": n, "share": round(n / len(texts), 3)}
+                for term, n in counts.items() if n >= min_hits and n / len(texts) > max_share]
+    return {"n_texts": len(texts), "excluded": excluded}
+
+
 def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[str, Any]],
                shifts: Dict[str, Dict[str, Any]], categories: Optional[List[Dict[str, Any]]] = None,
-               company_words: Iterable[str] = (), strict_terms: bool = False) -> Dict[str, Any]:
+               company_words: Iterable[str] = (), strict_terms: bool = False,
+               text_excluded: Iterable[str] = ()) -> Dict[str, Any]:
     """Signale, Begriffe, Ereignisart und Stufe eines Belegs (reine Funktion). ``strict_terms``
     (strenge Auswahl, E33): ein Begriff trifft nur, wenn das Titelwort der Begriff ist oder mit
-    ihm beginnt (``review_terms.match_terms(compound_only=True)``)."""
+    ihm beginnt (``review_terms.match_terms(compound_only=True)``). ``text_excluded`` (E35): Begriffe,
+    die im Text nicht zählen, weil sie in zu vielen Texten des Fensters stehen (``frequent_text_terms``)."""
     title = item.get("title") or ""
-    matched = match_terms(title, terms, compound_only=strict_terms)
+    text = item.get("text") if isinstance(item.get("text"), str) else ""
+    matched = [{**t, "in": TERM_IN_TITLE} for t in match_terms(title, terms, compound_only=strict_terms)]
+    if text:
+        skip = {t["term"] for t in matched} | set(text_excluded)
+        matched += [{**t, "in": TERM_IN_TEXT} for t in match_terms(text, terms, compound_only=strict_terms)
+                    if t["term"] not in skip]
     classification = classify_title(title, categories, eqs_category=item.get("category"))
     primary = classification["primary"]
     cat_match, shifted = category_match(primary, shifts)
@@ -456,10 +512,13 @@ def score_item(item: Dict[str, Any], window: Dict[str, Any], terms: List[Dict[st
         "eqs_category": item.get("category") if item.get("source_type") == TYPE_ADHOC else None,
         "time_match": tm, "term_match": t_match, "category_match": cat_match, "topic_match": topic,
         "terms": [{"term": t["term"], "word": t["word"], "before": t["before"], "after": t["after"],
-                   "n_before": t["n_before"], "n_after": t["n_after"], "strong": is_strong_term(t)} for t in matched],
+                   "n_before": t["n_before"], "n_after": t["n_after"], "strong": is_strong_term(t), "in": t["in"]}
+                  for t in matched],
         "category": category,
         "employer_related": employer,
         "company_in_title": company_in_title(title, company_words),
+        "has_text": bool(text),
+        "text_status": item.get("text_status") if text else None,
         "stage": stage,
         "stage_label": STAGE_LABELS[stage],
         "signal_label": signal_label(t_match, cat_match, employer),
@@ -596,6 +655,7 @@ def _finish_bundle(items: List[Dict[str, Any]]) -> Dict[str, Any]:
         "has_adhoc": any(i.get("source_type") == TYPE_ADHOC for i in items),
         "has_eqs_adhoc": any(is_eqs_adhoc(i) for i in items),
         "company_in_title": representative.get("company_in_title"),
+        "has_text": any(i.get("has_text") for i in items),
     }
 
 
@@ -666,15 +726,26 @@ def _count_phrase(bundle: Dict[str, Any]) -> str:
     return f"{n} Meldungen (darunter eine {'Ad-hoc-Mitteilung' if bundle.get('has_eqs_adhoc') else 'EQS-Mitteilung'})"
 
 
+def _term_name(t: Dict[str, Any]) -> str:
+    """'begriff' bzw. 'begriff' (im Text der Meldung) für einen Treffer im gespeicherten Text (E35)."""
+    return f"'{t['term']}'" + (" (im Text der Meldung)" if t.get("in") == TERM_IN_TEXT else "")
+
+
 def _term_phrase(terms: List[Dict[str, Any]], kind: str) -> str:
     if not terms:
         return ""
     where = "in den Bewertungen der Auswahl" if kind == KIND_SELECTION else "in den Bewertungen danach"
     if len(terms) == 1:
         t = terms[0]
+        if t.get("in") == TERM_IN_TEXT:
+            return (f"; '{t['term']}' steht im Text der Meldung und wird {where} häufiger genannt "
+                    f"({t['after']} gegenüber {t['before']} Bewertungen)")
         return f"; {where} wird '{t['term']}' häufiger genannt ({t['after']} gegenüber {t['before']} Bewertungen)"
-    names = ", ".join(f"'{t['term']}'" for t in terms[:-1]) + f" und '{terms[-1]['term']}'"
     counts = ", ".join(f"{t['term']}: {t['after']} gegenüber {t['before']}" for t in terms)
+    if all(t.get("in") == TERM_IN_TEXT for t in terms):
+        plain = ", ".join(f"'{t['term']}'" for t in terms[:-1]) + f" und '{terms[-1]['term']}'"
+        return f"; {plain} stehen im Text der Meldung und werden {where} häufiger genannt ({counts} Bewertungen)"
+    names = ", ".join(_term_name(t) for t in terms[:-1]) + f" und {_term_name(terms[-1])}"
     return f"; {where} werden {names} häufiger genannt ({counts} Bewertungen)"
 
 
@@ -763,6 +834,7 @@ def _group_member(bundle: Dict[str, Any], window: Dict[str, Any], kind: str) -> 
     return {
         "id": rep.get("id"), "confidence": bundle["stage"], "stage_label": bundle["stage_label"],
         "signal_label": bundle["signal_label"], "event": rep.get("title"), "date": rep.get("date"), "source": rep.get("publisher"), "url": rep.get("url"),
+        "has_text": bool(bundle.get("has_text")),
         "source_type": rep.get("source_type"), "eqs_category": rep.get("eqs_category"),
         "language": rep.get("language"), "issuer": rep.get("issuer"),
         "n_items": bundle["n_items"], "publishers": bundle["publishers"],
@@ -788,7 +860,7 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
     rep = bundle["representative"]
     item_fields = ("id", "date", "title", "publisher", "url", "source", "source_type", "eqs_category", "reliability",
                    "language", "issuer", "time_match", "term_match", "category_match", "topic_match", "stage", "stage_label", "signal_label",
-                   "company_in_title")
+                   "company_in_title", "has_text", "terms")
     return {
         "id": rep.get("id"),
         "confidence": bundle["stage"],
@@ -812,6 +884,7 @@ def _entry(bundle: Dict[str, Any], window: Dict[str, Any], kind: str, analyzer, 
         "category": bundle["category"],
         "time_phrase": time_phrase(rep.get("date"), window, kind),
         "company_in_title": bundle.get("company_in_title"),
+        "has_text": bool(bundle.get("has_text")),
         "sentiment": title_sentiment(rep.get("title") or "", analyzer, direction, cache),
         "text": explanation_text(bundle, window, kind),
         "items": [{k: i.get(k) for k in item_fields} for i in bundle["items"]],
@@ -834,6 +907,8 @@ def _item_score(i: Dict[str, Any], rank: int, bundle: Optional[Dict[str, Any]], 
         "employer_related": i.get("employer_related"),
         "company_in_title": i.get("company_in_title"),
         "terms": [t["term"] for t in i["terms"]],
+        "terms_in_text": [t["term"] for t in i["terms"] if t.get("in") == TERM_IN_TEXT],
+        "has_text": bool(i.get("has_text")),
         "selected": bool(i.get("selected", True)),
         "excluded": i.get("excluded"),
     }
@@ -889,8 +964,11 @@ def rank_evidence(
     kind = kind or window.get("kind") or KIND_CHANGE
     shifts = topic_shift_index(topics)
     name_words = company_title_words(exclude, title_words)
-    scored = [score_item(i, window, terms, shifts, cats, name_words, strict_terms=bool(strict))
-              for i in items if i.get("source_type") != TYPE_GLOBAL]
+    evidence_items = [i for i in items if i.get("source_type") != TYPE_GLOBAL]
+    text_terms = frequent_text_terms(evidence_items, terms, strict_terms=bool(strict))
+    text_excluded = {e["term"] for e in text_terms["excluded"]}
+    scored = [score_item(i, window, terms, shifts, cats, name_words, strict_terms=bool(strict), text_excluded=text_excluded)
+              for i in evidence_items]
     global_events = global_events_in_window([i for i in items if i.get("source_type") == TYPE_GLOBAL], window)
     selected, excluded = select_items(scored, strict)
     bundles = sorted(bundle_items(selected, exclude), key=sort_key)
@@ -931,6 +1009,8 @@ def rank_evidence(
         n_excluded_by_reason[i["excluded"]] = n_excluded_by_reason.get(i["excluded"], 0) + 1
     state = STATE_FOUND if explanations else STATE_OPEN
     return {
+        "texts": {"n_texts": text_terms["n_texts"], "excluded_terms": text_terms["excluded"],
+                  "n_with_text": sum(1 for sc in scored if sc.get("has_text"))},
         "state": state,
         "explanations": explanations,
         "n_items": len(scored),
@@ -1031,6 +1111,8 @@ __all__ = [
     "TOPIC_SHIFT_MIN_PP",
     "CATEGORY_MATCH_WITH_SHIFT", "CATEGORY_MATCH_ONLY", "TIME_NEAR", "TIME_AFTER_FACTOR", "TOPIC_STRONG", "TOPIC_WEAK",
     "TIME_MID", "TIME_MIN", "RULES_VERSION", "RULES_VERSION_DATE",
+    "TEXT_VERSION", "TEXT_VERSION_DATE", "TERM_IN_TITLE", "TERM_IN_TEXT", "TEXT_TERM_MAX_SHARE", "TEXT_TERM_MIN_HITS",
+    "TEXT_NOTE", "frequent_text_terms",
     "STRICT_SELECTION", "SELECTION_VERSION", "SELECTION_DATE", "SELECTION_MIN_TIME", "COMPANY_TITLE_MAX_SUFFIX",
     "GENERIC_NAME_WORDS", "EXCLUDED_COMPANY", "EXCLUDED_NON_EMPLOYER", "EXCLUDED_TOPIC", "EXCLUDED_TIME", "EXCLUSION_REASONS",
     "SELECTION_RULES", "SELECTION_NOTE", "OPEN_NOTE_LENIENT", "selection_rules", "company_title_words", "exclusion_reason",

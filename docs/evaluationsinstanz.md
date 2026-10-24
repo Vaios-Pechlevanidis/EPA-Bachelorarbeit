@@ -60,11 +60,12 @@ Zufall (E30)“ (Feature-Doku 03).
 | Folgen für die Interviews | Die Befragten sehen zwei Arten von Markierungen; die Rauten laden zum Nachfragen ein, obwohl ihre Treffsicherheit ungeprüft ist; der Zusatz muss im Gespräch erklärt werden | Das Gespräch bleibt bei den Niveauwechseln, deren Erkennung für die Gesamtbewertung der Mitarbeitenden geprüft ist (DZ1, E30); kurze Einbrüche einzelner Monate sind nur noch über den freien Drill-down (Doku 06) zu finden |
 | Folgen für die Arbeit | Das gezeigte Artefakt enthält einen Teil mit Zufallsbefund; die Auswertung der Interviews müsste Aussagen zu Rauten getrennt lesen | Gezeigt wird, was geprüft ist; E14 bleibt als Funktion des Artefakts beschrieben, aber nicht evaluiert |
 
-Unabhängig vom Schalter steht auf der Detailseite, auf der Dashboard-Karte und im PDF unter dem
-Diagramm „Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die Gesamtbewertung der
-Mitarbeitenden ohne Statusfilter (DZ1, E30)“, sobald eine Einzeldimension, die Bewerbenden oder
-eine Statusgruppe gewählt ist (Feature-Doku 01). Werden diese Reihen im Interview gezeigt, sollte
-der Leitfaden darauf eingehen.
+Bis zum 2026-10-24 stand unabhängig vom Schalter auf der Detailseite, auf der Dashboard-Karte und
+im PDF unter dem Diagramm „Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die
+Gesamtbewertung der Mitarbeitenden ohne Statusfilter (DZ1, E30)“, sobald eine Einzeldimension,
+die Bewerbenden oder eine Statusgruppe gewählt war (Feature-Doku 01). Der Autor hat den Hinweis am
+2026-10-24 entfernt (E25, Nachtrag). Werden diese Reihen im Interview gezeigt, muss der Leitfaden
+den Prüfumfang deshalb selbst nennen.
 
 Empfehlung (Vorschlag, die Entscheidung trifft der Autor): `VITE_SHOW_OUTLIER_MONTHS=false` für die
 Interviews, mit derselben Begründung wie bei der Prognose (E28): gezeigt wird, was Zyklus 2

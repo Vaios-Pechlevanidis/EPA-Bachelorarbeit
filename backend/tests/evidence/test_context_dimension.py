@@ -70,7 +70,7 @@ class TestSelectionScope:
     def test_only_evidence_of_the_dimension(self, client, store):
         body = client.get(SELECTION.format(DEMO_3), params={**SCOPE, "dimension_only": True}).json()
         assert [i["title"] for i in body["items"]] == ["Warnstreik bei Demo 3", "Gehaltserhöhung bei Demo 3"]
-        assert body["items"][0]["dimension_match"] == {"terms": [], "category": "Tarifverhandlung und Streik"}
+        assert body["items"][0]["dimension_match"] == {"terms": [], "terms_in_text": [], "category": "Tarifverhandlung und Streik", "has_text": False}
         assert body["items"][1]["dimension_match"]["terms"] == ["gehaltserhöhung"]
         assert body["total"] == 2 and body["counts"] == {"news": 2, "adhoc": 0, "global": 0} and body["coverage"] is True
         assert body["scope"]["n_all"] == 3 and body["scope"]["n_dimension"] == 2 and body["scope"]["topic"] == "Gehalt & Sozialleistungen"

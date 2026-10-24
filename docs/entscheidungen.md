@@ -1,6 +1,6 @@
 # Entscheidungen Zyklus 2 – Inkrement 0 „Fundament“, Inkrement 1 „Anomalien im Verlauf“, Inkrement 2 „Drill-down und Vorher-Nachher-Vergleich“ und Inkrement 3 „Aktienkurs und Kennzahlen“
 
-Stand: 2026-10-23 (E34 neu am 2026-10-23 mit der Dimension als globalem Filter der Detailseite; E33 neu am 2026-10-18; E32 neu und E29 um einen Nachtrag ergänzt am 2026-10-17 mit den eigenen Ereignissen und den anklickbaren allgemeinen Ereignissen; E23 Korrektur vorab festgelegt und E10, E11, E18, E19, E22 ergänzt am 2026-10-13; E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
+Stand: 2026-10-23 (E35 neu und E7 um einen Nachtrag ergänzt am 2026-10-23 mit dem Text der Meldungen im Wortbezug; E34 neu am 2026-10-23 mit der Dimension als globalem Filter der Detailseite; E33 neu am 2026-10-18; E32 neu und E29 um einen Nachtrag ergänzt am 2026-10-17 mit den eigenen Ereignissen und den anklickbaren allgemeinen Ereignissen; E23 Korrektur vorab festgelegt und E10, E11, E18, E19, E22 ergänzt am 2026-10-13; E5, E9, E14 und E27 zu DZ1 ergänzt und E31 neu am 2026-10-13; E30 neu am 2026-10-13, Hauptlauf und Befund am selben Tag; E29 neu und E20 in Teilen abgelöst am 2026-10-13; E9 und E14 um Literaturbelege ergänzt am 2026-10-11; E5 aktualisiert, E21 ergänzt und E24–E28 neu am 2026-10-09 mit dem Abschluss von Inkrement 6; E1–E8 vom 2026-10-02, E5 aktualisiert und E9 neu am 2026-10-03, E9 aktualisiert und E10–E16 neu am 2026-10-04, E17 neu am 2026-10-05; E5, E13, E15 und E16 aktualisiert am 2026-10-08 nach den Entscheidungen D1–D3 in `docs/offene-punkte-vor-inkrement-4.md`; E7 fortgeschrieben und E18–E20 neu am 2026-10-08 mit Inkrement 4 „Externe Belege im Ereignisfenster“). Jede Entscheidung nennt Kontext, Entscheidung, Begründung und Status.
 Status „vorläufig“ heißt: gilt, bis die manuellen Annotationen (DZ1) eine belastbare
 Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 
@@ -483,6 +483,12 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
   - **Google News als Nachrichtenquelle:** Es stützt und erweitert die Datengrundlage der
     Erklärungsansätze in zwei Richtungen: zeitlich auf die Anomaliezeiträume und auf die nicht
     börsennotierten Unternehmen, für die es weder Ticker noch EQS gibt.
+- **Nachtrag 2026-10-23 (E35):** Die Maßnahme „keine Volltexte, keine Textauszüge“ gilt
+  für den Belegspeicher weiter; daneben gibt es seit E35 einen eigenen Textspeicher
+  (`backend/data/context_text/`, nicht im Repository) mit den Texten der EQS-Mitteilungen und der
+  Presseartikel, die Kandidaten für Erklärungsansätze sind. Der Autor hat am 2026-10-23
+  entschieden, dass dieser Abruf im Rahmen der wissenschaftlichen Arbeit zulässig ist. Die
+  Antworten des Dashboards enthalten weiter keine Texte, nur Titel und Links.
 
 ## E8 – Reproduzierbarkeit des Docker-Stacks
 
@@ -1832,6 +1838,7 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Status:** umgesetzt in Inkrement 6, Phase A (Commits `c73594a`, `1ec9374`, `fe3b73f`); seit
   2026-10-09 nennt die Kachel „Ø Score“ die Bewertungen mit Gesamtnote (E26).
 - **Nachtrag 2026-10-13 – Kennzeichnung ungeprüfter Reihen:** Geprüft ist die Erkennung nur für die Gesamtbewertung der Mitarbeitenden ohne Statusfilter. Für DZ1 sind das die 8 annotierten der 15 geeigneten Reihen (20 Zeiträume, F1 0,43, E9 Aktualisierung 2026-10-10), für E30 alle 15 Reihen. In den 15 Reihen liegen 28 Markierungen (19 Niveauwechsel, 9 Einzelmonate). Für andere Reihen zeigen Dashboard-Karte, Detailseite und PDF-Export unter dem Diagramm „Erkennung für diese Auswahl nicht geprüft; geprüft ist nur die Gesamtbewertung der Mitarbeitenden ohne Statusfilter (DZ1, E30)“. Das betrifft Einzeldimensionen, Bewerbende und Statusgruppen. Umsetzung: `isValidatedScope` und `UNVALIDATED_SCOPE_NOTE` in `frontend/src/config.js`, Komponente `ScopeHint` in `AnomalyCard.jsx`. Die Markierungen selbst bleiben sichtbar.
+- **Nachtrag 2026-10-24 – Hinweis entfernt (Entscheidung des Autors):** Der Hinweis „Erkennung für diese Auswahl nicht geprüft …“ steht nicht mehr im Dashboard: nicht unter der Dashboard-Karte, nicht auf der Detailseite, nicht im PDF (weder unter der Anomalien-Karte noch als Warnzeile des Kurzberichts). Der Autor hat ihn am 2026-10-24 mit der Begründung entfernt, die Auswahl einer Dimension, Quelle oder Statusgruppe sei nur eine Darstellung derselben Erkennung. Der Einwand des Assistenten, dass die Markierungen ein Rechenergebnis sind, dessen Treffsicherheit nur für die Gesamtbewertung der Mitarbeitenden gemessen wurde (F1 0,43, DZ1) und auf dünneren Reihen anders ausfallen kann, bleibt hier festgehalten; der Prüfumfang gehört damit in die Arbeit (Kapitel zur Evaluation), nicht mehr in die Oberfläche. Entfernt wurden `VALIDATED_SCOPE`, `isValidatedScope`, `UNVALIDATED_SCOPE_NOTE` (config.js), `ScopeHint` (AnomalyCard.jsx, Anomalies.jsx) und der Vermerk samt Kurzbericht-Zeile in `pdfExport.js` und `reportSummary.js`. Der Zusatz „ungeprüft“ an den Einzelmonaten (E30) bleibt.
 
 ## E28 – Prognose im Zeitverlauf als Schalter beim Bauen (Inkrement 6, D2)
 
@@ -2308,3 +2315,78 @@ Kalibrierung erlauben; dann wird der Eintrag mit Beleg aktualisiert.
 - **Status:** umgesetzt am 2026-10-23 (Feature-Doku 20), nicht committet; Regeln Setzungen
   (vorläufig): ob der Kommentar allein die bessere Regel ist und ob englische Schlüsselwörter je
   Thema folgen sollen, entscheidet der Autor.
+
+## E35 – Text der Meldung im Wortbezug der Erklärungsansätze (2026-10-23)
+
+- **Kontext:** Wortbezug, Ereignisart und die strenge Auswahl (E21–E23, E33) beruhten allein
+  auf dem **Titel** eines Belegs; der Belegspeicher hält nach E7 keine Volltexte. Die Frage des
+  Autors (2026-10-23), ob nicht auch der Text verglichen werden sollte, trifft die wichtigste
+  dokumentierte Grenze der Erklärungsansätze (Doku 08 § 4: „Die Einstufung beruht auf Titeln
+  und Wortbezügen“). Gegen Volltexte sprachen die Nutzungsbedingungen (E7, Google News nennt
+  nur Titel und Weiterleitungslink; Verlagsseiten mit eigenen Bedingungen und Bezahlschranken)
+  und der Befund, dass die Schlüsselwörter der Ereignisarten in langen Texten beiläufig
+  vorkommen. Der Autor hat am 2026-10-23 entschieden, dass der Abruf der Texte im Rahmen der
+  wissenschaftlichen Arbeit zulässig ist.
+- **Entscheidung (2026-10-23, Autor):** (1) Ein eigener **Textspeicher**
+  `backend/data/context_text/<unternehmen>/<beleg-id>.json` (nicht im Repository,
+  `services/evidence_text.py`) hält je Beleg den Haupttext der Seite als Absätze (höchstens
+  40.000 Zeichen), die Zieladresse, Stand und Status (`ok`, `kurz` unter 300 Zeichen,
+  `fehlgeschlagen`). Der Belegspeicher und die Antworten der Belegliste bleiben ohne Text.
+  (2) **Abruf** nur durch `scripts/fetch_evidence_text.py`, nie zur Laufzeit des Dashboards:
+  EQS-Mitteilungen vollständig von der öffentlichen Meldungsseite; Presseartikel über die
+  Auflösung der Google-Weiterleitung (Artikelseite mit Signatur und Zeitstempel, dann die
+  Zieladresse aus `batchexecute`) und die Verlagsseite, aber nur für **Kandidaten**: Meldungen
+  der Markierungs- und Vergleichsfenster, die die titel- und datumsabhängigen Regeln 1 und 4
+  der strengen Auswahl erfüllen (Unternehmen im Titel genannt, zeitliche Nähe mindestens 0,5).
+  Nur bei ihnen kann der Text die Auswahl ändern. Drosselung Google News und EQS 2 s, Verlage
+  1 s je Host; Abbruch nach drei Fehlern in Folge vor der Verlagsseite. (3) **Verwendung**
+  (`explanation_ranking.score_item`, `TEXT_VERSION` 1): Liegt ein Text vor, sucht der
+  Wortbezug die kennzeichnenden Begriffe der Bewertungen auch im Text, mit derselben
+  Richtungsregel wie im Titel (E33); je Begriff steht der Fundort (`in`: `title` oder `text`),
+  Titeltreffer zuerst, ein Begriff zählt einmal. Zwei Schutzregeln gegen allgemeine Wörter, die
+  in Titeln nie, in Texten aber ständig stehen (Zählung 2026-10-23, E.ON 2023-11, 107 Texte:
+  „andere“ in 36, „deutlich“ in 20, „bisher“ in 14 Texten; fachliche Begriffe wie „überstunden“
+  oder „weiterbildung“ in keinem): (a) die Stoppwortliste der Begriffe (`review_terms.STOPWORDS`)
+  ist um Funktionswörter, Adverbien und Modalverben ergänzt („andere“, „bisher“, „deutlich“,
+  „aktuellen“, „eigenen“, „gerade“, „wäre“, „konnte“, …, englisch „every“, „nothing“, „think“, …;
+  Korrektur, gilt auch für Titel); (b) ein Begriff, der in mindestens 3 und in mehr als 20 % der
+  Texte des Fensters steht, zählt im Text nicht (`frequent_text_terms`, `TEXT_TERM_MAX_SHARE`
+  0,2, `TEXT_TERM_MIN_HITS` 3; Titeltreffer bleiben; die Antwort nennt die Begriffe mit Anteil).
+  **Ereignisart, Arbeitgeberbezug und die Nennung des Unternehmens kommen weiter allein aus dem
+  Titel.** Schwellen, Stufenregeln
+  (Fassung 2) und die vier Auswahlregeln bleiben; Regel 3 lautet jetzt „im Titel oder, wenn er
+  vorliegt, im Text der Meldung“. Der Dimensionsfilter (E34) prüft die Schlüsselwörter des
+  Themas ebenfalls im Text und weist sie getrennt aus. (4) **Oberfläche:** Begriffe aus dem
+  Text tragen „im Text“, Belege mit Text „Text geprüft“; die Begründung sagt „steht im Text
+  der Meldung“; „Wie wird eingestuft?“ nennt die Regel. (5) **Auswertung:** Die Auswertung
+  nach E23 läuft mit den Texten genau einmal und weist je Fenster die Belege mit Text und die
+  nur durch den Text ausgewählten Belege aus (`n_with_text`, `n_selected_by_text`).
+- **Begründung:** Der Wortbezug vergleicht den Beleg mit dem, was die Bewertenden nach der
+  Veränderung schreiben; die Begriffe sind je Fenster gewonnen und selten, ein Treffer im Text
+  ist daher ein Bezug, kein Rauschen. Die Schlüsselwörter der Ereignisarten (Verlust, Klage,
+  Übernahme, Aktie) stehen dagegen in fast jedem Finanzbericht und jeder EQS-Mitteilung;
+  aus dem Text ermittelt würden sie nahezu jeden Beleg einer Ereignisart oder der Gruppe ohne
+  Arbeitgeberbezug zuordnen. Die Beschränkung auf Kandidaten folgt aus den Regeln: Regel 1 und
+  4 hängen nicht vom Text ab, also kann ein Text nur bei Belegen etwas ändern, die sie
+  erfüllen; so bleibt der Abruf bei rund 3.600 statt 18.000 Artikeln. Der Fundort je Begriff
+  hält die Begründung prüfbar: Ein Treffer im Titel ist in der Liste sichtbar, ein Treffer im
+  Text nur mit dem Hinweis. Die Schutzregeln folgen aus der ersten Prüfung mit echten Texten:
+  Ohne sie wären bei E.ON 2023-11 47 statt 30 Belege ausgewählt, die meisten über „andere“,
+  „bisher“ und „deutlich“. Die Stoppwortliste fängt die bekannten Wörter, die Häufigkeitsgrenze
+  je Fenster das, was die Liste nicht kennt; ein Begriff, der in jedem dritten Text steht,
+  unterscheidet die Belege des Fensters nicht. Die Grenze kann einen fachlichen Begriff treffen,
+  der in einem ereignisreichen Fenster in vielen Texten steht; dann bleibt sein Titeltreffer.
+- **Grenzen:** Google News liefert keine Texte; die Auflösung der Weiterleitung nutzt ein
+  undokumentiertes Verfahren, das Google jederzeit ändern kann (dann bleiben die gespeicherten
+  Texte, neue kommen nicht hinzu). Bezahlschranken und Cookie-Wände liefern Teaser oder nichts
+  (Status `kurz` oder `fehlgeschlagen`); die Textextraktion ist eine einfache Absatzregel, Menüs
+  und Teaser anderer Artikel können Reste hinterlassen. Texte liegen nur für EQS-Mitteilungen
+  und die Kandidaten der Markierungs- und Vergleichsfenster vor; freie Auswahlen und
+  Einzeldimensionen außerhalb dieser Fenster werden weiter nur über den Titel bewertet, das
+  Kennzeichen „Text geprüft“ zeigt den Unterschied. Mehr Treffer durch Text sind kein Beleg
+  für mehr Erklärungskraft; das zeigt erst die Auswertung gegen die Vergleichsfenster (E23).
+- **Status:** umgesetzt am 2026-10-23 (Feature-Doku 22), nicht committet; Abruf der Texte
+  am 2026-10-23 gestartet (EQS vollständig, Meldungen der Markierungs- und dann der
+  Vergleichsfenster); Werte (300 Zeichen für „kurz“, 40.000 Zeichen Obergrenze, Abstände, 20 %
+  und 3 Texte der Häufigkeitsgrenze, die ergänzten Stoppwörter) sind Setzungen. Die Entscheidung
+  zur Zulässigkeit des Abrufs ist die des Autors (2026-10-23).

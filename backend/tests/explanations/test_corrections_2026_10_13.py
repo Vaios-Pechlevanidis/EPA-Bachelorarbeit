@@ -118,4 +118,5 @@ def test_company_in_title(name, term, title, expected):
 def test_rules_name_the_corrections_and_keep_version():
     rules = er.rules()
     assert rules["version"] == 2
-    assert len(rules["corrections"]) == 5 and all(c.startswith("2026-10-13") for c in rules["corrections"])
+    # fünf Korrekturen vom 2026-10-13, dazu die Stoppwörter vom 2026-10-23 (E35)
+    assert len(rules["corrections"]) == 6 and all(c.startswith(("2026-10-13", "2026-10-23")) for c in rules["corrections"])

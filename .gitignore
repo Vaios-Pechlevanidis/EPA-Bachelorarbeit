@@ -163,4 +163,5 @@ backend/data/bewertungsbogen/
 
 # Belegspeicher der externen Belege (Inkrement 4, E18): nicht einchecken
 backend/data/context/
+backend/data/context_text/
 backend/data/macro/

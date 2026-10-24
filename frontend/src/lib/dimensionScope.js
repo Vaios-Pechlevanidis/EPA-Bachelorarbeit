@@ -53,6 +53,7 @@ export function evidenceMatchText(match) {
     if (!match) return null
     const parts = [
         match.terms?.length ? `Schlüsselwort ${match.terms.map((t) => `‚${t}‘`).join(", ")}` : null,
+        match.terms_in_text?.length ? `Schlüsselwort im Text ${match.terms_in_text.map((t) => `‚${t}‘`).join(", ")}` : null,
         match.category ? `Ereignisart ${match.category}` : null,
     ].filter(Boolean)
     return parts.length ? `Bezug zur Dimension: ${parts.join(" · ")}` : null

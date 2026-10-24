@@ -1,5 +1,9 @@
 # 08 – Erklärungsansätze: Mögliche Zusammenhänge
 
+*Nachtrag 2026-10-23:* Liegt zu einer Meldung der Text vor (EQS-Mitteilungen, Kandidaten der
+Markierungs- und Vergleichsfenster), sucht der Wortbezug die Begriffe auch im Text; Fundort je
+Begriff („im Text“), Kennzeichen „Text geprüft“; Ereignisart weiter aus dem Titel (Doku 22, E35).
+
 | | |
 |---|---|
 | Inkrement | 5 (Zyklus 2) |

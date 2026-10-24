@@ -110,6 +110,12 @@ nur die Gesamtbewertung der Mitarbeitenden ohne Statusfilter (DZ1, E30).“ Der 
 Fehlerfall entfällt er. Die Markierungen selbst bleiben unverändert sichtbar; der Hinweis gilt
 unabhängig vom Schalter für Einzelmonate (Doku 03).
 
+**Hinweis entfernt (Nachtrag 2026-10-24):** Auf Entscheidung des Autors steht der Satz „Erkennung
+für diese Auswahl nicht geprüft …“ nicht mehr im Dashboard, auf der Detailseite oder im PDF
+(E25, Nachtrag 2026-10-24). Der Prüfumfang bleibt wie oben beschrieben und wird in der Arbeit
+genannt; die Oberfläche zeigt für alle Reihen dieselben Markierungen ohne diesen Vermerk. Der
+Zusatz „ungeprüft“ an den Einzelmonaten bleibt.
+
 Nutzen: Statt einen langen Verlauf selbst nach Brüchen abzusuchen, sieht man sofort,
 *wann* sich die Stimmung der Mitarbeitenden spürbar verschoben hat und *wie stark*.
 Diese Zeitpunkte sind der Ausgangspunkt für die spätere Kontextsuche (Nachrichten, Kurse),
@@ -275,8 +281,8 @@ für jede Dimension der Quelle Eignung und Anomalien sowie eine gemeinsame, sort
 | Teil | Datei | Aufgabe |
 |---|---|---|
 | Datenabruf | `frontend/src/hooks/useAnomalies.js` | ruft den Endpoint ab; Lade- und Fehlerzustand; bricht veraltete Anfragen beim Firmenwechsel ab |
-| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`, seit 2026-10-13 `ScopeHint`) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), Niveaulinie (`showLevels`), Kartenvariante (`compact`: Ringe auf dem Monatswert wie in der ersten Version, ohne Niveaulinie und Markierungslegende), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis (Liste nur auf der Detailseite), Dimensionsauswahl, Zeitfilter, Hinweis bei ungeprüften Reihen (`ScopeHint`); von Karte und Detailseite gemeinsam genutzt |
-| Prüfumfang und Schalter | `frontend/src/config.js` | `isValidatedScope` (Mitarbeitende, Gesamtbewertung, ohne Statusfilter), die Hinweistexte `UNVALIDATED_SCOPE_NOTE` und `OUTLIER_UNVALIDATED_NOTE` für Karte, Detailseite und PDF, Schalter `SHOW_OUTLIER_MONTHS` (Doku 03) |
+| Diagramm, Liste, Auswahl | `frontend/src/components/dashboard/AnomalyCard.jsx` (`AnomalyChart`, `AnomalyList`, `DimensionPicker`, `TimeRangeFilter`, `StepGlyph`; `ScopeHint` vom 2026-10-13 am 2026-10-24 entfernt) | Verlauf mit gestrichelt überbrückten Lücken, Stufen-Markierungen (`ReferenceLine` mit `segment` und eigener `shape`), Niveaulinie (`showLevels`), Kartenvariante (`compact`: Ringe auf dem Monatswert wie in der ersten Version, ohne Niveaulinie und Markierungslegende), Legende und Tooltip, optionaler Ausschnitt (`range`), Liste oder Eignungshinweis (Liste nur auf der Detailseite), Dimensionsauswahl, Zeitfilter, Hinweis bei ungeprüften Reihen (`ScopeHint`); von Karte und Detailseite gemeinsam genutzt |
+| Prüfumfang und Schalter | `frontend/src/config.js` | Hinweistext `OUTLIER_UNVALIDATED_NOTE` für Karte, Detailseite und PDF, Schalter `SHOW_OUTLIER_MONTHS` (Doku 03); `isValidatedScope` und `UNVALIDATED_SCOPE_NOTE` am 2026-10-24 entfernt (E25) |
 | Darstellungshilfen | `frontend/src/lib/anomalySeries.js` | reine Funktionen: Anzeigebereich vom ersten bis zum letzten bewerteten Monat (`trimToEvaluated`), Zeitfenster relativ zum letzten angezeigten Monat (`timeWindow`, `inWindow`), lineare Interpolation über Lücken nur zur Anzeige (`interpolateGaps`), Monatsformat |
 | Dimensionsnamen | `frontend/src/lib/ratingCategories.js` | einzige Zuordnung Schlüssel → Anzeigename; vorher lokal in `ReviewDetailModal.jsx`, dorthin unverändert verschoben |
 | Karte | `AnomalyCard` in derselben Datei, eingebunden in `frontend/src/pages/Dashboard.jsx` | kompakte Ansicht unter der Diagrammzeile; Klick öffnet die Detailseite |

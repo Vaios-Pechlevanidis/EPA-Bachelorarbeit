@@ -57,6 +57,11 @@ describe("evidenceMatchText", () => {
       .toBe("Bezug zur Dimension: Schlüsselwort ‚gehaltserhöhung‘ · Ereignisart Vergütung und Sozialleistungen")
     expect(evidenceMatchText({ terms: [], category: "Tarifverhandlung und Streik" })).toBe("Bezug zur Dimension: Ereignisart Tarifverhandlung und Streik")
   })
+  it("nennt Schlüsselwörter im Text der Meldung getrennt", () => {
+    expect(evidenceMatchText({ terms: ["gehalt"], terms_in_text: ["tarifvertrag"], category: null, has_text: true }))
+      .toBe("Bezug zur Dimension: Schlüsselwort ‚gehalt‘ · Schlüsselwort im Text ‚tarifvertrag‘")
+    expect(evidenceMatchText({ terms: [], terms_in_text: ["lohn"], category: null, has_text: true })).toBe("Bezug zur Dimension: Schlüsselwort im Text ‚lohn‘")
+  })
   it("schweigt ohne Bezug", () => {
     expect(evidenceMatchText(null)).toBeNull()
     expect(evidenceMatchText({ terms: [], category: null })).toBeNull()
